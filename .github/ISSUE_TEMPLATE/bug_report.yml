@@ -1,0 +1,33 @@
+name: Bug report
+description: Something does not work as documented.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the report. Security issues go through private vulnerability reporting instead, never a public issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The smallest request or steps that show the problem. Use invented data only.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      placeholder: v0.1.0 or a commit SHA
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant output
+      description: Response bodies, status codes or log lines, with any personal data removed.
+      render: text
