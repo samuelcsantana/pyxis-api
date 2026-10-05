@@ -6,7 +6,7 @@ request needs before it can be merged.
 ## Prerequisites
 
 - Node.js 24 (`.nvmrc`) and npm 11
-- Docker, for the local database and the image (from the database task onward)
+- Docker, for the local Postgres and the production image
 - Git Bash or another POSIX shell on Windows; with Git Bash, set `MSYS_NO_PATHCONV=1` before AWS
   CLI commands that take a path
 
@@ -14,24 +14,26 @@ request needs before it can be merged.
 
 ```bash
 npm ci
-npm run build
-npm start          # http://localhost:3040/health
+docker compose up -d --build   # Postgres, the migration step and the API on :3040
 ```
 
 `npm ci` also installs the Git hooks (Husky).
 
 ## Scripts
 
-| Script                                | What it does                                                         |
-| ------------------------------------- | -------------------------------------------------------------------- |
-| `npm run lint`                        | ESLint, then the comment check for YAML, shell, Docker and SQL files |
-| `npm run format` / `format:check`     | Prettier                                                             |
-| `npm run typecheck`                   | TypeScript in strict mode, for the app and for the scripts           |
-| `npm test` / `npm run test:cov`       | Unit tests; `test:cov` enforces 100% coverage                        |
-| `npm run test:e2e`                    | The application over HTTP                                            |
-| `npm run test:tooling`                | Tests of the lint rule and the comment check                         |
-| `npm run openapi:export`              | Regenerates `openapi/openapi.json` from the code                     |
-| `npm run build:watch` + `start:watch` | Recompile and restart on change, in two terminals                    |
+| Script                                | What it does                                                          |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `npm run lint`                        | ESLint, then the comment check for YAML, shell, Docker and SQL files  |
+| `npm run format` / `format:check`     | Prettier                                                              |
+| `npm run typecheck`                   | TypeScript in strict mode, for the app and for the scripts            |
+| `npm test`                            | Unit tests, no database                                               |
+| `npm run test:integration`            | Database adapters against a real Postgres (`docker compose up -d db`) |
+| `npm run test:cov`                    | Unit and integration together, with the 100% coverage gate            |
+| `npm run db:migrate`                  | Applies the migrations as the owner and grants the app role           |
+| `npm run test:e2e`                    | The application over HTTP                                             |
+| `npm run test:tooling`                | Tests of the lint rule and the comment check                          |
+| `npm run openapi:export`              | Regenerates `openapi/openapi.json` from the code                      |
+| `npm run build:watch` + `start:watch` | Recompile and restart on change, in two terminals                     |
 
 ## Workflow
 

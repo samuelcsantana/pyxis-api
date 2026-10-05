@@ -45,6 +45,8 @@ Shipping now:
 - Health endpoint, strict security headers and a request id on every response
 - OpenAPI 3.1 document generated from the routes' own Zod schemas, with Swagger UI outside
   production
+- PostgreSQL through Drizzle, with migrations run by the owner role and the API connected as a
+  least-privilege role that can read and write rows but never change the schema
 
 Planned for v1 (see [Roadmap](#roadmap)):
 
@@ -87,63 +89,84 @@ flowchart LR
 
 ## Tech stack
 
-TypeScript 6 (strict) · NestJS 12 on Fastify 5 · Zod 4 · Drizzle ORM and PostgreSQL (from the
-database milestone) · AWS Lambda behind CloudFront, provisioned with Terraform · Jest · GitHub
+TypeScript 6 (strict) · NestJS 12 on Fastify 5 · Zod 4 · Drizzle ORM with postgres-js on
+PostgreSQL 18 · AWS Lambda behind CloudFront, provisioned with Terraform · Jest · Docker · GitHub
 Actions with CodeQL, Dependabot, Codecov and release-please.
 
 ## Getting started
 
-Requirements: Node.js 24 and npm 11.
+Requirements: Node.js 24, npm 11 and Docker.
 
 ```bash
 git clone git@github.com:samuelcsantana/pyxis-api.git
 cd pyxis-api
-npm ci
-npm run build
-npm start
-curl http://localhost:3040/health          # {"status":"ok"}
+docker compose up -d --build              # Postgres 18, the migration step, the API
+curl http://localhost:3040/health         # {"status":"ok"}
 ```
 
-Swagger UI is at <http://localhost:3040/docs>. Configuration is validated at boot
-([`src/config/env.schema.ts`](src/config/env.schema.ts)):
+The compose stack runs the production image: `migrate` applies the migrations as the owner `pyxis`
+and grants the application role `pyxis_app` its row access, then `api` starts as `pyxis_app` on port
+3040 with Swagger UI at <http://localhost:3040/docs>. Postgres listens on host port 5446.
 
-| Variable          | Default       | Meaning                                                     |
-| ----------------- | ------------- | ----------------------------------------------------------- |
-| `PORT`            | `3040`        | HTTP port                                                   |
-| `NODE_ENV`        | `development` | `development`, `production` or `test`                       |
-| `SWAGGER_ENABLED` | unset         | `true`/`false`; unset means on everywhere except production |
+To run the API from source instead, keep only the database in Docker:
 
-With Docker: `docker build -t pyxis-api . && docker run -p 3040:3040 pyxis-api`.
+```bash
+docker compose up -d db
+npm ci && npm run build
+MIGRATION_DATABASE_URL=postgres://pyxis:pyxis@localhost:5446/pyxis APP_DB_ROLE=pyxis_app npm run db:migrate
+DATABASE_URL=postgres://pyxis_app:pyxis_app@localhost:5446/pyxis npm start
+```
+
+Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.schema.ts)):
+
+| Variable                 | Default       | Meaning                                                        |
+| ------------------------ | ------------- | -------------------------------------------------------------- |
+| `PORT`                   | `3040`        | HTTP port                                                      |
+| `NODE_ENV`               | `development` | `development`, `production` or `test`                          |
+| `SWAGGER_ENABLED`        | unset         | `true`/`false`; unset means on everywhere except production    |
+| `DATABASE_URL`           | required      | The API's connection, as the application role                  |
+| `MIGRATION_DATABASE_URL` | unset         | The owner's connection, used only by `npm run db:migrate`      |
+| `APP_DB_ROLE`            | unset         | The role granted row access after each migration (`pyxis_app`) |
+
+In production every database URL ends in `sslmode=verify-full`.
 
 ## Testing
 
 ```bash
-npm run test:cov       # unit tests, 100% coverage required
-npm run test:e2e       # the application over HTTP
-npm run test:tooling   # the lint rule and the comment check
+docker compose up -d db   # the integration tests and the coverage run need Postgres
+npm test                  # unit tests only, no database
+npm run test:integration  # Drizzle adapters and SQL against a fresh pyxis_test database
+npm run test:cov          # unit and integration together, 100% coverage required
+npm run test:e2e          # the application over HTTP
+npm run test:tooling      # the lint rule and the comment check
 ```
 
 Coverage must stay at **100% of statements, branches, functions and lines**; CI fails below it.
-Files outside the measurement, and why:
+Database adapters are never mocked: they are tested against a real Postgres, so the coverage gate
+counts the unit and integration suites together. Files outside the measurement, and why:
 
 | Excluded                    | Reason                                                                 |
 | --------------------------- | ---------------------------------------------------------------------- |
 | `src/main.ts`               | Process entry point: wires the app and listens; the e2e suite boots it |
 | `src/export-openapi.ts`     | Command-line entry point; CI runs it and checks its output             |
+| `src/migrate.ts`            | Command-line entry point; the compose stack and CI's image job run it  |
 | `src/**/*.module.ts`        | Nest module declarations: wiring without logic                         |
 | `eslint-rules/`, `scripts/` | Tooling outside `src/`, tested on Node's test runner instead           |
-
-Integration tests against a real Postgres arrive with the database milestone.
 
 ## Project structure
 
 ```text
 src/
 ├── config/            environment validation (Zod)
+├── infra/database/    Drizzle and postgres-js, the migration step, the role check
 ├── infra/http/        Fastify setup, security headers, request id, health, OpenAPI
+├── shared/            pure utilities
 ├── main.ts            HTTP entry point
+├── migrate.ts         migration entry point
 └── export-openapi.ts  writes openapi/openapi.json
+test/integration/      adapters against a real Postgres
 test/e2e/              the application over HTTP
+docker-compose.yml     Postgres 18, the migration step and the API
 openapi/openapi.json   the published contract, regenerated by npm run openapi:export
 eslint-rules/          the local no-comments ESLint rule
 scripts/               the comment check for files ESLint does not read
@@ -170,16 +193,17 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 
 ## Architecture decisions
 
-| ADR                                                    | Decision                                   |
-| ------------------------------------------------------ | ------------------------------------------ |
-| [0001](docs/adr/0001-record-architecture-decisions.md) | Record architecture decisions              |
-| [0002](docs/adr/0002-clean-architecture.md)            | Clean Architecture with ports and adapters |
-| [0003](docs/adr/0003-openapi-from-zod.md)              | Generate the OpenAPI 3.1 contract from Zod |
+| ADR                                                     | Decision                                   |
+| ------------------------------------------------------- | ------------------------------------------ |
+| [0001](docs/adr/0001-record-architecture-decisions.md)  | Record architecture decisions              |
+| [0002](docs/adr/0002-clean-architecture.md)             | Clean Architecture with ports and adapters |
+| [0003](docs/adr/0003-openapi-from-zod.md)               | Generate the OpenAPI 3.1 contract from Zod |
+| [0004](docs/adr/0004-least-privilege-database-roles.md) | Least-privilege database roles             |
 
 ## Roadmap
 
 - [x] Service skeleton, quality gates, OpenAPI export
-- [ ] Database: Drizzle, migrations, least-privilege roles, local Postgres
+- [x] Database: Drizzle, migrations, least-privilege roles, local Postgres
 - [ ] Ingestion: domain rules, `POST /v1/batch`, project and key scripts
 - [ ] Deployment: Lambda, CloudFront and Terraform
 - [ ] Dashboard sign-in and queries
