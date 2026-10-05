@@ -4,6 +4,7 @@
     ".": {
       "release-type": "node",
       "package-name": "pyxis-api",
+      "initial-version": "0.1.0",
       "include-component-in-tag": false,
       "bump-minor-pre-major": true,
       "changelog-sections": [
