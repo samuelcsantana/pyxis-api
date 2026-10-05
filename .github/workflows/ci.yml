@@ -45,6 +45,24 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: pyxis
+          POSTGRES_PASSWORD: pyxis
+          POSTGRES_DB: pyxis
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pyxis -d pyxis"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MIGRATION_DATABASE_URL: postgres://pyxis:pyxis@localhost:5432/pyxis
+      DATABASE_URL: postgres://pyxis_app:pyxis_app@localhost:5432/pyxis
+      APP_DB_ROLE: pyxis_app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
@@ -62,6 +80,24 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: pyxis
+          POSTGRES_PASSWORD: pyxis
+          POSTGRES_DB: pyxis
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pyxis -d pyxis"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MIGRATION_DATABASE_URL: postgres://pyxis:pyxis@localhost:5432/pyxis
+      DATABASE_URL: postgres://pyxis_app:pyxis_app@localhost:5432/pyxis
+      APP_DB_ROLE: pyxis_app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
@@ -69,6 +105,8 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Create the application role
+        run: psql "$MIGRATION_DATABASE_URL" --command "CREATE ROLE pyxis_app LOGIN PASSWORD 'pyxis_app'"
       - run: npm run test:e2e
 
   openapi:
@@ -97,15 +135,44 @@ jobs:
 
   image:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: pyxis
+          POSTGRES_PASSWORD: pyxis
+          POSTGRES_DB: pyxis
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pyxis -d pyxis"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      MIGRATION_DATABASE_URL: postgres://pyxis:pyxis@localhost:5432/pyxis
+      DATABASE_URL: postgres://pyxis_app:pyxis_app@localhost:5432/pyxis
+      APP_DB_ROLE: pyxis_app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       - run: docker build --tag pyxis-api:ci .
-      - run: docker run --detach --name pyxis-api --publish 3040:3040 pyxis-api:ci
-      - name: Answer /health from the running container
+      - name: Create the application role
+        run: psql "$MIGRATION_DATABASE_URL" --command "CREATE ROLE pyxis_app LOGIN PASSWORD 'pyxis_app'"
+      - name: Migrate with the production image
+        run: >-
+          docker run --rm --network host
+          --env MIGRATION_DATABASE_URL --env APP_DB_ROLE
+          pyxis-api:ci node dist/migrate.js
+      - name: Start the API as the application role
+        run: >-
+          docker run --detach --name pyxis-api --network host
+          --env DATABASE_URL --env PORT=3040
+          pyxis-api:ci
+      - name: Answer /health and connect as the application role
         run: |
           for attempt in $(seq 1 30); do
             if curl --fail --silent --show-error http://localhost:3040/health; then
-              exit 0
+              docker logs pyxis-api 2>&1 | grep --quiet database.role_ok && exit 0
             fi
             sleep 1
           done
