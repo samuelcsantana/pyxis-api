@@ -179,6 +179,51 @@ jobs:
           docker logs pyxis-api
           exit 1
 
+  lambda-image:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: pyxis
+          POSTGRES_PASSWORD: pyxis
+          POSTGRES_DB: pyxis
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U pyxis -d pyxis"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      INVOKE_PATH: 2015-03-31/functions/function/invocations
+      EDGE_SHARED_SECRET: ci-edge-secret
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - run: docker build --file Dockerfile.lambda --tag pyxis-api-lambda:ci .
+      - name: Create the application role
+        run: psql postgres://pyxis:pyxis@localhost:5432/pyxis --command "CREATE ROLE pyxis_app LOGIN PASSWORD 'pyxis_app'"
+      - name: Migrate through the migration handler
+        env:
+          MIGRATION_DATABASE_URL: postgres://pyxis:pyxis@host.docker.internal:5432/pyxis
+          APP_DB_ROLE: pyxis_app
+        run: |
+          docker run --detach --publish 9001:8080 --add-host host.docker.internal:host-gateway --env MIGRATION_DATABASE_URL --env APP_DB_ROLE pyxis-api-lambda:ci dist/lambda/migrate-entry.handler
+          sleep 2
+          curl --fail --silent --show-error -X POST "http://localhost:9001/$INVOKE_PATH" -d '{}' | tee migrate.json
+          grep --quiet '"ok":true' migrate.json
+      - name: Serve /health only to requests that carry the edge secret
+        env:
+          DATABASE_URL: postgres://pyxis_app:pyxis_app@host.docker.internal:5432/pyxis
+        run: |
+          docker run --detach --publish 9000:8080 --add-host host.docker.internal:host-gateway --env DATABASE_URL --env EDGE_SHARED_SECRET pyxis-api-lambda:ci
+          sleep 2
+          jq --arg secret "$EDGE_SHARED_SECRET" '.headers["x-origin-verify"] = $secret' test/lambda/function-url-health.json > allowed-event.json
+          curl --fail --silent --show-error -X POST "http://localhost:9000/$INVOKE_PATH" -d @allowed-event.json | tee allowed.json
+          curl --fail --silent --show-error -X POST "http://localhost:9000/$INVOKE_PATH" -d @test/lambda/function-url-health.json | tee refused.json
+          grep --quiet '"statusCode":200' allowed.json
+          grep --quiet '"statusCode":403' refused.json
+
   audit:
     runs-on: ubuntu-latest
     steps:
