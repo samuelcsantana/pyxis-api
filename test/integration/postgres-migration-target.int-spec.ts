@@ -8,7 +8,7 @@ import {
   hasMigrations,
 } from '../../src/infra/database/postgres-migration-target';
 import { appRole } from '../local-database';
-import { testAppUrl, testOwnerUrl } from './test-database';
+import { probeAppUrl, probeOwnerUrl } from './test-database';
 
 const PROBE_MIGRATION =
   'CREATE TABLE "migration_probe" ("id" integer PRIMARY KEY, "label" text NOT NULL);';
@@ -39,10 +39,10 @@ describe('createPostgresMigrationTarget against a real Postgres', () => {
     root = mkdtempSync(path.join(tmpdir(), 'pyxis-migrations-'));
     migrationsFolder = writeMigrationsFolder(root);
     await applyMigrations(
-      createPostgresMigrationTarget(testOwnerUrl(), migrationsFolder),
+      createPostgresMigrationTarget(probeOwnerUrl(), migrationsFolder),
       appRole(),
     );
-    appClient = postgres(testAppUrl(), { max: 1, onnotice: () => undefined });
+    appClient = postgres(probeAppUrl(), { max: 1, onnotice: () => undefined });
   });
 
   afterAll(async () => {
@@ -80,14 +80,14 @@ describe('createPostgresMigrationTarget against a real Postgres', () => {
 
   it('is idempotent: running it again changes nothing and grants again', async () => {
     await expect(
-      applyMigrations(createPostgresMigrationTarget(testOwnerUrl(), migrationsFolder), appRole()),
+      applyMigrations(createPostgresMigrationTarget(probeOwnerUrl(), migrationsFolder), appRole()),
     ).resolves.toEqual({ grantedTo: appRole() });
   });
 
   it('refuses to grant to a role that does not exist', async () => {
     await expect(
       applyMigrations(
-        createPostgresMigrationTarget(testOwnerUrl(), migrationsFolder),
+        createPostgresMigrationTarget(probeOwnerUrl(), migrationsFolder),
         'pyxis_missing_role',
       ),
     ).rejects.toThrow('APP_DB_ROLE "pyxis_missing_role" does not exist');
@@ -99,13 +99,13 @@ describe('createPostgresMigrationTarget against a real Postgres', () => {
 
     expect(hasMigrations(empty)).toBe(false);
     await expect(
-      applyMigrations(createPostgresMigrationTarget(testOwnerUrl(), empty), undefined),
+      applyMigrations(createPostgresMigrationTarget(probeOwnerUrl(), empty), undefined),
     ).resolves.toEqual({ grantedTo: null });
   });
 
   it('uses the drizzle folder of the repository by default', async () => {
     await expect(
-      applyMigrations(createPostgresMigrationTarget(testOwnerUrl()), undefined),
+      applyMigrations(createPostgresMigrationTarget(probeOwnerUrl()), undefined),
     ).resolves.toEqual({ grantedTo: null });
   });
 });
