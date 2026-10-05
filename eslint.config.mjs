@@ -20,6 +20,14 @@ export default defineConfig(
     },
     rules: {
       '@typescript-eslint/no-extraneous-class': ['error', { allowWithDecorator: true }],
+      '@typescript-eslint/no-floating-promises': [
+        'error',
+        {
+          allowForKnownSafeCalls: [
+            { from: 'package', package: 'node:test', name: ['describe', 'it', 'test'] },
+          ],
+        },
+      ],
     },
   },
   {
