@@ -1,0 +1,3 @@
+provisioning_role_arn = "arn:aws:iam::<account-id>:role/pyxis-api-terraform"
+image_tag             = "<short git sha of the first image pushed to ECR>"
+api_domain_enabled    = false
