@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards } from '@nestjs/common';
+import { Controller, Logger, Post, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
@@ -41,6 +41,27 @@ describe('ClientAddressThrottlerGuard', () => {
 
   const send = (clientIp: string) =>
     app.inject({ method: 'POST', url: '/limited', headers: { 'x-client-ip': clientIp } });
+
+  it('logs once which address sources the first request carried', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await send('203.0.113.50');
+    await send('203.0.113.51');
+
+    expect(logs.filter((entry) => JSON.stringify(entry).includes('client_ip.sources'))).toEqual([
+      {
+        message: 'client_ip.sources',
+        trustedHeader: 'x-client-ip',
+        cloudfrontViewerAddress: false,
+        xForwardedForHops: 0,
+        resolvedFrom: 'header',
+      },
+    ]);
+    jest.restoreAllMocks();
+  });
 
   it('counts requests per client address read from the trusted header', async () => {
     for (let request = 0; request < LIMIT; request += 1) {
