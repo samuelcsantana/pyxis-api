@@ -158,9 +158,11 @@ counts the unit and integration suites together. Files outside the measurement, 
 ```text
 src/
 ├── config/            environment validation (Zod)
+├── domain/            entities, event validation, the PII barrier, derivations, key formats
 ├── infra/database/    Drizzle and postgres-js, the migration step, the role check
 ├── infra/http/        Fastify setup, security headers, request id, health, OpenAPI
 ├── shared/            pure utilities
+├── test-utils/        fakes for the domain ports
 ├── main.ts            HTTP entry point
 ├── migrate.ts         migration entry point
 └── export-openapi.ts  writes openapi/openapi.json
@@ -173,7 +175,7 @@ scripts/               the comment check for files ESLint does not read
 docs/adr/              architecture decision records
 ```
 
-`domain/`, `usecases/` and `test-utils/` appear with the first business rules.
+`usecases/` appears with the first use case, `POST /v1/batch`.
 
 ## Contract
 
@@ -184,6 +186,15 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 ## Privacy and security
 
 - No cookies on ingestion, no personal data in events, IP address and user agent never stored
+- A server-side barrier drops any property or campaign value that looks personal: an email
+  address, ten or more digits written only with phone or document separators (phone numbers, CPF,
+  CNPJ), or a number with ten or more digits in its integer part. A user id that looks personal
+  rejects the whole event. UUIDs are always kept. Known false positive, accepted: a 13-digit epoch
+  in milliseconds sent as a property is dropped, so send durations, not timestamps
+- Paths are re-templated on the server with the SDK's rules (UUIDs, numbers, long digit runs and
+  email addresses become `:id`), a second layer behind the browser's
+- Device, browser and operating system are classified by own code from the user agent and client
+  hints, then the user agent is discarded; the country comes from CloudFront, never from the IP
 - Strict response headers: a CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default
 - `X-Forwarded-For` is never trusted for the client address
