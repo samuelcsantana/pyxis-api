@@ -7,3 +7,5 @@ export interface AdminUserRepository {
   projectsOf(adminUserId: string): Promise<readonly Project[]>;
   grantAccess(email: string, projectId: string): Promise<AdminUser>;
 }
+
+export const ADMIN_USER_REPOSITORY = Symbol('AdminUserRepository');
