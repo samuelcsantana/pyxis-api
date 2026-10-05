@@ -17,5 +17,31 @@ services:
       timeout: 5s
       retries: 10
 
+  migrate:
+    build: .
+    image: pyxis-api:local
+    restart: 'no'
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MIGRATION_DATABASE_URL: postgres://pyxis:pyxis@db:5432/pyxis
+      APP_DB_ROLE: pyxis_app
+    command: ['node', 'dist/migrate.js']
+
+  api:
+    image: pyxis-api:local
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      PORT: 3040
+      SWAGGER_ENABLED: 'true'
+      DATABASE_URL: postgres://pyxis_app:pyxis_app@db:5432/pyxis
+    ports:
+      - '3040:3040'
+
 volumes:
   pyxis_db_data:
