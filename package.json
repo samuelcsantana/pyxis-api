@@ -18,7 +18,10 @@
     "build:watch": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "start": "node dist/main.js",
     "start:watch": "node --watch dist/main.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js",
+    "test:cov": "npm test -- --coverage",
+    "test:e2e": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --config test/jest-e2e.json"
   },
   "dependencies": {
     "@nestjs/common": "^12.1.2",
@@ -31,7 +34,43 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@nestjs/testing": "^12.1.2",
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.19.1",
+    "jest": "^30.5.2",
+    "ts-jest": "^29.4.14",
     "typescript": "~6.0.3"
+  },
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "**/*.ts",
+      "!main.ts",
+      "!**/*.module.ts"
+    ],
+    "coverageDirectory": "../coverage",
+    "coverageReporters": [
+      "text",
+      "lcov"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "statements": 100,
+        "branches": 100,
+        "functions": 100,
+        "lines": 100
+      }
+    },
+    "workerIdleMemoryLimit": "1GB"
   }
 }
