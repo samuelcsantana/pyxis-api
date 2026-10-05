@@ -1,0 +1,21 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: pyxis
+      POSTGRES_PASSWORD: pyxis
+      POSTGRES_DB: pyxis
+    ports:
+      - '5446:5432'
+    volumes:
+      - pyxis_db_data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pyxis -d pyxis']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pyxis_db_data:
