@@ -7,3 +7,5 @@ export interface InsertedEvents {
 export interface EventRepository {
   insertMany(events: readonly TrackedEvent[]): Promise<InsertedEvents>;
 }
+
+export const EVENT_REPOSITORY = Symbol('EventRepository');
