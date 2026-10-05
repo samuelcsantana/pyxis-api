@@ -12,6 +12,7 @@ describe('registerSecurityHeaders', () => {
     fastify = Fastify();
     registerSecurityHeaders(fastify);
     fastify.get('/plain', () => Promise.resolve({ ok: true }));
+    fastify.get('/docs', () => Promise.resolve('swagger ui'));
     fastify.get('/cached', (_request, reply) =>
       reply.header('Cache-Control', 'public, max-age=60').send({ ok: true }),
     );
@@ -45,6 +46,13 @@ describe('registerSecurityHeaders', () => {
     const response = await fastify.inject({ method: 'GET', url: '/missing' });
 
     expect(response.statusCode).toBe(404);
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+  });
+
+  it('leaves the Swagger UI without a CSP but keeps the other headers', async () => {
+    const response = await fastify.inject({ method: 'GET', url: '/docs' });
+
+    expect(response.headers['content-security-policy']).toBeUndefined();
     expect(response.headers['x-content-type-options']).toBe('nosniff');
   });
 });
