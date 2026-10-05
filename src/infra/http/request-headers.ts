@@ -27,3 +27,25 @@ export function getClientIp(request: FastifyRequest, trustedHeader: string | und
     trustedHeader === undefined ? undefined : trustedAddress(request, trustedHeader);
   return fromHeader ?? request.ip;
 }
+
+export interface ClientIpSources {
+  readonly trustedHeader: string | null;
+  readonly cloudfrontViewerAddress: boolean;
+  readonly xForwardedForHops: number;
+  readonly resolvedFrom: 'header' | 'socket';
+}
+
+export function describeClientIpSources(
+  request: FastifyRequest,
+  trustedHeader: string | undefined,
+): ClientIpSources {
+  const forwardedFor = singleHeader(request, 'x-forwarded-for');
+  const fromHeader =
+    trustedHeader === undefined ? undefined : trustedAddress(request, trustedHeader);
+  return {
+    trustedHeader: trustedHeader ?? null,
+    cloudfrontViewerAddress: singleHeader(request, CLOUDFRONT_VIEWER_ADDRESS_HEADER) !== undefined,
+    xForwardedForHops: forwardedFor === undefined ? 0 : forwardedFor.split(',').length,
+    resolvedFrom: fromHeader === undefined ? 'socket' : 'header',
+  };
+}

@@ -1,5 +1,10 @@
 import type { FastifyRequest } from 'fastify';
-import { CLOUDFRONT_VIEWER_ADDRESS_HEADER, getClientIp, singleHeader } from './request-headers';
+import {
+  CLOUDFRONT_VIEWER_ADDRESS_HEADER,
+  describeClientIpSources,
+  getClientIp,
+  singleHeader,
+} from './request-headers';
 
 function request(headers: Record<string, string | string[]>): FastifyRequest {
   return { headers, ip: '10.0.0.9' } as unknown as FastifyRequest;
@@ -48,5 +53,34 @@ describe('getClientIp', () => {
     ['an address with a port where none is expected', { 'x-real-ip': '203.0.113.7:80' }],
   ])('falls back to the socket address when the trusted header is %s', (_, headers) => {
     expect(getClientIp(request(headers), 'x-real-ip')).toBe('10.0.0.9');
+  });
+});
+
+describe('describeClientIpSources', () => {
+  it('reports which address sources a request carried, never the addresses', () => {
+    expect(
+      describeClientIpSources(
+        request({
+          [CLOUDFRONT_VIEWER_ADDRESS_HEADER]: '198.51.100.10:46532',
+          'x-forwarded-for': '203.0.113.7, 130.176.0.1',
+        }),
+        CLOUDFRONT_VIEWER_ADDRESS_HEADER,
+      ),
+    ).toEqual({
+      trustedHeader: CLOUDFRONT_VIEWER_ADDRESS_HEADER,
+      cloudfrontViewerAddress: true,
+      xForwardedForHops: 2,
+      resolvedFrom: 'header',
+    });
+  });
+
+  it('reports the socket fallback when no header is trusted or present', () => {
+    expect(describeClientIpSources(request({}), undefined)).toEqual({
+      trustedHeader: null,
+      cloudfrontViewerAddress: false,
+      xForwardedForHops: 0,
+      resolvedFrom: 'socket',
+    });
+    expect(describeClientIpSources(request({}), 'x-real-ip').resolvedFrom).toBe('socket');
   });
 });
