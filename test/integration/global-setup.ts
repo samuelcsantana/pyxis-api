@@ -1,7 +1,7 @@
 import postgres from 'postgres';
 import { POSTGRES_ROLE_NAME } from '../../src/config/env.schema';
 import { appRole, appUrl, ownerUrl } from '../local-database';
-import { TEST_DATABASE } from './test-database';
+import { MIGRATION_PROBE_DATABASE, TEST_DATABASE } from './test-database';
 
 function quoteLiteral(value: string): string {
   return `'${value.replaceAll("'", "''")}'`;
@@ -21,8 +21,10 @@ export default async function globalSetup(): Promise<void> {
     if (row?.exists !== true) {
       await admin.unsafe(`CREATE ROLE ${role} LOGIN PASSWORD ${quoteLiteral(password)}`);
     }
-    await admin.unsafe(`DROP DATABASE IF EXISTS ${TEST_DATABASE} WITH (FORCE)`);
-    await admin.unsafe(`CREATE DATABASE ${TEST_DATABASE}`);
+    for (const database of [TEST_DATABASE, MIGRATION_PROBE_DATABASE]) {
+      await admin.unsafe(`DROP DATABASE IF EXISTS ${database} WITH (FORCE)`);
+      await admin.unsafe(`CREATE DATABASE ${database}`);
+    }
   } finally {
     await admin.end();
   }
