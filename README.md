@@ -18,8 +18,8 @@ queries and erases a person's events on request, without cookies or personal dat
 
 </div>
 
-> **Status:** early development. The service skeleton, its quality gates and the OpenAPI export are
-> in place; event ingestion is the next milestone (see [Roadmap](#roadmap)).
+> **Status:** early development. Event ingestion (`POST /v1/batch`) works end to end; deployment
+> and the dashboard routes are next (see [Roadmap](#roadmap)).
 
 ## Ecosystem
 
@@ -47,14 +47,18 @@ Shipping now:
   production
 - PostgreSQL through Drizzle, with migrations run by the owner role and the API connected as a
   least-privilege role that can read and write rows but never change the schema
+- `POST /v1/batch`: batched ingestion with a public project key and a per-project origin
+  allowlist, as `text/plain` (no CORS preflight, `sendBeacon`-friendly) or `application/json`.
+  Invalid events are rejected one by one while the rest of the batch is stored
+  ([ADR 0005](docs/adr/0005-per-event-validation.md)); a resent event is a duplicate, never stored
+  twice; bots are recognized and rejected
+- A server-side barrier that drops any property or campaign value that looks like an email, a
+  phone number or a tax id, and re-templates paths
+- Device, browser, operating system, channel and country derived on the server; the user agent
+  and the address are read, classified and discarded
 
 Planned for v1 (see [Roadmap](#roadmap)):
 
-- `POST /v1/batch`: batched ingestion with a public project key, a per-project origin allowlist,
-  rate limits, deduplication and a server-side barrier that drops anything that looks like an
-  email, a phone number or a tax id
-- Device, browser and country derived on the server; the user agent and the address are never
-  stored
 - Dashboard sign-in by email code, with sessions checked on every request
 - Queries for the overview, funnels, features, request errors, devices, acquisition and timelines
 - `DELETE /v1/subjects/{userId}`: erases a person's events, including the anonymous part of the
@@ -108,6 +112,20 @@ The compose stack runs the production image: `migrate` applies the migrations as
 and grants the application role `pyxis_app` its row access, then `api` starts as `pyxis_app` on port
 3040 with Swagger UI at <http://localhost:3040/docs>. Postgres listens on host port 5446.
 
+To send a first batch, create a project and its public key (scripts for this are on the
+roadmap), then post the sample batch from an allowed origin:
+
+```bash
+docker compose exec -T db psql -U pyxis -d pyxis -c "
+  WITH project AS (
+    INSERT INTO projects (name, allowed_origins) VALUES ('Local Demo', ARRAY['http://localhost:5173'])
+    RETURNING id)
+  INSERT INTO project_keys (project_id, kind, public_key)
+  SELECT id, 'public', 'pyxis_pk_LocalDemoKey00000000000000000000' FROM project;"
+curl -X POST http://localhost:3040/v1/batch -H "Origin: http://localhost:5173"   -H "Content-Type: text/plain;charset=UTF-8" --data @test/fixtures/batch-valid.json
+# {"accepted":2,"duplicates":0,"rejected":0}; sending it again: {"accepted":0,"duplicates":2,...}
+```
+
 To run the API from source instead, keep only the database in Docker:
 
 ```bash
@@ -119,14 +137,15 @@ DATABASE_URL=postgres://pyxis_app:pyxis_app@localhost:5446/pyxis npm start
 
 Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.schema.ts)):
 
-| Variable                 | Default       | Meaning                                                        |
-| ------------------------ | ------------- | -------------------------------------------------------------- |
-| `PORT`                   | `3040`        | HTTP port                                                      |
-| `NODE_ENV`               | `development` | `development`, `production` or `test`                          |
-| `SWAGGER_ENABLED`        | unset         | `true`/`false`; unset means on everywhere except production    |
-| `DATABASE_URL`           | required      | The API's connection, as the application role                  |
-| `MIGRATION_DATABASE_URL` | unset         | The owner's connection, used only by `npm run db:migrate`      |
-| `APP_DB_ROLE`            | unset         | The role granted row access after each migration (`pyxis_app`) |
+| Variable                 | Default       | Meaning                                                                                                                                                         |
+| ------------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                   | `3040`        | HTTP port                                                                                                                                                       |
+| `NODE_ENV`               | `development` | `development`, `production` or `test`                                                                                                                           |
+| `SWAGGER_ENABLED`        | unset         | `true`/`false`; unset means on everywhere except production                                                                                                     |
+| `DATABASE_URL`           | required      | The API's connection, as the application role                                                                                                                   |
+| `MIGRATION_DATABASE_URL` | unset         | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
+| `APP_DB_ROLE`            | unset         | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
+| `CLIENT_IP_HEADER`       | unset         | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
 
 In production every database URL ends in `sslmode=verify-full`.
 
@@ -159,8 +178,11 @@ counts the unit and integration suites together. Files outside the measurement, 
 src/
 ├── config/            environment validation (Zod)
 ├── domain/            entities, event validation, the PII barrier, derivations, key formats
-├── infra/database/    Drizzle and postgres-js, the migration step, the role check
-├── infra/http/        Fastify setup, security headers, request id, health, OpenAPI
+├── usecases/          one class per operation (IngestBatchUseCase)
+├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
+├── infra/repositories/ Drizzle adapters and the 60-second project key cache
+├── infra/rate-limit/  the per-project limiter
+├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion, OpenAPI
 ├── shared/            pure utilities
 ├── test-utils/        fakes for the domain ports
 ├── main.ts            HTTP entry point
@@ -175,7 +197,7 @@ scripts/               the comment check for files ESLint does not read
 docs/adr/              architecture decision records
 ```
 
-`usecases/` appears with the first use case, `POST /v1/batch`.
+Migrations live in `drizzle/`, generated by `npx drizzle-kit generate` from the schema.
 
 ## Contract
 
@@ -198,6 +220,13 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 - Strict response headers: a CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default
 - `X-Forwarded-For` is never trusted for the client address
+- Ingestion is rate-limited per client address (120 batches a minute) and per project (3,000 a
+  minute), in memory per execution environment: no counter, not even a hash of an address, is
+  stored. The function's reserved concurrency bounds the global worst case
+- A resolved project key is cached for 60 seconds per execution environment, so revoking a key
+  takes up to a minute to take effect everywhere
+- The ingestion route answers CORS with the project's allowed origin only, never with
+  credentials; a request from another origin gets 403 and nothing it can read
 - Secrets live in AWS Parameter Store, never in the repository; secret scanning and push protection
   are on
 - Vulnerabilities: see [SECURITY.md](SECURITY.md)
@@ -210,12 +239,14 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 | [0002](docs/adr/0002-clean-architecture.md)             | Clean Architecture with ports and adapters |
 | [0003](docs/adr/0003-openapi-from-zod.md)               | Generate the OpenAPI 3.1 contract from Zod |
 | [0004](docs/adr/0004-least-privilege-database-roles.md) | Least-privilege database roles             |
+| [0005](docs/adr/0005-per-event-validation.md)           | Validate each event of a batch on its own  |
 
 ## Roadmap
 
 - [x] Service skeleton, quality gates, OpenAPI export
 - [x] Database: Drizzle, migrations, least-privilege roles, local Postgres
-- [ ] Ingestion: domain rules, `POST /v1/batch`, project and key scripts
+- [x] Ingestion: domain rules, `POST /v1/batch`
+- [ ] Project and key scripts
 - [ ] Deployment: Lambda, CloudFront and Terraform
 - [ ] Dashboard sign-in and queries
 - [ ] Erasure and retention
