@@ -4,7 +4,13 @@
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "transform": {
-    "^.+\\.ts$": ["ts-jest", { "tsconfig": "<rootDir>/../tsconfig.json" }]
+    "^.+\\.ts$": [
+      "ts-jest",
+      {
+        "tsconfig": "<rootDir>/../tsconfig.json"
+      }
+    ]
   },
-  "workerIdleMemoryLimit": "1GB"
+  "workerIdleMemoryLimit": "1GB",
+  "setupFiles": ["<rootDir>/e2e/env-setup.ts"]
 }
