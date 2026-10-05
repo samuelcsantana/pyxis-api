@@ -2,13 +2,8 @@
   "compilerOptions": {
     "module": "commonjs",
     "target": "ES2021",
-    "lib": [
-      "ES2023"
-    ],
-    "types": [
-      "node",
-      "jest"
-    ],
+    "lib": ["ES2023"],
+    "types": ["node", "jest"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strict": true,
@@ -24,8 +19,5 @@
     "outDir": "./dist",
     "incremental": true
   },
-  "include": [
-    "src",
-    "test"
-  ]
+  "include": ["src", "test"]
 }

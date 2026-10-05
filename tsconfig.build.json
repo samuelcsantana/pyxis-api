@@ -3,15 +3,8 @@
   "compilerOptions": {
     "rootDir": "src",
     "incremental": false,
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/**/*.spec.ts",
-    "src/test-utils"
-  ]
+  "include": ["src"],
+  "exclude": ["src/**/*.spec.ts", "src/test-utils"]
 }

@@ -3,7 +3,7 @@ import { createFastifyAdapter } from './fastify-adapter.options';
 describe('createFastifyAdapter', () => {
   it('ignores X-Forwarded-For when resolving the client address', async () => {
     const fastify = createFastifyAdapter().getInstance();
-    fastify.get('/ip', async (request) => ({ ip: request.ip }));
+    fastify.get('/ip', (request) => Promise.resolve({ ip: request.ip }));
 
     const response = await fastify.inject({
       method: 'GET',
