@@ -72,4 +72,20 @@ describe('validateEnv', () => {
       /APP_DB_ROLE/,
     );
   });
+
+  it('reads the trusted client address header in lower case', () => {
+    expect(validateEnv({ CLIENT_IP_HEADER: 'CloudFront-Viewer-Address' }).CLIENT_IP_HEADER).toBe(
+      'cloudfront-viewer-address',
+    );
+  });
+
+  it('treats an empty CLIENT_IP_HEADER as unset', () => {
+    expect(validateEnv({ CLIENT_IP_HEADER: '' }).CLIENT_IP_HEADER).toBeUndefined();
+  });
+
+  it('rejects a CLIENT_IP_HEADER that is not a header name', () => {
+    expect(() => validateEnv({ CLIENT_IP_HEADER: 'x-real-ip: 1.2.3.4' })).toThrow(
+      /CLIENT_IP_HEADER/,
+    );
+  });
 });

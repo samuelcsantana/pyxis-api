@@ -12,5 +12,6 @@
     ]
   },
   "workerIdleMemoryLimit": "1GB",
-  "setupFiles": ["<rootDir>/e2e/env-setup.ts"]
+  "setupFiles": ["<rootDir>/e2e/env-setup.ts"],
+  "globalSetup": "<rootDir>/e2e/global-setup.ts"
 }
