@@ -18,4 +18,12 @@ describe('GET /health', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ status: 'ok' });
   });
+
+  it('carries the security headers and a request id', async () => {
+    const response = await app.inject({ method: 'GET', url: '/health' });
+
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['cache-control']).toBe('no-store');
+    expect(response.headers['x-request-id']).toEqual(expect.any(String));
+  });
 });
