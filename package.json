@@ -147,5 +147,13 @@
     ],
     "src/**/*.ts": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects unit --bail --findRelatedTests --passWithNoTests",
     "*.{json,yml,yaml,md}": "prettier --check"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.28.2"
+    },
+    "drizzle-kit": {
+      "esbuild": "^0.28.2"
+    }
   }
 }
