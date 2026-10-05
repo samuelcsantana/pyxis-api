@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import { PUBLIC_KEY_PREFIX } from '../../src/domain/keys/project-keys';
 import { PROJECT_RATE_LIMITER } from '../../src/domain/services/project-rate-limiter';
 import { FixedWindowProjectRateLimiter } from '../../src/infra/rate-limit/fixed-window-project-rate-limiter';
-import { CLIENT_BATCHES_PER_WINDOW } from '../../src/infra/http/ingest/client-address-throttler.guard';
+import { CLIENT_BATCHES_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
 import { E2E_CLIENT_IP_HEADER } from './env-setup';

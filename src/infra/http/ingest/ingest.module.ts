@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { EVENT_REPOSITORY } from '../../../domain/repositories/event.repository';
 import { PROJECT_REPOSITORY } from '../../../domain/repositories/project.repository';
 import { CLOCK, type Clock } from '../../../domain/services/clock';
@@ -12,16 +11,9 @@ import { FixedWindowProjectRateLimiter } from '../../rate-limit/fixed-window-pro
 import { CachingProjectRepository } from '../../repositories/caching-project.repository';
 import { DrizzleEventRepository } from '../../repositories/drizzle-event.repository';
 import { DrizzleProjectRepository } from '../../repositories/drizzle-project.repository';
-import { CLIENT_BATCHES_PER_WINDOW, CLIENT_RATE_WINDOW_MS } from './client-address-throttler.guard';
 import { IngestController } from './ingest.controller';
 
 @Module({
-  imports: [
-    ThrottlerModule.forRoot({
-      throttlers: [{ ttl: CLIENT_RATE_WINDOW_MS, limit: CLIENT_BATCHES_PER_WINDOW }],
-      setHeaders: false,
-    }),
-  ],
   controllers: [IngestController],
   providers: [
     IngestBatchUseCase,

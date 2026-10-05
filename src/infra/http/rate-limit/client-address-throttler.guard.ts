@@ -6,9 +6,6 @@ import type { EnvConfig } from '../../../config/env.schema';
 import { ClientRateLimitedError } from '../errors/http-errors';
 import { describeClientIpSources, getClientIp } from '../request-headers';
 
-export const CLIENT_BATCHES_PER_WINDOW = 120;
-export const CLIENT_RATE_WINDOW_MS = 60_000;
-
 const logger = new Logger('ClientIp');
 let sourcesLogged = false;
 
