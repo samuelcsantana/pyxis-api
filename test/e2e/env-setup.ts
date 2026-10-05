@@ -1,3 +1,6 @@
-import { appUrl } from '../local-database';
+import { e2eAppUrl } from './e2e-database';
 
-process.env.DATABASE_URL = appUrl();
+export const E2E_CLIENT_IP_HEADER = 'x-e2e-client-ip';
+
+process.env.DATABASE_URL = e2eAppUrl();
+process.env.CLIENT_IP_HEADER = E2E_CLIENT_IP_HEADER;

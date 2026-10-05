@@ -1,6 +1,190 @@
 {
   "components": {
-    "schemas": {}
+    "schemas": {
+      "BatchRequest": {
+        "additionalProperties": false,
+        "description": "A batch of events from the browser, sent as text/plain or application/json. More than 50 events answer 413.",
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/IncomingEvent"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "key": {
+            "pattern": "^pyxis_pk_[A-Za-z0-9]{32}$",
+            "type": "string"
+          },
+          "sent_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "sent_at",
+          "events"
+        ],
+        "type": "object"
+      },
+      "ErrorResponse": {
+        "additionalProperties": false,
+        "description": "A stable machine key in error and a message for humans that never echoes input.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "status_code": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "status_code",
+          "error",
+          "message"
+        ],
+        "type": "object"
+      },
+      "IncomingEvent": {
+        "additionalProperties": false,
+        "description": "One event. An event that breaks these rules is counted as rejected while the rest of its batch is kept.",
+        "properties": {
+          "attribution": {
+            "additionalProperties": false,
+            "properties": {
+              "from_ad_click": {
+                "type": "boolean"
+              },
+              "referrer_host": {
+                "maxLength": 128,
+                "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)*$",
+                "type": "string"
+              },
+              "utm": {
+                "additionalProperties": false,
+                "properties": {
+                  "campaign": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "medium": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "source": {
+                    "maxLength": 64,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            },
+            "required": [
+              "from_ad_click"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "name": {
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "type": "string"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+            "type": "string"
+          },
+          "path": {
+            "format": "starts_with",
+            "maxLength": 256,
+            "minLength": 1,
+            "pattern": "^\\/.*",
+            "type": "string"
+          },
+          "properties": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                }
+              ]
+            },
+            "maxProperties": 10,
+            "propertyNames": {
+              "pattern": "^[a-z0-9_]{1,40}$",
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "session_id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12})$",
+            "type": "string"
+          },
+          "user_id": {
+            "pattern": "^[A-Za-z0-9_-]{1,64}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "occurred_at",
+          "session_id",
+          "path"
+        ],
+        "type": "object"
+      },
+      "IngestResult": {
+        "additionalProperties": false,
+        "description": "What happened to each event of the batch.",
+        "properties": {
+          "accepted": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "duplicates": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "rejected": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "accepted",
+          "duplicates",
+          "rejected"
+        ],
+        "type": "object"
+      }
+    }
   },
   "info": {
     "contact": {},
@@ -45,6 +229,107 @@
         "summary": "Liveness check of the API",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/v1/batch": {
+      "options": {
+        "operationId": "IngestController_preflight",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "summary": "CORS preflight for the batch route",
+        "tags": [
+          "ingestion"
+        ]
+      },
+      "post": {
+        "description": "Public route, authenticated by the project key in the body and the Origin header. Invalid events are counted as rejected; the rest of the batch is stored. A resent event is a duplicate, never stored twice.",
+        "operationId": "IngestController_ingest",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            },
+            "text/plain": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResult"
+                }
+              }
+            },
+            "description": "The batch was processed."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body is not JSON or does not match BatchRequest."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The key is unknown or revoked."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The Origin header is missing or not one of the project's origins."
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The body exceeds 32,768 bytes or holds more than 50 events."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many batches from this address or for this project."
+          }
+        },
+        "summary": "Ingest a batch of events from the browser",
+        "tags": [
+          "ingestion"
         ]
       }
     }

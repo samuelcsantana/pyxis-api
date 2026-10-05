@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const DEFAULT_PORT = 3040;
 
 export const POSTGRES_ROLE_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
+export const HTTP_HEADER_NAME = /^[a-z0-9-]+$/;
 
 const emptyAsUnset = (value: unknown): unknown => (value === '' ? undefined : value);
 
@@ -15,6 +16,10 @@ export const envSchema = z.object({
   DATABASE_URL: z.preprocess(emptyAsUnset, postgresUrl.optional()),
   MIGRATION_DATABASE_URL: z.preprocess(emptyAsUnset, postgresUrl.optional()),
   APP_DB_ROLE: z.preprocess(emptyAsUnset, z.string().regex(POSTGRES_ROLE_NAME).optional()),
+  CLIENT_IP_HEADER: z.preprocess(
+    emptyAsUnset,
+    z.string().toLowerCase().regex(HTTP_HEADER_NAME).optional(),
+  ),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

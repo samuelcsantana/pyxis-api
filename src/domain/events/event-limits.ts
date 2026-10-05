@@ -1,4 +1,5 @@
 export const MAX_EVENTS_PER_BATCH = 50;
+export const MAX_BATCH_BYTES = 32_768;
 
 export const EVENT_NAME_PATTERN = /^[a-z][a-z0-9_]{0,63}$/;
 export const USER_ID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
