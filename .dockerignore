@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+openapi
+test
+scripts
+eslint-rules
+.git
+.github
+.husky
+.vscode
+*.md
+.env
+.env.*
