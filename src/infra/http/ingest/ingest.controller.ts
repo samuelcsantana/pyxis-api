@@ -18,7 +18,7 @@ import {
 } from '../../../usecases/ingest/ingest-batch.usecase';
 import { singleHeader } from '../request-headers';
 import { BatchEnvelopePipe } from './batch-envelope.pipe';
-import { ClientAddressThrottlerGuard } from './client-address-throttler.guard';
+import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import { allowOrigin, answerPreflight } from './ingest-cors';
 import {
   type BatchEnvelope,
