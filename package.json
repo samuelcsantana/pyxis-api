@@ -19,15 +19,17 @@
     "start": "node dist/main.js",
     "start:watch": "node --watch dist/main.js",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p scripts/tsconfig.json",
-    "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js",
-    "test:cov": "npm test -- --coverage",
+    "test": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects unit",
+    "test:cov": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --coverage --runInBand",
     "test:e2e": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --config test/jest-e2e.json",
     "lint": "eslint . --max-warnings 0 && node scripts/check-no-comments.mts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test:tooling": "node --test \"eslint-rules/**/*.test.mjs\" \"scripts/**/*.test.mts\"",
     "openapi:export": "npm run build && node dist/export-openapi.js",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:migrate": "node dist/migrate.js",
+    "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand"
   },
   "dependencies": {
     "@fastify/static": "^10.1.5",
@@ -62,24 +64,62 @@
     "typescript-eslint": "^8.71.1"
   },
   "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
+    "projects": [
+      {
+        "displayName": "unit",
+        "rootDir": ".",
+        "roots": [
+          "<rootDir>/src"
+        ],
+        "testRegex": ".*\\.spec\\.ts$",
+        "moduleFileExtensions": [
+          "js",
+          "json",
+          "ts"
+        ],
+        "transform": {
+          "^.+\\.ts$": [
+            "ts-jest",
+            {
+              "tsconfig": "<rootDir>/tsconfig.json"
+            }
+          ]
+        },
+        "testEnvironment": "node"
+      },
+      {
+        "displayName": "integration",
+        "rootDir": ".",
+        "roots": [
+          "<rootDir>/test/integration"
+        ],
+        "testRegex": ".*\\.int-spec\\.ts$",
+        "moduleFileExtensions": [
+          "js",
+          "json",
+          "ts"
+        ],
+        "transform": {
+          "^.+\\.ts$": [
+            "ts-jest",
+            {
+              "tsconfig": "<rootDir>/tsconfig.json"
+            }
+          ]
+        },
+        "testEnvironment": "node",
+        "globalSetup": "<rootDir>/test/integration/global-setup.ts"
+      }
     ],
-    "rootDir": "src",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.ts$": "ts-jest"
-    },
-    "testEnvironment": "node",
     "collectCoverageFrom": [
-      "**/*.ts",
-      "!main.ts",
-      "!export-openapi.ts",
-      "!**/*.module.ts"
+      "src/**/*.ts",
+      "!src/main.ts",
+      "!src/migrate.ts",
+      "!src/export-openapi.ts",
+      "!src/**/*.module.ts",
+      "!src/**/*.spec.ts"
     ],
-    "coverageDirectory": "../coverage",
+    "coverageDirectory": "coverage",
     "coverageReporters": [
       "text",
       "lcov"
@@ -99,7 +139,7 @@
       "eslint --max-warnings 0",
       "prettier --check"
     ],
-    "src/**/*.ts": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --bail --findRelatedTests --passWithNoTests",
+    "src/**/*.ts": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects unit --bail --findRelatedTests --passWithNoTests",
     "*.{json,yml,yaml,md}": "prettier --check"
   }
 }
