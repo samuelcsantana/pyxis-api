@@ -1,7 +1,17 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
-import { events, projectKeys, projects } from '.';
+import {
+  adminProjectAccess,
+  adminSessions,
+  adminUsers,
+  events,
+  otpCodes,
+  projectKeys,
+  projects,
+} from '.';
 
-function foreignKeyTargets(table: typeof events | typeof projectKeys): string[] {
+function foreignKeyTargets(
+  table: typeof events | typeof projectKeys | typeof adminProjectAccess | typeof adminSessions,
+): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
     return `${getTableConfig(reference.foreignTable).name}.${reference.foreignColumns.map((column) => column.name).join(',')}`;
@@ -63,5 +73,37 @@ describe('database schema', () => {
 
     expect(columns.timezone?.default).toBe('UTC');
     expect(columns.conversion_event?.notNull).toBe(false);
+  });
+
+  it('keys project access by admin and project, both deleted with their owner', () => {
+    const config = getTableConfig(adminProjectAccess);
+
+    expect(config.primaryKeys[0]?.columns.map((column) => column.name)).toEqual([
+      'admin_user_id',
+      'project_id',
+    ]);
+    expect(foreignKeyTargets(adminProjectAccess)).toEqual(['admin_users.id', 'projects.id']);
+  });
+
+  it('ties sessions to their admin and indexes them by admin', () => {
+    expect(foreignKeyTargets(adminSessions)).toEqual(['admin_users.id']);
+    expect(getTableConfig(adminSessions).indexes.map((index) => index.config.name)).toEqual([
+      'admin_sessions_admin_user_id_idx',
+    ]);
+  });
+
+  it('finds the codes of an email by creation time', () => {
+    expect(
+      getTableConfig(otpCodes).indexes.map((index) => [
+        index.config.name,
+        index.config.columns.map((column) => ('name' in column ? column.name : '')),
+      ]),
+    ).toEqual([['otp_codes_email_created_at_idx', ['email', 'created_at']]]);
+  });
+
+  it('keeps one admin per email', () => {
+    const email = getTableConfig(adminUsers).columns.find((column) => column.name === 'email');
+
+    expect(email?.isUnique).toBe(true);
   });
 });

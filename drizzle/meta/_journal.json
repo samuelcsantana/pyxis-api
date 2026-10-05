@@ -8,6 +8,13 @@
       "when": 1791237854464,
       "tag": "0000_ingestion-schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791244384565,
+      "tag": "0001_dashboard-auth",
+      "breakpoints": true
     }
   ]
 }
