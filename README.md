@@ -112,19 +112,33 @@ The compose stack runs the production image: `migrate` applies the migrations as
 and grants the application role `pyxis_app` its row access, then `api` starts as `pyxis_app` on port
 3040 with Swagger UI at <http://localhost:3040/docs>. Postgres listens on host port 5446.
 
-To send a first batch, create a project and its public key (scripts for this are on the
-roadmap), then post the sample batch from an allowed origin:
+To send a first batch, create a project with the scripts below, then post the sample batch with
+its public key from an allowed origin:
 
 ```bash
-docker compose exec -T db psql -U pyxis -d pyxis -c "
-  WITH project AS (
-    INSERT INTO projects (name, allowed_origins) VALUES ('Local Demo', ARRAY['http://localhost:5173'])
-    RETURNING id)
-  INSERT INTO project_keys (project_id, kind, public_key)
-  SELECT id, 'public', 'pyxis_pk_LocalDemoKey00000000000000000000' FROM project;"
-curl -X POST http://localhost:3040/v1/batch -H "Origin: http://localhost:5173"   -H "Content-Type: text/plain;charset=UTF-8" --data @test/fixtures/batch-valid.json
+npm ci && npm run build
+export MIGRATION_DATABASE_URL=postgres://pyxis:pyxis@localhost:5446/pyxis
+KEY=$(npm run -s project:create -- --name "Local Demo" --origin http://localhost:5173 | sed -n 's/^public_key=//p')
+sed "s/pyxis_pk_LocalDemoKey00000000000000000000/$KEY/" test/fixtures/batch-valid.json |
+  curl -X POST http://localhost:3040/v1/batch -H "Origin: http://localhost:5173" \
+    -H "Content-Type: text/plain;charset=UTF-8" --data @-
 # {"accepted":2,"duplicates":0,"rejected":0}; sending it again: {"accepted":0,"duplicates":2,...}
 ```
+
+### Project and key scripts
+
+They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=value` lines; run
+`npm run build` first. `-s` keeps npm's banner out of the output.
+
+| Command                                                                                                                                         | What it does                                                                             |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>]`                           | Creates a project and its first public key, printed for the site to embed                |
+| `npm run -s project:update -- --project <id> [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                    |
+| `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash |
+| `npm run -s key:revoke -- --key-id <id>`                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache     |
+
+An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
+path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
 
 To run the API from source instead, keep only the database in Docker:
 
@@ -167,6 +181,7 @@ counts the unit and integration suites together. Files outside the measurement, 
 | Excluded                    | Reason                                                                 |
 | --------------------------- | ---------------------------------------------------------------------- |
 | `src/main.ts`               | Process entry point: wires the app and listens; the e2e suite boots it |
+| `src/cli/*.main.ts`         | One-line script entry points; the commands and their runner are tested |
 | `src/export-openapi.ts`     | Command-line entry point; CI runs it and checks its output             |
 | `src/migrate.ts`            | Command-line entry point; the compose stack and CI's image job run it  |
 | `src/**/*.module.ts`        | Nest module declarations: wiring without logic                         |
@@ -178,7 +193,8 @@ counts the unit and integration suites together. Files outside the measurement, 
 src/
 ├── config/            environment validation (Zod)
 ├── domain/            entities, event validation, the PII barrier, derivations, key formats
-├── usecases/          one class per operation (IngestBatchUseCase)
+├── cli/               the project and key scripts
+├── usecases/          one class per operation (ingestion, projects, keys)
 ├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
 ├── infra/rate-limit/  the per-project limiter
@@ -245,8 +261,7 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 
 - [x] Service skeleton, quality gates, OpenAPI export
 - [x] Database: Drizzle, migrations, least-privilege roles, local Postgres
-- [x] Ingestion: domain rules, `POST /v1/batch`
-- [ ] Project and key scripts
+- [x] Ingestion: domain rules, `POST /v1/batch`, project and key scripts
 - [ ] Deployment: Lambda, CloudFront and Terraform
 - [ ] Dashboard sign-in and queries
 - [ ] Erasure and retention

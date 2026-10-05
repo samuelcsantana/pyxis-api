@@ -30,6 +30,7 @@ docker compose up -d --build   # Postgres, the migration step and the API on :30
 | `npm run test:integration`            | Database adapters against a real Postgres (`docker compose up -d db`) |
 | `npm run test:cov`                    | Unit and integration together, with the 100% coverage gate            |
 | `npm run db:migrate`                  | Applies the migrations as the owner and grants the app role           |
+| `npm run project:create` and friends  | Project and key scripts (README); run `npm run build` first           |
 | `npm run test:e2e`                    | The application over HTTP                                             |
 | `npm run test:tooling`                | Tests of the lint rule and the comment check                          |
 | `npm run openapi:export`              | Regenerates `openapi/openapi.json` from the code                      |
