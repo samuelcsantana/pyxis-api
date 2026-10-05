@@ -29,6 +29,10 @@
     "openapi:export": "npm run build && node dist/export-openapi.js",
     "prepare": "husky",
     "db:migrate": "node dist/migrate.js",
+    "project:create": "node dist/cli/project-create.main.js",
+    "project:update": "node dist/cli/project-update.main.js",
+    "key:create": "node dist/cli/key-create.main.js",
+    "key:revoke": "node dist/cli/key-revoke.main.js",
     "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand"
   },
   "dependencies": {
@@ -117,6 +121,7 @@
       "!src/main.ts",
       "!src/migrate.ts",
       "!src/export-openapi.ts",
+      "!src/cli/*.main.ts",
       "!src/**/*.module.ts",
       "!src/**/*.spec.ts"
     ],
