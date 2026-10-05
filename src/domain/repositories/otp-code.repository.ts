@@ -14,3 +14,5 @@ export interface OtpCodeRepository {
   consumeAttempt(codeId: string, maxAttempts: number): Promise<boolean>;
   markUsed(codeId: string, usedAt: Date): Promise<void>;
 }
+
+export const OTP_CODE_REPOSITORY = Symbol('OtpCodeRepository');

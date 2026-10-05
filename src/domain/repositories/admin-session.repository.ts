@@ -12,3 +12,5 @@ export interface AdminSessionRepository {
   touch(sessionId: string, usedAt: Date): Promise<void>;
   revoke(sessionId: string, revokedAt: Date): Promise<void>;
 }
+
+export const ADMIN_SESSION_REPOSITORY = Symbol('AdminSessionRepository');
