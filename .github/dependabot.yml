@@ -37,4 +37,4 @@ updates:
       include: scope
     ignore:
       - dependency-name: node
-        versions: ['25.x', '27.x', '29.x']
+        update-types: [version-update:semver-major]
