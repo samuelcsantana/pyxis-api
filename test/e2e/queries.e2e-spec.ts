@@ -96,6 +96,24 @@ describe('dashboard queries', () => {
     });
   });
 
+  it('answers the devices of the project', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/devices?from=2026-10-04&to=2026-10-05`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      device_types: [{ value: 'desktop', visits: 1, conversions: 1 }],
+      browsers: [{ value: 'chrome', visits: 1, conversions: 1 }],
+      operating_systems: [{ value: 'macos', visits: 1, conversions: 1 }],
+      countries: [{ value: 'other', visits: 1, conversions: 1 }],
+    });
+  });
+
+  it('answers 404 to the devices of a project of another admin', async () => {
+    const response = await get(`/v1/projects/${FOREIGN_ID}/devices?from=2026-10-05&to=2026-10-05`);
+
+    expect(response.statusCode).toBe(404);
+  });
+
   it.each([
     ['a project of another admin', FOREIGN_ID],
     ['a project that does not exist', '00000000-0000-4000-8000-000000000000'],
