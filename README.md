@@ -56,10 +56,13 @@ Shipping now:
   phone number or a tax id, and re-templates paths
 - Device, browser, operating system, channel and country derived on the server; the user agent
   and the address are read, classified and discarded
+- Dashboard sign-in with a six-digit code sent by email, exchanged for an opaque session in an
+  `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
+  the admin's projects. There is no sign-up: `admin:grant` is the only way in
+  ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
 
 Planned for v1 (see [Roadmap](#roadmap)):
 
-- Dashboard sign-in by email code, with sessions checked on every request
 - Queries for the overview, funnels, features, request errors, devices, acquisition and timelines
 - `DELETE /v1/subjects/{userId}`: erases a person's events, including the anonymous part of the
   visit they signed up in
@@ -125,20 +128,35 @@ sed "s/pyxis_pk_LocalDemoKey00000000000000000000/$KEY/" test/fixtures/batch-vali
 # {"accepted":2,"duplicates":0,"rejected":0}; sending it again: {"accepted":0,"duplicates":2,...}
 ```
 
-### Project and key scripts
+### Project, key and admin scripts
 
 They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=value` lines; run
 `npm run build` first. `-s` keeps npm's banner out of the output.
 
-| Command                                                                                                                                         | What it does                                                                             |
-| ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>]`                           | Creates a project and its first public key, printed for the site to embed                |
-| `npm run -s project:update -- --project <id> [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                    |
-| `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash |
-| `npm run -s key:revoke -- --key-id <id>`                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache     |
+| Command                                                                                                                                         | What it does                                                                              |
+| ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>]`                           | Creates a project and its first public key, printed for the site to embed                 |
+| `npm run -s project:update -- --project <id> [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                     |
+| `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash  |
+| `npm run -s key:revoke -- --key-id <id>`                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache      |
+| `npm run -s admin:grant -- --email <email> --project <id>`                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
+
+To sign in as an admin locally, grant yourself a project, then exchange the code the API logs
+(outside production codes are logged, never emailed). The compose stack accepts sign-in calls
+from `http://localhost:3000`, where the dashboard runs:
+
+```bash
+npm run -s admin:grant -- --email you@example.com --project <id>
+curl -X POST http://localhost:3040/v1/auth/request-code -H 'Origin: http://localhost:3000' \
+  -H 'Content-Type: application/json' -d '{"email":"you@example.com"}'          # 202
+docker compose logs api | grep -A2 mail.sign_in_code                           # the code
+curl -i -X POST http://localhost:3040/v1/auth/verify-code -H 'Origin: http://localhost:3000' \
+  -H 'Content-Type: application/json' -d '{"email":"you@example.com","code":"<code>"}'
+# 200 and Set-Cookie: pyxis_session=…; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800
+```
 
 To run the API from source instead, keep only the database in Docker:
 
@@ -151,17 +169,22 @@ DATABASE_URL=postgres://pyxis_app:pyxis_app@localhost:5446/pyxis npm start
 
 Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.schema.ts)):
 
-| Variable                 | Default       | Meaning                                                                                                                                                         |
-| ------------------------ | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                   | `3040`        | HTTP port                                                                                                                                                       |
-| `NODE_ENV`               | `development` | `development`, `production` or `test`                                                                                                                           |
-| `SWAGGER_ENABLED`        | unset         | `true`/`false`; unset means on everywhere except production                                                                                                     |
-| `DATABASE_URL`           | required      | The API's connection, as the application role                                                                                                                   |
-| `MIGRATION_DATABASE_URL` | unset         | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
-| `APP_DB_ROLE`            | unset         | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
-| `CLIENT_IP_HEADER`       | unset         | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
+| Variable                 | Default                             | Meaning                                                                                                                                                         |
+| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                   | `3040`                              | HTTP port                                                                                                                                                       |
+| `NODE_ENV`               | `development`                       | `development`, `production` or `test`                                                                                                                           |
+| `SWAGGER_ENABLED`        | unset                               | `true`/`false`; unset means on everywhere except production                                                                                                     |
+| `DATABASE_URL`           | required                            | The API's connection, as the application role                                                                                                                   |
+| `MIGRATION_DATABASE_URL` | unset                               | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
+| `APP_DB_ROLE`            | unset                               | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
+| `CLIENT_IP_HEADER`       | unset                               | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
+| `DASHBOARD_ORIGIN`       | unset; required in production       | The only origin allowed to call the sign-in routes and read `/v1/me` with credentials; unset refuses them all                                                   |
+| `SESSION_COOKIE_DOMAIN`  | unset                               | `Domain` of the session cookie (`pyxis.samuelsantana.dev`, so the dashboard's server receives it); unset means the API host only                                |
+| `RESEND_API_KEY`         | unset; required in production       | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                               |
+| `MAIL_FROM`              | `Pyxis <noreply@samuelsantana.dev>` | Sender of the sign-in emails; its domain must be verified in Resend                                                                                             |
 
-In production every database URL ends in `sslmode=verify-full`.
+In production every database URL ends in `sslmode=verify-full`. The production requirements
+apply to the API process only: the migration and the scripts validate the shared settings.
 
 ## Testing
 
@@ -194,13 +217,15 @@ counts the unit and integration suites together. Files outside the measurement, 
 src/
 ├── config/            environment validation (Zod)
 ├── domain/            entities, event validation, the PII barrier, derivations, key formats
-├── cli/               the project and key scripts
+├── cli/               the project, key and admin scripts
 ├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations)
-├── usecases/          one class per operation (ingestion, projects, keys)
+├── usecases/          one class per operation (ingestion, projects, keys, sign-in)
 ├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
 ├── infra/rate-limit/  the per-project limiter
-├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion, OpenAPI
+├── infra/mail/        the sign-in email through Resend, or the log outside production
+├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion,
+│                      sign-in and sessions, rate limits, OpenAPI
 ├── shared/            pure utilities
 ├── test-utils/        fakes for the domain ports
 ├── main.ts            HTTP entry point
@@ -235,7 +260,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 
 ## Privacy and security
 
-- No cookies on ingestion, no personal data in events, IP address and user agent never stored
+- No cookies on ingestion (the only cookie is the dashboard's session), no personal data in
+  events, IP address and user agent never stored
 - A server-side barrier drops any property or campaign value that looks personal: an email
   address, ten or more digits written only with phone or document separators (phone numbers, CPF,
   CNPJ), or a number with ten or more digits in its integer part. A user id that looks personal
@@ -255,20 +281,26 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   takes up to a minute to take effect everywhere
 - The ingestion route answers CORS with the project's allowed origin only, never with
   credentials; a request from another origin gets 403 and nothing it can read
+- Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
+  Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
+  use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out
+- The sign-in routes accept only the dashboard's `Origin`, on top of a `SameSite=Lax` cookie,
+  and allow five requests per address every fifteen minutes on each route
 - Secrets live in AWS Parameter Store, never in the repository; secret scanning and push protection
   are on
 - Vulnerabilities: see [SECURITY.md](SECURITY.md)
 
 ## Architecture decisions
 
-| ADR                                                     | Decision                                             |
-| ------------------------------------------------------- | ---------------------------------------------------- |
-| [0001](docs/adr/0001-record-architecture-decisions.md)  | Record architecture decisions                        |
-| [0002](docs/adr/0002-clean-architecture.md)             | Clean Architecture with ports and adapters           |
-| [0003](docs/adr/0003-openapi-from-zod.md)               | Generate the OpenAPI 3.1 contract from Zod           |
-| [0004](docs/adr/0004-least-privilege-database-roles.md) | Least-privilege database roles                       |
-| [0005](docs/adr/0005-per-event-validation.md)           | Validate each event of a batch on its own            |
-| [0006](docs/adr/0006-lambda-behind-cloudfront.md)       | Run on Lambda behind CloudFront, with an edge secret |
+| ADR                                                              | Decision                                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [0001](docs/adr/0001-record-architecture-decisions.md)           | Record architecture decisions                                    |
+| [0002](docs/adr/0002-clean-architecture.md)                      | Clean Architecture with ports and adapters                       |
+| [0003](docs/adr/0003-openapi-from-zod.md)                        | Generate the OpenAPI 3.1 contract from Zod                       |
+| [0004](docs/adr/0004-least-privilege-database-roles.md)          | Least-privilege database roles                                   |
+| [0005](docs/adr/0005-per-event-validation.md)                    | Validate each event of a batch on its own                        |
+| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                | Run on Lambda behind CloudFront, with an edge secret             |
+| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md) | Sign admins in with an emailed code and an opaque session cookie |
 
 ## Roadmap
 
@@ -277,7 +309,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Ingestion: domain rules, `POST /v1/batch`, project and key scripts
 - [x] Deployment code: Lambda handlers, image, Terraform, deploy script, runbook
 - [ ] First apply to AWS
-- [ ] Dashboard sign-in and queries
+- [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
+- [ ] Dashboard queries
 - [ ] Erasure and retention
 - [ ] Load test, database size alarm, API reference on GitHub Pages
 
