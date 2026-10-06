@@ -20,7 +20,7 @@ import {
 import { singleHeader } from '../request-headers';
 import { BatchEnvelopePipe } from './batch-envelope.pipe';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import { AUTH_THROTTLER } from '../rate-limit/rate-limits';
+import { AUTH_THROTTLER, SUBJECTS_THROTTLER } from '../rate-limit/rate-limits';
 import { allowOrigin, answerPreflight } from './ingest-cors';
 import {
   type BatchEnvelope,
@@ -52,7 +52,7 @@ function ApiErrorResponses(): MethodDecorator {
 
 @ApiTags('ingestion')
 @Controller('v1/batch')
-@SkipThrottle({ [AUTH_THROTTLER]: true })
+@SkipThrottle({ [AUTH_THROTTLER]: true, [SUBJECTS_THROTTLER]: true })
 export class IngestController {
   private readonly logger = new Logger(IngestController.name);
 

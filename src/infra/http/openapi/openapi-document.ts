@@ -6,6 +6,13 @@ import { jsonSchemaConverter } from './json-schema-converter';
 export const OPENAPI_VERSION = '3.1.0';
 export const CONTRACT_VERSION = '1';
 
+const SECRET_KEY_BEARER = {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'opaque',
+  description: 'A secret project key: pyxis_sk_ followed by 32 letters and digits',
+} as const;
+
 const SESSION_COOKIE_SCHEME = {
   type: 'apiKey',
   in: 'cookie',
@@ -24,6 +31,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setVersion(CONTRACT_VERSION)
     .setLicense('MIT', 'https://github.com/samuelcsantana/pyxis-api/blob/main/LICENSE')
     .addCookieAuth(SESSION_COOKIE_NAME, SESSION_COOKIE_SCHEME, SESSION_COOKIE_NAME)
+    .addBearerAuth(SECRET_KEY_BEARER, 'secret_key')
     .build();
   return SwaggerModule.createDocument(app, config, { standardSchemaConverter: jsonSchemaConverter });
 }

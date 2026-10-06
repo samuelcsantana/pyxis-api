@@ -29,12 +29,16 @@ describe('isDashboardPath', () => {
     expect(isDashboardPath(url)).toBe(true);
   });
 
-  it.each(['/v1/batch', '/health', '/v1/meetings', '/v1/authors', '/docs?path=/v1/me'])(
-    'leaves %s alone',
-    (url) => {
-      expect(isDashboardPath(url)).toBe(false);
-    },
-  );
+  it.each([
+    '/v1/batch',
+    '/health',
+    '/v1/meetings',
+    '/v1/authors',
+    '/v1/subjects/ana',
+    '/docs?path=/v1/me',
+  ])('leaves %s alone', (url) => {
+    expect(isDashboardPath(url)).toBe(false);
+  });
 });
 
 describe('registerDashboardCors', () => {

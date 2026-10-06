@@ -297,6 +297,21 @@
         ],
         "type": "object"
       },
+      "ErasedSubject": {
+        "additionalProperties": false,
+        "description": "How many events were deleted: the user's and those of every visit they identified in. Zero is success too, so a retry after a timeout is safe.",
+        "properties": {
+          "deleted_events": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted_events"
+        ],
+        "type": "object"
+      },
       "ErrorResponse": {
         "additionalProperties": false,
         "description": "A stable machine key in error and a message for humans that never echoes input.",
@@ -1009,6 +1024,131 @@
         ],
         "type": "object"
       },
+      "SubjectEvents": {
+        "additionalProperties": false,
+        "description": "Every event about the user, oldest first, 1,000 per page; pass next_after as after for the next page, null on the last one.",
+        "properties": {
+          "events": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "browser": {
+                  "type": "string"
+                },
+                "country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "device_type": {
+                  "type": "string"
+                },
+                "from_ad_click": {
+                  "type": "boolean"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "occurred_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "os": {
+                  "type": "string"
+                },
+                "path": {
+                  "type": "string"
+                },
+                "properties": {
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean"
+                    ]
+                  },
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "type": "object"
+                },
+                "referrer_host": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "session_id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "utm_campaign": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "utm_medium": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "utm_source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "occurred_at",
+                "session_id",
+                "path",
+                "referrer_host",
+                "utm_source",
+                "utm_medium",
+                "utm_campaign",
+                "from_ad_click",
+                "device_type",
+                "browser",
+                "os",
+                "country",
+                "properties"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "next_after": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "events",
+          "next_after"
+        ],
+        "type": "object"
+      },
       "TimelineReport": {
         "additionalProperties": false,
         "description": "The visits of a person (every visit with an event carrying the user id, the one they identified in included) or of one visit, newest first, 20 per page, with all their events. next_before is the cursor for the older page, null on the last one.",
@@ -1173,6 +1313,12 @@
         "in": "cookie",
         "name": "pyxis_session",
         "type": "apiKey"
+      },
+      "secret_key": {
+        "bearerFormat": "opaque",
+        "description": "A secret project key: pyxis_sk_ followed by 32 letters and digits",
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
@@ -2163,6 +2309,149 @@
         "summary": "The visits of a person or of one visit, with every event",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/subjects/{userId}": {
+      "delete": {
+        "operationId": "SubjectsController_erase",
+        "parameters": [
+          {
+            "description": "The user id the site sent to identify",
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErasedSubject"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "secret_key": []
+          }
+        ],
+        "summary": "Erase every event about a user, the visit they signed up in included",
+        "tags": [
+          "subjects"
+        ]
+      }
+    },
+    "/v1/subjects/{userId}/events": {
+      "get": {
+        "operationId": "SubjectsController_events",
+        "parameters": [
+          {
+            "description": "The user id the site sent to identify",
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubjectEvents"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "secret_key": []
+          }
+        ],
+        "summary": "Export every event about a user, for a data access request",
+        "tags": [
+          "subjects"
         ]
       }
     }
