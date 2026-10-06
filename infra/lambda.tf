@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_cloudwatch_log_group" "function" {
-  for_each          = toset([var.project, "${var.project}-migrate"])
+  for_each          = toset([var.project, "${var.project}-migrate", "${var.project}-jobs"])
   name              = "/aws/lambda/${each.key}"
   retention_in_days = var.log_retention_days
 }
@@ -85,4 +85,38 @@ resource "aws_lambda_function" "migrate" {
   lifecycle {
     ignore_changes = [image_uri]
   }
+}
+
+resource "aws_lambda_function" "jobs" {
+  function_name                  = "${var.project}-jobs"
+  description                    = "Pyxis daily jobs, run by EventBridge Scheduler as the application role."
+  role                           = aws_iam_role.jobs.arn
+  package_type                   = "Image"
+  image_uri                      = local.image_uri
+  architectures                  = ["x86_64"]
+  memory_size                    = 512
+  timeout                        = 900
+  reserved_concurrent_executions = 1
+
+  image_config {
+    command = ["dist/lambda/jobs-entry.handler"]
+  }
+
+  environment {
+    variables = {
+      NODE_ENV                = "production"
+      CONFIG_PARAMETER_PREFIX = "/${var.project}/jobs/"
+    }
+  }
+
+  depends_on = [aws_cloudwatch_log_group.function, aws_iam_role_policy.jobs]
+
+  lifecycle {
+    ignore_changes = [image_uri]
+  }
+}
+
+resource "aws_lambda_function_event_invoke_config" "jobs" {
+  function_name          = aws_lambda_function.jobs.function_name
+  maximum_retry_attempts = 0
 }

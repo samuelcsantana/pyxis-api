@@ -75,8 +75,11 @@ fi
 log "Updating $PROJECT"
 update_function "$PROJECT"
 
+log "Updating $PROJECT-jobs"
+update_function "$PROJECT-jobs"
+
 log "Deployed $IMAGE"
-for function in "$PROJECT-migrate" "$PROJECT"; do
+for function in "$PROJECT-migrate" "$PROJECT" "$PROJECT-jobs"; do
   aws lambda get-function --region "$REGION" --function-name "$function" \
     --query '[Configuration.FunctionName, Code.ImageUri, Configuration.LastModified]' --output text
 done

@@ -61,3 +61,14 @@ resource "aws_ssm_parameter" "app_db_role" {
   value       = "pyxis_app"
   description = "The role the migrations grant row access to; the API connects as it."
 }
+
+resource "aws_ssm_parameter" "jobs_database_url" {
+  name        = "/${var.project}/jobs/DATABASE_URL"
+  type        = "SecureString"
+  value       = "placeholder-set-in-the-console"
+  description = "The application role's connection for the daily jobs; the same value as /app/DATABASE_URL."
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
