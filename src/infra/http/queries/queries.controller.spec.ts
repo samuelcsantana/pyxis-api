@@ -2,15 +2,21 @@ import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
 import { type AcquisitionReport, noChannelVisits } from '../../../domain/queries/acquisition';
 import type { DevicesReport } from '../../../domain/queries/devices';
+import type { FeaturesReport } from '../../../domain/queries/features';
+import type { RequestsReport } from '../../../domain/queries/requests';
 import type { OverviewReport } from '../../../domain/queries/overview';
 import type { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
+import type { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
+import type { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { QueriesController } from './queries.controller';
 import {
   acquisitionReportSchema,
   devicesReportSchema,
+  featuresReportSchema,
   overviewReportSchema,
+  requestsReportSchema,
 } from './query.schemas';
 
 const PROJECT: Project = {
@@ -65,6 +71,32 @@ const ACQUISITION: AcquisitionReport = {
   ],
 };
 
+const FEATURES: FeaturesReport = {
+  items: [{ name: 'plan_selected', count: 3, visits: 2, daily: [1, 2] }],
+};
+
+const REQUESTS: RequestsReport = {
+  routes: [
+    {
+      method: 'POST',
+      route: '/v1/plans',
+      total: 4,
+      failed: 1,
+      medianDurationMs: 80,
+      statuses: [{ status: 500, count: 1 }],
+      screens: [{ path: '/pricing', failed: 1 }],
+      recentFailures: [
+        {
+          occurredAt: new Date('2026-10-05T12:00:00.000Z'),
+          status: 500,
+          errorCode: null,
+          sessionId: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e',
+        },
+      ],
+    },
+  ],
+};
+
 function answering<Report>(report: Report, calls: unknown[][]) {
   return {
     execute: (...args: unknown[]) => {
@@ -80,6 +112,8 @@ function controllerAnswering(report: OverviewReport, devices: DevicesReport = DE
     answering(report, calls) as unknown as GetOverviewUseCase,
     answering(devices, calls) as unknown as GetDevicesUseCase,
     answering(ACQUISITION, calls) as unknown as GetAcquisitionUseCase,
+    answering(FEATURES, calls) as unknown as GetFeaturesUseCase,
+    answering(REQUESTS, calls) as unknown as GetRequestsUseCase,
   );
   return { controller, calls };
 }
@@ -144,6 +178,54 @@ describe('QueriesController', () => {
           visits: 2,
           conversions: null,
           from_ad_click_visits: 2,
+        },
+      ],
+    });
+  });
+
+  it('asks for the features of one kind and answers them', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+
+    const body = await controller.features({ project: PROJECT } as FastifyRequest, {
+      from: '2026-10-04',
+      to: '2026-10-05',
+      kind: 'events',
+    });
+
+    expect(calls).toEqual([[PROJECT, { from: '2026-10-04', to: '2026-10-05' }, 'events']]);
+    expect(featuresReportSchema.parse(body)).toEqual({
+      items: [{ name: 'plan_selected', count: 3, visits: 2, daily: [1, 2] }],
+    });
+  });
+
+  it('asks for the requests of one screen, or of all, and answers them in snake case', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+    const range = { from: '2026-10-05', to: '2026-10-05' };
+
+    const body = await controller.requests({ project: PROJECT } as FastifyRequest, {
+      ...range,
+      screen: '/pricing',
+    });
+    await controller.requests({ project: PROJECT } as FastifyRequest, range);
+
+    expect(calls).toEqual([
+      [PROJECT, range, '/pricing'],
+      [PROJECT, range, null],
+    ]);
+    expect(requestsReportSchema.parse(body).routes[0]).toEqual({
+      method: 'POST',
+      route: '/v1/plans',
+      total: 4,
+      failed: 1,
+      statuses: [{ status: 500, count: 1 }],
+      median_duration_ms: 80,
+      screens: [{ path: '/pricing', failed: 1 }],
+      recent_failures: [
+        {
+          occurred_at: '2026-10-05T12:00:00.000Z',
+          status: 500,
+          error_code: null,
+          session_id: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e',
         },
       ],
     });

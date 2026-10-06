@@ -1,5 +1,8 @@
 import { z } from 'zod';
 import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
+import { FEATURE_KINDS } from '../../../domain/queries/features';
+
+const MAX_SCREEN_LENGTH = 256;
 
 export const rangeQuerySchema = z.strictObject({
   from: z.iso.date().describe('First day, inclusive, in the project time zone'),
@@ -79,7 +82,65 @@ export const acquisitionReportSchema = z
       'of the visit that carries a channel.',
   });
 
+export const featuresQuerySchema = rangeQuerySchema.extend({ kind: z.enum(FEATURE_KINDS) });
+
+export const requestsQuerySchema = rangeQuerySchema.extend({
+  screen: z.string().startsWith('/').max(MAX_SCREEN_LENGTH).optional(),
+});
+
+export const featuresReportSchema = z
+  .strictObject({
+    items: z.array(
+      z.strictObject({
+        name: z.string(),
+        count: z.int(),
+        visits: z.int(),
+        daily: z.array(z.int()),
+      }),
+    ),
+  })
+  .meta({
+    id: 'FeaturesReport',
+    description:
+      'The 50 most used named events (kind=events) or screens by page views (kind=screens), with ' +
+      'the visits they appear in and one daily count per day of the range.',
+  });
+
+export const requestsReportSchema = z
+  .strictObject({
+    routes: z.array(
+      z.strictObject({
+        method: z.string(),
+        route: z.string(),
+        total: z.int(),
+        failed: z.int(),
+        statuses: z.array(z.strictObject({ status: z.int(), count: z.int() })),
+        median_duration_ms: z.int(),
+        screens: z.array(z.strictObject({ path: z.string(), failed: z.int() })),
+        recent_failures: z.array(
+          z.strictObject({
+            occurred_at: z.iso.datetime(),
+            status: z.int(),
+            error_code: z.string().nullable(),
+            session_id: z.uuid(),
+          }),
+        ),
+      }),
+    ),
+  })
+  .meta({
+    id: 'RequestsReport',
+    description:
+      'Writes (methods other than GET) per route, the most failing first: a failure is status 0 ' +
+      'or 400 and above. Screens are the pages the calls were made from; at most five recent ' +
+      'failures per route, newest first.',
+  });
+
 export type RangeQuery = z.infer<typeof rangeQuerySchema>;
+export type FeaturesQuery = z.infer<typeof featuresQuerySchema>;
+export type RequestsQuery = z.infer<typeof requestsQuerySchema>;
+export type FeaturesReportBody = z.infer<typeof featuresReportSchema>;
+export type RequestsReportBody = z.infer<typeof requestsReportSchema>;
 export type AcquisitionReportBody = z.infer<typeof acquisitionReportSchema>;
 export type DevicesReportBody = z.infer<typeof devicesReportSchema>;
 export type OverviewReportBody = z.infer<typeof overviewReportSchema>;

@@ -320,6 +320,52 @@
         ],
         "type": "object"
       },
+      "FeaturesReport": {
+        "additionalProperties": false,
+        "description": "The 50 most used named events (kind=events) or screens by page views (kind=screens), with the visits they appear in and one daily count per day of the range.",
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "count": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "daily": {
+                  "items": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "type": "array"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name",
+                "count",
+                "visits",
+                "daily"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "type": "object"
+      },
       "IncomingEvent": {
         "additionalProperties": false,
         "description": "One event. An event that breaks these rules is counted as rejected while the rest of its batch is kept.",
@@ -788,6 +834,136 @@
         },
         "required": [
           "email"
+        ],
+        "type": "object"
+      },
+      "RequestsReport": {
+        "additionalProperties": false,
+        "description": "Writes (methods other than GET) per route, the most failing first: a failure is status 0 or 400 and above. Screens are the pages the calls were made from; at most five recent failures per route, newest first.",
+        "properties": {
+          "routes": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "failed": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "median_duration_ms": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "method": {
+                  "type": "string"
+                },
+                "recent_failures": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "error_code": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "occurred_at": {
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "type": "string"
+                      },
+                      "session_id": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "status": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "occurred_at",
+                      "status",
+                      "error_code",
+                      "session_id"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "route": {
+                  "type": "string"
+                },
+                "screens": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "failed": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "path": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "failed"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "statuses": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "count": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "status": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "status",
+                      "count"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "total": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "method",
+                "route",
+                "total",
+                "failed",
+                "statuses",
+                "median_duration_ms",
+                "screens",
+                "recent_failures"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "routes"
         ],
         "type": "object"
       },
@@ -1342,6 +1518,105 @@
         ]
       }
     },
+    "/v1/projects/{projectId}/features": {
+      "get": {
+        "operationId": "QueriesController_features",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "events",
+                "screens"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The most used named events or screens, with their daily counts",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
     "/v1/projects/{projectId}/overview": {
       "get": {
         "operationId": "QueriesController_overview",
@@ -1424,6 +1699,102 @@
           }
         ],
         "summary": "KPIs, daily activity, top pages and top events of a range",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/requests": {
+      "get": {
+        "operationId": "QueriesController_requests",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the calls made from this page path",
+            "in": "query",
+            "name": "screen",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RequestsReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Writes per route: failures, statuses, durations and screens",
         "tags": [
           "dashboard queries"
         ]
