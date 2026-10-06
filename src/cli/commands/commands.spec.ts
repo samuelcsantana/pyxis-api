@@ -1,6 +1,7 @@
 import { PUBLIC_KEY_PATTERN, SECRET_KEY_PATTERN } from '../../domain/keys/project-keys';
 import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-context';
 import { CliUsageError } from '../cli-args';
+import { adminGrantCommand } from './admin-grant.command';
 import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
@@ -224,5 +225,30 @@ describe('key:revoke', () => {
     expect(output.out).toEqual([`revoked_key_id=${publicKeyId}`]);
     expect(output.err).toEqual([expect.stringContaining('60 seconds')]);
     expect(await context.store.findByPublicKey(publicKey)).toBeNull();
+  });
+});
+
+describe('admin:grant', () => {
+  it('parses the email and the project id', () => {
+    expect(
+      adminGrantCommand.parse(['--email', 'ana@example.com', '--project', PROJECT_ID]),
+    ).toEqual({ email: 'ana@example.com', projectId: PROJECT_ID });
+  });
+
+  it('refuses an email that is not one', () => {
+    expect(() => adminGrantCommand.parse(['--email', 'ana', '--project', PROJECT_ID])).toThrow(
+      CliUsageError,
+    );
+  });
+
+  it('grants the project and prints the admin id', async () => {
+    const { context, projectId } = await createdProject();
+    const output = captureOutput();
+
+    await adminGrantCommand.execute(context, { email: 'Ana@Example.com', projectId }, output);
+
+    const admin = await context.admins.findByEmail('ana@example.com');
+    expect(output.out).toEqual([`admin_user_id=${String(admin?.id)}`, `project_id=${projectId}`]);
+    expect(output.err).toEqual([expect.stringContaining('ana@example.com can now ask')]);
   });
 });

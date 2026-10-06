@@ -1,5 +1,7 @@
 import { parseArgs, type ParseArgsConfig } from 'node:util';
+import { z } from 'zod';
 import { isUuid } from '../domain/events/text-shapes';
+import { MAX_EMAIL_LENGTH } from '../infra/database/schema/admins';
 
 export class CliUsageError extends Error {
   constructor(message: string) {
@@ -55,4 +57,14 @@ export function requiredId(values: ParsedValues, name: string): string {
     throw new CliUsageError(`--${name} must be a UUID.`);
   }
   return value.toLowerCase();
+}
+
+const emailSchema = z.email().max(MAX_EMAIL_LENGTH);
+
+export function requiredEmail(values: ParsedValues, name: string): string {
+  const value = requiredText(values, name).trim();
+  if (!emailSchema.safeParse(value).success) {
+    throw new CliUsageError(`--${name} must be an email address.`);
+  }
+  return value;
 }

@@ -51,6 +51,34 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('grants a project to an admin, creating the admin once', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const project = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+      });
+
+      const first = await context.grantAdminAccess.execute({
+        email: 'ana@example.com',
+        projectId: project.projectId,
+      });
+      const again = await context.grantAdminAccess.execute({
+        email: 'ana@example.com',
+        projectId: project.projectId,
+      });
+
+      expect(again.adminUserId).toBe(first.adminUserId);
+      const access = await owner<{ email: string; project_id: string }[]>`
+        SELECT admin_users.email, admin_project_access.project_id
+        FROM admin_project_access JOIN admin_users ON admin_users.id = admin_project_access.admin_user_id
+      `;
+      expect(access).toEqual([{ email: 'ana@example.com', project_id: project.projectId }]);
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',

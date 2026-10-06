@@ -5,8 +5,10 @@ import { migrationConnectionString } from '../infra/database/migrations';
 import { createDrizzleDatabase } from '../infra/database/postgres-client';
 import { CONNECT_TIMEOUT_SECONDS } from '../infra/database/postgres-options';
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
+import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
+import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
@@ -32,6 +34,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
     revokeProjectKey: new RevokeProjectKeyUseCase(keys, new SystemClock()),
     updateProject: new UpdateProjectUseCase(settings),
+    grantAdminAccess: new GrantAdminAccessUseCase(settings, new DrizzleAdminUserRepository(db)),
     close: () => client.end(),
   };
 }

@@ -1,6 +1,8 @@
 import { FixedClock } from './fixed-clock';
+import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { SequenceRandomSource } from './sequence-random-source';
+import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
@@ -20,12 +22,15 @@ export function captureOutput(): CapturedOutput {
 
 export function inMemoryCliContext(): CliContext & {
   readonly store: InMemoryProjectRepository;
+  readonly admins: InMemoryAdminUserRepository;
   closed: boolean;
 } {
   const store = new InMemoryProjectRepository();
+  const admins = new InMemoryAdminUserRepository();
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   const context = {
     store,
+    admins,
     closed: false,
     createProject: new CreateProjectUseCase(store, random),
     createProjectKey: new CreateProjectKeyUseCase(store, store, random),
@@ -34,6 +39,7 @@ export function inMemoryCliContext(): CliContext & {
       new FixedClock(new Date('2026-10-06T14:00:00.000Z')),
     ),
     updateProject: new UpdateProjectUseCase(store),
+    grantAdminAccess: new GrantAdminAccessUseCase(store, admins),
     close: () => {
       context.closed = true;
       return Promise.resolve();
