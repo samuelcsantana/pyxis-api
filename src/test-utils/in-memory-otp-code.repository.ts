@@ -45,10 +45,14 @@ export class InMemoryOtpCodeRepository implements OtpCodeRepository {
     return Promise.resolve(true);
   }
 
-  markUsed(codeId: string, usedAt: Date): Promise<void> {
-    for (const code of this.stored.filter((candidate) => candidate.id === codeId)) {
-      code.usedAt = usedAt;
+  claim(codeId: string, usedAt: Date): Promise<boolean> {
+    const code = this.stored.find(
+      (candidate) => candidate.id === codeId && candidate.usedAt === null,
+    );
+    if (code === undefined) {
+      return Promise.resolve(false);
     }
-    return Promise.resolve();
+    code.usedAt = usedAt;
+    return Promise.resolve(true);
   }
 }

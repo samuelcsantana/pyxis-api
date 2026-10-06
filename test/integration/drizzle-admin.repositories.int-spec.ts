@@ -124,7 +124,7 @@ describe('admin repositories against a real Postgres', () => {
 
       expect(await codes.findLatestValid('ana@example.com', NOW)).toEqual(latest);
 
-      await codes.markUsed(latest.id, NOW);
+      expect(await codes.claim(latest.id, NOW)).toBe(true);
       expect((await codes.findLatestValid('ana@example.com', NOW))?.codeHash).toBe(
         sha256Hex('old'),
       );
@@ -145,6 +145,20 @@ describe('admin repositories against a real Postgres', () => {
 
       expect(results.filter(Boolean)).toHaveLength(5);
       expect(await codes.consumeAttempt(code.id, 5)).toBe(false);
+    });
+
+    it('lets exactly one of several parallel claims use a code', async () => {
+      const code = await codes.create({
+        email: 'ana@example.com',
+        codeHash: sha256Hex('1'),
+        createdAt: NOW,
+        expiresAt: at(10 * MINUTE),
+      });
+
+      const claims = await Promise.all(Array.from({ length: 4 }, () => codes.claim(code.id, NOW)));
+
+      expect(claims.filter(Boolean)).toHaveLength(1);
+      expect(await codes.findLatestValid('ana@example.com', NOW)).toBeNull();
     });
   });
 

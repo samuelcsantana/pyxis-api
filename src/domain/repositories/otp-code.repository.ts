@@ -12,7 +12,7 @@ export interface OtpCodeRepository {
   countCreatedSince(email: string, since: Date): Promise<number>;
   findLatestValid(email: string, now: Date): Promise<OtpCode | null>;
   consumeAttempt(codeId: string, maxAttempts: number): Promise<boolean>;
-  markUsed(codeId: string, usedAt: Date): Promise<void>;
+  claim(codeId: string, usedAt: Date): Promise<boolean>;
 }
 
 export const OTP_CODE_REPOSITORY = Symbol('OtpCodeRepository');

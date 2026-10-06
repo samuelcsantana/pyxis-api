@@ -157,6 +157,22 @@ describe('dashboard sign-in', () => {
       );
     });
 
+    it('lets only one of two simultaneous exchanges of the right code open a session', async () => {
+      const { requestCode, verifyCode, sessions } = await setup();
+      await requestCode.execute(ADMIN_EMAIL);
+
+      const outcomes = await Promise.allSettled([
+        verifyCode.execute(ADMIN_EMAIL, '123456'),
+        verifyCode.execute(ADMIN_EMAIL, '123456'),
+      ]);
+
+      expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
+      expect(outcomes.find((outcome) => outcome.status === 'rejected')?.reason).toBeInstanceOf(
+        InvalidSignInCodeError,
+      );
+      expect(sessions.stored).toHaveLength(1);
+    });
+
     it(`kills the code after ${String(MAX_SIGN_IN_CODE_ATTEMPTS)} wrong guesses, even for the right one`, async () => {
       const { requestCode, verifyCode } = await setup();
       await requestCode.execute(ADMIN_EMAIL);
