@@ -1,9 +1,11 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import type { DevicesReport } from '../../../domain/queries/devices';
 import type { OverviewReport } from '../../../domain/queries/overview';
+import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { QueriesController } from './queries.controller';
-import { overviewReportSchema } from './query.schemas';
+import { devicesReportSchema, overviewReportSchema } from './query.schemas';
 
 const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
@@ -36,15 +38,29 @@ const REPORT: OverviewReport = {
   topEvents: [{ name: 'plan_selected', count: 2, visits: 2 }],
 };
 
-function controllerAnswering(report: OverviewReport) {
-  const calls: unknown[][] = [];
-  const getOverview = {
+const DEVICES: DevicesReport = {
+  deviceType: [{ value: 'mobile', visits: 4, conversions: 1 }],
+  browser: [{ value: 'safari', visits: 4, conversions: 1 }],
+  os: [{ value: 'ios', visits: 4, conversions: 1 }],
+  country: [{ value: 'other', visits: 4, conversions: null }],
+};
+
+function answering<Report>(report: Report, calls: unknown[][]) {
+  return {
     execute: (...args: unknown[]) => {
       calls.push(args);
       return Promise.resolve(report);
     },
-  } as unknown as GetOverviewUseCase;
-  return { controller: new QueriesController(getOverview), calls };
+  };
+}
+
+function controllerAnswering(report: OverviewReport, devices: DevicesReport = DEVICES) {
+  const calls: unknown[][] = [];
+  const controller = new QueriesController(
+    answering(report, calls) as unknown as GetOverviewUseCase,
+    answering(devices, calls) as unknown as GetDevicesUseCase,
+  );
+  return { controller, calls };
 }
 
 describe('QueriesController', () => {
@@ -73,5 +89,20 @@ describe('QueriesController', () => {
     });
 
     expect(body.kpis.conversions).toBeNull();
+  });
+
+  it('answers the devices of the guarded project in snake case', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+    const range = { from: '2026-10-04', to: '2026-10-05' };
+
+    const body = await controller.devices({ project: PROJECT } as FastifyRequest, range);
+
+    expect(calls).toEqual([[PROJECT, range]]);
+    expect(devicesReportSchema.parse(body)).toEqual({
+      device_types: [{ value: 'mobile', visits: 4, conversions: 1 }],
+      browsers: [{ value: 'safari', visits: 4, conversions: 1 }],
+      operating_systems: [{ value: 'ios', visits: 4, conversions: 1 }],
+      countries: [{ value: 'other', visits: 4, conversions: null }],
+    });
   });
 });

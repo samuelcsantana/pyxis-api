@@ -8,7 +8,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
+import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
 import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/queries/overview';
+import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { SessionGuard } from '../auth/auth.guards';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -16,6 +18,8 @@ import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import {
+  type DevicesReportBody,
+  devicesReportSchema,
   type OverviewReportBody,
   overviewReportSchema,
   type RangeQuery,
@@ -49,6 +53,19 @@ function overviewBody(report: OverviewReport): OverviewReportBody {
   };
 }
 
+function sharesBody(shares: readonly ValueShare[]) {
+  return shares.map((share) => ({ ...share }));
+}
+
+function devicesBody(report: DevicesReport): DevicesReportBody {
+  return {
+    device_types: sharesBody(report.deviceType),
+    browsers: sharesBody(report.browser),
+    operating_systems: sharesBody(report.os),
+    countries: sharesBody(report.country),
+  };
+}
+
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
 @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
@@ -72,7 +89,10 @@ function overviewBody(report: OverviewReport): OverviewReportBody {
 @Controller('v1/projects/:projectId')
 @UseGuards(SessionGuard, ProjectAccessGuard)
 export class QueriesController {
-  constructor(private readonly getOverview: GetOverviewUseCase) {}
+  constructor(
+    private readonly getOverview: GetOverviewUseCase,
+    private readonly getDevices: GetDevicesUseCase,
+  ) {}
 
   @Get('overview')
   @ApiOperation({ summary: 'KPIs, daily activity, top pages and top events of a range' })
@@ -83,5 +103,16 @@ export class QueriesController {
     range: RangeQuery,
   ): Promise<OverviewReportBody> {
     return overviewBody(await this.getOverview.execute(projectOf(request), range));
+  }
+
+  @Get('devices')
+  @ApiOperation({ summary: 'Visits and conversions by device type, browser, system and country' })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: devicesReportSchema })
+  async devices(
+    @Req() request: FastifyRequest,
+    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
+    range: RangeQuery,
+  ): Promise<DevicesReportBody> {
+    return devicesBody(await this.getDevices.execute(projectOf(request), range));
   }
 }

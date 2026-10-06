@@ -36,5 +36,24 @@ export const overviewReportSchema = z
       'of the range against the previous one, with one daily entry per day of the range.',
   });
 
+const valueSharesSchema = z.array(
+  z.strictObject({ value: z.string(), visits: z.int(), conversions: z.int().nullable() }),
+);
+
+export const devicesReportSchema = z
+  .strictObject({
+    device_types: valueSharesSchema,
+    browsers: valueSharesSchema,
+    operating_systems: valueSharesSchema,
+    countries: valueSharesSchema,
+  })
+  .meta({
+    id: 'DevicesReport',
+    description:
+      'Visits and conversions (null without a conversion event) per value, sorted by visits: the ' +
+      'top five values and "other" for the rest, unknown countries included.',
+  });
+
 export type RangeQuery = z.infer<typeof rangeQuerySchema>;
+export type DevicesReportBody = z.infer<typeof devicesReportSchema>;
 export type OverviewReportBody = z.infer<typeof overviewReportSchema>;
