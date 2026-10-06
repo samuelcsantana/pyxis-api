@@ -1,4 +1,4 @@
-import { DEFAULT_MAIL_FROM, DEFAULT_PORT, validateEnv } from './env.schema';
+import { DEFAULT_MAIL_FROM, DEFAULT_PORT, validateEnv, validateServerEnv } from './env.schema';
 
 const DASHBOARD_ORIGIN = 'https://pyxis.example.com';
 const PRODUCTION = { NODE_ENV: 'production', RESEND_API_KEY: 'key', DASHBOARD_ORIGIN };
@@ -93,33 +93,6 @@ describe('validateEnv', () => {
     );
   });
 
-  it('refuses production without a Resend key, so codes can never be logged there', () => {
-    expect(() => validateEnv({ NODE_ENV: 'production', DASHBOARD_ORIGIN })).toThrow(
-      /RESEND_API_KEY/,
-    );
-  });
-
-  it('accepts production with a Resend key and a sender of its own', () => {
-    expect(validateEnv({ ...PRODUCTION, MAIL_FROM: 'Ops <ops@example.com>' })).toMatchObject({
-      RESEND_API_KEY: 'key',
-      MAIL_FROM: 'Ops <ops@example.com>',
-    });
-  });
-
-  it('runs without a Resend key outside production', () => {
-    expect(validateEnv({ NODE_ENV: 'development' }).RESEND_API_KEY).toBeUndefined();
-  });
-
-  it('refuses production without the dashboard origin it lets sign in', () => {
-    expect(() => validateEnv({ NODE_ENV: 'production', RESEND_API_KEY: 'key' })).toThrow(
-      /DASHBOARD_ORIGIN/,
-    );
-  });
-
-  it('runs without a dashboard origin outside production', () => {
-    expect(validateEnv({ NODE_ENV: 'development' }).DASHBOARD_ORIGIN).toBeUndefined();
-  });
-
   it.each(['https://pyxis.example.com', 'http://localhost:3000'])(
     'accepts %s as the dashboard origin',
     (origin) => {
@@ -155,5 +128,51 @@ describe('validateEnv', () => {
 
   it('treats an empty SESSION_COOKIE_DOMAIN as unset', () => {
     expect(validateEnv({ SESSION_COOKIE_DOMAIN: '' }).SESSION_COOKIE_DOMAIN).toBeUndefined();
+  });
+});
+
+describe('validateServerEnv', () => {
+  it('refuses production without a Resend key, so codes can never be logged there', () => {
+    expect(() => validateServerEnv({ NODE_ENV: 'production', DASHBOARD_ORIGIN })).toThrow(
+      /RESEND_API_KEY/,
+    );
+  });
+
+  it('refuses production without the dashboard origin it lets sign in', () => {
+    expect(() => validateServerEnv({ NODE_ENV: 'production', RESEND_API_KEY: 'key' })).toThrow(
+      /DASHBOARD_ORIGIN/,
+    );
+  });
+
+  it('accepts production with a Resend key, the dashboard origin and a sender of its own', () => {
+    expect(validateServerEnv({ ...PRODUCTION, MAIL_FROM: 'Ops <ops@example.com>' })).toMatchObject({
+      RESEND_API_KEY: 'key',
+      DASHBOARD_ORIGIN,
+      MAIL_FROM: 'Ops <ops@example.com>',
+    });
+  });
+
+  it('runs without either outside production', () => {
+    const env = validateServerEnv({ NODE_ENV: 'development' });
+
+    expect(env.RESEND_API_KEY).toBeUndefined();
+    expect(env.DASHBOARD_ORIGIN).toBeUndefined();
+  });
+
+  it('still rejects what the shared schema rejects', () => {
+    expect(() => validateServerEnv({ PORT: '70000' })).toThrow('Invalid environment configuration');
+  });
+});
+
+describe('validateEnv in production', () => {
+  it('lets the migration and the scripts run without the server-only settings', () => {
+    const env = validateEnv({
+      NODE_ENV: 'production',
+      MIGRATION_DATABASE_URL: 'postgres://pyxis:secret@db:5432/pyxis',
+    });
+
+    expect(env.NODE_ENV).toBe('production');
+    expect(env.RESEND_API_KEY).toBeUndefined();
+    expect(env.DASHBOARD_ORIGIN).toBeUndefined();
   });
 });
