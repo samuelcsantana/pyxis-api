@@ -8,8 +8,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
+import type { AcquisitionReport } from '../../../domain/queries/acquisition';
 import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
 import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/queries/overview';
+import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { SessionGuard } from '../auth/auth.guards';
@@ -18,6 +20,8 @@ import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import {
+  type AcquisitionReportBody,
+  acquisitionReportSchema,
   type DevicesReportBody,
   devicesReportSchema,
   type OverviewReportBody,
@@ -66,6 +70,20 @@ function devicesBody(report: DevicesReport): DevicesReportBody {
   };
 }
 
+function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
+  return {
+    days: report.days.map((day) => ({ date: day.date, by_channel: { ...day.byChannel } })),
+    sources: report.sources.map((source) => ({
+      source: source.source,
+      medium: source.medium,
+      channel: source.channel,
+      visits: source.visits,
+      conversions: source.conversions,
+      from_ad_click_visits: source.fromAdClickVisits,
+    })),
+  };
+}
+
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
 @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
@@ -92,6 +110,7 @@ export class QueriesController {
   constructor(
     private readonly getOverview: GetOverviewUseCase,
     private readonly getDevices: GetDevicesUseCase,
+    private readonly getAcquisition: GetAcquisitionUseCase,
   ) {}
 
   @Get('overview')
@@ -114,5 +133,16 @@ export class QueriesController {
     range: RangeQuery,
   ): Promise<DevicesReportBody> {
     return devicesBody(await this.getDevices.execute(projectOf(request), range));
+  }
+
+  @Get('acquisition')
+  @ApiOperation({ summary: 'Visits per day and channel, and the sources that brought them' })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: acquisitionReportSchema })
+  async acquisition(
+    @Req() request: FastifyRequest,
+    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
+    range: RangeQuery,
+  ): Promise<AcquisitionReportBody> {
+    return acquisitionBody(await this.getAcquisition.execute(projectOf(request), range));
   }
 }
