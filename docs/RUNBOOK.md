@@ -51,7 +51,11 @@ There is no scheduled function yet; it arrives with the first scheduled job.
 6. **Parameter values**, in the Parameter Store console (Terraform created placeholders and never
    reads the values back): `/pyxis-api/app/DATABASE_URL` (pooler host, `pyxis_app`,
    `sslmode=verify-full`), `/pyxis-api/app/EDGE_SHARED_SECRET` (a long random value),
+   `/pyxis-api/app/RESEND_API_KEY` (a Resend key allowed to send only),
    `/pyxis-api/migrate/MIGRATION_DATABASE_URL` (direct host, owner, `sslmode=verify-full`).
+   `DASHBOARD_ORIGIN`, `SESSION_COOKIE_DOMAIN` and `MAIL_FROM` are plain parameters Terraform sets
+   from its variables; the domain of `MAIL_FROM` must be verified in Resend before the first
+   sign-in.
 7. **Edge secret in CloudFront.** In the distribution's origin, set the `x-origin-verify` custom
    header to the same value as `EDGE_SHARED_SECRET`. Terraform ignores the origin from then on.
    Until both hold the same value, every request through CloudFront answers 403 by design.
@@ -108,6 +112,22 @@ MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s key:create -
 
 A secret key is printed once on stdout; put it straight into the consuming site's secret store.
 A revoked key may still be accepted for up to 60 seconds by running instances.
+
+## Dashboard admins
+
+There is no sign-up. Grant an email a project, and it can ask the dashboard for a sign-in code:
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s admin:grant -- --email <email> --project <id>
+```
+
+Running it again changes nothing. To end every session of an admin at once, delete their rows
+in `admin_sessions` (or the admin, which cascades to sessions and grants).
+
+If no code arrives, look for `auth.code_delivery_failed` in the logs: Resend refused the key or
+the sender. `auth.code_rate_limited` means five codes were already sent to that email this
+hour. Browsers send a `Secure` cookie to `http://localhost` except Safari, so test the
+dashboard locally in Chromium or Firefox.
 
 ## Rotating the edge secret
 
