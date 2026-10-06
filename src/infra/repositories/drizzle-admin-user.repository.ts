@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import type { AdminUser } from '../../domain/entities/admin-user.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import type { AdminUserRepository } from '../../domain/repositories/admin-user.repository';
@@ -46,6 +46,21 @@ export class DrizzleAdminUserRepository implements AdminUserRepository {
       .where(eq(adminProjectAccess.adminUserId, adminUserId))
       .orderBy(asc(projects.name));
     return rows.map((row) => toProject(row.project));
+  }
+
+  async accessibleProject(adminUserId: string, projectId: string): Promise<Project | null> {
+    const [row] = await this.db
+      .select({ project: projects })
+      .from(adminProjectAccess)
+      .innerJoin(projects, eq(adminProjectAccess.projectId, projects.id))
+      .where(
+        and(
+          eq(adminProjectAccess.adminUserId, adminUserId),
+          eq(adminProjectAccess.projectId, projectId),
+        ),
+      )
+      .limit(1);
+    return row === undefined ? null : toProject(row.project);
   }
 
   grantAccess(email: string, projectId: string): Promise<AdminUser> {

@@ -82,6 +82,21 @@ describe('admin repositories against a real Postgres', () => {
 
       expect((await admins.projectsOf(other.id)).map((project) => project.id)).toEqual([BLOG_ID]);
     });
+
+    it('finds a project only for an admin who was granted it', async () => {
+      const ana = await admins.grantAccess('ana@example.com', SHOP_ID);
+      const bruno = await admins.grantAccess('bruno@example.com', BLOG_ID);
+
+      expect(await admins.accessibleProject(ana.id, SHOP_ID)).toMatchObject({
+        id: SHOP_ID,
+        name: 'Shop',
+        timezone: 'America/Sao_Paulo',
+      });
+      expect(await admins.accessibleProject(bruno.id, SHOP_ID)).toBeNull();
+      expect(
+        await admins.accessibleProject(ana.id, 'ffffffff-ffff-4fff-bfff-ffffffffffff'),
+      ).toBeNull();
+    });
   });
 
   describe('DrizzleOtpCodeRepository', () => {

@@ -25,6 +25,16 @@ describe('InMemoryAdminUserRepository', () => {
     expect(await admins.findById(first.id)).toEqual(first);
     expect(await admins.findById('nobody')).toBeNull();
   });
+
+  it('finds a granted project and nothing else', async () => {
+    const admins = new InMemoryAdminUserRepository();
+    admins.addProject(PROJECT);
+    const admin = await admins.grantAccess('ana@example.com', PROJECT.id);
+
+    expect(await admins.accessibleProject(admin.id, PROJECT.id)).toEqual(PROJECT);
+    expect(await admins.accessibleProject(admin.id, 'other-project')).toBeNull();
+    expect(await admins.accessibleProject('stranger', PROJECT.id)).toBeNull();
+  });
 });
 
 describe('InMemoryOtpCodeRepository', () => {
