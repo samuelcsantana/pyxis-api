@@ -34,7 +34,8 @@
     "key:create": "node dist/cli/key-create.main.js",
     "key:revoke": "node dist/cli/key-revoke.main.js",
     "admin:grant": "node dist/cli/admin-grant.main.js",
-    "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand"
+    "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand",
+    "docs:build": "redocly build-docs openapi/openapi.json --output api-reference/index.html --title \"Pyxis API reference\""
   },
   "dependencies": {
     "@aws-sdk/client-ssm": "^3.1146.0",
@@ -58,6 +59,7 @@
     "@commitlint/config-conventional": "^21.2.3",
     "@eslint/js": "^10.0.1",
     "@nestjs/testing": "^12.1.2",
+    "@redocly/cli": "^2.58.1",
     "@types/aws-lambda": "^8.10.164",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.19.1",
