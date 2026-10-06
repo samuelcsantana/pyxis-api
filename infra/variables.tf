@@ -67,3 +67,20 @@ variable "mail_from" {
   type        = string
   default     = "Pyxis <noreply@samuelsantana.dev>"
 }
+
+variable "alert_email" {
+  description = "Address that receives the operational alarms; AWS emails it a link to confirm the subscription."
+  type        = string
+}
+
+variable "database_size_alarm_ratio" {
+  description = "Share of the database size limit at which the size alarm fires."
+  type        = number
+  default     = 0.7
+}
+
+variable "metrics_namespace" {
+  description = "CloudWatch namespace of the metrics read from the functions' logs."
+  type        = string
+  default     = "Pyxis"
+}
