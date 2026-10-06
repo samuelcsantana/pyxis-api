@@ -7,6 +7,9 @@ import {
   INGEST_THROTTLER,
   SIGN_IN_RATE_WINDOW_MS,
   SIGN_IN_REQUESTS_PER_WINDOW,
+  SUBJECT_RATE_WINDOW_MS,
+  SUBJECT_REQUESTS_PER_WINDOW,
+  SUBJECTS_THROTTLER,
 } from './rate-limits';
 
 @Module({
@@ -15,6 +18,11 @@ import {
       throttlers: [
         { name: INGEST_THROTTLER, ttl: CLIENT_RATE_WINDOW_MS, limit: CLIENT_BATCHES_PER_WINDOW },
         { name: AUTH_THROTTLER, ttl: SIGN_IN_RATE_WINDOW_MS, limit: SIGN_IN_REQUESTS_PER_WINDOW },
+        {
+          name: SUBJECTS_THROTTLER,
+          ttl: SUBJECT_RATE_WINDOW_MS,
+          limit: SUBJECT_REQUESTS_PER_WINDOW,
+        },
       ],
       setHeaders: false,
     }),

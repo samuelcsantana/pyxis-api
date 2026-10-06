@@ -21,7 +21,7 @@ import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import { INGEST_THROTTLER } from '../rate-limit/rate-limits';
+import { INGEST_THROTTLER, SUBJECTS_THROTTLER } from '../rate-limit/rate-limits';
 import { singleHeader } from '../request-headers';
 import { SchemaPipe } from '../schema-pipe';
 import { adminOf, DashboardOriginGuard, SessionGuard } from './auth.guards';
@@ -44,7 +44,7 @@ import {
 
 @ApiTags('dashboard sign-in')
 @Controller('v1/auth')
-@SkipThrottle({ [INGEST_THROTTLER]: true })
+@SkipThrottle({ [INGEST_THROTTLER]: true, [SUBJECTS_THROTTLER]: true })
 export class AuthController {
   constructor(
     private readonly requestSignInCode: RequestSignInCodeUseCase,

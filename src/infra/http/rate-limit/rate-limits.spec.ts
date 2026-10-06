@@ -5,6 +5,9 @@ import {
   INGEST_THROTTLER,
   SIGN_IN_RATE_WINDOW_MS,
   SIGN_IN_REQUESTS_PER_WINDOW,
+  SUBJECT_RATE_WINDOW_MS,
+  SUBJECT_REQUESTS_PER_WINDOW,
+  SUBJECTS_THROTTLER,
 } from './rate-limits';
 
 describe('rate limits', () => {
@@ -21,6 +24,14 @@ describe('rate limits', () => {
       AUTH_THROTTLER: 'auth',
       SIGN_IN_REQUESTS_PER_WINDOW: 5,
       SIGN_IN_RATE_WINDOW_MS: 900_000,
+    });
+  });
+
+  it('lets one secret key call the subject routes sixty times a minute', () => {
+    expect({ SUBJECTS_THROTTLER, SUBJECT_REQUESTS_PER_WINDOW, SUBJECT_RATE_WINDOW_MS }).toEqual({
+      SUBJECTS_THROTTLER: 'subjects',
+      SUBJECT_REQUESTS_PER_WINDOW: 60,
+      SUBJECT_RATE_WINDOW_MS: 60_000,
     });
   });
 });

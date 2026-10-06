@@ -34,6 +34,12 @@ describe('buildOpenApiDocument', () => {
   it('declares the dashboard session cookie as a security scheme', () => {
     expect(buildOpenApiDocument(app).components?.securitySchemes).toEqual({
       pyxis_session: { type: 'apiKey', in: 'cookie', name: 'pyxis_session' },
+      secret_key: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'opaque',
+        description: 'A secret project key: pyxis_sk_ followed by 32 letters and digits',
+      },
     });
   });
 
