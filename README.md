@@ -344,7 +344,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Erasure and export of a person's events
 - [x] Retention: a daily job deletes events older than 13 months
 - [x] API reference on GitHub Pages
-- [ ] Load test and database size alarm
+- [x] Database size report and alarm (in Terraform, applied with the stack)
+- [ ] Load test through CloudFront
 
 ## Contributing and license
 
