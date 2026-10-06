@@ -223,6 +223,7 @@ jobs:
           sleep 2
           curl --fail --silent --show-error -X POST "http://localhost:9002/$INVOKE_PATH" -d '{}' | tee jobs.json
           grep --quiet '"ok":true' jobs.json
+          grep --quiet '"databaseSize"' jobs.json
       - name: Serve /health only to requests that carry the edge secret
         env:
           DATABASE_URL: postgres://pyxis_app:pyxis_app@host.docker.internal:5432/pyxis
