@@ -47,5 +47,6 @@ import { DashboardOriginGuard, SessionGuard } from './auth.guards';
         }),
     },
   ],
+  exports: [AuthenticateSessionUseCase, ADMIN_USER_REPOSITORY, CLOCK],
 })
 export class AuthModule {}

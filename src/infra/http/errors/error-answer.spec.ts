@@ -7,6 +7,7 @@ import {
   UnknownProjectKeyError,
 } from '../../../domain/errors/ingest.errors';
 import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
+import { InvalidRangeError } from '../../../domain/errors/query.errors';
 import { toErrorAnswer } from './error-answer';
 import {
   ClientRateLimitedError,
@@ -40,6 +41,7 @@ describe('toErrorAnswer', () => {
     [new OriginNotAllowedError(), 403, 'origin_not_allowed'],
     [new InvalidSignInCodeError(), 400, 'invalid_code'],
     [new UnauthenticatedError(), 401, 'unauthenticated'],
+    [new InvalidRangeError(), 400, 'invalid_range'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },
