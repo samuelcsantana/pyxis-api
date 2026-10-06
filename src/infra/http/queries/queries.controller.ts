@@ -16,6 +16,7 @@ import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/querie
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
+import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { SessionGuard } from '../auth/auth.guards';
@@ -32,6 +33,10 @@ import {
   featuresQuerySchema,
   type FeaturesReportBody,
   featuresReportSchema,
+  type FunnelQuery,
+  funnelQuerySchema,
+  type FunnelReportBody,
+  funnelReportSchema,
   type OverviewReportBody,
   overviewReportSchema,
   type RangeQuery,
@@ -149,6 +154,7 @@ export class QueriesController {
     private readonly getAcquisition: GetAcquisitionUseCase,
     private readonly getFeatures: GetFeaturesUseCase,
     private readonly getRequests: GetRequestsUseCase,
+    private readonly getFunnel: GetFunnelUseCase,
   ) {}
 
   @Get('overview')
@@ -214,5 +220,26 @@ export class QueriesController {
     const range = { from: query.from, to: query.to };
     const report = await this.getRequests.execute(projectOf(request), range, query.screen ?? null);
     return requestsBody(report);
+  }
+
+  @Get('funnel')
+  @ApiOperation({ summary: 'How many visits or people reached each step of a funnel, in order' })
+  @ApiQuery({ name: 'mode', enum: ['visit', 'user'] })
+  @ApiQuery({
+    name: 'steps',
+    description:
+      'URL-encoded JSON array of 2 to 8 steps: {"type":"page","path":"/calculator-*"} (a star ' +
+      'matches any characters) or {"type":"event","name":"signup_completed"}',
+    schema: { type: 'string' },
+  })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: funnelReportSchema })
+  async funnel(
+    @Req() request: FastifyRequest,
+    @Query({ schema: funnelQuerySchema, pipes: [new SchemaPipe(funnelQuerySchema)] })
+    query: FunnelQuery,
+  ): Promise<FunnelReportBody> {
+    const range = { from: query.from, to: query.to };
+    const report = await this.getFunnel.execute(projectOf(request), range, query.mode, query.steps);
+    return { steps: report.steps.map((step) => ({ count: step.count })) };
   }
 }

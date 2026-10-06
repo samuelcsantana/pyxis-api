@@ -8,6 +8,7 @@ import type { OverviewReport } from '../../../domain/queries/overview';
 import type { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import type { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
+import type { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import type { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { QueriesController } from './queries.controller';
@@ -15,6 +16,7 @@ import {
   acquisitionReportSchema,
   devicesReportSchema,
   featuresReportSchema,
+  funnelQuerySchema,
   overviewReportSchema,
   requestsReportSchema,
 } from './query.schemas';
@@ -114,6 +116,7 @@ function controllerAnswering(report: OverviewReport, devices: DevicesReport = DE
     answering(ACQUISITION, calls) as unknown as GetAcquisitionUseCase,
     answering(FEATURES, calls) as unknown as GetFeaturesUseCase,
     answering(REQUESTS, calls) as unknown as GetRequestsUseCase,
+    answering({ steps: [{ count: 5 }, { count: 2 }] }, calls) as unknown as GetFunnelUseCase,
   );
   return { controller, calls };
 }
@@ -229,5 +232,54 @@ describe('QueriesController', () => {
         },
       ],
     });
+  });
+
+  it('asks for the funnel in the mode asked, with the parsed steps', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+    const query = funnelQuerySchema.parse({
+      from: '2026-10-01',
+      to: '2026-10-05',
+      mode: 'visit',
+      steps: JSON.stringify([
+        { type: 'page', path: '/calculator-*' },
+        { type: 'event', name: 'signup_completed' },
+      ]),
+    });
+
+    const body = await controller.funnel({ project: PROJECT } as FastifyRequest, query);
+
+    expect(body).toEqual({ steps: [{ count: 5 }, { count: 2 }] });
+    expect(calls).toEqual([
+      [
+        PROJECT,
+        { from: '2026-10-01', to: '2026-10-05' },
+        'visit',
+        [
+          { type: 'page', path: '/calculator-*' },
+          { type: 'event', name: 'signup_completed' },
+        ],
+      ],
+    ]);
+  });
+});
+
+describe('funnelQuerySchema', () => {
+  const base = { from: '2026-10-01', to: '2026-10-05', mode: 'user' };
+  const step = { type: 'event', name: 'plan_selected' };
+
+  it.each([
+    ['text that is not JSON', 'not json'],
+    ['a single step', JSON.stringify([step])],
+    ['nine steps', JSON.stringify(Array.from({ length: 9 }, () => step))],
+    ['a page step without a leading slash', JSON.stringify([step, { type: 'page', path: 'x' }])],
+    ['an unknown step type', JSON.stringify([step, { type: 'click', name: 'x' }])],
+  ])('refuses %s', (_case, steps) => {
+    expect(funnelQuerySchema.safeParse({ ...base, steps }).success).toBe(false);
+  });
+
+  it('accepts eight steps', () => {
+    const steps = JSON.stringify(Array.from({ length: 8 }, () => step));
+
+    expect(funnelQuerySchema.safeParse({ ...base, steps }).success).toBe(true);
   });
 });

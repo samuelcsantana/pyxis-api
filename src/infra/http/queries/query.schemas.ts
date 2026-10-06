@@ -1,6 +1,8 @@
 import { z } from 'zod';
 import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
+import { EVENT_NAME_PATTERN, MAX_PATH_LENGTH } from '../../../domain/events/event-limits';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
+import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
 
 const MAX_SCREEN_LENGTH = 256;
 
@@ -88,6 +90,40 @@ export const requestsQuerySchema = rangeQuerySchema.extend({
   screen: z.string().startsWith('/').max(MAX_SCREEN_LENGTH).optional(),
 });
 
+const funnelStepSchema = z.discriminatedUnion('type', [
+  z.strictObject({
+    type: z.literal('page'),
+    path: z.string().startsWith('/').max(MAX_PATH_LENGTH),
+  }),
+  z.strictObject({ type: z.literal('event'), name: z.string().regex(EVENT_NAME_PATTERN) }),
+]);
+
+const funnelStepsSchema = z
+  .string()
+  .transform((text, context) => {
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      context.addIssue({ code: 'custom', message: 'steps must be JSON' });
+      return z.NEVER;
+    }
+  })
+  .pipe(z.array(funnelStepSchema).min(MIN_FUNNEL_STEPS).max(MAX_FUNNEL_STEPS));
+
+export const funnelQuerySchema = rangeQuerySchema.extend({
+  mode: z.enum(FUNNEL_MODES),
+  steps: funnelStepsSchema,
+});
+
+export const funnelReportSchema = z
+  .strictObject({ steps: z.array(z.strictObject({ count: z.int() })) })
+  .meta({
+    id: 'FunnelReport',
+    description:
+      'How many visits (mode=visit) or identified people (mode=user) reached each step, in order: ' +
+      'a step counts only at or after the first time the previous one happened.',
+  });
+
 export const featuresReportSchema = z
   .strictObject({
     items: z.array(
@@ -139,6 +175,8 @@ export const requestsReportSchema = z
 export type RangeQuery = z.infer<typeof rangeQuerySchema>;
 export type FeaturesQuery = z.infer<typeof featuresQuerySchema>;
 export type RequestsQuery = z.infer<typeof requestsQuerySchema>;
+export type FunnelQuery = z.infer<typeof funnelQuerySchema>;
+export type FunnelReportBody = z.infer<typeof funnelReportSchema>;
 export type FeaturesReportBody = z.infer<typeof featuresReportSchema>;
 export type RequestsReportBody = z.infer<typeof requestsReportSchema>;
 export type AcquisitionReportBody = z.infer<typeof acquisitionReportSchema>;

@@ -366,6 +366,33 @@
         ],
         "type": "object"
       },
+      "FunnelReport": {
+        "additionalProperties": false,
+        "description": "How many visits (mode=visit) or identified people (mode=user) reached each step, in order: a step counts only at or after the first time the previous one happened.",
+        "properties": {
+          "steps": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "count": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "count"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "steps"
+        ],
+        "type": "object"
+      },
       "IncomingEvent": {
         "additionalProperties": false,
         "description": "One event. An event that breaks these rules is counted as rejected while the rest of its batch is kept.",
@@ -1612,6 +1639,114 @@
           }
         ],
         "summary": "The most used named events or screens, with their daily counts",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/funnel": {
+      "get": {
+        "operationId": "QueriesController_funnel",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": true,
+            "schema": {
+              "enum": [
+                "visit",
+                "user"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "URL-encoded JSON array of 2 to 8 steps: {\"type\":\"page\",\"path\":\"/calculator-*\"} (a star matches any characters) or {\"type\":\"event\",\"name\":\"signup_completed\"}",
+            "in": "query",
+            "name": "steps",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunnelReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "How many visits or people reached each step of a funnel, in order",
         "tags": [
           "dashboard queries"
         ]

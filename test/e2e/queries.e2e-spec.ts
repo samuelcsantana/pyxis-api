@@ -194,6 +194,37 @@ describe('dashboard queries', () => {
     expect(elsewhere.json()).toEqual({ routes: [] });
   });
 
+  it('answers how many visits and people went through a funnel', async () => {
+    const steps = encodeURIComponent(
+      JSON.stringify([
+        { type: 'page', path: '/pri*' },
+        { type: 'event', name: 'signup_completed' },
+      ]),
+    );
+    const range = 'from=2026-10-04&to=2026-10-05';
+
+    const visits = await get(`/v1/projects/${SHOP_ID}/funnel?${range}&mode=visit&steps=${steps}`);
+    const people = await get(`/v1/projects/${SHOP_ID}/funnel?${range}&mode=user&steps=${steps}`);
+
+    expect(visits.json()).toEqual({ steps: [{ count: 1 }, { count: 1 }] });
+    expect(people.json()).toEqual({ steps: [{ count: 1 }, { count: 1 }] });
+  });
+
+  it('answers 400 to a funnel of nine steps', async () => {
+    const steps = encodeURIComponent(
+      JSON.stringify(
+        Array.from({ length: 9 }, () => ({ type: 'event', name: 'signup_completed' })),
+      ),
+    );
+
+    const response = await get(
+      `/v1/projects/${SHOP_ID}/funnel?from=2026-10-05&to=2026-10-05&mode=visit&steps=${steps}`,
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: 'invalid_request' });
+  });
+
   it('answers 400 to an unknown feature kind', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/features?from=2026-10-05&to=2026-10-05&kind=clicks`,
