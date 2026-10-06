@@ -69,13 +69,14 @@ Shipping now:
   `/requests?screen=` (writes per route: failures, statuses, median duration, the screens they
   came from and the latest failures with their error code) and
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
-  a person's anonymous steps counting once they identify). A project
+  a person's anonymous steps counting once they identify) and
+  `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
+  included, or of one visit, newest first, 20 per page, with every event). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
 Planned for v1 (see [Roadmap](#roadmap)):
 
-- The timeline of a person or a visit
 - `DELETE /v1/subjects/{userId}`: erases a person's events, including the anonymous part of the
   visit they signed up in
 - Automatic deletion of events older than 13 months
@@ -327,8 +328,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Deployment code: Lambda handlers, image, Terraform, deploy script, runbook
 - [ ] First apply to AWS
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
-- [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel
-- [ ] Dashboard queries: timeline
+- [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
 - [ ] Erasure and retention
 - [ ] Load test, database size alarm, API reference on GitHub Pages
 
