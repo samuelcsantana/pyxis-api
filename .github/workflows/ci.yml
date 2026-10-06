@@ -121,6 +121,8 @@ jobs:
       - run: npm run openapi:export
       - name: Fail when openapi/openapi.json is out of date
         run: git diff --exit-code openapi/openapi.json
+      - name: Build the API reference from it
+        run: npm run docs:build
 
   build:
     runs-on: ubuntu-latest
