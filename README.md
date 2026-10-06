@@ -64,13 +64,16 @@ Shipping now:
   `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
   writes against the previous period, daily activity, top pages and events),
   `/devices` (device type, browser, system and country, top five and "other") and
-  `/acquisition` (visits per day and channel, sources with conversions and ad clicks). A project
+  `/acquisition` (visits per day and channel, sources with conversions and ad clicks),
+  `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
+  `/requests?screen=` (writes per route: failures, statuses, median duration, the screens they
+  came from and the latest failures with their error code). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
 Planned for v1 (see [Roadmap](#roadmap)):
 
-- Queries for funnels, features, request errors and timelines
+- Queries for funnels and timelines
 - `DELETE /v1/subjects/{userId}`: erases a person's events, including the anonymous part of the
   visit they signed up in
 - Automatic deletion of events older than 13 months
@@ -322,8 +325,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Deployment code: Lambda handlers, image, Terraform, deploy script, runbook
 - [ ] First apply to AWS
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
-- [x] Dashboard queries: overview, devices, acquisition
-- [ ] Dashboard queries: features, requests, funnel, timeline
+- [x] Dashboard queries: overview, devices, acquisition, features, requests
+- [ ] Dashboard queries: funnel, timeline
 - [ ] Erasure and retention
 - [ ] Load test, database size alarm, API reference on GitHub Pages
 
