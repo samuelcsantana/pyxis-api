@@ -35,6 +35,8 @@ others, but fails the run, and the scheduler retries it twice within the hour.
    cp infra/terraform.tfvars.example infra/terraform.tfvars
    ```
 
+   `terraform.tfvars` takes the address that receives the alarms (`alert_email`).
+
 4. **First image.** The functions need an image to point at:
 
    ```bash
@@ -65,6 +67,8 @@ others, but fails the run, and the scheduler retries it twice within the hour.
    header to the same value as `EDGE_SHARED_SECRET`. Terraform ignores the origin from then on.
    Until both hold the same value, every request through CloudFront answers 403 by design.
 8. **Migrate and deploy:** `scripts/deploy-lambda.sh`.
+   Then confirm the alarm subscription: AWS emails `alert_email` a link, and the SNS topic
+   `pyxis-api-alerts` delivers nothing until it is clicked.
 9. **Domain.** Add the certificate's validation CNAME (`terraform output
 certificate_validation_record`) and keep a CAA record allowing `amazon.com` on the apex if it
    has CAA records. Once the certificate is issued, set `api_domain_enabled = true`, apply, and
@@ -99,13 +103,23 @@ Run them once by hand, for example after the first deploy:
 
 ```bash
 aws lambda invoke --function-name pyxis-api-jobs --region sa-east-1 --profile pyxis-api \
-  --cli-read-timeout 910 jobs.json && cat jobs.json   # {"ok":true,"retention":{...}}
-aws logs tail /aws/lambda/pyxis-api-jobs --since 1h --profile pyxis-api | grep retention.
+  --cli-read-timeout 910 jobs.json && cat jobs.json   # {"ok":true,"databaseSize":{...},"retention":{...}}
+aws logs tail /aws/lambda/pyxis-api-jobs --since 1h --profile pyxis-api | grep -E 'database.size|retention.'
 ```
 
-`retention.step_done { step, deleted }` is logged for each step; `retention.step_failed` names a
-step that failed and why. The schedule can be paused with
-`aws scheduler update-schedule` or by setting its state to `DISABLED` in Terraform.
+The job first logs `database.size { bytes, limitBytes, ratio }`: the size of the database against
+the 1 GB of a free Neon branch. A metric filter turns `ratio` into the CloudWatch metric
+`Pyxis/DatabaseSizeRatio`, and the alarm `pyxis-api-database-size` fires at 0.7 or more (the
+`database_size_alarm_ratio` variable), emailing `alert_email` through `pyxis-api-alerts`. To see
+the email arrive without waiting for a full database:
+
+```bash
+aws cloudwatch set-alarm-state --alarm-name pyxis-api-database-size --state-value ALARM --state-reason "Checking the alert email" --region sa-east-1 --profile pyxis-api
+```
+
+Then `retention.step_done { step, deleted }` is logged for each step; `retention.step_failed`
+names a step that failed and why. The schedule can be paused with `aws scheduler update-schedule`
+or by setting its state to `DISABLED` in Terraform.
 
 ## Rollback
 
