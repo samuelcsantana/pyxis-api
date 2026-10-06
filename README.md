@@ -75,10 +75,13 @@ Shipping now:
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
+- `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
+  visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
+  site's backend with a secret project key
+  ([ADR 0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md))
+
 Planned for v1 (see [Roadmap](#roadmap)):
 
-- `DELETE /v1/subjects/{userId}`: erases a person's events, including the anonymous part of the
-  visit they signed up in
 - Automatic deletion of events older than 13 months
 
 ## Architecture
@@ -303,6 +306,9 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out
 - The sign-in routes accept only the dashboard's `Origin`, on top of a `SameSite=Lax` cookie,
   and allow five requests per address every fifteen minutes on each route
+- Erasure deletes the person's events and every visit they identified in, in one statement, and
+  logs only how many rows went, never the user id. Secret keys are looked up by hash on every call
+  (no cache, so revoking one takes effect at once) and limited to 60 calls a minute each
 - Secrets live in AWS Parameter Store, never in the repository; secret scanning and push protection
   are on
 - Vulnerabilities: see [SECURITY.md](SECURITY.md)
@@ -319,6 +325,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 | [0006](docs/adr/0006-lambda-behind-cloudfront.md)                | Run on Lambda behind CloudFront, with an edge secret             |
 | [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md) | Sign admins in with an emailed code and an opaque session cookie |
 | [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)         | Answer dashboard queries from the raw events, without rollups    |
+| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md) | Erase a person together with the visits they identified in       |
 
 ## Roadmap
 
@@ -329,7 +336,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [ ] First apply to AWS
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
 - [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
-- [ ] Erasure and retention
+- [x] Erasure and export of a person's events
+- [ ] Retention: deleting events older than 13 months
 - [ ] Load test, database size alarm, API reference on GitHub Pages
 
 ## Contributing and license
