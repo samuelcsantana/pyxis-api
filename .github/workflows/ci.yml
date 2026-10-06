@@ -213,6 +213,14 @@ jobs:
           sleep 2
           curl --fail --silent --show-error -X POST "http://localhost:9001/$INVOKE_PATH" -d '{}' | tee migrate.json
           grep --quiet '"ok":true' migrate.json
+      - name: Run the retention through the jobs handler
+        env:
+          DATABASE_URL: postgres://pyxis_app:pyxis_app@host.docker.internal:5432/pyxis
+        run: |
+          docker run --detach --publish 9002:8080 --add-host host.docker.internal:host-gateway --env DATABASE_URL pyxis-api-lambda:ci dist/lambda/jobs-entry.handler
+          sleep 2
+          curl --fail --silent --show-error -X POST "http://localhost:9002/$INVOKE_PATH" -d '{}' | tee jobs.json
+          grep --quiet '"ok":true' jobs.json
       - name: Serve /health only to requests that carry the edge secret
         env:
           DATABASE_URL: postgres://pyxis_app:pyxis_app@host.docker.internal:5432/pyxis
