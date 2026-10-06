@@ -9,7 +9,17 @@ export type BrowserFamily =
 
 export type OsFamily = 'android' | 'ios' | 'windows' | 'macos' | 'linux' | 'chromeos' | 'other';
 
-export type Channel = 'paid' | 'email' | 'social' | 'campaign' | 'organic' | 'referral' | 'direct';
+export const CHANNELS = [
+  'paid',
+  'email',
+  'social',
+  'campaign',
+  'organic',
+  'referral',
+  'direct',
+] as const;
+
+export type Channel = (typeof CHANNELS)[number];
 
 export interface Attribution {
   readonly referrerHost: string | null;

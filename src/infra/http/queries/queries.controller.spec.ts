@@ -1,11 +1,17 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { type AcquisitionReport, noChannelVisits } from '../../../domain/queries/acquisition';
 import type { DevicesReport } from '../../../domain/queries/devices';
 import type { OverviewReport } from '../../../domain/queries/overview';
+import type { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { QueriesController } from './queries.controller';
-import { devicesReportSchema, overviewReportSchema } from './query.schemas';
+import {
+  acquisitionReportSchema,
+  devicesReportSchema,
+  overviewReportSchema,
+} from './query.schemas';
 
 const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
@@ -45,6 +51,20 @@ const DEVICES: DevicesReport = {
   country: [{ value: 'other', visits: 4, conversions: null }],
 };
 
+const ACQUISITION: AcquisitionReport = {
+  days: [{ date: '2026-10-05', byChannel: { ...noChannelVisits(), paid: 2 } }],
+  sources: [
+    {
+      source: 'google',
+      medium: 'cpc',
+      channel: 'paid',
+      visits: 2,
+      conversions: null,
+      fromAdClickVisits: 2,
+    },
+  ],
+};
+
 function answering<Report>(report: Report, calls: unknown[][]) {
   return {
     execute: (...args: unknown[]) => {
@@ -59,6 +79,7 @@ function controllerAnswering(report: OverviewReport, devices: DevicesReport = DE
   const controller = new QueriesController(
     answering(report, calls) as unknown as GetOverviewUseCase,
     answering(devices, calls) as unknown as GetDevicesUseCase,
+    answering(ACQUISITION, calls) as unknown as GetAcquisitionUseCase,
   );
   return { controller, calls };
 }
@@ -103,6 +124,28 @@ describe('QueriesController', () => {
       browsers: [{ value: 'safari', visits: 4, conversions: 1 }],
       operating_systems: [{ value: 'ios', visits: 4, conversions: 1 }],
       countries: [{ value: 'other', visits: 4, conversions: null }],
+    });
+  });
+
+  it('answers the acquisition of the guarded project in snake case', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+    const range = { from: '2026-10-05', to: '2026-10-05' };
+
+    const body = await controller.acquisition({ project: PROJECT } as FastifyRequest, range);
+
+    expect(calls).toEqual([[PROJECT, range]]);
+    expect(acquisitionReportSchema.parse(body)).toEqual({
+      days: [{ date: '2026-10-05', by_channel: { ...noChannelVisits(), paid: 2 } }],
+      sources: [
+        {
+          source: 'google',
+          medium: 'cpc',
+          channel: 'paid',
+          visits: 2,
+          conversions: null,
+          from_ad_click_visits: 2,
+        },
+      ],
     });
   });
 });

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
 
 export const rangeQuerySchema = z.strictObject({
   from: z.iso.date().describe('First day, inclusive, in the project time zone'),
@@ -54,6 +55,31 @@ export const devicesReportSchema = z
       'top five values and "other" for the rest, unknown countries included.',
   });
 
+export const acquisitionReportSchema = z
+  .strictObject({
+    days: z.array(
+      z.strictObject({ date: z.iso.date(), by_channel: z.record(z.enum(CHANNELS), z.int()) }),
+    ),
+    sources: z.array(
+      z.strictObject({
+        source: z.string(),
+        medium: z.string().nullable(),
+        channel: z.enum(CHANNELS),
+        visits: z.int(),
+        conversions: z.int().nullable(),
+        from_ad_click_visits: z.int(),
+      }),
+    ),
+  })
+  .meta({
+    id: 'AcquisitionReport',
+    description:
+      'Visits per day and channel, every channel named, and the top sources: the source is the ' +
+      'campaign source, else the referring host, else "(direct)", taken from the first page view ' +
+      'of the visit that carries a channel.',
+  });
+
 export type RangeQuery = z.infer<typeof rangeQuerySchema>;
+export type AcquisitionReportBody = z.infer<typeof acquisitionReportSchema>;
 export type DevicesReportBody = z.infer<typeof devicesReportSchema>;
 export type OverviewReportBody = z.infer<typeof overviewReportSchema>;

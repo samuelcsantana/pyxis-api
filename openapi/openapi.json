@@ -1,6 +1,124 @@
 {
   "components": {
     "schemas": {
+      "AcquisitionReport": {
+        "additionalProperties": false,
+        "description": "Visits per day and channel, every channel named, and the top sources: the source is the campaign source, else the referring host, else \"(direct)\", taken from the first page view of the visit that carries a channel.",
+        "properties": {
+          "days": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "by_channel": {
+                  "additionalProperties": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "propertyNames": {
+                    "enum": [
+                      "paid",
+                      "email",
+                      "social",
+                      "campaign",
+                      "organic",
+                      "referral",
+                      "direct"
+                    ],
+                    "type": "string"
+                  },
+                  "required": [
+                    "paid",
+                    "email",
+                    "social",
+                    "campaign",
+                    "organic",
+                    "referral",
+                    "direct"
+                  ],
+                  "type": "object"
+                },
+                "date": {
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "date",
+                "by_channel"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "channel": {
+                  "enum": [
+                    "paid",
+                    "email",
+                    "social",
+                    "campaign",
+                    "organic",
+                    "referral",
+                    "direct"
+                  ],
+                  "type": "string"
+                },
+                "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "from_ad_click_visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "medium": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source": {
+                  "type": "string"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "source",
+                "medium",
+                "channel",
+                "visits",
+                "conversions",
+                "from_ad_click_visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "sources"
+        ],
+        "type": "object"
+      },
       "BatchRequest": {
         "additionalProperties": false,
         "description": "A batch of events from the browser, sent as text/plain or application/json. More than 50 events answer 413.",
@@ -1047,6 +1165,93 @@
         "summary": "The signed-in admin and their projects",
         "tags": [
           "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/acquisition": {
+      "get": {
+        "operationId": "QueriesController_acquisition",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcquisitionReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Visits per day and channel, and the sources that brought them",
+        "tags": [
+          "dashboard queries"
         ]
       }
     },

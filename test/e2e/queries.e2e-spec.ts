@@ -14,6 +14,7 @@ const ADMIN_ID = 'a6b7c8d9-eafb-4c12-8d3e-4f5a6b7c8d9e';
 const OTHER_ADMIN_ID = 'b7c8d9ea-fb0c-4d23-9e4f-5a6b7c8d9eaf';
 const SESSION_TOKEN = 'e2e-queries-session-token';
 const SESSION_ID = 'c8d9eafb-0c1d-4e34-8f5a-6b7c8d9eafb0';
+const AD_SESSION_ID = 'd9eafb0c-1d2e-4f45-9a6b-7c8d9eafb0c1';
 
 describe('dashboard queries', () => {
   let app: NestFastifyApplication;
@@ -58,6 +59,12 @@ describe('dashboard queries', () => {
          '{"method":"POST","route":"/v1/plans","status":503,"duration_ms":80}'),
         (gen_random_uuid(), ${FOREIGN_ID}, '2026-10-05T10:00:00Z', ${NOW}, 'page_view',
          ${SESSION_ID}, NULL, '/', 'desktop', 'chrome', 'macos', '{}')
+    `;
+    await owner`
+      INSERT INTO events (id, project_id, occurred_at, received_at, name, session_id, path,
+                          device_type, browser, os, channel, utm_source, utm_medium, from_ad_click)
+      VALUES (gen_random_uuid(), ${SHOP_ID}, '2026-09-20T10:00:00Z', ${NOW}, 'page_view',
+              ${AD_SESSION_ID}, '/', 'mobile', 'safari', 'ios', 'paid', 'google', 'cpc', TRUE)
     `;
     app = await createTestApp((builder) =>
       builder.overrideProvider(CLOCK).useValue(new FixedClock(NOW)),
@@ -105,6 +112,38 @@ describe('dashboard queries', () => {
       browsers: [{ value: 'chrome', visits: 1, conversions: 1 }],
       operating_systems: [{ value: 'macos', visits: 1, conversions: 1 }],
       countries: [{ value: 'other', visits: 1, conversions: 1 }],
+    });
+  });
+
+  it('answers the acquisition of the project, every channel named', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/acquisition?from=2026-09-20&to=2026-09-20`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      days: [
+        {
+          date: '2026-09-20',
+          by_channel: {
+            paid: 1,
+            email: 0,
+            social: 0,
+            campaign: 0,
+            organic: 0,
+            referral: 0,
+            direct: 0,
+          },
+        },
+      ],
+      sources: [
+        {
+          source: 'google',
+          medium: 'cpc',
+          channel: 'paid',
+          visits: 1,
+          conversions: 0,
+          from_ad_click_visits: 1,
+        },
+      ],
     });
   });
 
