@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
-import { EVENT_NAME_PATTERN, MAX_PATH_LENGTH } from '../../../domain/events/event-limits';
+import {
+  EVENT_NAME_PATTERN,
+  MAX_PATH_LENGTH,
+  USER_ID_PATTERN,
+} from '../../../domain/events/event-limits';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
 
@@ -124,6 +128,46 @@ export const funnelReportSchema = z
       'a step counts only at or after the first time the previous one happened.',
   });
 
+const timelineCursor = { before: z.iso.datetime().optional() };
+
+export const timelineQuerySchema = z.union([
+  z.strictObject({ user_id: z.string().regex(USER_ID_PATTERN), ...timelineCursor }),
+  z.strictObject({ session_id: z.uuid(), ...timelineCursor }),
+]);
+
+export const timelineReportSchema = z
+  .strictObject({
+    visits: z.array(
+      z.strictObject({
+        session_id: z.uuid(),
+        started_at: z.iso.datetime(),
+        ended_at: z.iso.datetime(),
+        device_type: z.string(),
+        browser: z.string(),
+        os: z.string(),
+        country: z.string().nullable(),
+        channel: z.enum(CHANNELS).nullable(),
+        events: z.array(
+          z.strictObject({
+            id: z.uuid(),
+            occurred_at: z.iso.datetime(),
+            name: z.string(),
+            path: z.string(),
+            properties: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
+          }),
+        ),
+      }),
+    ),
+    next_before: z.iso.datetime().nullable(),
+  })
+  .meta({
+    id: 'TimelineReport',
+    description:
+      'The visits of a person (every visit with an event carrying the user id, the one they ' +
+      'identified in included) or of one visit, newest first, 20 per page, with all their ' +
+      'events. next_before is the cursor for the older page, null on the last one.',
+  });
+
 export const featuresReportSchema = z
   .strictObject({
     items: z.array(
@@ -176,6 +220,8 @@ export type RangeQuery = z.infer<typeof rangeQuerySchema>;
 export type FeaturesQuery = z.infer<typeof featuresQuerySchema>;
 export type RequestsQuery = z.infer<typeof requestsQuerySchema>;
 export type FunnelQuery = z.infer<typeof funnelQuerySchema>;
+export type TimelineQuery = z.infer<typeof timelineQuerySchema>;
+export type TimelineReportBody = z.infer<typeof timelineReportSchema>;
 export type FunnelReportBody = z.infer<typeof funnelReportSchema>;
 export type FeaturesReportBody = z.infer<typeof featuresReportSchema>;
 export type RequestsReportBody = z.infer<typeof requestsReportSchema>;

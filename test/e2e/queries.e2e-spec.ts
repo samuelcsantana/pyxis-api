@@ -225,6 +225,35 @@ describe('dashboard queries', () => {
     expect(response.json()).toMatchObject({ error: 'invalid_request' });
   });
 
+  it('answers the timeline of a person with all the events of their visits', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/timeline?user_id=u-1`);
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      visits: { session_id: string; events: { name: string }[] }[];
+      next_before: string | null;
+    }>();
+    expect(body.next_before).toBeNull();
+    expect(body.visits.map((visit) => visit.session_id)).toEqual([SESSION_ID]);
+    expect(body.visits[0]?.events.map((event) => event.name)).toEqual([
+      'page_view',
+      'signup_completed',
+      'api_request',
+    ]);
+  });
+
+  it('answers an empty timeline for someone the project never saw', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/timeline?user_id=nobody`);
+
+    expect(response.json()).toEqual({ visits: [], next_before: null });
+  });
+
+  it('answers 400 to a timeline that names neither a person nor a visit', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/timeline`);
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('answers 400 to an unknown feature kind', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/features?from=2026-10-05&to=2026-10-05&kind=clicks`,

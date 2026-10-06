@@ -1,4 +1,12 @@
-import { Controller, Get, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  applyDecorators,
+  Controller,
+  Get,
+  HttpStatus,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiOperation,
@@ -12,12 +20,14 @@ import type { AcquisitionReport } from '../../../domain/queries/acquisition';
 import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
 import type { FeaturesReport } from '../../../domain/queries/features';
 import type { RequestsReport } from '../../../domain/queries/requests';
+import type { TimelineReport, TimelineSubject } from '../../../domain/queries/timeline';
 import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/queries/overview';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
 import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
+import { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { SessionGuard } from '../auth/auth.guards';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -45,6 +55,10 @@ import {
   requestsQuerySchema,
   type RequestsReportBody,
   requestsReportSchema,
+  type TimelineQuery,
+  timelineQuerySchema,
+  type TimelineReportBody,
+  timelineReportSchema,
 } from './query.schemas';
 
 function kpiBody(kpi: Kpi) {
@@ -125,6 +139,44 @@ function requestsBody(report: RequestsReport): RequestsReportBody {
   };
 }
 
+function ApiRange() {
+  return applyDecorators(
+    ApiQuery({
+      name: 'from',
+      description: 'First day, inclusive, in the project time zone',
+      schema: { type: 'string', format: 'date' },
+    }),
+    ApiQuery({
+      name: 'to',
+      description: 'Last day, inclusive, at most today in the project time zone; 400 days at most',
+      schema: { type: 'string', format: 'date' },
+    }),
+  );
+}
+
+function timelineBody(report: TimelineReport): TimelineReportBody {
+  return {
+    visits: report.visits.map((visit) => ({
+      session_id: visit.sessionId,
+      started_at: visit.startedAt.toISOString(),
+      ended_at: visit.endedAt.toISOString(),
+      device_type: visit.deviceType,
+      browser: visit.browser,
+      os: visit.os,
+      country: visit.country,
+      channel: visit.channel,
+      events: visit.events.map((event) => ({
+        id: event.id,
+        occurred_at: event.occurredAt.toISOString(),
+        name: event.name,
+        path: event.path,
+        properties: { ...event.properties },
+      })),
+    })),
+    next_before: report.nextBefore === null ? null : report.nextBefore.toISOString(),
+  };
+}
+
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
 @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
@@ -135,16 +187,6 @@ function requestsBody(report: RequestsReport): RequestsReportBody {
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
-@ApiQuery({
-  name: 'from',
-  description: 'First day, inclusive, in the project time zone',
-  schema: { type: 'string', format: 'date' },
-})
-@ApiQuery({
-  name: 'to',
-  description: 'Last day, inclusive, at most today in the project time zone; 400 days at most',
-  schema: { type: 'string', format: 'date' },
-})
 @Controller('v1/projects/:projectId')
 @UseGuards(SessionGuard, ProjectAccessGuard)
 export class QueriesController {
@@ -155,9 +197,11 @@ export class QueriesController {
     private readonly getFeatures: GetFeaturesUseCase,
     private readonly getRequests: GetRequestsUseCase,
     private readonly getFunnel: GetFunnelUseCase,
+    private readonly getTimeline: GetTimelineUseCase,
   ) {}
 
   @Get('overview')
+  @ApiRange()
   @ApiOperation({ summary: 'KPIs, daily activity, top pages and top events of a range' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: overviewReportSchema })
   async overview(
@@ -169,6 +213,7 @@ export class QueriesController {
   }
 
   @Get('devices')
+  @ApiRange()
   @ApiOperation({ summary: 'Visits and conversions by device type, browser, system and country' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: devicesReportSchema })
   async devices(
@@ -180,6 +225,7 @@ export class QueriesController {
   }
 
   @Get('acquisition')
+  @ApiRange()
   @ApiOperation({ summary: 'Visits per day and channel, and the sources that brought them' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: acquisitionReportSchema })
   async acquisition(
@@ -191,6 +237,7 @@ export class QueriesController {
   }
 
   @Get('features')
+  @ApiRange()
   @ApiOperation({ summary: 'The most used named events or screens, with their daily counts' })
   @ApiQuery({ name: 'kind', enum: ['events', 'screens'] })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: featuresReportSchema })
@@ -204,6 +251,7 @@ export class QueriesController {
   }
 
   @Get('requests')
+  @ApiRange()
   @ApiOperation({ summary: 'Writes per route: failures, statuses, durations and screens' })
   @ApiQuery({
     name: 'screen',
@@ -223,6 +271,7 @@ export class QueriesController {
   }
 
   @Get('funnel')
+  @ApiRange()
   @ApiOperation({ summary: 'How many visits or people reached each step of a funnel, in order' })
   @ApiQuery({ name: 'mode', enum: ['visit', 'user'] })
   @ApiQuery({
@@ -241,5 +290,27 @@ export class QueriesController {
     const range = { from: query.from, to: query.to };
     const report = await this.getFunnel.execute(projectOf(request), range, query.mode, query.steps);
     return { steps: report.steps.map((step) => ({ count: step.count })) };
+  }
+
+  @Get('timeline')
+  @ApiOperation({ summary: 'The visits of a person or of one visit, with every event' })
+  @ApiQuery({ name: 'user_id', required: false, schema: { type: 'string' } })
+  @ApiQuery({ name: 'session_id', required: false, schema: { type: 'string', format: 'uuid' } })
+  @ApiQuery({
+    name: 'before',
+    required: false,
+    description: 'The next_before of the previous page',
+    schema: { type: 'string', format: 'date-time' },
+  })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: timelineReportSchema })
+  async timeline(
+    @Req() request: FastifyRequest,
+    @Query({ schema: timelineQuerySchema, pipes: [new SchemaPipe(timelineQuerySchema)] })
+    query: TimelineQuery,
+  ): Promise<TimelineReportBody> {
+    const subject: TimelineSubject =
+      'user_id' in query ? { userId: query.user_id } : { sessionId: query.session_id };
+    const before = query.before === undefined ? null : new Date(query.before);
+    return timelineBody(await this.getTimeline.execute(projectOf(request), subject, before));
   }
 }
