@@ -10,6 +10,8 @@ import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.us
 import type { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
 import type { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import type { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
+import type { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.usecase';
+import type { TimelineReport } from '../../../domain/queries/timeline';
 import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { QueriesController } from './queries.controller';
 import {
@@ -19,6 +21,8 @@ import {
   funnelQuerySchema,
   overviewReportSchema,
   requestsReportSchema,
+  timelineQuerySchema,
+  timelineReportSchema,
 } from './query.schemas';
 
 const PROJECT: Project = {
@@ -99,6 +103,31 @@ const REQUESTS: RequestsReport = {
   ],
 };
 
+const TIMELINE: TimelineReport = {
+  visits: [
+    {
+      sessionId: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e',
+      startedAt: new Date('2026-10-04T12:00:00.000Z'),
+      endedAt: new Date('2026-10-04T12:05:00.000Z'),
+      deviceType: 'mobile',
+      browser: 'safari',
+      os: 'ios',
+      country: 'BR',
+      channel: 'paid',
+      events: [
+        {
+          id: '9f1c2b3a-1d2e-4f5a-8b6c-000000000001',
+          occurredAt: new Date('2026-10-04T12:03:00.000Z'),
+          name: 'calculator_used',
+          path: '/calculator',
+          properties: { plan: 'mei' },
+        },
+      ],
+    },
+  ],
+  nextBefore: new Date('2026-10-04T12:00:00.000Z'),
+};
+
 function answering<Report>(report: Report, calls: unknown[][]) {
   return {
     execute: (...args: unknown[]) => {
@@ -108,7 +137,11 @@ function answering<Report>(report: Report, calls: unknown[][]) {
   };
 }
 
-function controllerAnswering(report: OverviewReport, devices: DevicesReport = DEVICES) {
+function controllerAnswering(
+  report: OverviewReport,
+  devices: DevicesReport = DEVICES,
+  timeline: TimelineReport = TIMELINE,
+) {
   const calls: unknown[][] = [];
   const controller = new QueriesController(
     answering(report, calls) as unknown as GetOverviewUseCase,
@@ -117,6 +150,7 @@ function controllerAnswering(report: OverviewReport, devices: DevicesReport = DE
     answering(FEATURES, calls) as unknown as GetFeaturesUseCase,
     answering(REQUESTS, calls) as unknown as GetRequestsUseCase,
     answering({ steps: [{ count: 5 }, { count: 2 }] }, calls) as unknown as GetFunnelUseCase,
+    answering(timeline, calls) as unknown as GetTimelineUseCase,
   );
   return { controller, calls };
 }
@@ -260,6 +294,70 @@ describe('QueriesController', () => {
         ],
       ],
     ]);
+  });
+
+  it('asks for the timeline of a person and answers it with a cursor', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+
+    const body = await controller.timeline(
+      { project: PROJECT } as FastifyRequest,
+      timelineQuerySchema.parse({ user_id: 'ana', before: '2026-10-05T00:00:00.000Z' }),
+    );
+
+    expect(calls).toEqual([[PROJECT, { userId: 'ana' }, new Date('2026-10-05T00:00:00.000Z')]]);
+    expect(timelineReportSchema.parse(body)).toEqual({
+      visits: [
+        {
+          session_id: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e',
+          started_at: '2026-10-04T12:00:00.000Z',
+          ended_at: '2026-10-04T12:05:00.000Z',
+          device_type: 'mobile',
+          browser: 'safari',
+          os: 'ios',
+          country: 'BR',
+          channel: 'paid',
+          events: [
+            {
+              id: '9f1c2b3a-1d2e-4f5a-8b6c-000000000001',
+              occurred_at: '2026-10-04T12:03:00.000Z',
+              name: 'calculator_used',
+              path: '/calculator',
+              properties: { plan: 'mei' },
+            },
+          ],
+        },
+      ],
+      next_before: '2026-10-04T12:00:00.000Z',
+    });
+  });
+
+  it('asks for one visit and answers no cursor on the last page', async () => {
+    const { controller, calls } = controllerAnswering(REPORT, DEVICES, {
+      visits: [],
+      nextBefore: null,
+    });
+
+    const body = await controller.timeline(
+      { project: PROJECT } as FastifyRequest,
+      timelineQuerySchema.parse({ session_id: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e' }),
+    );
+
+    expect(calls).toEqual([[PROJECT, { sessionId: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e' }, null]]);
+    expect(body).toEqual({ visits: [], next_before: null });
+  });
+});
+
+describe('timelineQuerySchema', () => {
+  it.each([
+    ['neither a user nor a visit', {}],
+    [
+      'both a user and a visit',
+      { user_id: 'ana', session_id: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e' },
+    ],
+    ['a visit id that is not a UUID', { session_id: 'visit-1' }],
+    ['a cursor that is not a timestamp', { user_id: 'ana', before: 'yesterday' }],
+  ])('refuses %s', (_case, query) => {
+    expect(timelineQuerySchema.safeParse(query).success).toBe(false);
   });
 });
 

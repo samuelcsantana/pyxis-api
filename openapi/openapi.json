@@ -1009,6 +1009,143 @@
         ],
         "type": "object"
       },
+      "TimelineReport": {
+        "additionalProperties": false,
+        "description": "The visits of a person (every visit with an event carrying the user id, the one they identified in included) or of one visit, newest first, 20 per page, with all their events. next_before is the cursor for the older page, null on the last one.",
+        "properties": {
+          "next_before": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visits": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "browser": {
+                  "type": "string"
+                },
+                "channel": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "paid",
+                        "email",
+                        "social",
+                        "campaign",
+                        "organic",
+                        "referral",
+                        "direct"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "country": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "device_type": {
+                  "type": "string"
+                },
+                "ended_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "events": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "id": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "occurred_at": {
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "type": "string"
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "properties": {
+                        "additionalProperties": {
+                          "type": [
+                            "string",
+                            "number",
+                            "boolean"
+                          ]
+                        },
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "occurred_at",
+                      "name",
+                      "path",
+                      "properties"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "os": {
+                  "type": "string"
+                },
+                "session_id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "started_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "session_id",
+                "started_at",
+                "ended_at",
+                "device_type",
+                "browser",
+                "os",
+                "country",
+                "channel",
+                "events"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "visits",
+          "next_before"
+        ],
+        "type": "object"
+      },
       "VerifyCodeRequest": {
         "additionalProperties": false,
         "description": "The email and the six-digit code it received.",
@@ -1930,6 +2067,100 @@
           }
         ],
         "summary": "Writes per route: failures, statuses, durations and screens",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/timeline": {
+      "get": {
+        "operationId": "QueriesController_timeline",
+        "parameters": [
+          {
+            "description": "The next_before of the previous page",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "session_id",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "user_id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The visits of a person or of one visit, with every event",
         "tags": [
           "dashboard queries"
         ]
