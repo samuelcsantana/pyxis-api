@@ -167,6 +167,7 @@ jobs:
         run: >-
           docker run --detach --name pyxis-api --network host
           --env DATABASE_URL --env PORT=3040 --env RESEND_API_KEY=ci-placeholder
+          --env DASHBOARD_ORIGIN=https://dashboard.example.com
           pyxis-api:ci
       - name: Answer /health and connect as the application role
         run: |
@@ -216,7 +217,7 @@ jobs:
         env:
           DATABASE_URL: postgres://pyxis_app:pyxis_app@host.docker.internal:5432/pyxis
         run: |
-          docker run --detach --publish 9000:8080 --add-host host.docker.internal:host-gateway --env DATABASE_URL --env EDGE_SHARED_SECRET --env RESEND_API_KEY=ci-placeholder pyxis-api-lambda:ci
+          docker run --detach --publish 9000:8080 --add-host host.docker.internal:host-gateway --env DATABASE_URL --env EDGE_SHARED_SECRET --env RESEND_API_KEY=ci-placeholder --env DASHBOARD_ORIGIN=https://dashboard.example.com pyxis-api-lambda:ci
           sleep 2
           jq --arg secret "$EDGE_SHARED_SECRET" '.headers["x-origin-verify"] = $secret' test/lambda/function-url-health.json > allowed-event.json
           curl --fail --silent --show-error -X POST "http://localhost:9000/$INVOKE_PATH" -d @allowed-event.json | tee allowed.json

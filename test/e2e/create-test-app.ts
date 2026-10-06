@@ -9,7 +9,7 @@ export async function createTestApp(
 ): Promise<NestFastifyApplication> {
   const moduleRef = await customize(Test.createTestingModule({ imports: [AppModule] })).compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(createFastifyAdapter());
-  configureApp(app);
+  configureApp(app, { dashboardOrigin: process.env.DASHBOARD_ORIGIN });
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
   return app;

@@ -40,6 +40,7 @@ services:
       PORT: 3040
       SWAGGER_ENABLED: 'true'
       DATABASE_URL: postgres://pyxis_app:pyxis_app@db:5432/pyxis
+      DASHBOARD_ORIGIN: http://localhost:3000
     ports:
       - '3040:3040'
 

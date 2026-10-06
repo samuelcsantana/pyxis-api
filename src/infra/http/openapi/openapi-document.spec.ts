@@ -31,6 +31,12 @@ describe('buildOpenApiDocument', () => {
     expect(document.info.license?.name).toBe('MIT');
   });
 
+  it('declares the dashboard session cookie as a security scheme', () => {
+    expect(buildOpenApiDocument(app).components?.securitySchemes).toEqual({
+      pyxis_session: { type: 'apiKey', in: 'cookie', name: 'pyxis_session' },
+    });
+  });
+
   it('derives response schemas from the Zod schemas of the routes', () => {
     const document = buildOpenApiDocument(app);
     const response = document.paths['/health']?.get?.responses['200'] as {

@@ -1,4 +1,11 @@
-import { CLIENT_BATCHES_PER_WINDOW, CLIENT_RATE_WINDOW_MS, INGEST_THROTTLER } from './rate-limits';
+import {
+  AUTH_THROTTLER,
+  CLIENT_BATCHES_PER_WINDOW,
+  CLIENT_RATE_WINDOW_MS,
+  INGEST_THROTTLER,
+  SIGN_IN_RATE_WINDOW_MS,
+  SIGN_IN_REQUESTS_PER_WINDOW,
+} from './rate-limits';
 
 describe('rate limits', () => {
   it('lets one address send 120 batches a minute to ingestion', () => {
@@ -6,6 +13,14 @@ describe('rate limits', () => {
       INGEST_THROTTLER: 'ingest',
       CLIENT_BATCHES_PER_WINDOW: 120,
       CLIENT_RATE_WINDOW_MS: 60_000,
+    });
+  });
+
+  it('lets one address try to sign in five times every fifteen minutes', () => {
+    expect({ AUTH_THROTTLER, SIGN_IN_REQUESTS_PER_WINDOW, SIGN_IN_RATE_WINDOW_MS }).toEqual({
+      AUTH_THROTTLER: 'auth',
+      SIGN_IN_REQUESTS_PER_WINDOW: 5,
+      SIGN_IN_RATE_WINDOW_MS: 900_000,
     });
   });
 });
