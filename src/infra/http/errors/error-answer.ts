@@ -2,7 +2,12 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { ProjectRateLimitedError } from '../../../domain/errors/ingest.errors';
 import type { ErrorResponse } from '../ingest/ingest.schemas';
-import { ClientRateLimitedError, InvalidBatchError } from './http-errors';
+import {
+  ClientRateLimitedError,
+  DashboardOriginRequiredError,
+  InvalidBatchError,
+  InvalidRequestError,
+} from './http-errors';
 
 export interface ErrorAnswer {
   readonly body: ErrorResponse;
@@ -15,6 +20,8 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['unknown_key', HttpStatus.UNAUTHORIZED],
   ['origin_not_allowed', HttpStatus.FORBIDDEN],
   ['rate_limited', HttpStatus.TOO_MANY_REQUESTS],
+  ['invalid_code', HttpStatus.BAD_REQUEST],
+  ['unauthenticated', HttpStatus.UNAUTHORIZED],
 ]);
 
 const HTTP_ERRORS: ReadonlyMap<number, { readonly error: string; readonly message: string }> =
@@ -82,8 +89,11 @@ export function toErrorAnswer(exception: unknown): ErrorAnswer {
   if (exception instanceof DomainError) {
     return domainAnswer(exception);
   }
-  if (exception instanceof InvalidBatchError) {
+  if (exception instanceof InvalidBatchError || exception instanceof InvalidRequestError) {
     return answer(HttpStatus.BAD_REQUEST, exception.code, exception.message);
+  }
+  if (exception instanceof DashboardOriginRequiredError) {
+    return answer(HttpStatus.FORBIDDEN, exception.code, exception.message);
   }
   if (exception instanceof ClientRateLimitedError) {
     return answer(HttpStatus.TOO_MANY_REQUESTS, exception.code, exception.message, {

@@ -10,8 +10,8 @@ import { registerSwaggerUi } from './infra/http/openapi/swagger-ui';
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, createFastifyAdapter());
-  configureApp(app);
   const config = app.get<ConfigService<EnvConfig, true>>(ConfigService);
+  configureApp(app, { dashboardOrigin: config.get('DASHBOARD_ORIGIN', { infer: true }) });
   registerSwaggerUi(app, {
     NODE_ENV: config.get('NODE_ENV', { infer: true }),
     SWAGGER_ENABLED: config.get('SWAGGER_ENABLED', { infer: true }),

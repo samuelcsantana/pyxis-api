@@ -1,5 +1,8 @@
 import { DEFAULT_MAIL_FROM, DEFAULT_PORT, validateEnv } from './env.schema';
 
+const DASHBOARD_ORIGIN = 'https://pyxis.example.com';
+const PRODUCTION = { NODE_ENV: 'production', RESEND_API_KEY: 'key', DASHBOARD_ORIGIN };
+
 describe('validateEnv', () => {
   it('applies the defaults when nothing is set', () => {
     expect(validateEnv({})).toEqual({
@@ -14,9 +17,7 @@ describe('validateEnv', () => {
   });
 
   it('coerces the port from the string the environment provides', () => {
-    expect(
-      validateEnv({ NODE_ENV: 'production', PORT: '8080', RESEND_API_KEY: 'key' }),
-    ).toMatchObject({
+    expect(validateEnv({ ...PRODUCTION, PORT: '8080' })).toMatchObject({
       NODE_ENV: 'production',
       PORT: 8080,
     });
@@ -93,20 +94,66 @@ describe('validateEnv', () => {
   });
 
   it('refuses production without a Resend key, so codes can never be logged there', () => {
-    expect(() => validateEnv({ NODE_ENV: 'production' })).toThrow(/RESEND_API_KEY/);
+    expect(() => validateEnv({ NODE_ENV: 'production', DASHBOARD_ORIGIN })).toThrow(
+      /RESEND_API_KEY/,
+    );
   });
 
   it('accepts production with a Resend key and a sender of its own', () => {
-    expect(
-      validateEnv({
-        NODE_ENV: 'production',
-        RESEND_API_KEY: 'key',
-        MAIL_FROM: 'Ops <ops@example.com>',
-      }),
-    ).toMatchObject({ RESEND_API_KEY: 'key', MAIL_FROM: 'Ops <ops@example.com>' });
+    expect(validateEnv({ ...PRODUCTION, MAIL_FROM: 'Ops <ops@example.com>' })).toMatchObject({
+      RESEND_API_KEY: 'key',
+      MAIL_FROM: 'Ops <ops@example.com>',
+    });
   });
 
   it('runs without a Resend key outside production', () => {
     expect(validateEnv({ NODE_ENV: 'development' }).RESEND_API_KEY).toBeUndefined();
+  });
+
+  it('refuses production without the dashboard origin it lets sign in', () => {
+    expect(() => validateEnv({ NODE_ENV: 'production', RESEND_API_KEY: 'key' })).toThrow(
+      /DASHBOARD_ORIGIN/,
+    );
+  });
+
+  it('runs without a dashboard origin outside production', () => {
+    expect(validateEnv({ NODE_ENV: 'development' }).DASHBOARD_ORIGIN).toBeUndefined();
+  });
+
+  it.each(['https://pyxis.example.com', 'http://localhost:3000'])(
+    'accepts %s as the dashboard origin',
+    (origin) => {
+      expect(validateEnv({ DASHBOARD_ORIGIN: origin }).DASHBOARD_ORIGIN).toBe(origin);
+    },
+  );
+
+  it.each([
+    ['a path', 'https://pyxis.example.com/sign-in'],
+    ['a trailing slash', 'https://pyxis.example.com/'],
+    ['another scheme', 'ftp://pyxis.example.com'],
+    ['no scheme', 'pyxis.example.com'],
+  ])('rejects a dashboard origin with %s', (_case, origin) => {
+    expect(() => validateEnv({ DASHBOARD_ORIGIN: origin })).toThrow(/DASHBOARD_ORIGIN/);
+  });
+
+  it('treats an empty DASHBOARD_ORIGIN as unset', () => {
+    expect(validateEnv({ DASHBOARD_ORIGIN: '' }).DASHBOARD_ORIGIN).toBeUndefined();
+  });
+
+  it('accepts a host name as the session cookie domain', () => {
+    expect(validateEnv({ SESSION_COOKIE_DOMAIN: 'pyxis.example.com' }).SESSION_COOKIE_DOMAIN).toBe(
+      'pyxis.example.com',
+    );
+  });
+
+  it.each(['localhost', '.example.com', 'example.com; Secure', 'Example.com'])(
+    'rejects %s as the session cookie domain',
+    (domain) => {
+      expect(() => validateEnv({ SESSION_COOKIE_DOMAIN: domain })).toThrow(/SESSION_COOKIE_DOMAIN/);
+    },
+  );
+
+  it('treats an empty SESSION_COOKIE_DOMAIN as unset', () => {
+    expect(validateEnv({ SESSION_COOKIE_DOMAIN: '' }).SESSION_COOKIE_DOMAIN).toBeUndefined();
   });
 });

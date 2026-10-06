@@ -7,6 +7,7 @@ import { loadParameters, ssmParameterPages } from './load-parameters';
 async function buildProxy(): Promise<PromiseHandler> {
   const { NestFactory } = await import('@nestjs/core');
   const { ConsoleLogger } = await import('@nestjs/common');
+  const { ConfigService } = await import('@nestjs/config');
   const { AppModule } = await import('../app.module');
   const { createFastifyAdapter } = await import('../infra/http/fastify-adapter.options');
   const { configureApp } = await import('../infra/http/configure-app');
@@ -14,7 +15,7 @@ async function buildProxy(): Promise<PromiseHandler> {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, createFastifyAdapter(), {
     logger: new ConsoleLogger({ json: true }),
   });
-  configureApp(app);
+  configureApp(app, { dashboardOrigin: app.get(ConfigService).get<string>('DASHBOARD_ORIGIN') });
   await app.init();
   const fastify = app.getHttpAdapter().getInstance();
   await fastify.ready();

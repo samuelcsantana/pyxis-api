@@ -6,8 +6,14 @@ import {
   ProjectRateLimitedError,
   UnknownProjectKeyError,
 } from '../../../domain/errors/ingest.errors';
+import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
 import { toErrorAnswer } from './error-answer';
-import { ClientRateLimitedError, InvalidBatchError } from './http-errors';
+import {
+  ClientRateLimitedError,
+  DashboardOriginRequiredError,
+  InvalidBatchError,
+  InvalidRequestError,
+} from './http-errors';
 
 class UnmappedDomainError extends DomainError {
   readonly code = 'not_mapped';
@@ -32,6 +38,8 @@ describe('toErrorAnswer', () => {
     [new BatchTooLargeError(), 413, 'batch_too_large'],
     [new UnknownProjectKeyError(), 401, 'unknown_key'],
     [new OriginNotAllowedError(), 403, 'origin_not_allowed'],
+    [new InvalidSignInCodeError(), 400, 'invalid_code'],
+    [new UnauthenticatedError(), 401, 'unauthenticated'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },
@@ -61,6 +69,26 @@ describe('toErrorAnswer', () => {
       status_code: 400,
       error: 'invalid_batch',
       message: 'The batch does not match the contract.',
+    });
+  });
+
+  it('answers a body that breaks its schema with 400', () => {
+    expect(toErrorAnswer(new InvalidRequestError()).body).toEqual({
+      status_code: 400,
+      error: 'invalid_request',
+      message: 'The request body does not match the contract.',
+    });
+  });
+
+  it('answers a dashboard call from another origin with 403', () => {
+    expect(toErrorAnswer(new DashboardOriginRequiredError())).toEqual({
+      body: {
+        status_code: 403,
+        error: 'origin_not_allowed',
+        message: 'This request must come from the dashboard.',
+      },
+      headers: {},
+      unexpected: false,
     });
   });
 
