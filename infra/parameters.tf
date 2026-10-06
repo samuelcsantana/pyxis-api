@@ -1,5 +1,20 @@
 locals {
-  app_secrets = ["DATABASE_URL", "EDGE_SHARED_SECRET"]
+  app_secrets = ["DATABASE_URL", "EDGE_SHARED_SECRET", "RESEND_API_KEY"]
+
+  app_settings = {
+    DASHBOARD_ORIGIN = {
+      value       = var.dashboard_origin
+      description = "The only origin the dashboard sign-in routes accept and grant credentialed CORS to."
+    }
+    SESSION_COOKIE_DOMAIN = {
+      value       = var.session_cookie_domain
+      description = "Domain attribute of the session cookie, so the dashboard's own server can read it too."
+    }
+    MAIL_FROM = {
+      value       = var.mail_from
+      description = "Sender of the sign-in code emails. Its domain must be verified in Resend."
+    }
+  }
 }
 
 resource "aws_ssm_parameter" "app_secret" {
@@ -12,6 +27,14 @@ resource "aws_ssm_parameter" "app_secret" {
   lifecycle {
     ignore_changes = [value]
   }
+}
+
+resource "aws_ssm_parameter" "app_setting" {
+  for_each    = local.app_settings
+  name        = "/${var.project}/app/${each.key}"
+  type        = "String"
+  value       = each.value.value
+  description = each.value.description
 }
 
 resource "aws_ssm_parameter" "client_ip_header" {
