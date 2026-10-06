@@ -20,6 +20,9 @@ queries and erases a person's events on request, without cookies or personal dat
 **[API reference](https://samuelcsantana.github.io/pyxis-api/)** — every route, built from
 `openapi/openapi.json` on each push to `main`.
 
+**[Dashboard Storybook](https://samuelcsantana.github.io/pyxis-web/)** ·
+**[SDK playground](https://samuelcsantana.github.io/pyxis-sdk/)**
+
 </div>
 
 > **Status:** early development. Ingestion, dashboard sign-in, every dashboard query, erasure and
