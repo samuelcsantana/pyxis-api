@@ -36,7 +36,7 @@ services:
       migrate:
         condition: service_completed_successfully
     environment:
-      NODE_ENV: production
+      NODE_ENV: development
       PORT: 3040
       SWAGGER_ENABLED: 'true'
       DATABASE_URL: postgres://pyxis_app:pyxis_app@db:5432/pyxis

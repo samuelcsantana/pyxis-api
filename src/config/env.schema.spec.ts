@@ -1,4 +1,4 @@
-import { DEFAULT_PORT, validateEnv } from './env.schema';
+import { DEFAULT_MAIL_FROM, DEFAULT_PORT, validateEnv } from './env.schema';
 
 describe('validateEnv', () => {
   it('applies the defaults when nothing is set', () => {
@@ -9,11 +9,14 @@ describe('validateEnv', () => {
       DATABASE_URL: undefined,
       MIGRATION_DATABASE_URL: undefined,
       APP_DB_ROLE: undefined,
+      MAIL_FROM: DEFAULT_MAIL_FROM,
     });
   });
 
   it('coerces the port from the string the environment provides', () => {
-    expect(validateEnv({ NODE_ENV: 'production', PORT: '8080' })).toMatchObject({
+    expect(
+      validateEnv({ NODE_ENV: 'production', PORT: '8080', RESEND_API_KEY: 'key' }),
+    ).toMatchObject({
       NODE_ENV: 'production',
       PORT: 8080,
     });
@@ -87,5 +90,23 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ CLIENT_IP_HEADER: 'x-real-ip: 1.2.3.4' })).toThrow(
       /CLIENT_IP_HEADER/,
     );
+  });
+
+  it('refuses production without a Resend key, so codes can never be logged there', () => {
+    expect(() => validateEnv({ NODE_ENV: 'production' })).toThrow(/RESEND_API_KEY/);
+  });
+
+  it('accepts production with a Resend key and a sender of its own', () => {
+    expect(
+      validateEnv({
+        NODE_ENV: 'production',
+        RESEND_API_KEY: 'key',
+        MAIL_FROM: 'Ops <ops@example.com>',
+      }),
+    ).toMatchObject({ RESEND_API_KEY: 'key', MAIL_FROM: 'Ops <ops@example.com>' });
+  });
+
+  it('runs without a Resend key outside production', () => {
+    expect(validateEnv({ NODE_ENV: 'development' }).RESEND_API_KEY).toBeUndefined();
   });
 });
