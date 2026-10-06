@@ -4,7 +4,7 @@ data "aws_cloudfront_cache_policy" "caching_disabled" {
 
 resource "aws_cloudfront_origin_request_policy" "api" {
   name    = "${var.project}-all-viewer-except-host"
-  comment = "Every viewer and CloudFront header except Host, including CloudFront-Viewer-Address and CloudFront-Viewer-Country, which the managed AllViewer policy does not forward."
+  comment = "Every viewer and CloudFront header except Host, so the API sees CloudFront-Viewer-Address."
 
   headers_config {
     header_behavior = "allExcept"
