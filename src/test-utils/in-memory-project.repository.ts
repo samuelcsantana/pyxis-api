@@ -1,6 +1,7 @@
 import type { Project } from '../domain/entities/project.entity';
 import type { ProjectKey } from '../domain/entities/project-key.entity';
 import type {
+  LiveSecretKey,
   NewProjectKey,
   ProjectKeyRepository,
 } from '../domain/repositories/project-key.repository';
@@ -79,6 +80,20 @@ export class InMemoryProjectRepository
       key.id === keyId && key.revokedAt === null ? { ...key, revokedAt } : key,
     );
     return Promise.resolve(live);
+  }
+
+  findLiveSecret(secretHash: string): Promise<LiveSecretKey | null> {
+    const key = this.keys.find(
+      (candidate) =>
+        candidate.kind === 'secret' &&
+        candidate.secretHash === secretHash &&
+        candidate.revokedAt === null,
+    );
+    return Promise.resolve(
+      key?.kind === 'secret'
+        ? { keyId: key.id, projectId: key.projectId, secretHash: key.secretHash }
+        : null,
+    );
   }
 
   private nextId(): string {

@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, isNull } from 'drizzle-orm';
 import type { ProjectKey } from '../../domain/entities/project-key.entity';
 import type {
+  LiveSecretKey,
   NewProjectKey,
   ProjectKeyRepository,
 } from '../../domain/repositories/project-key.repository';
@@ -47,5 +48,24 @@ export class DrizzleProjectKeyRepository implements ProjectKeyRepository {
       .where(and(eq(projectKeys.id, keyId), isNull(projectKeys.revokedAt)))
       .returning({ id: projectKeys.id });
     return revoked.length > 0;
+  }
+
+  async findLiveSecret(secretHash: string): Promise<LiveSecretKey | null> {
+    const [row] = await this.db
+      .select({
+        keyId: projectKeys.id,
+        projectId: projectKeys.projectId,
+        secretHash: projectKeys.secretHash,
+      })
+      .from(projectKeys)
+      .where(and(eq(projectKeys.secretHash, secretHash), isNull(projectKeys.revokedAt)))
+      .limit(1);
+    return row === undefined
+      ? null
+      : {
+          keyId: row.keyId,
+          projectId: row.projectId,
+          secretHash: requiredColumn(row.secretHash, 'secret_hash'),
+        };
   }
 }

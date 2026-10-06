@@ -29,6 +29,16 @@ export function generateSecretKey(random: RandomSource): string {
   return `${SECRET_KEY_PREFIX}${randomKeyBody(random)}`;
 }
 
+const BEARER_PREFIX = 'Bearer ';
+
+export function secretKeyFromAuthorization(header: string | undefined): string | null {
+  if (header?.startsWith(BEARER_PREFIX) !== true) {
+    return null;
+  }
+  const candidate = header.slice(BEARER_PREFIX.length).trim();
+  return SECRET_KEY_PATTERN.test(candidate) ? candidate : null;
+}
+
 export function hashSecretKey(secretKey: string): string {
   return createHash('sha256').update(secretKey).digest('hex');
 }
