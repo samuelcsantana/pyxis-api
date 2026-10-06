@@ -14,7 +14,11 @@ filled-in values live with the operator, never in this public repository.
 | Configuration                          | Parameter Store under `/pyxis-api/app/` (HTTP) and `/pyxis-api/migrate/` (migrations)                                     |
 | Database                               | Neon, São Paulo; the HTTP function connects as `pyxis_app` through the pooler, migrations as the owner on the direct host |
 
-There is no scheduled function yet; it arrives with the first scheduled job.
+| Jobs function `pyxis-api-jobs` | Same image, `dist/lambda/jobs-entry.handler`; run daily at 06:00 UTC by the EventBridge schedule `pyxis-api-retention`, as the application role; reads `/pyxis-api/jobs/` |
+
+The daily job deletes events older than 13 months (per project, 10,000 rows at a time), then
+expired or revoked dashboard sessions and expired sign-in codes. A failed step does not skip the
+others, but fails the run, and the scheduler retries it twice within the hour.
 
 ## First-time setup
 
@@ -52,6 +56,7 @@ There is no scheduled function yet; it arrives with the first scheduled job.
    reads the values back): `/pyxis-api/app/DATABASE_URL` (pooler host, `pyxis_app`,
    `sslmode=verify-full`), `/pyxis-api/app/EDGE_SHARED_SECRET` (a long random value),
    `/pyxis-api/app/RESEND_API_KEY` (a Resend key allowed to send only),
+   `/pyxis-api/jobs/DATABASE_URL` (the same value as `/pyxis-api/app/DATABASE_URL`),
    `/pyxis-api/migrate/MIGRATION_DATABASE_URL` (direct host, owner, `sslmode=verify-full`).
    `DASHBOARD_ORIGIN`, `SESSION_COOKIE_DOMAIN` and `MAIL_FROM` are plain parameters Terraform sets
    from its variables; the domain of `MAIL_FROM` must be verified in Resend before the first
@@ -87,6 +92,20 @@ aws logs tail /aws/lambda/pyxis-api --since 15m --profile pyxis-api | grep -E 'c
 `database.role_ok` confirms the function connects as the least-privilege role. A batch sent from
 an allowed origin must store a row whose `country` is filled, which proves
 `CloudFront-Viewer-Country` arrives.
+
+## The daily jobs
+
+Run them once by hand, for example after the first deploy:
+
+```bash
+aws lambda invoke --function-name pyxis-api-jobs --region sa-east-1 --profile pyxis-api \
+  --cli-read-timeout 910 jobs.json && cat jobs.json   # {"ok":true,"retention":{...}}
+aws logs tail /aws/lambda/pyxis-api-jobs --since 1h --profile pyxis-api | grep retention.
+```
+
+`retention.step_done { step, deleted }` is logged for each step; `retention.step_failed` names a
+step that failed and why. The schedule can be paused with
+`aws scheduler update-schedule` or by setting its state to `DISABLED` in Terraform.
 
 ## Rollback
 

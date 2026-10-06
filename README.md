@@ -80,9 +80,8 @@ Shipping now:
   site's backend with a secret project key
   ([ADR 0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md))
 
-Planned for v1 (see [Roadmap](#roadmap)):
-
-- Automatic deletion of events older than 13 months
+- A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
+  codes; each step logs its count, and a failed step fails the run so the scheduler retries
 
 ## Architecture
 
@@ -235,7 +234,7 @@ src/
 ├── domain/            entities, event validation, the PII barrier, derivations, key formats,
 │                      date ranges and the report shapes of the dashboard queries
 ├── cli/               the project, key and admin scripts
-├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations)
+├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations, daily jobs)
 ├── usecases/          one class per operation (ingestion, projects, keys, sign-in, queries)
 ├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
@@ -337,7 +336,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
 - [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
 - [x] Erasure and export of a person's events
-- [ ] Retention: deleting events older than 13 months
+- [x] Retention: a daily job deletes events older than 13 months
 - [ ] Load test, database size alarm, API reference on GitHub Pages
 
 ## Contributing and license
