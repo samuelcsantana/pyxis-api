@@ -44,7 +44,12 @@ export class DrizzleOtpCodeRepository implements OtpCodeRepository {
     return counted.length > 0;
   }
 
-  async markUsed(codeId: string, usedAt: Date): Promise<void> {
-    await this.db.update(otpCodes).set({ usedAt }).where(eq(otpCodes.id, codeId));
+  async claim(codeId: string, usedAt: Date): Promise<boolean> {
+    const claimed = await this.db
+      .update(otpCodes)
+      .set({ usedAt })
+      .where(and(eq(otpCodes.id, codeId), isNull(otpCodes.usedAt)))
+      .returning({ id: otpCodes.id });
+    return claimed.length > 0;
   }
 }

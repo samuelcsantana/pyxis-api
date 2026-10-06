@@ -48,7 +48,9 @@ export class VerifySignInCodeUseCase {
       this.logger.warn({ message: 'auth.invalid_code_attempt' });
       throw new InvalidSignInCodeError();
     }
-    await this.codes.markUsed(latest.id, now);
+    if (!(await this.codes.claim(latest.id, now))) {
+      throw new InvalidSignInCodeError();
+    }
     const admin = await this.admins.findByEmail(email);
     if (admin === null) {
       throw new InvalidSignInCodeError();

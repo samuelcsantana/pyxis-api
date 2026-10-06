@@ -32,6 +32,6 @@ describe('InMemoryOtpCodeRepository', () => {
     const codes = new InMemoryOtpCodeRepository();
 
     expect(await codes.consumeAttempt('missing', 5)).toBe(false);
-    await expect(codes.markUsed('missing', new Date())).resolves.toBeUndefined();
+    expect(await codes.claim('missing', new Date())).toBe(false);
   });
 });
