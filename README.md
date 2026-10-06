@@ -60,10 +60,17 @@ Shipping now:
   `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
   the admin's projects. There is no sign-up: `admin:grant` is the only way in
   ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
+- Dashboard queries over any range of up to 400 days in the project's time zone:
+  `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
+  writes against the previous period, daily activity, top pages and events),
+  `/devices` (device type, browser, system and country, top five and "other") and
+  `/acquisition` (visits per day and channel, sources with conversions and ad clicks). A project
+  the admin may not read answers the same 404 as one that does not exist
+  ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
 Planned for v1 (see [Roadmap](#roadmap)):
 
-- Queries for the overview, funnels, features, request errors, devices, acquisition and timelines
+- Queries for funnels, features, request errors and timelines
 - `DELETE /v1/subjects/{userId}`: erases a person's events, including the anonymous part of the
   visit they signed up in
 - Automatic deletion of events older than 13 months
@@ -216,12 +223,14 @@ counts the unit and integration suites together. Files outside the measurement, 
 ```text
 src/
 ├── config/            environment validation (Zod)
-├── domain/            entities, event validation, the PII barrier, derivations, key formats
+├── domain/            entities, event validation, the PII barrier, derivations, key formats,
+│                      date ranges and the report shapes of the dashboard queries
 ├── cli/               the project, key and admin scripts
 ├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations)
-├── usecases/          one class per operation (ingestion, projects, keys, sign-in)
+├── usecases/          one class per operation (ingestion, projects, keys, sign-in, queries)
 ├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
+├── infra/queries/     the dashboard queries in SQL and the definitions they share
 ├── infra/rate-limit/  the per-project limiter
 ├── infra/mail/        the sign-in email through Resend, or the log outside production
 ├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion,
@@ -281,6 +290,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   takes up to a minute to take effect everywhere
 - The ingestion route answers CORS with the project's allowed origin only, never with
   credentials; a request from another origin gets 403 and nothing it can read
+- A dashboard query for a project the admin was not granted answers exactly like one for a
+  project that does not exist (404 `not_found`), so the API never confirms that a project exists
 - Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
   use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out
@@ -301,6 +312,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 | [0005](docs/adr/0005-per-event-validation.md)                    | Validate each event of a batch on its own                        |
 | [0006](docs/adr/0006-lambda-behind-cloudfront.md)                | Run on Lambda behind CloudFront, with an edge secret             |
 | [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md) | Sign admins in with an emailed code and an opaque session cookie |
+| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)         | Answer dashboard queries from the raw events, without rollups    |
 
 ## Roadmap
 
@@ -310,7 +322,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Deployment code: Lambda handlers, image, Terraform, deploy script, runbook
 - [ ] First apply to AWS
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
-- [ ] Dashboard queries
+- [x] Dashboard queries: overview, devices, acquisition
+- [ ] Dashboard queries: features, requests, funnel, timeline
 - [ ] Erasure and retention
 - [ ] Load test, database size alarm, API reference on GitHub Pages
 
