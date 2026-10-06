@@ -1,5 +1,6 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
+import { openCliContext } from '../../src/cli/cli-context';
 import { sha256Hex } from '../../src/domain/auth/hashing';
 import { MAX_SIGN_IN_CODE_ATTEMPTS } from '../../src/domain/auth/sign-in-code';
 import { MAIL_SENDER } from '../../src/domain/services/mail-sender';
@@ -255,6 +256,29 @@ describe('dashboard sign-in', () => {
       `${SESSION_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
     );
     expect(after.statusCode).toBe(401);
+  });
+
+  it('lets an admin granted by the admin:grant script sign in and see the project', async () => {
+    const scripts = openCliContext({ MIGRATION_DATABASE_URL: e2eOwnerUrl() });
+    try {
+      await scripts.grantAdminAccess.execute({ email: 'bia@example.com', projectId: PROJECT_ID });
+    } finally {
+      await scripts.close();
+    }
+    await post('/v1/auth/request-code', { email: 'bia@example.com' });
+    const verified = await post('/v1/auth/verify-code', {
+      email: 'bia@example.com',
+      code: latestCode(),
+    });
+    const token = SESSION_COOKIE_PATTERN.exec(String(verified.headers['set-cookie']))?.[1];
+
+    const described = await me(`${SESSION_COOKIE_NAME}=${String(token)}`);
+
+    expect(verified.statusCode).toBe(200);
+    expect(described.json()).toMatchObject({
+      email: 'bia@example.com',
+      projects: [{ id: PROJECT_ID }],
+    });
   });
 
   it('limits each address to five code requests every fifteen minutes', async () => {

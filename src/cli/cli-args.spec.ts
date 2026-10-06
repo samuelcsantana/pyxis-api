@@ -3,6 +3,7 @@ import {
   flag,
   optionalText,
   parseCommandArgs,
+  requiredEmail,
   requiredId,
   requiredText,
   textList,
@@ -45,6 +46,8 @@ describe('option readers', () => {
     origin: ['a', 'b'],
     clear: true,
     id: '9F1C2B3A-1D2E-4F5A-8B6C-7D8E9F0A1B2C',
+    email: ' ana@example.com ',
+    longEmail: `${'a'.repeat(250)}@example.com`,
   };
 
   it('read an optional text, a list and a flag', () => {
@@ -66,5 +69,14 @@ describe('option readers', () => {
   it('require a UUID and lower-case it', () => {
     expect(requiredId(values, 'id')).toBe('9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c');
     expect(() => requiredId(values, 'name')).toThrow('--name must be a UUID.');
+  });
+
+  it('require an email address that fits the column, trimmed', () => {
+    expect(requiredEmail(values, 'email')).toBe('ana@example.com');
+    expect(() => requiredEmail(values, 'name')).toThrow('--name must be an email address.');
+    expect(() => requiredEmail(values, 'longEmail')).toThrow(
+      '--longEmail must be an email address.',
+    );
+    expect(() => requiredEmail(values, 'missing')).toThrow('--missing is required.');
   });
 });

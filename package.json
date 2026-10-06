@@ -33,6 +33,7 @@
     "project:update": "node dist/cli/project-update.main.js",
     "key:create": "node dist/cli/key-create.main.js",
     "key:revoke": "node dist/cli/key-revoke.main.js",
+    "admin:grant": "node dist/cli/admin-grant.main.js",
     "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand"
   },
   "dependencies": {
