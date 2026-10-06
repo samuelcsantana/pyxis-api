@@ -147,6 +147,61 @@ describe('dashboard queries', () => {
     });
   });
 
+  it('answers the named events and the screens of the project', async () => {
+    const events = await get(
+      `/v1/projects/${SHOP_ID}/features?from=2026-10-04&to=2026-10-05&kind=events`,
+    );
+    const screens = await get(
+      `/v1/projects/${SHOP_ID}/features?from=2026-10-04&to=2026-10-05&kind=screens`,
+    );
+
+    expect(events.json()).toEqual({
+      items: [{ name: 'signup_completed', count: 1, visits: 1, daily: [0, 1] }],
+    });
+    expect(screens.json()).toEqual({
+      items: [{ name: '/pricing', count: 1, visits: 1, daily: [0, 1] }],
+    });
+  });
+
+  it('answers the failing writes per route, for every screen or one', async () => {
+    const all = await get(`/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05`);
+    const elsewhere = await get(
+      `/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05&screen=/checkout`,
+    );
+
+    expect(all.statusCode).toBe(200);
+    expect(all.json()).toEqual({
+      routes: [
+        {
+          method: 'POST',
+          route: '/v1/plans',
+          total: 1,
+          failed: 1,
+          statuses: [{ status: 503, count: 1 }],
+          median_duration_ms: 80,
+          screens: [{ path: '/pricing', failed: 1 }],
+          recent_failures: [
+            {
+              occurred_at: '2026-10-05T10:02:00.000Z',
+              status: 503,
+              error_code: null,
+              session_id: SESSION_ID,
+            },
+          ],
+        },
+      ],
+    });
+    expect(elsewhere.json()).toEqual({ routes: [] });
+  });
+
+  it('answers 400 to an unknown feature kind', async () => {
+    const response = await get(
+      `/v1/projects/${SHOP_ID}/features?from=2026-10-05&to=2026-10-05&kind=clicks`,
+    );
+
+    expect(response.statusCode).toBe(400);
+  });
+
   it('answers 404 to the devices of a project of another admin', async () => {
     const response = await get(`/v1/projects/${FOREIGN_ID}/devices?from=2026-10-05&to=2026-10-05`);
 

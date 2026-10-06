@@ -10,9 +10,13 @@ import {
 import type { FastifyRequest } from 'fastify';
 import type { AcquisitionReport } from '../../../domain/queries/acquisition';
 import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
+import type { FeaturesReport } from '../../../domain/queries/features';
+import type { RequestsReport } from '../../../domain/queries/requests';
 import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/queries/overview';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
+import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
+import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { SessionGuard } from '../auth/auth.guards';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -24,10 +28,18 @@ import {
   acquisitionReportSchema,
   type DevicesReportBody,
   devicesReportSchema,
+  type FeaturesQuery,
+  featuresQuerySchema,
+  type FeaturesReportBody,
+  featuresReportSchema,
   type OverviewReportBody,
   overviewReportSchema,
   type RangeQuery,
   rangeQuerySchema,
+  type RequestsQuery,
+  requestsQuerySchema,
+  type RequestsReportBody,
+  requestsReportSchema,
 } from './query.schemas';
 
 function kpiBody(kpi: Kpi) {
@@ -84,6 +96,30 @@ function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
   };
 }
 
+function featuresBody(report: FeaturesReport): FeaturesReportBody {
+  return { items: report.items.map((item) => ({ ...item, daily: [...item.daily] })) };
+}
+
+function requestsBody(report: RequestsReport): RequestsReportBody {
+  return {
+    routes: report.routes.map((route) => ({
+      method: route.method,
+      route: route.route,
+      total: route.total,
+      failed: route.failed,
+      statuses: route.statuses.map((entry) => ({ ...entry })),
+      median_duration_ms: route.medianDurationMs,
+      screens: route.screens.map((entry) => ({ ...entry })),
+      recent_failures: route.recentFailures.map((failure) => ({
+        occurred_at: failure.occurredAt.toISOString(),
+        status: failure.status,
+        error_code: failure.errorCode,
+        session_id: failure.sessionId,
+      })),
+    })),
+  };
+}
+
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
 @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
@@ -111,6 +147,8 @@ export class QueriesController {
     private readonly getOverview: GetOverviewUseCase,
     private readonly getDevices: GetDevicesUseCase,
     private readonly getAcquisition: GetAcquisitionUseCase,
+    private readonly getFeatures: GetFeaturesUseCase,
+    private readonly getRequests: GetRequestsUseCase,
   ) {}
 
   @Get('overview')
@@ -144,5 +182,37 @@ export class QueriesController {
     range: RangeQuery,
   ): Promise<AcquisitionReportBody> {
     return acquisitionBody(await this.getAcquisition.execute(projectOf(request), range));
+  }
+
+  @Get('features')
+  @ApiOperation({ summary: 'The most used named events or screens, with their daily counts' })
+  @ApiQuery({ name: 'kind', enum: ['events', 'screens'] })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: featuresReportSchema })
+  async features(
+    @Req() request: FastifyRequest,
+    @Query({ schema: featuresQuerySchema, pipes: [new SchemaPipe(featuresQuerySchema)] })
+    query: FeaturesQuery,
+  ): Promise<FeaturesReportBody> {
+    const range = { from: query.from, to: query.to };
+    return featuresBody(await this.getFeatures.execute(projectOf(request), range, query.kind));
+  }
+
+  @Get('requests')
+  @ApiOperation({ summary: 'Writes per route: failures, statuses, durations and screens' })
+  @ApiQuery({
+    name: 'screen',
+    required: false,
+    description: 'Only the calls made from this page path',
+    schema: { type: 'string' },
+  })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: requestsReportSchema })
+  async requests(
+    @Req() request: FastifyRequest,
+    @Query({ schema: requestsQuerySchema, pipes: [new SchemaPipe(requestsQuerySchema)] })
+    query: RequestsQuery,
+  ): Promise<RequestsReportBody> {
+    const range = { from: query.from, to: query.to };
+    const report = await this.getRequests.execute(projectOf(request), range, query.screen ?? null);
+    return requestsBody(report);
   }
 }
