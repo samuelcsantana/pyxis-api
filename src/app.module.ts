@@ -5,6 +5,7 @@ import { DatabaseModule } from './infra/database/database.module';
 import { AuthModule } from './infra/http/auth/auth.module';
 import { HealthModule } from './infra/http/health/health.module';
 import { IngestModule } from './infra/http/ingest/ingest.module';
+import { QueriesModule } from './infra/http/queries/queries.module';
 import { RateLimitModule } from './infra/http/rate-limit/rate-limit.module';
 
 @Module({
@@ -15,6 +16,7 @@ import { RateLimitModule } from './infra/http/rate-limit/rate-limit.module';
     HealthModule,
     AuthModule,
     IngestModule,
+    QueriesModule,
   ],
 })
 export class AppModule {}

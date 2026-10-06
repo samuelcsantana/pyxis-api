@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { singleHeader } from '../request-headers';
 
-export const DASHBOARD_PATHS = ['/v1/auth', '/v1/me'] as const;
+export const DASHBOARD_PATHS = ['/v1/auth', '/v1/me', '/v1/projects'] as const;
 export const DASHBOARD_PREFLIGHT_MAX_AGE_SECONDS = 600;
 
 export function isDashboardPath(url: string): boolean {

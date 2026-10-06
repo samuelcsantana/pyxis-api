@@ -22,6 +22,7 @@ describe('isDashboardPath', () => {
     '/v1/me',
     '/v1/me?fresh=1',
     '/v1/me/projects',
+    '/v1/projects/p1/overview?from=a&to=b',
     '/v1/auth/request-code',
     '/v1/auth/logout?x=1',
   ])('treats %s as a dashboard path', (url) => {

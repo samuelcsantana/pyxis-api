@@ -232,6 +232,282 @@
         ],
         "type": "object"
       },
+      "OverviewReport": {
+        "additionalProperties": false,
+        "description": "Visits, identified users, conversions (null without a conversion event) and failed writes of the range against the previous one, with one daily entry per day of the range.",
+        "properties": {
+          "days": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "date": {
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "type": "string"
+                },
+                "events": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "page_views": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "date",
+                "page_views",
+                "events"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "kpis": {
+            "additionalProperties": false,
+            "properties": {
+              "conversions": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "current": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "daily": {
+                        "items": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "type": "array"
+                      },
+                      "previous": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "current",
+                      "previous",
+                      "daily"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "identified_users": {
+                "additionalProperties": false,
+                "properties": {
+                  "current": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "daily": {
+                    "items": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "previous": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "current",
+                  "previous",
+                  "daily"
+                ],
+                "type": "object"
+              },
+              "visits": {
+                "additionalProperties": false,
+                "properties": {
+                  "current": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "daily": {
+                    "items": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  },
+                  "previous": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "current",
+                  "previous",
+                  "daily"
+                ],
+                "type": "object"
+              },
+              "write_errors": {
+                "additionalProperties": false,
+                "properties": {
+                  "current": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "failed": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "total": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "failed",
+                      "total"
+                    ],
+                    "type": "object"
+                  },
+                  "daily": {
+                    "items": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "failed": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "total": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": [
+                        "failed",
+                        "total"
+                      ],
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "previous": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "failed": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "total": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "failed",
+                      "total"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "current",
+                  "previous",
+                  "daily"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "visits",
+              "identified_users",
+              "conversions",
+              "write_errors"
+            ],
+            "type": "object"
+          },
+          "top_events": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "count": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "name",
+                "count",
+                "visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "top_pages": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "views": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "views",
+                "visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "kpis",
+          "days",
+          "top_pages",
+          "top_events"
+        ],
+        "type": "object"
+      },
       "RequestCodeRequest": {
         "additionalProperties": false,
         "description": "The email to send a sign-in code to.",
@@ -622,6 +898,93 @@
         "summary": "The signed-in admin and their projects",
         "tags": [
           "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/overview": {
+      "get": {
+        "operationId": "QueriesController_overview",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "KPIs, daily activity, top pages and top events of a range",
+        "tags": [
+          "dashboard queries"
         ]
       }
     }
