@@ -1,5 +1,10 @@
 import type { Project } from '../../domain/entities/project.entity';
-import { checkedRange, previousRange, todayIn } from '../../domain/queries/date-range';
+import {
+  checkedRange,
+  comparisonCutoff,
+  previousRange,
+  todayIn,
+} from '../../domain/queries/date-range';
 import type { QueryScope } from '../../domain/queries/query-scope';
 
 export interface RequestedRange {
@@ -10,6 +15,7 @@ export interface RequestedRange {
 export interface ScopedPeriods {
   readonly current: QueryScope;
   readonly previous: QueryScope;
+  readonly comparisonCutoff: string | null;
 }
 
 export function scopedPeriods(
@@ -24,5 +30,11 @@ export function scopedPeriods(
     conversionEvent: project.conversionEvent,
     range,
   };
-  return { current, previous: { ...current, range: previousRange(range) } };
+  const previous: QueryScope = { ...current, range: previousRange(range) };
+  const cutoff = comparisonCutoff(range, project.timezone, now);
+  return {
+    current,
+    previous: cutoff === null ? previous : { ...previous, lastDayUntil: cutoff },
+    comparisonCutoff: cutoff,
+  };
 }

@@ -54,6 +54,27 @@ const REPORT: OverviewReport = {
   ],
   topPages: [{ path: '/pricing', views: 6, visits: 3 }],
   topEvents: [{ name: 'plan_selected', count: 2, visits: 2 }],
+  comparisonCutoff: '10:00:00.000',
+  previousDays: [
+    {
+      date: '2026-10-02',
+      pageViews: 4,
+      events: 1,
+      visits: 2,
+      identifiedUsers: 0,
+      conversions: 1,
+      writeErrors: { failed: 0, total: 1 },
+    },
+    {
+      date: '2026-10-03',
+      pageViews: 3,
+      events: 0,
+      visits: 1,
+      identifiedUsers: 0,
+      conversions: 0,
+      writeErrors: { failed: 0, total: 1 },
+    },
+  ],
 };
 
 const DEVICES: DevicesReport = {
