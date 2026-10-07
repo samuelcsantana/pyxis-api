@@ -90,6 +90,19 @@ const SEEDED: readonly TrackedEvent[] = [
     status: 500,
     duration: 10,
   }),
+  call(2, '2026-10-05T13:13:00.000Z', '/pricing', {
+    method: 'GET',
+    route: '/v1/plans',
+    status: 200,
+    duration: 12,
+  }),
+  call(1, '2026-10-05T12:20:00.000Z', '/checkout', {
+    method: 'GET',
+    route: '/v1/plans',
+    status: 0,
+    duration: 5000,
+    errorCode: 'network_error',
+  }),
   event(3, '2026-10-05T12:00:00.000Z', 'plan_selected', { projectId: BLOG_ID }),
 ];
 
@@ -158,7 +171,7 @@ describe('features and requests queries against a real Postgres', () => {
   });
 
   describe('DrizzleRequestsQuery', () => {
-    const everyScreen = { ...SCOPE, screen: null };
+    const everyScreen = { ...SCOPE, screen: null, kind: 'writes' } as const;
 
     it('totals the writes per route, failed meaning status 0 or 400 and above, never a GET', async () => {
       expect(await requests.routes(everyScreen, 50)).toEqual([
@@ -215,8 +228,53 @@ describe('features and requests queries against a real Postgres', () => {
       expect(await requests.recentFailures(everyScreen, 1)).toHaveLength(2);
     });
 
+    describe('for the failed reads', () => {
+      const failedReads = { ...SCOPE, screen: null, kind: 'reads' } as const;
+
+      it('counts GET calls that failed and nothing else, so total equals failed', async () => {
+        expect(await requests.routes(failedReads, 50)).toEqual([
+          { method: 'GET', route: '/v1/plans', total: 2, failed: 2, medianDurationMs: 2505 },
+        ]);
+      });
+
+      it('gives their statuses, screens and latest failures', async () => {
+        expect(await requests.statuses(failedReads)).toEqual([
+          { method: 'GET', route: '/v1/plans', status: 0, count: 1 },
+          { method: 'GET', route: '/v1/plans', status: 500, count: 1 },
+        ]);
+        expect(await requests.screens(failedReads)).toEqual([
+          { method: 'GET', route: '/v1/plans', path: '/checkout', failed: 1 },
+          { method: 'GET', route: '/v1/plans', path: '/pricing', failed: 1 },
+        ]);
+        expect(await requests.recentFailures(failedReads, 5)).toEqual([
+          {
+            method: 'GET',
+            route: '/v1/plans',
+            occurredAt: new Date('2026-10-05T13:12:00.000Z'),
+            status: 500,
+            errorCode: null,
+            sessionId: '88888888-0000-4000-8000-000000000002',
+          },
+          {
+            method: 'GET',
+            route: '/v1/plans',
+            occurredAt: new Date('2026-10-05T12:20:00.000Z'),
+            status: 0,
+            errorCode: 'network_error',
+            sessionId: '88888888-0000-4000-8000-000000000001',
+          },
+        ]);
+      });
+
+      it('narrows to one screen too', async () => {
+        expect(await requests.routes({ ...failedReads, screen: '/checkout' }, 50)).toMatchObject([
+          { total: 1, failed: 1 },
+        ]);
+      });
+    });
+
     it('narrows everything to one screen when asked', async () => {
-      const checkout = { ...SCOPE, screen: '/checkout' };
+      const checkout = { ...SCOPE, screen: '/checkout', kind: 'writes' } as const;
 
       expect(await requests.routes(checkout, 50)).toEqual([
         { method: 'POST', route: '/v1/plans', total: 1, failed: 1, medianDurationMs: 100 },

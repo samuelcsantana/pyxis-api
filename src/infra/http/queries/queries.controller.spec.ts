@@ -107,6 +107,7 @@ const FEATURES: FeaturesReport = {
 };
 
 const REQUESTS: RequestsReport = {
+  kind: 'writes',
   routes: [
     {
       method: 'POST',
@@ -292,13 +293,15 @@ describe('QueriesController', () => {
     const body = await controller.requests({ project: PROJECT } as FastifyRequest, {
       ...range,
       screen: '/pricing',
+      kind: 'writes',
     });
-    await controller.requests({ project: PROJECT } as FastifyRequest, range);
+    await controller.requests({ project: PROJECT } as FastifyRequest, { ...range, kind: 'reads' });
 
     expect(calls).toEqual([
-      [PROJECT, range, '/pricing'],
-      [PROJECT, range, null],
+      [PROJECT, range, '/pricing', 'writes'],
+      [PROJECT, range, null, 'reads'],
     ]);
+    expect(requestsReportSchema.parse(body).kind).toBe('writes');
     expect(requestsReportSchema.parse(body).routes[0]).toEqual({
       method: 'POST',
       route: '/v1/plans',

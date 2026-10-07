@@ -2,6 +2,8 @@ import type { QueryScope } from './query-scope';
 
 export const TOP_ROUTES = 50;
 export const RECENT_FAILURES_PER_ROUTE = 5;
+export const REQUEST_KINDS = ['writes', 'reads'] as const;
+export type RequestKind = (typeof REQUEST_KINDS)[number];
 
 export interface RouteKey {
   readonly method: string;
@@ -33,6 +35,7 @@ export interface RouteFailure extends RouteKey {
 
 export interface RequestsScope extends QueryScope {
   readonly screen: string | null;
+  readonly kind: RequestKind;
 }
 
 export interface RequestsQuery {
@@ -51,6 +54,7 @@ export interface RouteReport extends RouteTotal {
 }
 
 export interface RequestsReport {
+  readonly kind: RequestKind;
   readonly routes: readonly RouteReport[];
 }
 

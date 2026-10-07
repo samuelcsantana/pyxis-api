@@ -7,6 +7,7 @@ import {
 } from '../../../domain/events/event-limits';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
+import { REQUEST_KINDS } from '../../../domain/queries/requests';
 
 const MAX_SCREEN_LENGTH = 256;
 
@@ -125,6 +126,7 @@ export const featuresQuerySchema = rangeQuerySchema.extend({ kind: z.enum(FEATUR
 
 export const requestsQuerySchema = rangeQuerySchema.extend({
   screen: z.string().startsWith('/').max(MAX_SCREEN_LENGTH).optional(),
+  kind: z.enum(REQUEST_KINDS).default('writes'),
 });
 
 const funnelStepSchema = z.discriminatedUnion('type', [
@@ -221,6 +223,7 @@ export const featuresReportSchema = z
 
 export const requestsReportSchema = z
   .strictObject({
+    kind: z.enum(REQUEST_KINDS),
     routes: z.array(
       z.strictObject({
         method: z.string(),
@@ -244,8 +247,10 @@ export const requestsReportSchema = z
   .meta({
     id: 'RequestsReport',
     description:
-      'Writes (methods other than GET) per route, the most failing first: a failure is status 0 ' +
-      'or 400 and above. Screens are the pages the calls were made from; at most five recent ' +
+      'Writes (methods other than GET, kind=writes) or failed reads (GET, kind=reads) per route, ' +
+      'the most failing first: a failure is status 0 or 400 and above. Reads count failures ' +
+      'only, so total equals failed and no rate can be drawn from them: a site may send a GET ' +
+      'only when it fails. Screens are the pages the calls were made from; at most five recent ' +
       'failures per route, newest first.',
   });
 
