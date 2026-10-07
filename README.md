@@ -70,7 +70,10 @@ Shipping now:
   ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
 - Dashboard queries over any range of up to 400 days in the project's time zone:
   `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
-  writes against the previous period, daily activity, top pages and events),
+  writes against the previous period, daily activity of both periods, top pages and events; a
+  range that ends today is compared with the previous period up to the same time of day, and the
+  answer says which time that was:
+  [ADR 0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)),
   `/devices` (device type, browser, system and country, top five and "other") and
   `/acquisition` (visits per day and channel, sources with conversions and ad clicks),
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
@@ -350,17 +353,18 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 
 ## Architecture decisions
 
-| ADR                                                              | Decision                                                         |
-| ---------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [0001](docs/adr/0001-record-architecture-decisions.md)           | Record architecture decisions                                    |
-| [0002](docs/adr/0002-clean-architecture.md)                      | Clean Architecture with ports and adapters                       |
-| [0003](docs/adr/0003-openapi-from-zod.md)                        | Generate the OpenAPI 3.1 contract from Zod                       |
-| [0004](docs/adr/0004-least-privilege-database-roles.md)          | Least-privilege database roles                                   |
-| [0005](docs/adr/0005-per-event-validation.md)                    | Validate each event of a batch on its own                        |
-| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                | Run on Lambda behind CloudFront, with an edge secret             |
-| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md) | Sign admins in with an emailed code and an opaque session cookie |
-| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)         | Answer dashboard queries from the raw events, without rollups    |
-| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md) | Erase a person together with the visits they identified in       |
+| ADR                                                                    | Decision                                                         |
+| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| [0001](docs/adr/0001-record-architecture-decisions.md)                 | Record architecture decisions                                    |
+| [0002](docs/adr/0002-clean-architecture.md)                            | Clean Architecture with ports and adapters                       |
+| [0003](docs/adr/0003-openapi-from-zod.md)                              | Generate the OpenAPI 3.1 contract from Zod                       |
+| [0004](docs/adr/0004-least-privilege-database-roles.md)                | Least-privilege database roles                                   |
+| [0005](docs/adr/0005-per-event-validation.md)                          | Validate each event of a batch on its own                        |
+| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                      | Run on Lambda behind CloudFront, with an edge secret             |
+| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)       | Sign admins in with an emailed code and an opaque session cookie |
+| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)               | Answer dashboard queries from the raw events, without rollups    |
+| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)       | Erase a person together with the visits they identified in       |
+| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md) | Compare an unfinished day up to the same time of day             |
 
 ## Roadmap
 
