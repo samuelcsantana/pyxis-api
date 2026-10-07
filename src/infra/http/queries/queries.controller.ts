@@ -85,6 +85,16 @@ function overviewBody(report: OverviewReport): OverviewReportBody {
     })),
     top_pages: [...report.topPages],
     top_events: [...report.topEvents],
+    comparison_cutoff: report.comparisonCutoff,
+    previous_days: report.previousDays.map((day) => ({
+      date: day.date,
+      page_views: day.pageViews,
+      events: day.events,
+      visits: day.visits,
+      identified_users: day.identifiedUsers,
+      conversions: day.conversions,
+      write_errors: { ...day.writeErrors },
+    })),
   };
 }
 

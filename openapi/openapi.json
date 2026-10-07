@@ -589,8 +589,20 @@
       },
       "OverviewReport": {
         "additionalProperties": false,
-        "description": "Visits, identified users, conversions (null without a conversion event) and failed writes of the range against the previous one, with one daily entry per day of the range.",
+        "description": "Visits, identified users, conversions (null without a conversion event) and failed writes of the range against the previous one (the same number of days right before it), with one daily entry per day of each period.",
         "properties": {
+          "comparison_cutoff": {
+            "anyOf": [
+              {
+                "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d\\.\\d{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When the range ends today in the project time zone: the local time it was read at, and the previous period stops at that time on its last day. Null when the range is over and both periods are whole days."
+          },
           "days": {
             "items": {
               "additionalProperties": false,
@@ -800,6 +812,82 @@
             ],
             "type": "object"
           },
+          "previous_days": {
+            "description": "One entry per day of the previous period, oldest first",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "date": {
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "type": "string"
+                },
+                "events": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "identified_users": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "page_views": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "write_errors": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "failed": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "total": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "failed",
+                    "total"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "date",
+                "page_views",
+                "events",
+                "visits",
+                "identified_users",
+                "conversions",
+                "write_errors"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "top_events": {
             "items": {
               "additionalProperties": false,
@@ -859,7 +947,9 @@
           "kpis",
           "days",
           "top_pages",
-          "top_events"
+          "top_events",
+          "comparison_cutoff",
+          "previous_days"
         ],
         "type": "object"
       },
