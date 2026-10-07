@@ -31,7 +31,8 @@ describe('GetOverviewUseCase', () => {
     query.totalsByFrom.set('2026-10-03', {
       visits: 12,
       identifiedUsers: 4,
-      conversions: 2,
+      conversions: 3,
+      convertingVisits: 2,
       writes: 10,
       failedWrites: 1,
     });
@@ -39,6 +40,7 @@ describe('GetOverviewUseCase', () => {
       visits: 9,
       identifiedUsers: 3,
       conversions: 1,
+      convertingVisits: 1,
       writes: 8,
       failedWrites: 0,
     });
@@ -47,7 +49,8 @@ describe('GetOverviewUseCase', () => {
 
     expect(report.kpis.visits).toMatchObject({ current: 12, previous: 9 });
     expect(report.kpis.identifiedUsers).toMatchObject({ current: 4, previous: 3 });
-    expect(report.kpis.conversions).toMatchObject({ current: 2, previous: 1 });
+    expect(report.kpis.conversions).toMatchObject({ current: 3, previous: 1 });
+    expect(report.kpis.convertingVisits).toMatchObject({ current: 2, previous: 1 });
     expect(report.kpis.writeErrors).toMatchObject({
       current: { failed: 1, total: 10 },
       previous: { failed: 0, total: 8 },
@@ -66,6 +69,7 @@ describe('GetOverviewUseCase', () => {
         visits: 5,
         identifiedUsers: 2,
         conversions: 1,
+        convertingVisits: 1,
         writes: 3,
         failedWrites: 1,
         pageViews: 20,
@@ -77,6 +81,7 @@ describe('GetOverviewUseCase', () => {
 
     expect(report.kpis.visits.daily).toEqual([0, 5, 0]);
     expect(report.kpis.conversions?.daily).toEqual([0, 1, 0]);
+    expect(report.kpis.convertingVisits?.daily).toEqual([0, 1, 0]);
     expect(report.kpis.writeErrors.daily).toEqual([
       { failed: 0, total: 0 },
       { failed: 1, total: 3 },
@@ -110,7 +115,10 @@ describe('GetOverviewUseCase', () => {
   it('leaves conversions out when the project has no conversion event', async () => {
     const { run } = setup({ ...PROJECT, conversionEvent: null });
 
-    expect((await run('2026-10-05', '2026-10-05')).kpis.conversions).toBeNull();
+    const { kpis } = await run('2026-10-05', '2026-10-05');
+
+    expect(kpis.conversions).toBeNull();
+    expect(kpis.convertingVisits).toBeNull();
   });
 
   it('stops the previous period at the local time of now when the range ends today', async () => {
@@ -165,6 +173,7 @@ describe('GetOverviewUseCase', () => {
         visits: 4,
         identifiedUsers: 1,
         conversions: 2,
+        convertingVisits: 2,
         writes: 5,
         failedWrites: 1,
         pageViews: 9,
@@ -182,6 +191,7 @@ describe('GetOverviewUseCase', () => {
         visits: 0,
         identifiedUsers: 0,
         conversions: 0,
+        convertingVisits: 0,
         writeErrors: { failed: 0, total: 0 },
       },
       {
@@ -191,6 +201,7 @@ describe('GetOverviewUseCase', () => {
         visits: 4,
         identifiedUsers: 1,
         conversions: 2,
+        convertingVisits: 2,
         writeErrors: { failed: 1, total: 5 },
       },
     ]);
@@ -203,7 +214,7 @@ describe('GetOverviewUseCase', () => {
     const report = await run('2026-10-05', '2026-10-05');
 
     expect(report.previousDays).toEqual([
-      expect.objectContaining({ date: '2026-10-04', conversions: null }),
+      expect.objectContaining({ date: '2026-10-04', conversions: null, convertingVisits: null }),
     ]);
   });
 

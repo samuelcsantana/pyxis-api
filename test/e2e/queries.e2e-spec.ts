@@ -85,6 +85,7 @@ describe('dashboard queries', () => {
         visits: { current: 1, previous: 0, daily: [0, 1] },
         identified_users: { current: 1, previous: 0, daily: [0, 1] },
         conversions: { current: 1, previous: 0, daily: [0, 1] },
+        converting_visits: { current: 1, previous: 0, daily: [0, 1] },
         write_errors: {
           current: { failed: 1, total: 1 },
           previous: { failed: 0, total: 0 },
@@ -108,6 +109,7 @@ describe('dashboard queries', () => {
         visits: 0,
         identified_users: 0,
         conversions: 0,
+        converting_visits: 0,
         write_errors: { failed: 0, total: 0 },
       })),
     });

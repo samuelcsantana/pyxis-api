@@ -35,10 +35,15 @@ export function isConversion(scope: QueryScope): SQL {
 
 export const visits = sql`count(DISTINCT ${events.sessionId}) FILTER (WHERE ${isPageView})::int`;
 
+export function convertingVisits(scope: QueryScope): SQL {
+  return sql`count(DISTINCT ${events.sessionId}) FILTER (WHERE ${isConversion(scope)})::int`;
+}
+
 export function periodTotalsColumns(scope: QueryScope): SQL {
   return sql`${visits} AS "visits",
     count(DISTINCT ${events.userId})::int AS "identifiedUsers",
     count(*) FILTER (WHERE ${isConversion(scope)})::int AS "conversions",
+    ${convertingVisits(scope)} AS "convertingVisits",
     count(*) FILTER (WHERE ${isWrite})::int AS "writes",
     count(*) FILTER (WHERE ${isFailedWrite})::int AS "failedWrites"`;
 }
