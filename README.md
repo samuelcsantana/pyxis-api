@@ -234,6 +234,18 @@ counts the unit and integration suites together. Files outside the measurement, 
 | `src/**/*.module.ts`        | Nest module declarations: wiring without logic                                                  |
 | `eslint-rules/`, `scripts/` | Tooling outside `src/`, tested on Node's test runner instead                                    |
 
+### Load test
+
+`scripts/load-test.mts` sends batches to `POST /v1/batch` on a fixed schedule and prints the
+status codes, the accepted and rejected events and the p50, p95 and max latency. It exits 1 if any
+batch answers other than `202`. It defaults to 1,000 events a minute for 10 minutes, in batches of
+20 over 200 visits. Point it at a project made for the test, never at a real site's project:
+
+```bash
+node scripts/load-test.mts --endpoint http://localhost:3040 --key pyxis_pk_… \
+  --origin http://localhost:3031 [--events-per-minute 1000] [--minutes 10] [--batch-size 20]
+```
+
 ## Project structure
 
 ```text
@@ -341,13 +353,14 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Database: Drizzle, migrations, least-privilege roles, local Postgres
 - [x] Ingestion: domain rules, `POST /v1/batch`, project and key scripts
 - [x] Deployment code: Lambda handlers, image, Terraform, deploy script, runbook
-- [ ] First apply to AWS
+- [x] First apply to AWS
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
 - [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
 - [x] Erasure and export of a person's events
 - [x] Retention: a daily job deletes events older than 13 months
 - [x] API reference on GitHub Pages
 - [x] Database size report and alarm (in Terraform, applied with the stack)
+- [x] Load test script, run against the local stack
 - [ ] Load test through CloudFront
 
 ## Contributing and license
