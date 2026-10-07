@@ -60,6 +60,13 @@ export interface DayActivity {
   readonly events: number;
 }
 
+export interface PreviousDay extends DayActivity {
+  readonly visits: number;
+  readonly identifiedUsers: number;
+  readonly conversions: number | null;
+  readonly writeErrors: FailureCount;
+}
+
 export interface OverviewReport {
   readonly kpis: {
     readonly visits: Kpi;
@@ -70,4 +77,6 @@ export interface OverviewReport {
   readonly days: readonly DayActivity[];
   readonly topPages: readonly PageCount[];
   readonly topEvents: readonly EventCount[];
+  readonly comparisonCutoff: string | null;
+  readonly previousDays: readonly PreviousDay[];
 }

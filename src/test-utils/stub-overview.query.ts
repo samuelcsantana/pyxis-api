@@ -30,7 +30,9 @@ export class StubOverviewQuery implements OverviewQuery {
 
   days(scope: QueryScope): Promise<readonly DayTotals[]> {
     this.scopes.push(scope);
-    return Promise.resolve(this.sparseDays);
+    return Promise.resolve(
+      this.sparseDays.filter((day) => day.date >= scope.range.from && day.date <= scope.range.to),
+    );
   }
 
   topPages(scope: QueryScope, limit: number): Promise<readonly PageCount[]> {

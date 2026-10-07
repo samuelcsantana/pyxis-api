@@ -15,10 +15,14 @@ const PROJECT: Project = {
 };
 const LATE_EVENING_IN_SAO_PAULO = new Date('2026-10-06T02:30:00.000Z');
 
-function setup(project: Project = PROJECT) {
+function setup(project: Project = PROJECT, now: Date = LATE_EVENING_IN_SAO_PAULO) {
   const query = new StubOverviewQuery();
-  const useCase = new GetOverviewUseCase(query, new FixedClock(LATE_EVENING_IN_SAO_PAULO));
+  const useCase = new GetOverviewUseCase(query, new FixedClock(now));
   return { query, run: (from: string, to: string) => useCase.execute(project, { from, to }) };
+}
+
+function scopesFrom(query: StubOverviewQuery, from: string) {
+  return query.scopes.filter((scope) => scope.range.from === from);
 }
 
 describe('GetOverviewUseCase', () => {
@@ -107,6 +111,100 @@ describe('GetOverviewUseCase', () => {
     const { run } = setup({ ...PROJECT, conversionEvent: null });
 
     expect((await run('2026-10-05', '2026-10-05')).kpis.conversions).toBeNull();
+  });
+
+  it('stops the previous period at the local time of now when the range ends today', async () => {
+    const { query, run } = setup();
+
+    const report = await run('2026-10-03', '2026-10-05');
+
+    expect(report.comparisonCutoff).toBe('23:30:00.000');
+    expect(scopesFrom(query, '2026-09-30')).toHaveLength(2);
+    for (const scope of scopesFrom(query, '2026-09-30')) {
+      expect(scope).toMatchObject({
+        range: { from: '2026-09-30', to: '2026-10-02' },
+        lastDayUntil: '23:30:00.000',
+      });
+    }
+    for (const scope of scopesFrom(query, '2026-10-03')) {
+      expect(scope.lastDayUntil).toBeUndefined();
+    }
+  });
+
+  it('compares whole days when the range ended before today', async () => {
+    const { query, run } = setup();
+
+    const report = await run('2026-10-03', '2026-10-04');
+
+    expect(report.comparisonCutoff).toBeNull();
+    expect(query.scopes.every((scope) => scope.lastDayUntil === undefined)).toBe(true);
+  });
+
+  it.each([
+    ['the last millisecond of the day', '2026-10-06T02:59:59.999Z', '2026-10-05', '23:59:59.999'],
+    ['the first moment of the next day', '2026-10-06T03:00:00.007Z', '2026-10-05', null],
+    ['the new day', '2026-10-06T03:00:00.007Z', '2026-10-06', '00:00:00.007'],
+  ])('reads the cutoff across midnight in Sao Paulo: %s', async (_case, now, day, cutoff) => {
+    const { run } = setup(PROJECT, new Date(now));
+
+    expect((await run(day, day)).comparisonCutoff).toBe(cutoff);
+  });
+
+  it('reads the cutoff on the UTC clock for a UTC project', async () => {
+    const { run } = setup({ ...PROJECT, timezone: 'UTC' });
+
+    expect((await run('2026-10-06', '2026-10-06')).comparisonCutoff).toBe('02:30:00.000');
+    expect((await run('2026-10-05', '2026-10-05')).comparisonCutoff).toBeNull();
+  });
+
+  it('gives the previous period one entry per day, with zeros on days without events', async () => {
+    const { query, run } = setup();
+    query.sparseDays = [
+      {
+        date: '2026-10-03',
+        visits: 4,
+        identifiedUsers: 1,
+        conversions: 2,
+        writes: 5,
+        failedWrites: 1,
+        pageViews: 9,
+        events: 3,
+      },
+    ];
+
+    const report = await run('2026-10-04', '2026-10-05');
+
+    expect(report.previousDays).toEqual([
+      {
+        date: '2026-10-02',
+        pageViews: 0,
+        events: 0,
+        visits: 0,
+        identifiedUsers: 0,
+        conversions: 0,
+        writeErrors: { failed: 0, total: 0 },
+      },
+      {
+        date: '2026-10-03',
+        pageViews: 9,
+        events: 3,
+        visits: 4,
+        identifiedUsers: 1,
+        conversions: 2,
+        writeErrors: { failed: 1, total: 5 },
+      },
+    ]);
+    expect(report.kpis.visits.daily).toEqual([0, 0]);
+  });
+
+  it('leaves the previous days without conversions when the project has no conversion event', async () => {
+    const { run } = setup({ ...PROJECT, conversionEvent: null });
+
+    const report = await run('2026-10-05', '2026-10-05');
+
+    expect(report.previousDays).toEqual([
+      expect.objectContaining({ date: '2026-10-04', conversions: null }),
+    ]);
   });
 
   it('refuses a range that ends after today in the project zone, even if UTC is already there', async () => {

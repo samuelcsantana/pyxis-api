@@ -7,8 +7,10 @@ import {
   type OverviewQuery,
   type OverviewReport,
   type PeriodTotals,
+  type PreviousDay,
   TOP_ITEMS,
 } from '../../domain/queries/overview';
+import type { QueryScope } from '../../domain/queries/query-scope';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { type RequestedRange, scopedPeriods } from './scoped-periods';
 
@@ -31,6 +33,18 @@ function failures(totals: PeriodTotals) {
   return { failed: totals.failedWrites, total: totals.writes };
 }
 
+function previousDay(day: DayTotals, scope: QueryScope): PreviousDay {
+  return {
+    date: day.date,
+    pageViews: day.pageViews,
+    events: day.events,
+    visits: day.visits,
+    identifiedUsers: day.identifiedUsers,
+    conversions: scope.conversionEvent === null ? null : day.conversions,
+    writeErrors: failures(day),
+  };
+}
+
 @Injectable()
 export class GetOverviewUseCase {
   constructor(
@@ -39,15 +53,21 @@ export class GetOverviewUseCase {
   ) {}
 
   async execute(project: Project, requested: RequestedRange): Promise<OverviewReport> {
-    const { current, previous } = scopedPeriods(project, requested, this.clock.now());
-    const [now, before, sparseDays, topPages, topEvents] = await Promise.all([
+    const { current, previous, comparisonCutoff } = scopedPeriods(
+      project,
+      requested,
+      this.clock.now(),
+    );
+    const [now, before, sparseDays, sparsePreviousDays, topPages, topEvents] = await Promise.all([
       this.query.totals(current),
       this.query.totals(previous),
       this.query.days(current),
+      this.query.days(previous),
       this.query.topPages(current, TOP_ITEMS),
       this.query.topEvents(current, TOP_ITEMS),
     ]);
     const days = denseDays(daysIn(current.range), sparseDays);
+    const previousDays = denseDays(daysIn(previous.range), sparsePreviousDays);
     return {
       kpis: {
         visits: {
@@ -77,6 +97,8 @@ export class GetOverviewUseCase {
       days: days.map((day) => ({ date: day.date, pageViews: day.pageViews, events: day.events })),
       topPages,
       topEvents,
+      comparisonCutoff,
+      previousDays: previousDays.map((day) => previousDay(day, previous)),
     };
   }
 }
