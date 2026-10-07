@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
 import type { Channel } from '../../domain/entities/tracked-event.entity';
-import { API_REQUEST } from '../../domain/events/reserved-event-names';
 import { likePattern } from '../../domain/queries/funnel';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import {
@@ -15,10 +14,7 @@ import {
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isNamedEvent, isPageView } from './definitions';
-
-const isFailedRequest = sql`${events.name} = ${API_REQUEST}
-  AND ((${events.properties}->>'status')::int = 0 OR (${events.properties}->>'status')::int >= 400)`;
+import { inScope, isFailedRequest, isNamedEvent, isPageView } from './definitions';
 
 const inVisitOrder = sql`ORDER BY ${events.occurredAt}, ${events.id}`;
 
