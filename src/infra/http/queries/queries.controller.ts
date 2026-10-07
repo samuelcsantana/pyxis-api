@@ -139,7 +139,7 @@ function requestsBody(report: RequestsReport): RequestsReportBody {
   };
 }
 
-function ApiRange() {
+export function ApiRange() {
   return applyDecorators(
     ApiQuery({
       name: 'from',
