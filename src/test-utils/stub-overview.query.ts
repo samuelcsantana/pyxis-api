@@ -11,6 +11,7 @@ const NO_TOTALS: PeriodTotals = {
   visits: 0,
   identifiedUsers: 0,
   conversions: 0,
+  convertingVisits: 0,
   writes: 0,
   failedWrites: 0,
 };

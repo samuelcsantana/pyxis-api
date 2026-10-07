@@ -39,6 +39,7 @@ const REPORT: OverviewReport = {
     visits: { current: 3, previous: 2, daily: [1, 2] },
     identifiedUsers: { current: 1, previous: 0, daily: [0, 1] },
     conversions: { current: 1, previous: 1, daily: [1, 0] },
+    convertingVisits: { current: 1, previous: 1, daily: [1, 0] },
     writeErrors: {
       current: { failed: 1, total: 4 },
       previous: { failed: 0, total: 2 },
@@ -63,6 +64,7 @@ const REPORT: OverviewReport = {
       visits: 2,
       identifiedUsers: 0,
       conversions: 1,
+      convertingVisits: 1,
       writeErrors: { failed: 0, total: 1 },
     },
     {
@@ -72,6 +74,7 @@ const REPORT: OverviewReport = {
       visits: 1,
       identifiedUsers: 0,
       conversions: 0,
+      convertingVisits: 0,
       writeErrors: { failed: 0, total: 1 },
     },
   ],
@@ -186,6 +189,7 @@ describe('QueriesController', () => {
     expect(calls).toEqual([[PROJECT, range]]);
     expect(overviewReportSchema.parse(body)).toEqual(body);
     expect(body.kpis.identified_users).toEqual({ current: 1, previous: 0, daily: [0, 1] });
+    expect(body.kpis.converting_visits).toEqual({ current: 1, previous: 1, daily: [1, 0] });
     expect(body.kpis.write_errors.current).toEqual({ failed: 1, total: 4 });
     expect(body.days[1]).toEqual({ date: '2026-10-05', page_views: 7, events: 2 });
     expect(body.comparison_cutoff).toBe('10:00:00.000');
@@ -196,6 +200,7 @@ describe('QueriesController', () => {
       visits: 2,
       identified_users: 0,
       conversions: 1,
+      converting_visits: 1,
       write_errors: { failed: 0, total: 1 },
     });
   });
@@ -214,7 +219,7 @@ describe('QueriesController', () => {
   it('keeps conversions null when the project has no conversion event', async () => {
     const { controller } = controllerAnswering({
       ...REPORT,
-      kpis: { ...REPORT.kpis, conversions: null },
+      kpis: { ...REPORT.kpis, conversions: null, convertingVisits: null },
     });
 
     const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
@@ -223,6 +228,7 @@ describe('QueriesController', () => {
     });
 
     expect(body.kpis.conversions).toBeNull();
+    expect(body.kpis.converting_visits).toBeNull();
   });
 
   it('answers the devices of the guarded project in snake case', async () => {

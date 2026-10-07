@@ -671,6 +671,43 @@
                   }
                 ]
               },
+              "converting_visits": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "current": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "daily": {
+                        "items": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        "type": "array"
+                      },
+                      "previous": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "current",
+                      "previous",
+                      "daily"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Visits that sent the conversion event at least once; null without one"
+              },
               "identified_users": {
                 "additionalProperties": false,
                 "properties": {
@@ -808,6 +845,7 @@
               "visits",
               "identified_users",
               "conversions",
+              "converting_visits",
               "write_errors"
             ],
             "type": "object"
@@ -818,6 +856,18 @@
               "additionalProperties": false,
               "properties": {
                 "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "converting_visits": {
                   "anyOf": [
                     {
                       "maximum": 9007199254740991,
@@ -882,6 +932,7 @@
                 "visits",
                 "identified_users",
                 "conversions",
+                "converting_visits",
                 "write_errors"
               ],
               "type": "object"

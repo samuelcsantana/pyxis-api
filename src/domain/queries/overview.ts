@@ -6,6 +6,7 @@ export interface PeriodTotals {
   readonly visits: number;
   readonly identifiedUsers: number;
   readonly conversions: number;
+  readonly convertingVisits: number;
   readonly writes: number;
   readonly failedWrites: number;
 }
@@ -64,6 +65,7 @@ export interface PreviousDay extends DayActivity {
   readonly visits: number;
   readonly identifiedUsers: number;
   readonly conversions: number | null;
+  readonly convertingVisits: number | null;
   readonly writeErrors: FailureCount;
 }
 
@@ -72,6 +74,7 @@ export interface OverviewReport {
     readonly visits: Kpi;
     readonly identifiedUsers: Kpi;
     readonly conversions: Kpi | null;
+    readonly convertingVisits: Kpi | null;
     readonly writeErrors: WriteErrorsKpi;
   };
   readonly days: readonly DayActivity[];

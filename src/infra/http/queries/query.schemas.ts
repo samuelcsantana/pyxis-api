@@ -29,6 +29,9 @@ export const overviewReportSchema = z
       visits: kpiSchema,
       identified_users: kpiSchema,
       conversions: kpiSchema.nullable(),
+      converting_visits: kpiSchema
+        .nullable()
+        .describe('Visits that sent the conversion event at least once; null without one'),
       write_errors: z.strictObject({
         current: failureCountSchema,
         previous: failureCountSchema,
@@ -55,6 +58,7 @@ export const overviewReportSchema = z
           visits: z.int(),
           identified_users: z.int(),
           conversions: z.int().nullable(),
+          converting_visits: z.int().nullable(),
           write_errors: failureCountSchema,
         }),
       )

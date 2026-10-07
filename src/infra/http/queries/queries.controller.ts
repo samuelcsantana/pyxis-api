@@ -70,12 +70,13 @@ function writeErrorsBody(kpi: WriteErrorsKpi) {
 }
 
 function overviewBody(report: OverviewReport): OverviewReportBody {
-  const { conversions } = report.kpis;
+  const { conversions, convertingVisits } = report.kpis;
   return {
     kpis: {
       visits: kpiBody(report.kpis.visits),
       identified_users: kpiBody(report.kpis.identifiedUsers),
       conversions: conversions === null ? null : kpiBody(conversions),
+      converting_visits: convertingVisits === null ? null : kpiBody(convertingVisits),
       write_errors: writeErrorsBody(report.kpis.writeErrors),
     },
     days: report.days.map((day) => ({
@@ -93,6 +94,7 @@ function overviewBody(report: OverviewReport): OverviewReportBody {
       visits: day.visits,
       identified_users: day.identifiedUsers,
       conversions: day.conversions,
+      converting_visits: day.convertingVisits,
       write_errors: { ...day.writeErrors },
     })),
   };

@@ -18,6 +18,7 @@ const EMPTY_DAY: Omit<DayTotals, 'date'> = {
   visits: 0,
   identifiedUsers: 0,
   conversions: 0,
+  convertingVisits: 0,
   writes: 0,
   failedWrites: 0,
   pageViews: 0,
@@ -41,6 +42,7 @@ function previousDay(day: DayTotals, scope: QueryScope): PreviousDay {
     visits: day.visits,
     identifiedUsers: day.identifiedUsers,
     conversions: scope.conversionEvent === null ? null : day.conversions,
+    convertingVisits: scope.conversionEvent === null ? null : day.convertingVisits,
     writeErrors: failures(day),
   };
 }
@@ -87,6 +89,14 @@ export class GetOverviewUseCase {
                 current: now.conversions,
                 previous: before.conversions,
                 daily: days.map((day) => day.conversions),
+              },
+        convertingVisits:
+          project.conversionEvent === null
+            ? null
+            : {
+                current: now.convertingVisits,
+                previous: before.convertingVisits,
+                daily: days.map((day) => day.convertingVisits),
               },
         writeErrors: {
           current: failures(now),

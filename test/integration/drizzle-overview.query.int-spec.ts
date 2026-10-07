@@ -60,6 +60,7 @@ const SEEDED: readonly TrackedEvent[] = [
   event(SESSION.morning, '2026-10-05T12:00:00.000Z', 'page_view', { path: '/' }),
   event(SESSION.morning, '2026-10-05T12:01:00.000Z', 'page_view', { path: '/pricing' }),
   event(SESSION.morning, '2026-10-05T12:02:00.000Z', 'signup_completed', { userId: 'u1' }),
+  event(SESSION.morning, '2026-10-05T12:02:30.000Z', 'signup_completed', { userId: 'u1' }),
   request(SESSION.morning, '2026-10-05T12:03:00.000Z', 'POST', 201),
   request(SESSION.morning, '2026-10-05T12:04:00.000Z', 'POST', 500),
   request(SESSION.morning, '2026-10-05T12:05:00.000Z', 'GET', 500),
@@ -110,7 +111,8 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
     expect(await query.totals(SCOPE)).toEqual({
       visits: 3,
       identifiedUsers: 2,
-      conversions: 1,
+      conversions: 2,
+      convertingVisits: 1,
       writes: 3,
       failedWrites: 2,
     });
@@ -123,7 +125,14 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
   });
 
   it('counts no conversion when the project has no conversion event', async () => {
-    expect((await query.totals({ ...SCOPE, conversionEvent: null })).conversions).toBe(0);
+    expect(await query.totals({ ...SCOPE, conversionEvent: null })).toMatchObject({
+      conversions: 0,
+      convertingVisits: 0,
+    });
+  });
+
+  it('counts a visit that converted twice as one converting visit', async () => {
+    expect(await query.totals(SCOPE)).toMatchObject({ conversions: 2, convertingVisits: 1 });
   });
 
   it('buckets by the local day: 23:30 in Sao Paulo is still that day', async () => {
@@ -133,6 +142,7 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
         visits: 1,
         identifiedUsers: 1,
         conversions: 0,
+        convertingVisits: 0,
         writes: 0,
         failedWrites: 0,
         pageViews: 1,
@@ -142,11 +152,12 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
         date: '2026-10-05',
         visits: 2,
         identifiedUsers: 1,
-        conversions: 1,
+        conversions: 2,
+        convertingVisits: 1,
         writes: 3,
         failedWrites: 2,
         pageViews: 3,
-        events: 2,
+        events: 3,
       },
     ]);
   });
@@ -157,8 +168,8 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
       { path: '/pricing', views: 2, visits: 2 },
     ]);
     expect(await query.topEvents(SCOPE, 10)).toEqual([
+      { name: 'signup_completed', count: 2, visits: 1 },
       { name: 'plan_selected', count: 1, visits: 1 },
-      { name: 'signup_completed', count: 1, visits: 1 },
     ]);
   });
 
