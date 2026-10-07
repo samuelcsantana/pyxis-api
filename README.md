@@ -79,7 +79,12 @@ Shipping now:
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
   a person's anonymous steps counting once they identify) and
   `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
-  included, or of one visit, newest first, 20 per page, with every event). A project
+  included, or of one visit, newest first, 20 per page, with every event) and
+  `/visits` (the visits of the range, newest first, 50 per page with a cursor, each with its
+  entry page, page views, first named events and failed requests; filtered by up to three pages
+  it viewed, a star matching any characters, a named event with an optional property value,
+  channel, device and whether it was identified; a visit is one browser tab, and nothing links
+  two of them). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
@@ -364,6 +369,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] First apply to AWS
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
 - [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
+- [x] Visits list: filtered by pages, events, channel, device and identity
 - [x] Erasure and export of a person's events
 - [x] Retention: a daily job deletes events older than 13 months
 - [x] API reference on GitHub Pages
