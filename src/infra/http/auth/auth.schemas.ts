@@ -26,6 +26,14 @@ export const meSchema = z
         name: z.string(),
         timezone: z.string(),
         conversion_event: z.string().nullable(),
+        first_event_at: z.iso
+          .datetime()
+          .nullable()
+          .describe('When the oldest event kept for the project happened; null before the first'),
+        last_event_at: z.iso
+          .datetime()
+          .nullable()
+          .describe('When the newest event of the project happened; null before the first'),
       }),
     ),
   })

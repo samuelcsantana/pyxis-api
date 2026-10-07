@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvConfig } from '../../../config/env.schema';
+import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
 import { ADMIN_USER_REPOSITORY } from '../../../domain/repositories/admin-user.repository';
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
@@ -14,6 +15,7 @@ import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { SystemClock } from '../../clock/system-clock';
 import { createMailSender } from '../../mail/create-mail-sender';
+import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
 import { CryptoRandomSource } from '../../random/crypto-random-source';
 import { DrizzleAdminSessionRepository } from '../../repositories/drizzle-admin-session.repository';
 import { DrizzleAdminUserRepository } from '../../repositories/drizzle-admin-user.repository';
@@ -36,6 +38,7 @@ import { DashboardOriginGuard, SessionGuard } from './auth.guards';
     { provide: ADMIN_USER_REPOSITORY, useClass: DrizzleAdminUserRepository },
     { provide: OTP_CODE_REPOSITORY, useClass: DrizzleOtpCodeRepository },
     { provide: ADMIN_SESSION_REPOSITORY, useClass: DrizzleAdminSessionRepository },
+    { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     {
       provide: MAIL_SENDER,
       inject: [ConfigService],

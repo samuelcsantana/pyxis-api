@@ -114,6 +114,10 @@ export class AuthController {
   }
 }
 
+function isoOrNull(at: Date | null): string | null {
+  return at === null ? null : at.toISOString();
+}
+
 @ApiTags('dashboard sign-in')
 @Controller('v1/me')
 export class MeController {
@@ -134,6 +138,8 @@ export class MeController {
         name: project.name,
         timezone: project.timezone,
         conversion_event: project.conversionEvent,
+        first_event_at: isoOrNull(project.firstEventAt),
+        last_event_at: isoOrNull(project.lastEventAt),
       })),
     };
   }

@@ -96,15 +96,39 @@ describe('AuthController', () => {
 
 describe('MeController', () => {
   it('describes the signed-in admin and their projects in snake case', async () => {
+    const quiet = { ...PROJECT, id: 'quiet-project', firstEventAt: null, lastEventAt: null };
+    const active = {
+      ...PROJECT,
+      firstEventAt: new Date('2026-10-01T12:00:00.000Z'),
+      lastEventAt: new Date('2026-10-05T09:30:00.000Z'),
+    };
     const describeAdmin = {
-      execute: (admin: AdminUser) => Promise.resolve({ email: admin.email, projects: [PROJECT] }),
+      execute: (admin: AdminUser) =>
+        Promise.resolve({ email: admin.email, projects: [active, quiet] }),
     } as unknown as DescribeAdminUseCase;
     const request = { admin: ADMIN } as unknown as FastifyRequest;
 
-    await expect(new MeController(describeAdmin).me(request)).resolves.toEqual({
+    const body = await new MeController(describeAdmin).me(request);
+
+    expect(body).toEqual({
       email: EMAIL,
       projects: [
-        { id: PROJECT.id, name: 'Shop', timezone: 'America/Sao_Paulo', conversion_event: null },
+        {
+          id: PROJECT.id,
+          name: 'Shop',
+          timezone: 'America/Sao_Paulo',
+          conversion_event: null,
+          first_event_at: '2026-10-01T12:00:00.000Z',
+          last_event_at: '2026-10-05T09:30:00.000Z',
+        },
+        {
+          id: 'quiet-project',
+          name: 'Shop',
+          timezone: 'America/Sao_Paulo',
+          conversion_event: null,
+          first_event_at: null,
+          last_event_at: null,
+        },
       ],
     });
   });

@@ -15,6 +15,7 @@ import { InMemoryOtpCodeRepository } from '../../test-utils/in-memory-otp-code.r
 import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { AuthenticateSessionUseCase } from './authenticate-session.usecase';
+import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 import { RequestSignInCodeUseCase } from './request-sign-in-code.usecase';
 import { SignOutUseCase } from './sign-out.usecase';
@@ -49,7 +50,7 @@ async function setup() {
     verifyCode: new VerifySignInCodeUseCase(admins, codes, sessions, clock, random),
     authenticate: new AuthenticateSessionUseCase(sessions, admins, clock),
     signOut: new SignOutUseCase(sessions, clock),
-    describe: new DescribeAdminUseCase(admins),
+    describe: new DescribeAdminUseCase(admins, new StubProjectActivityQuery()),
   };
 }
 
@@ -238,7 +239,7 @@ describe('dashboard sign-in', () => {
       expect(authenticated).toEqual(admin);
       expect(await describeAdmin.execute(authenticated)).toEqual({
         email: ADMIN_EMAIL,
-        projects: [PROJECT],
+        projects: [{ ...PROJECT, firstEventAt: null, lastEventAt: null }],
       });
     });
 
