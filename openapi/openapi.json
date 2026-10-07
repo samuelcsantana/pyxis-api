@@ -863,6 +863,81 @@
         ],
         "type": "object"
       },
+      "PropertyBreakdownReport": {
+        "additionalProperties": false,
+        "description": "How the properties of one named event break down in the range. events counts the event; for each key, events counts those that carry it, values are its 10 most frequent values (text, as sent: true, 12.5) with their count and visits, and other_count the events with any other value. Keys come in order of the events that carry them; a reserved event (page_view, identify, api_request) answers 0 events and no keys.",
+        "properties": {
+          "events": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "keys": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "events": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "other_count": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "values": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "count": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "visits": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "count",
+                      "visits"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "key",
+                "events",
+                "values",
+                "other_count"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "events",
+          "keys"
+        ],
+        "type": "object"
+      },
       "RequestCodeRequest": {
         "additionalProperties": false,
         "description": "The email to send a sign-in code to.",
@@ -2041,6 +2116,104 @@
           }
         ],
         "summary": "The most used named events or screens, with their daily counts",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/features/properties": {
+      "get": {
+        "operationId": "PropertyBreakdownController_properties",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The named event to break down",
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "The named event to break down",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertyBreakdownReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "How the property values of one named event break down",
         "tags": [
           "dashboard queries"
         ]
