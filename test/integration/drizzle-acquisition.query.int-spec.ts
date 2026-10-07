@@ -60,6 +60,7 @@ const SEEDED: readonly TrackedEvent[] = [
   event(1, '2026-10-05T12:00:00.000Z', 'page_view', { channel: 'paid', attribution: AD }),
   event(1, '2026-10-05T12:01:00.000Z', 'page_view', { path: '/pricing' }),
   event(1, '2026-10-05T12:02:00.000Z', 'signup_completed'),
+  event(1, '2026-10-05T12:03:00.000Z', 'signup_completed'),
   event(2, '2026-10-06T02:30:00.000Z', 'page_view', { channel: 'paid', attribution: AD }),
   event(3, '2026-10-04T15:00:00.000Z', 'page_view', { channel: 'organic', attribution: SEARCH }),
   event(4, '2026-10-05T16:00:00.000Z', 'page_view', { channel: 'direct' }),
@@ -106,14 +107,15 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
     ]);
   });
 
-  it('groups sessions by source, medium and channel, with conversions and ad clicks', async () => {
+  it('groups sessions by source, medium and channel, with conversions, converting visits and ad clicks', async () => {
     expect(await query.sources(SCOPE, 20)).toEqual([
       {
         source: 'google',
         medium: 'cpc',
         channel: 'paid',
         visits: 2,
-        conversions: 1,
+        conversions: 2,
+        convertingVisits: 1,
         fromAdClickVisits: 2,
       },
       {
@@ -122,6 +124,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         channel: 'direct',
         visits: 1,
         conversions: 0,
+        convertingVisits: 0,
         fromAdClickVisits: 0,
       },
       {
@@ -130,6 +133,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         channel: 'organic',
         visits: 1,
         conversions: 0,
+        convertingVisits: 0,
         fromAdClickVisits: 0,
       },
     ]);

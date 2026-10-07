@@ -30,6 +30,7 @@ export class GetAcquisitionUseCase {
       sources: sources.map((source) => ({
         ...source,
         conversions: countConversions ? source.conversions : null,
+        convertingVisits: countConversions ? source.convertingVisits : null,
       })),
     };
   }
