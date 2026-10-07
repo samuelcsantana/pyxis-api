@@ -26,8 +26,12 @@ export const isNamedEvent = sql`${events.name} NOT IN (${PAGE_VIEW}, ${IDENTIFY}
 
 export const isWrite = sql`${events.name} = ${API_REQUEST} AND ${events.properties}->>'method' <> 'GET'`;
 
-export const isFailedWrite = sql`${isWrite}
-  AND ((${events.properties}->>'status')::int = 0 OR (${events.properties}->>'status')::int >= 400)`;
+export const hasFailed = sql`((${events.properties}->>'status')::int = 0
+  OR (${events.properties}->>'status')::int >= 400)`;
+
+export const isFailedWrite = sql`${isWrite} AND ${hasFailed}`;
+
+export const isFailedRequest = sql`${events.name} = ${API_REQUEST} AND ${hasFailed}`;
 
 export function isConversion(scope: QueryScope): SQL {
   return sql`${events.name} = ${scope.conversionEvent}`;
