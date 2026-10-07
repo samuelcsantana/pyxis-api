@@ -81,8 +81,9 @@ Shipping now:
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
   `/features/properties?name=` (how one named event's property values break down: per key, the
   ten most frequent values with their count and visits, and the count of the rest) and
-  `/requests?screen=` (writes per route: failures, statuses, median duration, the screens they
-  came from and the latest failures with their error code) and
+  `/requests?screen=&kind=` (writes per route: failures, statuses, median duration, the screens
+  they came from and the latest failures with their error code; with `kind=reads`, the failed
+  reads instead, counted without a rate because sites send a read only when it fails) and
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
   a person's anonymous steps counting once they identify) and
   `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
