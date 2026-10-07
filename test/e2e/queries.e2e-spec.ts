@@ -130,10 +130,10 @@ describe('dashboard queries', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({
-      device_types: [{ value: 'desktop', visits: 1, conversions: 1 }],
-      browsers: [{ value: 'chrome', visits: 1, conversions: 1 }],
-      operating_systems: [{ value: 'macos', visits: 1, conversions: 1 }],
-      countries: [{ value: 'other', visits: 1, conversions: 1 }],
+      device_types: [{ value: 'desktop', visits: 1, conversions: 1, converting_visits: 1 }],
+      browsers: [{ value: 'chrome', visits: 1, conversions: 1, converting_visits: 1 }],
+      operating_systems: [{ value: 'macos', visits: 1, conversions: 1, converting_visits: 1 }],
+      countries: [{ value: 'other', visits: 1, conversions: 1, converting_visits: 1 }],
     });
   });
 

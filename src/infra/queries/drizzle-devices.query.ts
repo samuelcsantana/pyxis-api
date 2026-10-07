@@ -5,7 +5,7 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isConversion, visits } from './definitions';
+import { convertingVisits, inScope, isConversion, visits } from './definitions';
 
 const DIMENSION_COLUMNS = {
   deviceType: events.deviceType,
@@ -24,11 +24,13 @@ export class DrizzleDevicesQuery implements DevicesQuery {
       value: string | null;
       visits: number;
       conversions: number;
+      convertingVisits: number;
     }>(
       sql`
         SELECT ${column} AS "value",
           ${visits} AS "visits",
-          count(*) FILTER (WHERE ${isConversion(scope)})::int AS "conversions"
+          count(*) FILTER (WHERE ${isConversion(scope)})::int AS "conversions",
+          ${convertingVisits(scope)} AS "convertingVisits"
         FROM ${events}
         WHERE ${inScope(scope)}
         GROUP BY ${column}`,

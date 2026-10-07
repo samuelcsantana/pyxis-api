@@ -150,13 +150,25 @@
       },
       "DevicesReport": {
         "additionalProperties": false,
-        "description": "Visits and conversions (null without a conversion event) per value, sorted by visits: the top five values and \"other\" for the rest, unknown countries included.",
+        "description": "Visits, conversion events and converting visits (both null without a conversion event) per value, sorted by visits: the top five values and \"other\" for the rest, unknown countries included.",
         "properties": {
           "browsers": {
             "items": {
               "additionalProperties": false,
               "properties": {
                 "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "converting_visits": {
                   "anyOf": [
                     {
                       "maximum": 9007199254740991,
@@ -180,7 +192,8 @@
               "required": [
                 "value",
                 "visits",
-                "conversions"
+                "conversions",
+                "converting_visits"
               ],
               "type": "object"
             },
@@ -202,6 +215,18 @@
                     }
                   ]
                 },
+                "converting_visits": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "value": {
                   "type": "string"
                 },
@@ -214,7 +239,8 @@
               "required": [
                 "value",
                 "visits",
-                "conversions"
+                "conversions",
+                "converting_visits"
               ],
               "type": "object"
             },
@@ -236,29 +262,7 @@
                     }
                   ]
                 },
-                "value": {
-                  "type": "string"
-                },
-                "visits": {
-                  "maximum": 9007199254740991,
-                  "minimum": -9007199254740991,
-                  "type": "integer"
-                }
-              },
-              "required": [
-                "value",
-                "visits",
-                "conversions"
-              ],
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "operating_systems": {
-            "items": {
-              "additionalProperties": false,
-              "properties": {
-                "conversions": {
+                "converting_visits": {
                   "anyOf": [
                     {
                       "maximum": 9007199254740991,
@@ -282,7 +286,55 @@
               "required": [
                 "value",
                 "visits",
-                "conversions"
+                "conversions",
+                "converting_visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "operating_systems": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "converting_visits": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "value": {
+                  "type": "string"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "value",
+                "visits",
+                "conversions",
+                "converting_visits"
               ],
               "type": "object"
             },

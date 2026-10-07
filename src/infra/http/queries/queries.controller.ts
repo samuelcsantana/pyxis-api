@@ -101,7 +101,12 @@ function overviewBody(report: OverviewReport): OverviewReportBody {
 }
 
 function sharesBody(shares: readonly ValueShare[]) {
-  return shares.map((share) => ({ ...share }));
+  return shares.map((share) => ({
+    value: share.value,
+    visits: share.visits,
+    conversions: share.conversions,
+    converting_visits: share.convertingVisits,
+  }));
 }
 
 function devicesBody(report: DevicesReport): DevicesReportBody {

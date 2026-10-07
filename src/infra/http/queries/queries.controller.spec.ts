@@ -81,10 +81,10 @@ const REPORT: OverviewReport = {
 };
 
 const DEVICES: DevicesReport = {
-  deviceType: [{ value: 'mobile', visits: 4, conversions: 1 }],
-  browser: [{ value: 'safari', visits: 4, conversions: 1 }],
-  os: [{ value: 'ios', visits: 4, conversions: 1 }],
-  country: [{ value: 'other', visits: 4, conversions: null }],
+  deviceType: [{ value: 'mobile', visits: 4, conversions: 2, convertingVisits: 1 }],
+  browser: [{ value: 'safari', visits: 4, conversions: 2, convertingVisits: 1 }],
+  os: [{ value: 'ios', visits: 4, conversions: 2, convertingVisits: 1 }],
+  country: [{ value: 'other', visits: 4, conversions: null, convertingVisits: null }],
 };
 
 const ACQUISITION: AcquisitionReport = {
@@ -239,10 +239,10 @@ describe('QueriesController', () => {
 
     expect(calls).toEqual([[PROJECT, range]]);
     expect(devicesReportSchema.parse(body)).toEqual({
-      device_types: [{ value: 'mobile', visits: 4, conversions: 1 }],
-      browsers: [{ value: 'safari', visits: 4, conversions: 1 }],
-      operating_systems: [{ value: 'ios', visits: 4, conversions: 1 }],
-      countries: [{ value: 'other', visits: 4, conversions: null }],
+      device_types: [{ value: 'mobile', visits: 4, conversions: 2, converting_visits: 1 }],
+      browsers: [{ value: 'safari', visits: 4, conversions: 2, converting_visits: 1 }],
+      operating_systems: [{ value: 'ios', visits: 4, conversions: 2, converting_visits: 1 }],
+      countries: [{ value: 'other', visits: 4, conversions: null, converting_visits: null }],
     });
   });
 
