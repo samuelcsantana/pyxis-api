@@ -2,7 +2,9 @@ export type PropertyValue = string | number | boolean;
 
 export type PropertyMap = Readonly<Record<string, PropertyValue>>;
 
-export type DeviceType = 'mobile' | 'tablet' | 'desktop' | 'other';
+export const DEVICE_TYPES = ['mobile', 'tablet', 'desktop', 'other'] as const;
+
+export type DeviceType = (typeof DEVICE_TYPES)[number];
 
 export type BrowserFamily =
   'chrome' | 'safari' | 'firefox' | 'edge' | 'samsung' | 'opera' | 'other';
