@@ -248,6 +248,54 @@ describe('dashboard queries', () => {
     expect(response.json()).toEqual({ visits: [], next_before: null });
   });
 
+  it('answers the visits of the range, filtered by page and event, with their summary', async () => {
+    const range = 'from=2026-09-01&to=2026-10-05';
+
+    const all = await get(`/v1/projects/${SHOP_ID}/visits?${range}`);
+    const filtered = await get(
+      `/v1/projects/${SHOP_ID}/visits?${range}&path=%2Fpri*&path=%2Fpricing` +
+        '&event=signup_completed&identity=identified&device=desktop',
+    );
+    const paid = await get(`/v1/projects/${SHOP_ID}/visits?${range}&channel=paid`);
+
+    expect(all.statusCode).toBe(200);
+    expect(
+      all.json<{ visits: { session_id: string }[] }>().visits.map((visit) => visit.session_id),
+    ).toEqual([SESSION_ID, AD_SESSION_ID]);
+    expect(filtered.json()).toEqual({
+      visits: [
+        {
+          session_id: SESSION_ID,
+          started_at: '2026-10-05T10:00:00.000Z',
+          ended_at: '2026-10-05T10:02:00.000Z',
+          entry_path: '/pricing',
+          page_views: 1,
+          highlights: ['signup_completed'],
+          failed_requests: 1,
+          device_type: 'desktop',
+          browser: 'chrome',
+          os: 'macos',
+          country: null,
+          channel: null,
+          user_id: 'u-1',
+        },
+      ],
+      next_cursor: null,
+    });
+    expect(
+      paid.json<{ visits: { session_id: string }[] }>().visits.map((visit) => visit.session_id),
+    ).toEqual([AD_SESSION_ID]);
+  });
+
+  it('answers 400 to a visits property filter without an event', async () => {
+    const response = await get(
+      `/v1/projects/${SHOP_ID}/visits?from=2026-10-05&to=2026-10-05&property=plan%3Dmei`,
+    );
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: 'invalid_request' });
+  });
+
   it('answers 400 to a timeline that names neither a person nor a visit', async () => {
     const response = await get(`/v1/projects/${SHOP_ID}/timeline`);
 
