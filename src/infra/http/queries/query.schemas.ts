@@ -73,7 +73,12 @@ export const overviewReportSchema = z
   });
 
 const valueSharesSchema = z.array(
-  z.strictObject({ value: z.string(), visits: z.int(), conversions: z.int().nullable() }),
+  z.strictObject({
+    value: z.string(),
+    visits: z.int(),
+    conversions: z.int().nullable(),
+    converting_visits: z.int().nullable(),
+  }),
 );
 
 export const devicesReportSchema = z
@@ -86,8 +91,9 @@ export const devicesReportSchema = z
   .meta({
     id: 'DevicesReport',
     description:
-      'Visits and conversions (null without a conversion event) per value, sorted by visits: the ' +
-      'top five values and "other" for the rest, unknown countries included.',
+      'Visits, conversion events and converting visits (both null without a conversion event) ' +
+      'per value, sorted by visits: the top five values and "other" for the rest, unknown ' +
+      'countries included.',
   });
 
 export const acquisitionReportSchema = z

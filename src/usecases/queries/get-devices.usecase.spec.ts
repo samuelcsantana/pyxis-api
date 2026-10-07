@@ -26,19 +26,21 @@ describe('GetDevicesUseCase', () => {
   it('asks each dimension for the range in the project zone and ranks the values', async () => {
     const { query, run } = setup();
     query.counts.set('deviceType', [
-      { value: 'desktop', visits: 2, conversions: 0 },
-      { value: 'mobile', visits: 5, conversions: 1 },
+      { value: 'desktop', visits: 2, conversions: 0, convertingVisits: 0 },
+      { value: 'mobile', visits: 5, conversions: 1, convertingVisits: 1 },
     ]);
-    query.counts.set('country', [{ value: null, visits: 1, conversions: 0 }]);
+    query.counts.set('country', [{ value: null, visits: 1, conversions: 0, convertingVisits: 0 }]);
 
     const report = await run('2026-09-06', '2026-10-05');
 
     expect(report.deviceType).toEqual([
-      { value: 'mobile', visits: 5, conversions: 1 },
-      { value: 'desktop', visits: 2, conversions: 0 },
+      { value: 'mobile', visits: 5, conversions: 1, convertingVisits: 1 },
+      { value: 'desktop', visits: 2, conversions: 0, convertingVisits: 0 },
     ]);
     expect(report.browser).toEqual([]);
-    expect(report.country).toEqual([{ value: 'other', visits: 1, conversions: 0 }]);
+    expect(report.country).toEqual([
+      { value: 'other', visits: 1, conversions: 0, convertingVisits: 0 },
+    ]);
     expect(query.asked.map((asked) => asked.dimension)).toEqual([
       'deviceType',
       'browser',
@@ -50,10 +52,10 @@ describe('GetDevicesUseCase', () => {
 
   it('answers null conversions without a conversion event', async () => {
     const { query, run } = setup({ ...PROJECT, conversionEvent: null });
-    query.counts.set('os', [{ value: 'ios', visits: 3, conversions: 0 }]);
+    query.counts.set('os', [{ value: 'ios', visits: 3, conversions: 0, convertingVisits: 0 }]);
 
     expect((await run('2026-10-05', '2026-10-05')).os).toEqual([
-      { value: 'ios', visits: 3, conversions: null },
+      { value: 'ios', visits: 3, conversions: null, convertingVisits: null },
     ]);
   });
 

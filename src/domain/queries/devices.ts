@@ -9,6 +9,7 @@ export interface ValueCount {
   readonly value: string | null;
   readonly visits: number;
   readonly conversions: number;
+  readonly convertingVisits: number;
 }
 
 export interface DevicesQuery {
@@ -21,6 +22,7 @@ export interface ValueShare {
   readonly value: string;
   readonly visits: number;
   readonly conversions: number | null;
+  readonly convertingVisits: number | null;
 }
 
 export type DevicesReport = Readonly<Record<DeviceDimension, readonly ValueShare[]>>;
@@ -42,6 +44,7 @@ export function topValuesAndOther(
     value: share.value,
     visits: share.visits,
     conversions: countConversions ? share.conversions : null,
+    convertingVisits: countConversions ? share.convertingVisits : null,
   }));
 }
 
@@ -50,7 +53,8 @@ function sum(counts: readonly ValueCount[]) {
     (total, count) => ({
       visits: total.visits + count.visits,
       conversions: total.conversions + count.conversions,
+      convertingVisits: total.convertingVisits + count.convertingVisits,
     }),
-    { visits: 0, conversions: 0 },
+    { visits: 0, conversions: 0, convertingVisits: 0 },
   );
 }

@@ -46,6 +46,7 @@ const SEEDED: readonly TrackedEvent[] = [
   event(1, 'page_view', IPHONE),
   event(1, 'page_view', IPHONE),
   event(1, 'signup_completed', IPHONE),
+  event(1, 'signup_completed', IPHONE),
   event(2, 'page_view', IPHONE),
   event(3, 'page_view', LAPTOP),
   event(3, 'signup_completed', LAPTOP, { occurredAt: new Date('2026-09-01T12:00:00.000Z') }),
@@ -82,12 +83,12 @@ describe('DrizzleDevicesQuery against a real Postgres', () => {
     await owner.end();
   });
 
-  it('counts visits and conversions per device type, inside the range only', async () => {
+  it('counts visits, conversion events and converting visits per device type', async () => {
     const rows = await query.breakdown(SCOPE, 'deviceType');
 
     expect([...rows].sort((left, right) => right.visits - left.visits)).toEqual([
-      { value: 'mobile', visits: 2, conversions: 1 },
-      { value: 'desktop', visits: 1, conversions: 0 },
+      { value: 'mobile', visits: 2, conversions: 2, convertingVisits: 1 },
+      { value: 'desktop', visits: 1, conversions: 0, convertingVisits: 0 },
     ]);
   });
 
@@ -98,7 +99,12 @@ describe('DrizzleDevicesQuery against a real Postgres', () => {
   ] as const)('groups by %s too', async (dimension, mobileValue) => {
     const rows = await query.breakdown(SCOPE, dimension);
 
-    expect(rows).toContainEqual({ value: mobileValue, visits: 2, conversions: 1 });
+    expect(rows).toContainEqual({
+      value: mobileValue,
+      visits: 2,
+      conversions: 2,
+      convertingVisits: 1,
+    });
   });
 
   it('keeps a missing country as null for the use case to fold', async () => {
@@ -106,12 +112,13 @@ describe('DrizzleDevicesQuery against a real Postgres', () => {
       value: null,
       visits: 1,
       conversions: 0,
+      convertingVisits: 0,
     });
   });
 
   it('never counts another project', async () => {
     expect(await query.breakdown({ ...SCOPE, projectId: BLOG_ID }, 'deviceType')).toEqual([
-      { value: 'desktop', visits: 1, conversions: 0 },
+      { value: 'desktop', visits: 1, conversions: 0, convertingVisits: 0 },
     ]);
   });
 });
