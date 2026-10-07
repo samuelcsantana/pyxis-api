@@ -3,10 +3,17 @@ import { API_REQUEST, IDENTIFY, PAGE_VIEW } from '../../domain/events/reserved-e
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { events } from '../database/schema/events';
 
+function rangeEnd(scope: QueryScope): SQL {
+  if (scope.lastDayUntil === undefined) {
+    return sql`(${scope.range.to}::date + 1)::timestamp AT TIME ZONE ${scope.timeZone}`;
+  }
+  return sql`(${scope.range.to}::date + ${scope.lastDayUntil}::time) AT TIME ZONE ${scope.timeZone}`;
+}
+
 export function inScope(scope: QueryScope): SQL {
   return sql`${events.projectId} = ${scope.projectId}
     AND ${events.occurredAt} >= (${scope.range.from}::date)::timestamp AT TIME ZONE ${scope.timeZone}
-    AND ${events.occurredAt} < (${scope.range.to}::date + 1)::timestamp AT TIME ZONE ${scope.timeZone}`;
+    AND ${events.occurredAt} < ${rangeEnd(scope)}`;
 }
 
 export function localDay(scope: QueryScope): SQL {

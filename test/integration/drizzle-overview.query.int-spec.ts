@@ -166,6 +166,58 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
     expect(await query.topPages(SCOPE, 1)).toHaveLength(1);
   });
 
+  describe('when the last day of the range stops at a local time', () => {
+    const dayBefore = { ...SCOPE, range: { from: '2026-10-04', to: '2026-10-04' } };
+
+    it('leaves out what happened later that day, in the project zone', async () => {
+      const untilTen = { ...dayBefore, lastDayUntil: '10:00:00.000' };
+
+      expect(await query.totals(untilTen)).toMatchObject({ visits: 0, identifiedUsers: 0 });
+      expect(await query.days(untilTen)).toEqual([]);
+    });
+
+    it('counts what happened before that time', async () => {
+      const untilOne = { ...dayBefore, lastDayUntil: '13:00:00.000' };
+
+      expect(await query.totals(untilOne)).toMatchObject({ visits: 1, identifiedUsers: 1 });
+      expect(await query.days(untilOne)).toMatchObject([{ date: '2026-10-04', pageViews: 1 }]);
+    });
+
+    it('stops right before an event at exactly that time', async () => {
+      const untilNoon = { ...dayBefore, lastDayUntil: '12:00:00.000' };
+      const justAfterNoon = { ...dayBefore, lastDayUntil: '12:00:00.001' };
+
+      expect((await query.totals(untilNoon)).visits).toBe(0);
+      expect((await query.totals(justAfterNoon)).visits).toBe(1);
+    });
+
+    it('keeps the earlier days of the range whole', async () => {
+      const untilEarlyMorning = { ...SCOPE, lastDayUntil: '01:00:00.000' };
+
+      expect(await query.days(untilEarlyMorning)).toMatchObject([
+        { date: '2026-10-04', visits: 1 },
+      ]);
+    });
+
+    it('reads the time in a UTC project as UTC', async () => {
+      const blogDay = {
+        ...SCOPE,
+        projectId: BLOG_ID,
+        timeZone: 'UTC',
+        range: { from: '2026-10-05', to: '2026-10-05' },
+      };
+
+      expect(await query.totals({ ...blogDay, lastDayUntil: '12:00:30.000' })).toMatchObject({
+        visits: 1,
+        conversions: 0,
+      });
+      expect(await query.totals({ ...blogDay, lastDayUntil: '12:01:30.000' })).toMatchObject({
+        visits: 1,
+        conversions: 1,
+      });
+    });
+  });
+
   it('never counts another project, even on the same days', async () => {
     const blog = { ...SCOPE, projectId: BLOG_ID, timeZone: 'UTC' };
 
