@@ -66,7 +66,9 @@ Shipping now:
   and the address are read, classified and discarded
 - Dashboard sign-in with a six-digit code sent by email, exchanged for an opaque session in an
   `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
-  the admin's projects. There is no sign-up: `admin:grant` is the only way in
+  the admin's projects, each with when its first and its latest events happened (null before
+  any), so the dashboard can tell a project still waiting for its first event from a quiet
+  period. There is no sign-up: `admin:grant` is the only way in
   ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
 - Dashboard queries over any range of up to 400 days in the project's time zone:
   `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
