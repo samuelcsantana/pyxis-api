@@ -139,6 +139,7 @@ function featuresBody(report: FeaturesReport): FeaturesReportBody {
 
 function requestsBody(report: RequestsReport): RequestsReportBody {
   return {
+    kind: report.kind,
     routes: report.routes.map((route) => ({
       method: route.method,
       route: route.route,
@@ -270,12 +271,20 @@ export class QueriesController {
 
   @Get('requests')
   @ApiRange()
-  @ApiOperation({ summary: 'Writes per route: failures, statuses, durations and screens' })
+  @ApiOperation({
+    summary: 'Writes, or failed reads, per route: failures, statuses, durations and screens',
+  })
   @ApiQuery({
     name: 'screen',
     required: false,
     description: 'Only the calls made from this page path',
     schema: { type: 'string' },
+  })
+  @ApiQuery({
+    name: 'kind',
+    required: false,
+    description: 'writes (the default): every non-GET call; reads: failed GET calls only',
+    enum: ['writes', 'reads'],
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: requestsReportSchema })
   async requests(
@@ -284,7 +293,12 @@ export class QueriesController {
     query: RequestsQuery,
   ): Promise<RequestsReportBody> {
     const range = { from: query.from, to: query.to };
-    const report = await this.getRequests.execute(projectOf(request), range, query.screen ?? null);
+    const report = await this.getRequests.execute(
+      projectOf(request),
+      range,
+      query.screen ?? null,
+      query.kind,
+    );
     return requestsBody(report);
   }
 

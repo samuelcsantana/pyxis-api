@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
 import type {
+  RequestKind,
   RequestsQuery,
   RequestsScope,
   RouteFailure,
@@ -11,7 +12,7 @@ import type {
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isFailedWrite, isWrite } from './definitions';
+import { hasFailed, inScope, isFailedRead, isWrite } from './definitions';
 
 const method = sql`${events.properties}->>'method'`;
 const route = sql`${events.properties}->>'route'`;
@@ -19,9 +20,14 @@ const status = sql`(${events.properties}->>'status')::int`;
 const durationMs = sql`(${events.properties}->>'duration_ms')::int`;
 const utcIsoTimestamp = sql`to_char(${events.occurredAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
 
-function writesInScope(scope: RequestsScope): SQL {
+const COUNTED_REQUESTS: Readonly<Record<RequestKind, SQL>> = {
+  writes: isWrite,
+  reads: isFailedRead,
+};
+
+function requestsInScope(scope: RequestsScope): SQL {
   const onScreen = scope.screen === null ? sql`` : sql` AND ${events.path} = ${scope.screen}`;
-  return sql`${inScope(scope)} AND ${isWrite}${onScreen}`;
+  return sql`${inScope(scope)} AND ${COUNTED_REQUESTS[scope.kind]}${onScreen}`;
 }
 
 @Injectable()
@@ -33,10 +39,10 @@ export class DrizzleRequestsQuery implements RequestsQuery {
       sql`
         SELECT ${method} AS "method", ${route} AS "route",
           count(*)::int AS "total",
-          count(*) FILTER (WHERE ${isFailedWrite})::int AS "failed",
+          count(*) FILTER (WHERE ${hasFailed})::int AS "failed",
           round(percentile_cont(0.5) WITHIN GROUP (ORDER BY ${durationMs}))::int AS "medianDurationMs"
         FROM ${events}
-        WHERE ${writesInScope(scope)}
+        WHERE ${requestsInScope(scope)}
         GROUP BY 1, 2
         ORDER BY "failed" DESC, "total" DESC, "method", "route"
         LIMIT ${limit}`,
@@ -51,7 +57,7 @@ export class DrizzleRequestsQuery implements RequestsQuery {
       SELECT ${method} AS "method", ${route} AS "route", ${status} AS "status",
         count(*)::int AS "count"
       FROM ${events}
-      WHERE ${writesInScope(scope)}
+      WHERE ${requestsInScope(scope)}
       GROUP BY 1, 2, 3
       ORDER BY 1, 2, 3`);
     return [...rows];
@@ -62,9 +68,9 @@ export class DrizzleRequestsQuery implements RequestsQuery {
       -readonly [Key in keyof RouteScreenCount]: RouteScreenCount[Key];
     }>(sql`
       SELECT ${method} AS "method", ${route} AS "route", ${events.path} AS "path",
-        count(*) FILTER (WHERE ${isFailedWrite})::int AS "failed"
+        count(*) FILTER (WHERE ${hasFailed})::int AS "failed"
       FROM ${events}
-      WHERE ${writesInScope(scope)}
+      WHERE ${requestsInScope(scope)}
       GROUP BY 1, 2, 3
       ORDER BY "failed" DESC, "path"`);
     return [...rows];
@@ -85,7 +91,7 @@ export class DrizzleRequestsQuery implements RequestsQuery {
           row_number() OVER (PARTITION BY ${method}, ${route} ORDER BY ${events.occurredAt} DESC)
             AS "rank"
         FROM ${events}
-        WHERE ${writesInScope(scope)} AND ${isFailedWrite}
+        WHERE ${requestsInScope(scope)} AND ${hasFailed}
       ) AS ranked
       WHERE "rank" <= ${perRoute}
       ORDER BY "method", "route", "occurredAt" DESC`);

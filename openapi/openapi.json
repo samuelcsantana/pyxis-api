@@ -1162,8 +1162,15 @@
       },
       "RequestsReport": {
         "additionalProperties": false,
-        "description": "Writes (methods other than GET) per route, the most failing first: a failure is status 0 or 400 and above. Screens are the pages the calls were made from; at most five recent failures per route, newest first.",
+        "description": "Writes (methods other than GET, kind=writes) or failed reads (GET, kind=reads) per route, the most failing first: a failure is status 0 or 400 and above. Reads count failures only, so total equals failed and no rate can be drawn from them: a site may send a GET only when it fails. Screens are the pages the calls were made from; at most five recent failures per route, newest first.",
         "properties": {
+          "kind": {
+            "enum": [
+              "writes",
+              "reads"
+            ],
+            "type": "string"
+          },
           "routes": {
             "items": {
               "additionalProperties": false,
@@ -1286,6 +1293,7 @@
           }
         },
         "required": [
+          "kind",
           "routes"
         ],
         "type": "object"
@@ -2654,6 +2662,19 @@
             }
           },
           {
+            "description": "writes (the default): every non-GET call; reads: failed GET calls only",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "enum": [
+                "writes",
+                "reads"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -2710,7 +2731,7 @@
             "pyxis_session": []
           }
         ],
-        "summary": "Writes per route: failures, statuses, durations and screens",
+        "summary": "Writes, or failed reads, per route: failures, statuses, durations and screens",
         "tags": [
           "dashboard queries"
         ]

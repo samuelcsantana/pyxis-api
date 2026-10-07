@@ -33,6 +33,9 @@ export const isFailedWrite = sql`${isWrite} AND ${hasFailed}`;
 
 export const isFailedRequest = sql`${events.name} = ${API_REQUEST} AND ${hasFailed}`;
 
+export const isFailedRead = sql`${events.name} = ${API_REQUEST}
+  AND ${events.properties}->>'method' = 'GET' AND ${hasFailed}`;
+
 export function isConversion(scope: QueryScope): SQL {
   return sql`${events.name} = ${scope.conversionEvent}`;
 }

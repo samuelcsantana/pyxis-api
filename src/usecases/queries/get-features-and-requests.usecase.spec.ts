@@ -71,8 +71,14 @@ describe('GetRequestsUseCase', () => {
       { ...KEY, occurredAt: failedAt, status: 500, errorCode: 'card_declined', sessionId: 's1' },
     ];
 
-    const report = await new GetRequestsUseCase(query, CLOCK).execute(PROJECT, RANGE, '/pricing');
+    const report = await new GetRequestsUseCase(query, CLOCK).execute(
+      PROJECT,
+      RANGE,
+      '/pricing',
+      'writes',
+    );
 
+    expect(report.kind).toBe('writes');
     expect(report.routes).toEqual([
       {
         ...KEY,
@@ -96,8 +102,22 @@ describe('GetRequestsUseCase', () => {
   it('asks for every screen when none is chosen', async () => {
     const query = new StubRequestsQuery();
 
-    await new GetRequestsUseCase(query, CLOCK).execute(PROJECT, RANGE, null);
+    await new GetRequestsUseCase(query, CLOCK).execute(PROJECT, RANGE, null, 'writes');
 
     expect(query.scopes[0]?.screen).toBeNull();
+  });
+
+  it('asks for the failed reads when they are the kind wanted', async () => {
+    const query = new StubRequestsQuery();
+
+    const report = await new GetRequestsUseCase(query, CLOCK).execute(
+      PROJECT,
+      RANGE,
+      null,
+      'reads',
+    );
+
+    expect(report.kind).toBe('reads');
+    expect(query.scopes.every((scope) => scope.kind === 'reads')).toBe(true);
   });
 });

@@ -194,6 +194,7 @@ describe('dashboard queries', () => {
 
     expect(all.statusCode).toBe(200);
     expect(all.json()).toEqual({
+      kind: 'writes',
       routes: [
         {
           method: 'POST',
@@ -214,7 +215,21 @@ describe('dashboard queries', () => {
         },
       ],
     });
-    expect(elsewhere.json()).toEqual({ routes: [] });
+    expect(elsewhere.json()).toEqual({ kind: 'writes', routes: [] });
+  });
+
+  it('answers the failed reads when asked, and refuses an unknown kind', async () => {
+    const reads = await get(
+      `/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05&kind=reads`,
+    );
+    const unknown = await get(
+      `/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05&kind=everything`,
+    );
+
+    expect(reads.statusCode).toBe(200);
+    expect(reads.json()).toEqual({ kind: 'reads', routes: [] });
+    expect(unknown.statusCode).toBe(400);
+    expect(unknown.json()).toMatchObject({ error: 'invalid_request' });
   });
 
   it('answers how many visits and people went through a funnel', async () => {
