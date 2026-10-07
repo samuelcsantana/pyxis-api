@@ -188,6 +188,27 @@ describe('QueriesController', () => {
     expect(body.kpis.identified_users).toEqual({ current: 1, previous: 0, daily: [0, 1] });
     expect(body.kpis.write_errors.current).toEqual({ failed: 1, total: 4 });
     expect(body.days[1]).toEqual({ date: '2026-10-05', page_views: 7, events: 2 });
+    expect(body.comparison_cutoff).toBe('10:00:00.000');
+    expect(body.previous_days[0]).toEqual({
+      date: '2026-10-02',
+      page_views: 4,
+      events: 1,
+      visits: 2,
+      identified_users: 0,
+      conversions: 1,
+      write_errors: { failed: 0, total: 1 },
+    });
+  });
+
+  it('answers a null cutoff when the range is over', async () => {
+    const { controller } = controllerAnswering({ ...REPORT, comparisonCutoff: null });
+
+    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
+      from: '2026-10-04',
+      to: '2026-10-05',
+    });
+
+    expect(overviewReportSchema.parse(body).comparison_cutoff).toBeNull();
   });
 
   it('keeps conversions null when the project has no conversion event', async () => {

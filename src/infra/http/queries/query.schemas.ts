@@ -38,12 +38,34 @@ export const overviewReportSchema = z
     days: z.array(z.strictObject({ date: z.iso.date(), page_views: z.int(), events: z.int() })),
     top_pages: z.array(z.strictObject({ path: z.string(), views: z.int(), visits: z.int() })),
     top_events: z.array(z.strictObject({ name: z.string(), count: z.int(), visits: z.int() })),
+    comparison_cutoff: z.iso
+      .time({ precision: 3 })
+      .nullable()
+      .describe(
+        'When the range ends today in the project time zone: the local time it was read at, ' +
+          'and the previous period stops at that time on its last day. Null when the range is ' +
+          'over and both periods are whole days.',
+      ),
+    previous_days: z
+      .array(
+        z.strictObject({
+          date: z.iso.date(),
+          page_views: z.int(),
+          events: z.int(),
+          visits: z.int(),
+          identified_users: z.int(),
+          conversions: z.int().nullable(),
+          write_errors: failureCountSchema,
+        }),
+      )
+      .describe('One entry per day of the previous period, oldest first'),
   })
   .meta({
     id: 'OverviewReport',
     description:
       'Visits, identified users, conversions (null without a conversion event) and failed writes ' +
-      'of the range against the previous one, with one daily entry per day of the range.',
+      'of the range against the previous one (the same number of days right before it), with ' +
+      'one daily entry per day of each period.',
   });
 
 const valueSharesSchema = z.array(

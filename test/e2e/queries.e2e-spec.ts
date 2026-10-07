@@ -100,6 +100,26 @@ describe('dashboard queries', () => {
       ],
       top_pages: [{ path: '/pricing', views: 1, visits: 1 }],
       top_events: [{ name: 'signup_completed', count: 1, visits: 1 }],
+      comparison_cutoff: '15:00:00.000',
+      previous_days: ['2026-10-02', '2026-10-03'].map((date) => ({
+        date,
+        page_views: 0,
+        events: 0,
+        visits: 0,
+        identified_users: 0,
+        conversions: 0,
+        write_errors: { failed: 0, total: 0 },
+      })),
+    });
+  });
+
+  it('compares whole days when the range ended before today', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/overview?from=2026-10-04&to=2026-10-04`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      comparison_cutoff: null,
+      previous_days: [{ date: '2026-10-03', visits: 0 }],
     });
   });
 
