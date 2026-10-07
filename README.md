@@ -74,6 +74,8 @@ Shipping now:
   `/devices` (device type, browser, system and country, top five and "other") and
   `/acquisition` (visits per day and channel, sources with conversions and ad clicks),
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
+  `/features/properties?name=` (how one named event's property values break down: per key, the
+  ten most frequent values with their count and visits, and the count of the rest) and
   `/requests?screen=` (writes per route: failures, statuses, median duration, the screens they
   came from and the latest failures with their error code) and
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
@@ -370,6 +372,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
 - [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
 - [x] Visits list: filtered by pages, events, channel, device and identity
+- [x] Property breakdown of a named event
 - [x] Erasure and export of a person's events
 - [x] Retention: a daily job deletes events older than 13 months
 - [x] API reference on GitHub Pages
