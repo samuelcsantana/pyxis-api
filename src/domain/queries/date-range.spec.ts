@@ -1,8 +1,10 @@
 import { InvalidRangeError } from '../errors/query.errors';
 import {
   checkedRange,
+  comparisonCutoff,
   dayCount,
   daysIn,
+  localTimeIn,
   MAX_RANGE_DAYS,
   previousRange,
   todayIn,
@@ -20,6 +22,46 @@ describe('todayIn', () => {
 
   it('moves on at local midnight', () => {
     expect(todayIn(SAO_PAULO, new Date('2026-10-06T03:30:00.000Z'))).toBe('2026-10-06');
+  });
+});
+
+describe('localTimeIn', () => {
+  it('reads the wall clock of the project, to the millisecond', () => {
+    const lateEveningInSaoPaulo = new Date('2026-10-06T02:30:15.042Z');
+
+    expect(localTimeIn(SAO_PAULO, lateEveningInSaoPaulo)).toBe('23:30:15.042');
+    expect(localTimeIn('UTC', lateEveningInSaoPaulo)).toBe('02:30:15.042');
+  });
+
+  it('starts the day at 00, never at 24', () => {
+    expect(localTimeIn(SAO_PAULO, new Date('2026-10-06T03:00:00.000Z'))).toBe('00:00:00.000');
+  });
+});
+
+describe('comparisonCutoff', () => {
+  const lastWeek = { from: '2026-09-29', to: '2026-10-05' };
+
+  it('is the local time of now when the range ends today', () => {
+    expect(comparisonCutoff(lastWeek, SAO_PAULO, new Date('2026-10-05T13:00:00.000Z'))).toBe(
+      '10:00:00.000',
+    );
+  });
+
+  it('is the last millisecond before midnight when today is about to end', () => {
+    expect(comparisonCutoff(lastWeek, SAO_PAULO, new Date('2026-10-06T02:59:59.999Z'))).toBe(
+      '23:59:59.999',
+    );
+  });
+
+  it('is null once the last day of the range is over in the project zone', () => {
+    expect(comparisonCutoff(lastWeek, SAO_PAULO, new Date('2026-10-06T03:00:00.000Z'))).toBeNull();
+  });
+
+  it('follows the project zone, not UTC', () => {
+    const afterMidnightInUtc = new Date('2026-10-06T01:00:00.000Z');
+
+    expect(comparisonCutoff(lastWeek, SAO_PAULO, afterMidnightInUtc)).toBe('22:00:00.000');
+    expect(comparisonCutoff(lastWeek, 'UTC', afterMidnightInUtc)).toBeNull();
   });
 });
 
