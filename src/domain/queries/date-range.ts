@@ -35,6 +35,21 @@ export function todayIn(timeZone: string, now: Date): string {
   }).format(now);
 }
 
+export function localTimeIn(timeZone: string, now: Date): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    hourCycle: 'h23',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3,
+  }).format(now);
+}
+
+export function comparisonCutoff(range: DateRange, timeZone: string, now: Date): string | null {
+  return range.to === todayIn(timeZone, now) ? localTimeIn(timeZone, now) : null;
+}
+
 export function dayCount(range: DateRange): number {
   const span = calendarDate(range.to).getTime() - calendarDate(range.from).getTime();
   return Math.round(span / MILLISECONDS_PER_DAY) + 1;
