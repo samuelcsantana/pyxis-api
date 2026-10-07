@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.1.0...v0.1.1) (2026-10-07)
+
+
+### Documentation
+
+* **readme:** document the load test script ([ca725ca](https://github.com/samuelcsantana/pyxis-api/commit/ca725caaeca4e2b30460f62d6ee21dc84e1d8599))
+
 ## 0.1.0 (2026-10-06)
 
 
