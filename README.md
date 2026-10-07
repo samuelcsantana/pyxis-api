@@ -246,6 +246,14 @@ node scripts/load-test.mts --endpoint http://localhost:3040 --key pyxis_pk_… \
   --origin http://localhost:3031 [--events-per-minute 1000] [--minutes 10] [--batch-size 20]
 ```
 
+Measured on 2026-10-07 with the defaults. The production run went through CloudFront to a project
+created for it, which was deleted afterwards with its events and key.
+
+| Target                                     | Batches   | Events accepted  | Client p50 / p95 / max | Lambda                                                                                  |
+| ------------------------------------------ | --------- | ---------------- | ---------------------- | --------------------------------------------------------------------------------------- |
+| Local compose stack                        | 500 × 202 | 10,000 of 10,000 | 25 / 31 / 39 ms        | —                                                                                       |
+| `api.pyxis.samuelsantana.dev` (CloudFront) | 500 × 202 | 10,000 of 10,000 | 104 / 140 / 3,935 ms   | 504 invocations, 3 cold starts (init 0.5–0.7 s), p50 18 ms, p95 29 ms, 219 MB, no error |
+
 ## Project structure
 
 ```text
@@ -361,7 +369,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] API reference on GitHub Pages
 - [x] Database size report and alarm (in Terraform, applied with the stack)
 - [x] Load test script, run against the local stack
-- [ ] Load test through CloudFront
+- [x] Load test through CloudFront
 
 ## Contributing and license
 
