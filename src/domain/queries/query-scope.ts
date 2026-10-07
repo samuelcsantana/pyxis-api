@@ -5,4 +5,5 @@ export interface QueryScope {
   readonly timeZone: string;
   readonly conversionEvent: string | null;
   readonly range: DateRange;
+  readonly lastDayUntil?: string;
 }
