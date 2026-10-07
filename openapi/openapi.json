@@ -80,6 +80,18 @@
                     }
                   ]
                 },
+                "converting_visits": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
                 "from_ad_click_visits": {
                   "maximum": 9007199254740991,
                   "minimum": -9007199254740991,
@@ -106,6 +118,7 @@
                 "channel",
                 "visits",
                 "conversions",
+                "converting_visits",
                 "from_ad_click_visits"
               ],
               "type": "object"

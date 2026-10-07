@@ -163,6 +163,7 @@ describe('dashboard queries', () => {
           channel: 'paid',
           visits: 1,
           conversions: 0,
+          converting_visits: 0,
           from_ad_click_visits: 1,
         },
       ],

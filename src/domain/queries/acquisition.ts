@@ -16,6 +16,7 @@ export interface SourceCount {
   readonly channel: Channel;
   readonly visits: number;
   readonly conversions: number;
+  readonly convertingVisits: number;
   readonly fromAdClickVisits: number;
 }
 
@@ -33,8 +34,9 @@ export interface DayChannels {
   readonly byChannel: ChannelVisits;
 }
 
-export interface SourceShare extends Omit<SourceCount, 'conversions'> {
+export interface SourceShare extends Omit<SourceCount, 'conversions' | 'convertingVisits'> {
   readonly conversions: number | null;
+  readonly convertingVisits: number | null;
 }
 
 export interface AcquisitionReport {

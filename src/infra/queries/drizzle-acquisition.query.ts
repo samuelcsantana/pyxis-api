@@ -56,6 +56,7 @@ export class DrizzleAcquisitionQuery implements AcquisitionQuery {
       SELECT entries."source", entries."medium", entries."channel",
         count(*)::int AS "visits",
         coalesce(sum(conversions."conversions"), 0)::int AS "conversions",
+        count(conversions."sessionId")::int AS "convertingVisits",
         count(*) FILTER (WHERE entries."fromAdClick")::int AS "fromAdClickVisits"
       FROM entries
       LEFT JOIN conversions ON conversions."sessionId" = entries."sessionId"

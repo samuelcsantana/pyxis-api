@@ -19,7 +19,8 @@ const SOURCE = {
   medium: 'cpc',
   channel: 'paid',
   visits: 4,
-  conversions: 1,
+  conversions: 3,
+  convertingVisits: 2,
   fromAdClickVisits: 3,
 } as const;
 
@@ -54,7 +55,7 @@ describe('GetAcquisitionUseCase', () => {
     query.bySource = [SOURCE];
 
     expect((await run('2026-10-05', '2026-10-05')).sources).toEqual([
-      { ...SOURCE, conversions: null },
+      { ...SOURCE, conversions: null, convertingVisits: null },
     ]);
   });
 

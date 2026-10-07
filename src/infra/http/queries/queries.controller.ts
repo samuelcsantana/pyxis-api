@@ -127,6 +127,7 @@ function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
       channel: source.channel,
       visits: source.visits,
       conversions: source.conversions,
+      converting_visits: source.convertingVisits,
       from_ad_click_visits: source.fromAdClickVisits,
     })),
   };

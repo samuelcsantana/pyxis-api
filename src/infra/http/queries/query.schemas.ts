@@ -108,6 +108,7 @@ export const acquisitionReportSchema = z
         channel: z.enum(CHANNELS),
         visits: z.int(),
         conversions: z.int().nullable(),
+        converting_visits: z.int().nullable(),
         from_ad_click_visits: z.int(),
       }),
     ),
