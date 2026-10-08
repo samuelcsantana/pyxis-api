@@ -27,7 +27,13 @@ function setup() {
 describe('GetFunnelUseCase', () => {
   it('counts the steps in the mode asked, over the range in the project zone', async () => {
     const { query, useCase } = setup();
-    query.counts = [10, 4];
+    query.report = {
+      steps: [
+        { count: 10, medianSecondsFromPrevious: null },
+        { count: 4, medianSecondsFromPrevious: 95 },
+      ],
+      medianSecondsOverall: 95,
+    };
 
     const report = await useCase.execute(
       PROJECT,
@@ -36,7 +42,7 @@ describe('GetFunnelUseCase', () => {
       STEPS,
     );
 
-    expect(report).toEqual({ steps: [{ count: 10 }, { count: 4 }] });
+    expect(report).toBe(query.report);
     expect(query.asked).toEqual([
       {
         scope: {

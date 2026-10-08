@@ -19,6 +19,7 @@ import {
   devicesReportSchema,
   featuresReportSchema,
   funnelQuerySchema,
+  funnelReportSchema,
   overviewReportSchema,
   requestsQuerySchema,
   requestsReportSchema,
@@ -200,7 +201,16 @@ function controllerAnswering(
     answering(ACQUISITION, calls) as unknown as GetAcquisitionUseCase,
     answering(FEATURES, calls) as unknown as GetFeaturesUseCase,
     answering(requests, calls) as unknown as GetRequestsUseCase,
-    answering({ steps: [{ count: 5 }, { count: 2 }] }, calls) as unknown as GetFunnelUseCase,
+    answering(
+      {
+        steps: [
+          { count: 5, medianSecondsFromPrevious: null },
+          { count: 2, medianSecondsFromPrevious: 42 },
+        ],
+        medianSecondsOverall: 42,
+      },
+      calls,
+    ) as unknown as GetFunnelUseCase,
     answering(timeline, calls) as unknown as GetTimelineUseCase,
   );
   return { controller, calls };
@@ -409,7 +419,13 @@ describe('QueriesController', () => {
 
     const body = await controller.funnel({ project: PROJECT } as FastifyRequest, query);
 
-    expect(body).toEqual({ steps: [{ count: 5 }, { count: 2 }] });
+    expect(funnelReportSchema.parse(body)).toEqual({
+      steps: [
+        { count: 5, median_seconds_from_previous: null },
+        { count: 2, median_seconds_from_previous: 42 },
+      ],
+      median_seconds_overall: 42,
+    });
     expect(calls).toEqual([
       [
         PROJECT,

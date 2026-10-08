@@ -1,6 +1,6 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
-import type { FunnelStep } from '../../src/domain/queries/funnel';
+import type { FunnelMode, FunnelStep } from '../../src/domain/queries/funnel';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
 import {
   createDrizzleDatabase,
@@ -97,12 +97,37 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
     await owner.end();
   });
 
+  const counts = async (scope: QueryScope, mode: FunnelMode, steps: readonly FunnelStep[]) =>
+    (await query.measure(scope, mode, steps)).steps.map((step) => step.count);
+
   it('counts each step of a visit only after the previous one, never out of order', async () => {
-    expect(await query.count(SCOPE, 'visit', CALCULATOR)).toEqual([2, 1, 0]);
+    expect(await counts(SCOPE, 'visit', CALCULATOR)).toEqual([2, 1, 0]);
   });
 
   it('gives a person the anonymous steps of the visit they identified in', async () => {
-    expect(await query.count(SCOPE, 'user', CALCULATOR)).toEqual([1, 1, 1]);
+    expect(await counts(SCOPE, 'user', CALCULATOR)).toEqual([1, 1, 1]);
+  });
+
+  it('times each step from the previous one, and the whole funnel, by their median', async () => {
+    expect(await query.measure(SCOPE, 'user', CALCULATOR)).toEqual({
+      steps: [
+        { count: 1, medianSecondsFromPrevious: null },
+        { count: 1, medianSecondsFromPrevious: 300 },
+        { count: 1, medianSecondsFromPrevious: 75_300 },
+      ],
+      medianSecondsOverall: 75_600,
+    });
+  });
+
+  it('has no time for a step nobody reached, nor for a funnel nobody finished', async () => {
+    expect(await query.measure(SCOPE, 'visit', CALCULATOR)).toEqual({
+      steps: [
+        { count: 2, medianSecondsFromPrevious: null },
+        { count: 1, medianSecondsFromPrevious: 300 },
+        { count: 0, medianSecondsFromPrevious: null },
+      ],
+      medianSecondsOverall: null,
+    });
   });
 
   it('takes a percent sign and an underscore in a path literally', async () => {
@@ -111,12 +136,12 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
       { type: 'page', path: '/50%_off' },
     ];
 
-    expect(await query.count(SCOPE, 'visit', steps)).toEqual([1, 1]);
+    expect(await counts(SCOPE, 'visit', steps)).toEqual([1, 1]);
   });
 
   it('never counts another project', async () => {
-    expect(
-      await query.count({ ...SCOPE, projectId: BLOG_ID }, 'visit', CALCULATOR.slice(0, 2)),
-    ).toEqual([1, 0]);
+    expect(await counts({ ...SCOPE, projectId: BLOG_ID }, 'visit', CALCULATOR.slice(0, 2))).toEqual(
+      [1, 0],
+    );
   });
 });

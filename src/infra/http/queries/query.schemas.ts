@@ -183,12 +183,20 @@ export const funnelQuerySchema = rangeQuerySchema.extend({
 });
 
 export const funnelReportSchema = z
-  .strictObject({ steps: z.array(z.strictObject({ count: z.int() })) })
+  .strictObject({
+    steps: z.array(
+      z.strictObject({ count: z.int(), median_seconds_from_previous: z.int().nullable() }),
+    ),
+    median_seconds_overall: z.int().nullable(),
+  })
   .meta({
     id: 'FunnelReport',
     description:
       'How many visits (mode=visit) or identified people (mode=user) reached each step, in order: ' +
-      'a step counts only at or after the first time the previous one happened.',
+      'a step counts only at or after the first time the previous one happened. ' +
+      'median_seconds_from_previous is the median time, in whole seconds, between reaching the ' +
+      'previous step and this one, among those who reached it (null on the first step or when ' +
+      'nobody did); median_seconds_overall the same from the first step to the last.',
   });
 
 const timelineCursor = { before: z.iso.datetime().optional() };
