@@ -6,11 +6,9 @@ import {
   MAX_PATH_LENGTH,
   MAX_PROPERTY_STRING_LENGTH,
   MAX_REFERRER_HOST_LENGTH,
-  MAX_ROUTE_LENGTH,
   MAX_UTM_VALUE_LENGTH,
   PROPERTY_KEY_PATTERN,
 } from '../../../domain/events/event-limits';
-import { API_REQUEST_METHODS } from '../../../domain/events/reserved-event-names';
 import {
   MAX_VISIT_HIGHLIGHTS,
   MAX_VISIT_PATH_FILTERS,
@@ -18,13 +16,11 @@ import {
   VISIT_LIST_PAGE_SIZE,
   type VisitCursor,
   type VisitPropertyFilter,
-  type VisitRouteFilter,
 } from '../../../domain/queries/visits';
-import { rangeQuerySchema } from './query.schemas';
+import { rangeQuerySchema, routeFilterSchema } from './query.schemas';
 
 const CURSOR_SEPARATOR = '~';
 const PROPERTY_SEPARATOR = '=';
-const ROUTE_SEPARATOR = ' ';
 const FAILED_VALUES = ['true', 'false'] as const;
 
 const pathFilterSchema = z.string().startsWith('/').max(MAX_PATH_LENGTH);
@@ -47,27 +43,6 @@ const propertyFilterSchema = z.string().transform((text, context): VisitProperty
     return z.NEVER;
   }
   return { key, value };
-});
-
-const routePartsSchema = z.strictObject({
-  method: z.enum(API_REQUEST_METHODS),
-  route: z.string().min(1).max(MAX_ROUTE_LENGTH).startsWith('/'),
-});
-
-const routeFilterSchema = z.string().transform((text, context): VisitRouteFilter => {
-  const separator = text.indexOf(ROUTE_SEPARATOR);
-  const parts = routePartsSchema.safeParse({
-    method: text.slice(0, separator),
-    route: text.slice(separator + 1),
-  });
-  if (!parts.success) {
-    context.addIssue({
-      code: 'custom',
-      message: 'route must be a method and a route, like POST /orders',
-    });
-    return z.NEVER;
-  }
-  return parts.data;
 });
 
 export function visitCursorText(cursor: VisitCursor): string {

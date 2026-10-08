@@ -1190,14 +1190,117 @@
       },
       "RequestsReport": {
         "additionalProperties": false,
-        "description": "Writes (methods other than GET, kind=writes) or failed reads (GET, kind=reads) per route, the most failing first: a failure is status 0 or 400 and above. Reads count failures only, so total equals failed and no rate can be drawn from them: a site may send a GET only when it fails. Screens are the pages the calls were made from; at most five recent failures per route, newest first.",
+        "description": "Writes (methods other than GET, kind=writes) or failed reads (GET, kind=reads) per route, the most failing first: a failure is status 0 or 400 and above. Reads count failures only, so total equals failed and no rate can be drawn from them: a site may send a GET only when it fails. Screens are the pages the calls were made from; at most five recent failures per route, newest first. days counts the calls of every route per day by status class (success below 400, client_error 4xx, server_error 5xx, no_response status 0). route_days, only when a route is asked, gives that route per day: calls, failures, and the median and 95th percentile duration (null on a day without calls).",
         "properties": {
+          "days": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "by_status_class": {
+                  "additionalProperties": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "propertyNames": {
+                    "enum": [
+                      "success",
+                      "client_error",
+                      "server_error",
+                      "no_response"
+                    ],
+                    "type": "string"
+                  },
+                  "required": [
+                    "success",
+                    "client_error",
+                    "server_error",
+                    "no_response"
+                  ],
+                  "type": "object"
+                },
+                "date": {
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "date",
+                "by_status_class"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "kind": {
             "enum": [
               "writes",
               "reads"
             ],
             "type": "string"
+          },
+          "route_days": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "date": {
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                      "type": "string"
+                    },
+                    "failed": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "median_duration_ms": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "p95_duration_ms": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "total": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "total",
+                    "failed",
+                    "median_duration_ms",
+                    "p95_duration_ms"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "routes": {
             "items": {
@@ -1215,6 +1318,11 @@
                 },
                 "method": {
                   "type": "string"
+                },
+                "p95_duration_ms": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
                 },
                 "recent_failures": {
                   "items": {
@@ -1312,6 +1420,7 @@
                 "failed",
                 "statuses",
                 "median_duration_ms",
+                "p95_duration_ms",
                 "screens",
                 "recent_failures"
               ],
@@ -1322,7 +1431,9 @@
         },
         "required": [
           "kind",
-          "routes"
+          "routes",
+          "days",
+          "route_days"
         ],
         "type": "object"
       },
@@ -2726,6 +2837,15 @@
                 "writes",
                 "reads"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Also answer route_days for this method and route: POST /orders/:id",
+            "in": "query",
+            "name": "route",
+            "required": false,
+            "schema": {
               "type": "string"
             }
           },

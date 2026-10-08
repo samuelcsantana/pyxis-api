@@ -20,6 +20,7 @@ import {
   featuresReportSchema,
   funnelQuerySchema,
   overviewReportSchema,
+  requestsQuerySchema,
   requestsReportSchema,
   timelineQuerySchema,
   timelineReportSchema,
@@ -115,6 +116,7 @@ const REQUESTS: RequestsReport = {
       total: 4,
       failed: 1,
       medianDurationMs: 80,
+      p95DurationMs: 300,
       statuses: [{ status: 500, count: 1 }],
       screens: [{ path: '/pricing', failed: 1 }],
       recentFailures: [
@@ -126,6 +128,15 @@ const REQUESTS: RequestsReport = {
         },
       ],
     },
+  ],
+  days: [
+    {
+      date: '2026-10-05',
+      byStatusClass: { success: 3, client_error: 0, server_error: 1, no_response: 0 },
+    },
+  ],
+  routeDays: [
+    { date: '2026-10-05', total: 4, failed: 1, medianDurationMs: 80, p95DurationMs: 300 },
   ],
 };
 
@@ -168,6 +179,7 @@ function controllerAnswering(
   report: OverviewReport,
   devices: DevicesReport = DEVICES,
   timeline: TimelineReport = TIMELINE,
+  requests: RequestsReport = REQUESTS,
 ) {
   const calls: unknown[][] = [];
   const controller = new QueriesController(
@@ -175,7 +187,7 @@ function controllerAnswering(
     answering(devices, calls) as unknown as GetDevicesUseCase,
     answering(ACQUISITION, calls) as unknown as GetAcquisitionUseCase,
     answering(FEATURES, calls) as unknown as GetFeaturesUseCase,
-    answering(REQUESTS, calls) as unknown as GetRequestsUseCase,
+    answering(requests, calls) as unknown as GetRequestsUseCase,
     answering({ steps: [{ count: 5 }, { count: 2 }] }, calls) as unknown as GetFunnelUseCase,
     answering(timeline, calls) as unknown as GetTimelineUseCase,
   );
@@ -295,12 +307,22 @@ describe('QueriesController', () => {
       ...range,
       screen: '/pricing',
       kind: 'writes',
+      route: { method: 'POST', route: '/v1/plans' },
     });
     await controller.requests({ project: PROJECT } as FastifyRequest, { ...range, kind: 'reads' });
 
     expect(calls).toEqual([
-      [PROJECT, range, '/pricing', 'writes'],
-      [PROJECT, range, null, 'reads'],
+      [PROJECT, range, '/pricing', 'writes', { method: 'POST', route: '/v1/plans' }],
+      [PROJECT, range, null, 'reads', null],
+    ]);
+    expect(requestsReportSchema.parse(body).days).toEqual([
+      {
+        date: '2026-10-05',
+        by_status_class: { success: 3, client_error: 0, server_error: 1, no_response: 0 },
+      },
+    ]);
+    expect(requestsReportSchema.parse(body).route_days).toEqual([
+      { date: '2026-10-05', total: 4, failed: 1, median_duration_ms: 80, p95_duration_ms: 300 },
     ]);
     expect(requestsReportSchema.parse(body).kind).toBe('writes');
     expect(requestsReportSchema.parse(body).routes[0]).toEqual({
@@ -310,6 +332,7 @@ describe('QueriesController', () => {
       failed: 1,
       statuses: [{ status: 500, count: 1 }],
       median_duration_ms: 80,
+      p95_duration_ms: 300,
       screens: [{ path: '/pricing', failed: 1 }],
       recent_failures: [
         {
@@ -320,6 +343,32 @@ describe('QueriesController', () => {
         },
       ],
     });
+  });
+
+  it('answers no route days when no route was asked', async () => {
+    const { controller } = controllerAnswering(REPORT, DEVICES, TIMELINE, {
+      ...REQUESTS,
+      routeDays: null,
+    });
+
+    const body = await controller.requests({ project: PROJECT } as FastifyRequest, {
+      from: '2026-10-05',
+      to: '2026-10-05',
+      kind: 'writes',
+    });
+
+    expect(body.route_days).toBeNull();
+  });
+
+  it('reads the route of the requests query as a method and a route', () => {
+    expect(
+      requestsQuerySchema.parse({ from: '2026-10-05', to: '2026-10-05', route: 'POST /v1/plans' })
+        .route,
+    ).toEqual({ method: 'POST', route: '/v1/plans' });
+    expect(
+      requestsQuerySchema.safeParse({ from: '2026-10-05', to: '2026-10-05', route: '/v1/plans' })
+        .success,
+    ).toBe(false);
   });
 
   it('asks for the funnel in the mode asked, with the parsed steps', async () => {

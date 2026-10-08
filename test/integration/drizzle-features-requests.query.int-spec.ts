@@ -175,9 +175,41 @@ describe('features and requests queries against a real Postgres', () => {
 
     it('totals the writes per route, failed meaning status 0 or 400 and above, never a GET', async () => {
       expect(await requests.routes(everyScreen, 50)).toEqual([
-        { method: 'POST', route: '/v1/plans', total: 4, failed: 2, medianDurationMs: 80 },
-        { method: 'DELETE', route: '/v1/plans/:id', total: 1, failed: 1, medianDurationMs: 20 },
+        {
+          method: 'POST',
+          route: '/v1/plans',
+          total: 4,
+          failed: 2,
+          medianDurationMs: 80,
+          p95DurationMs: 2565,
+        },
+        {
+          method: 'DELETE',
+          route: '/v1/plans/:id',
+          total: 1,
+          failed: 1,
+          medianDurationMs: 20,
+          p95DurationMs: 20,
+        },
       ]);
+    });
+
+    it('counts the calls of each day by status class, status 0 as no response', async () => {
+      expect(await requests.statusClassesByDay(everyScreen)).toEqual([
+        { date: '2026-10-05', statusClass: 'client_error', count: 1 },
+        { date: '2026-10-05', statusClass: 'no_response', count: 1 },
+        { date: '2026-10-05', statusClass: 'server_error', count: 1 },
+        { date: '2026-10-05', statusClass: 'success', count: 2 },
+      ]);
+    });
+
+    it('gives one route per day with its failures and its median and 95th percentile', async () => {
+      expect(await requests.routeDays(everyScreen, PLANS)).toEqual([
+        { date: '2026-10-05', total: 4, failed: 2, medianDurationMs: 80, p95DurationMs: 2565 },
+      ]);
+      expect(await requests.routeDays(everyScreen, { method: 'GET', route: '/v1/plans' })).toEqual(
+        [],
+      );
     });
 
     it('counts each status of each route', async () => {
@@ -233,7 +265,18 @@ describe('features and requests queries against a real Postgres', () => {
 
       it('counts GET calls that failed and nothing else, so total equals failed', async () => {
         expect(await requests.routes(failedReads, 50)).toEqual([
-          { method: 'GET', route: '/v1/plans', total: 2, failed: 2, medianDurationMs: 2505 },
+          {
+            method: 'GET',
+            route: '/v1/plans',
+            total: 2,
+            failed: 2,
+            medianDurationMs: 2505,
+            p95DurationMs: 4750,
+          },
+        ]);
+        expect(await requests.statusClassesByDay(failedReads)).toEqual([
+          { date: '2026-10-05', statusClass: 'no_response', count: 1 },
+          { date: '2026-10-05', statusClass: 'server_error', count: 1 },
         ]);
       });
 
@@ -277,8 +320,16 @@ describe('features and requests queries against a real Postgres', () => {
       const checkout = { ...SCOPE, screen: '/checkout', kind: 'writes' } as const;
 
       expect(await requests.routes(checkout, 50)).toEqual([
-        { method: 'POST', route: '/v1/plans', total: 1, failed: 1, medianDurationMs: 100 },
+        {
+          method: 'POST',
+          route: '/v1/plans',
+          total: 1,
+          failed: 1,
+          medianDurationMs: 100,
+          p95DurationMs: 100,
+        },
       ]);
+      expect(await requests.routeDays(checkout, PLANS)).toMatchObject([{ total: 1, failed: 1 }]);
       expect(await requests.statuses(checkout)).toHaveLength(1);
       expect(await requests.screens(checkout)).toHaveLength(1);
       expect(await requests.recentFailures(checkout, 5)).toHaveLength(1);

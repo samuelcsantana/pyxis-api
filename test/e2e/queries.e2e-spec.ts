@@ -187,7 +187,9 @@ describe('dashboard queries', () => {
   });
 
   it('answers the failing writes per route, for every screen or one', async () => {
-    const all = await get(`/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05`);
+    const all = await get(
+      `/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05&route=POST%20%2Fv1%2Fplans`,
+    );
     const elsewhere = await get(
       `/v1/projects/${SHOP_ID}/requests?from=2026-10-05&to=2026-10-05&screen=/checkout`,
     );
@@ -203,6 +205,7 @@ describe('dashboard queries', () => {
           failed: 1,
           statuses: [{ status: 503, count: 1 }],
           median_duration_ms: 80,
+          p95_duration_ms: 80,
           screens: [{ path: '/pricing', failed: 1 }],
           recent_failures: [
             {
@@ -214,8 +217,27 @@ describe('dashboard queries', () => {
           ],
         },
       ],
+      days: [
+        {
+          date: '2026-10-05',
+          by_status_class: { success: 0, client_error: 0, server_error: 1, no_response: 0 },
+        },
+      ],
+      route_days: [
+        { date: '2026-10-05', total: 1, failed: 1, median_duration_ms: 80, p95_duration_ms: 80 },
+      ],
     });
-    expect(elsewhere.json()).toEqual({ kind: 'writes', routes: [] });
+    expect(elsewhere.json()).toEqual({
+      kind: 'writes',
+      routes: [],
+      days: [
+        {
+          date: '2026-10-05',
+          by_status_class: { success: 0, client_error: 0, server_error: 0, no_response: 0 },
+        },
+      ],
+      route_days: null,
+    });
   });
 
   it('answers the failed reads when asked, and refuses an unknown kind', async () => {
@@ -227,7 +249,7 @@ describe('dashboard queries', () => {
     );
 
     expect(reads.statusCode).toBe(200);
-    expect(reads.json()).toEqual({ kind: 'reads', routes: [] });
+    expect(reads.json()).toMatchObject({ kind: 'reads', routes: [], route_days: null });
     expect(unknown.statusCode).toBe(400);
     expect(unknown.json()).toMatchObject({ error: 'invalid_request' });
   });

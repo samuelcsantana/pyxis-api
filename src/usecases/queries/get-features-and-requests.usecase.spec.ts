@@ -1,7 +1,11 @@
 import type { Project } from '../../domain/entities/project.entity';
 import { InvalidRangeError } from '../../domain/errors/query.errors';
 import { TOP_FEATURES } from '../../domain/queries/features';
-import { RECENT_FAILURES_PER_ROUTE, TOP_ROUTES } from '../../domain/queries/requests';
+import {
+  noStatusClasses,
+  RECENT_FAILURES_PER_ROUTE,
+  TOP_ROUTES,
+} from '../../domain/queries/requests';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubFeaturesQuery } from '../../test-utils/stub-features.query';
 import { StubRequestsQuery } from '../../test-utils/stub-requests.query';
@@ -60,7 +64,9 @@ describe('GetRequestsUseCase', () => {
   it('puts the statuses, screens and recent failures of each route under it', async () => {
     const query = new StubRequestsQuery();
     const failedAt = new Date('2026-10-05T12:00:00.000Z');
-    query.routesAnswer = [{ ...KEY, total: 4, failed: 1, medianDurationMs: 80 }];
+    query.routesAnswer = [
+      { ...KEY, total: 4, failed: 1, medianDurationMs: 80, p95DurationMs: 300 },
+    ];
     query.statusesAnswer = [
       { ...KEY, status: 201, count: 3 },
       { ...KEY, status: 500, count: 1 },
@@ -76,15 +82,19 @@ describe('GetRequestsUseCase', () => {
       RANGE,
       '/pricing',
       'writes',
+      null,
     );
 
     expect(report.kind).toBe('writes');
+    expect(report.routeDays).toBeNull();
+    expect(query.askedRoutes).toEqual([]);
     expect(report.routes).toEqual([
       {
         ...KEY,
         total: 4,
         failed: 1,
         medianDurationMs: 80,
+        p95DurationMs: 300,
         statuses: [
           { status: 201, count: 3 },
           { status: 500, count: 1 },
@@ -102,7 +112,7 @@ describe('GetRequestsUseCase', () => {
   it('asks for every screen when none is chosen', async () => {
     const query = new StubRequestsQuery();
 
-    await new GetRequestsUseCase(query, CLOCK).execute(PROJECT, RANGE, null, 'writes');
+    await new GetRequestsUseCase(query, CLOCK).execute(PROJECT, RANGE, null, 'writes', null);
 
     expect(query.scopes[0]?.screen).toBeNull();
   });
@@ -115,9 +125,56 @@ describe('GetRequestsUseCase', () => {
       RANGE,
       null,
       'reads',
+      null,
     );
 
     expect(report.kind).toBe('reads');
     expect(query.scopes.every((scope) => scope.kind === 'reads')).toBe(true);
+  });
+
+  it('counts the calls of every day by status class, days without calls at zero', async () => {
+    const query = new StubRequestsQuery();
+    query.classesAnswer = [
+      { date: '2026-10-05', statusClass: 'success', count: 3 },
+      { date: '2026-10-05', statusClass: 'server_error', count: 1 },
+      { date: '2026-10-05', statusClass: 'no_response', count: 2 },
+    ];
+
+    const report = await new GetRequestsUseCase(query, CLOCK).execute(
+      PROJECT,
+      RANGE,
+      null,
+      'writes',
+      null,
+    );
+
+    expect(report.days).toEqual([
+      { date: '2026-10-04', byStatusClass: noStatusClasses() },
+      {
+        date: '2026-10-05',
+        byStatusClass: { ...noStatusClasses(), success: 3, server_error: 1, no_response: 2 },
+      },
+    ]);
+  });
+
+  it('gives the asked route per day, a day without calls with no duration', async () => {
+    const query = new StubRequestsQuery();
+    query.routeDaysAnswer = [
+      { date: '2026-10-05', total: 4, failed: 1, medianDurationMs: 80, p95DurationMs: 300 },
+    ];
+
+    const report = await new GetRequestsUseCase(query, CLOCK).execute(
+      PROJECT,
+      RANGE,
+      null,
+      'writes',
+      KEY,
+    );
+
+    expect(query.askedRoutes).toEqual([KEY]);
+    expect(report.routeDays).toEqual([
+      { date: '2026-10-04', total: 0, failed: 0, medianDurationMs: null, p95DurationMs: null },
+      { date: '2026-10-05', total: 4, failed: 1, medianDurationMs: 80, p95DurationMs: 300 },
+    ]);
   });
 });

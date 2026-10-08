@@ -3,13 +3,38 @@ import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
 import {
   EVENT_NAME_PATTERN,
   MAX_PATH_LENGTH,
+  MAX_ROUTE_LENGTH,
   USER_ID_PATTERN,
 } from '../../../domain/events/event-limits';
+import { API_REQUEST_METHODS } from '../../../domain/events/reserved-event-names';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
-import { REQUEST_KINDS } from '../../../domain/queries/requests';
+import { REQUEST_KINDS, STATUS_CLASSES } from '../../../domain/queries/requests';
+import type { VisitRouteFilter } from '../../../domain/queries/visits';
 
 const MAX_SCREEN_LENGTH = 256;
+const ROUTE_SEPARATOR = ' ';
+
+const routePartsSchema = z.strictObject({
+  method: z.enum(API_REQUEST_METHODS),
+  route: z.string().min(1).max(MAX_ROUTE_LENGTH).startsWith('/'),
+});
+
+export const routeFilterSchema = z.string().transform((text, context): VisitRouteFilter => {
+  const separator = text.indexOf(ROUTE_SEPARATOR);
+  const parts = routePartsSchema.safeParse({
+    method: text.slice(0, separator),
+    route: text.slice(separator + 1),
+  });
+  if (!parts.success) {
+    context.addIssue({
+      code: 'custom',
+      message: 'route must be a method and a route, like POST /orders',
+    });
+    return z.NEVER;
+  }
+  return parts.data;
+});
 
 export const rangeQuerySchema = z.strictObject({
   from: z.iso.date().describe('First day, inclusive, in the project time zone'),
@@ -127,6 +152,7 @@ export const featuresQuerySchema = rangeQuerySchema.extend({ kind: z.enum(FEATUR
 export const requestsQuerySchema = rangeQuerySchema.extend({
   screen: z.string().startsWith('/').max(MAX_SCREEN_LENGTH).optional(),
   kind: z.enum(REQUEST_KINDS).default('writes'),
+  route: routeFilterSchema.optional(),
 });
 
 const funnelStepSchema = z.discriminatedUnion('type', [
@@ -234,6 +260,7 @@ export const requestsReportSchema = z
         failed: z.int(),
         statuses: z.array(z.strictObject({ status: z.int(), count: z.int() })),
         median_duration_ms: z.int(),
+        p95_duration_ms: z.int(),
         screens: z.array(z.strictObject({ path: z.string(), failed: z.int() })),
         recent_failures: z.array(
           z.strictObject({
@@ -245,6 +272,23 @@ export const requestsReportSchema = z
         ),
       }),
     ),
+    days: z.array(
+      z.strictObject({
+        date: z.iso.date(),
+        by_status_class: z.record(z.enum(STATUS_CLASSES), z.int()),
+      }),
+    ),
+    route_days: z
+      .array(
+        z.strictObject({
+          date: z.iso.date(),
+          total: z.int(),
+          failed: z.int(),
+          median_duration_ms: z.int().nullable(),
+          p95_duration_ms: z.int().nullable(),
+        }),
+      )
+      .nullable(),
   })
   .meta({
     id: 'RequestsReport',
@@ -253,7 +297,10 @@ export const requestsReportSchema = z
       'the most failing first: a failure is status 0 or 400 and above. Reads count failures ' +
       'only, so total equals failed and no rate can be drawn from them: a site may send a GET ' +
       'only when it fails. Screens are the pages the calls were made from; at most five recent ' +
-      'failures per route, newest first.',
+      'failures per route, newest first. days counts the calls of every route per day by status ' +
+      'class (success below 400, client_error 4xx, server_error 5xx, no_response status 0). ' +
+      'route_days, only when a route is asked, gives that route per day: calls, failures, and the ' +
+      'median and 95th percentile duration (null on a day without calls).',
   });
 
 export type RangeQuery = z.infer<typeof rangeQuerySchema>;
