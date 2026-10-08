@@ -1,5 +1,49 @@
 # Changelog
 
+## [0.2.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.1.1...v0.2.0) (2026-10-08)
+
+
+### Features
+
+* **auth:** tell when each project's first and latest events happened ([7fde3d9](https://github.com/samuelcsantana/pyxis-api/commit/7fde3d9e9c68a8e49a0b090bb1b74a23ab7148b9))
+* **http:** add GET /v1/projects/{projectId}/visits ([adc438d](https://github.com/samuelcsantana/pyxis-api/commit/adc438d131b3466009ea587702dbbb409778268a))
+* **mail:** send a branded sign-in email that reads in light and dark ([f15c503](https://github.com/samuelcsantana/pyxis-api/commit/f15c5033f1113a39ad4c4e38b3f93bc051c442ab))
+* **queries:** add the property breakdown of a named event ([53bbda4](https://github.com/samuelcsantana/pyxis-api/commit/53bbda45b27c4ab111c2a011afc9face8aa6aed0))
+* **queries:** add the visits list use case and its port ([a39eb25](https://github.com/samuelcsantana/pyxis-api/commit/a39eb25bd4d3cfcaa248fde99d8c0d8563f35890))
+* **queries:** answer the comparison cutoff and the previous days on /overview ([c0cef62](https://github.com/samuelcsantana/pyxis-api/commit/c0cef6299abb5c38d5498d84b6e44e24c6d61ab9))
+* **queries:** compare today with the same hours of the previous period ([bf0d389](https://github.com/samuelcsantana/pyxis-api/commit/bf0d389d8deb1a529a1e212d8eb97a20efcd8cb7))
+* **queries:** count an event's property values in Postgres ([cc76650](https://github.com/samuelcsantana/pyxis-api/commit/cc76650cf983239491c5f9981b8f56a1f95e0ce8))
+* **queries:** count converting visits on the overview ([230ae0a](https://github.com/samuelcsantana/pyxis-api/commit/230ae0aadebe47b70f48ce1c7ae071530297ee32))
+* **queries:** count converting visits per device, browser, system and country ([463e9da](https://github.com/samuelcsantana/pyxis-api/commit/463e9daec93905ea992485789500bf01953bc9db))
+* **queries:** count converting visits per source ([2338218](https://github.com/samuelcsantana/pyxis-api/commit/23382184a34db7e73470d6caa604469592240792))
+* **queries:** let a scope stop its last day at a local time of day ([83d9cc8](https://github.com/samuelcsantana/pyxis-api/commit/83d9cc8ced28aa197d7a8851e525dec586aeb323))
+* **queries:** list visits from the raw events with Drizzle ([d1d3158](https://github.com/samuelcsantana/pyxis-api/commit/d1d3158346a5f931da920136390a90144ebebcef))
+* **queries:** report failed reads per route with kind=reads ([ff94d8c](https://github.com/samuelcsantana/pyxis-api/commit/ff94d8c047fd05c030aee46f57e4ea10d3fc67fc))
+* **queries:** serve the property breakdown on GET /features/properties ([4210f4d](https://github.com/samuelcsantana/pyxis-api/commit/4210f4d49b2fe14ab0371b5a17bfa636fdddaa89))
+* **queries:** tell the local time a range that ends today stops at ([0104286](https://github.com/samuelcsantana/pyxis-api/commit/0104286ac8426067a33c29f66d2d30699e06f0c1))
+
+
+### Bug Fixes
+
+* **mail:** escape the code before it is written into the sign-in email's HTML ([39c96b9](https://github.com/samuelcsantana/pyxis-api/commit/39c96b968fff4e051e83704ca1002059957bad3f))
+
+
+### Refactoring
+
+* **queries:** define a failed request once, with the other definitions ([daeaad8](https://github.com/samuelcsantana/pyxis-api/commit/daeaad8f0918c6c0a7bb8f3159e86b311532a365))
+
+
+### Documentation
+
+* **adr:** record the comparison of an unfinished day ([21b6c9c](https://github.com/samuelcsantana/pyxis-api/commit/21b6c9ccce118ecf90cafd516188379e42cbe993))
+* **readme:** describe the branded sign-in email ([0c6d51c](https://github.com/samuelcsantana/pyxis-api/commit/0c6d51cf6f8f937a47276b901829cc84aa4660df))
+* **readme:** describe the failed reads on /requests ([bddee1e](https://github.com/samuelcsantana/pyxis-api/commit/bddee1efbc6b455f580fbf073d82df3d127e9dc7))
+* **readme:** document the visits list ([780f7c2](https://github.com/samuelcsantana/pyxis-api/commit/780f7c20072ecd0a39209fa39ed7bb775de05ff9))
+* **readme:** list the property breakdown route ([96c1f15](https://github.com/samuelcsantana/pyxis-api/commit/96c1f15c6cac38dfafd36de60f6121aa08f04c01))
+* **readme:** name converting visits next to conversion events ([400bf63](https://github.com/samuelcsantana/pyxis-api/commit/400bf63829e8a2cc5cc99716f17c634bc9dd06ec))
+* **readme:** record the load test through CloudFront ([3b565aa](https://github.com/samuelcsantana/pyxis-api/commit/3b565aa0387590e1209f5de6ce91edfa68b3a57a))
+* **readme:** say that /v1/me tells when each project's events began and last arrived ([b73f0c0](https://github.com/samuelcsantana/pyxis-api/commit/b73f0c062016990b98335196acf00d9c83478840))
+
 ## [0.1.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.1.0...v0.1.1) (2026-10-07)
 
 
