@@ -317,14 +317,34 @@ describe('dashboard queries', () => {
           os: 'macos',
           country: null,
           channel: null,
+          source: null,
+          campaign: null,
           user_id: 'u-1',
         },
       ],
       next_cursor: null,
+      total: 1,
     });
     expect(
       paid.json<{ visits: { session_id: string }[] }>().visits.map((visit) => visit.session_id),
     ).toEqual([AD_SESSION_ID]);
+  });
+
+  it('answers the visits of one source, and those whose request to a route failed', async () => {
+    const range = 'from=2026-09-01&to=2026-10-05';
+
+    const fromGoogle = await get(`/v1/projects/${SHOP_ID}/visits?${range}&source=google`);
+    const failedPlans = await get(
+      `/v1/projects/${SHOP_ID}/visits?${range}&route=POST%20%2Fv1%2Fplans&failed=true`,
+    );
+    const badRoute = await get(`/v1/projects/${SHOP_ID}/visits?${range}&route=%2Fv1%2Fplans`);
+
+    expect(fromGoogle.json()).toMatchObject({
+      visits: [{ session_id: AD_SESSION_ID, source: 'google', campaign: null }],
+      total: 1,
+    });
+    expect(failedPlans.json()).toMatchObject({ visits: [{ session_id: SESSION_ID }], total: 1 });
+    expect(badRoute.statusCode).toBe(400);
   });
 
   it('answers 400 to a visits property filter without an event', async () => {

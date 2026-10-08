@@ -1633,7 +1633,7 @@
       },
       "VisitsReport": {
         "additionalProperties": false,
-        "description": "The visits with events in the range, newest first, 50 per page. A visit is one browser tab; nothing links two of them. entry_path is its first page view, highlights its first named events in order, failed_requests its api_request events with status 0 or 400 and above, user_id the id it was identified with. next_cursor goes back as cursor for the older page, null on the last one.",
+        "description": "The visits with events in the range, newest first, 50 per page. A visit is one browser tab; nothing links two of them. entry_path is its first page view, highlights its first named events in order, failed_requests its api_request events with status 0 or 400 and above, source and campaign those of its entry page view (the source as Acquisition names it), user_id the id it was identified with. total counts every visit that matches the filters, on every page. next_cursor goes back as cursor for the older page, null on the last one.",
         "properties": {
           "next_cursor": {
             "type": [
@@ -1641,12 +1641,23 @@
               "null"
             ]
           },
+          "total": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
           "visits": {
             "items": {
               "additionalProperties": false,
               "properties": {
                 "browser": {
                   "type": "string"
+                },
+                "campaign": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "channel": {
                   "anyOf": [
@@ -1712,6 +1723,12 @@
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                   "type": "string"
                 },
+                "source": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "started_at": {
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
@@ -1737,6 +1754,8 @@
                 "os",
                 "country",
                 "channel",
+                "source",
+                "campaign",
                 "user_id"
               ],
               "type": "object"
@@ -1746,7 +1765,8 @@
         },
         "required": [
           "visits",
-          "next_cursor"
+          "next_cursor",
+          "total"
         ],
         "type": "object"
       }
@@ -2960,6 +2980,58 @@
               "enum": [
                 "identified",
                 "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The two-letter country code of the visit",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The source of the visit as Acquisition names it: campaign source, referring host or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "The campaign (utm_campaign) of the visit entry",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "A request the visit made, as method and route: POST /orders/:id",
+            "in": "query",
+            "name": "route",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: the visit had a failed request (status 0 or 400 and above); with route, on that route",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
               ],
               "type": "string"
             }

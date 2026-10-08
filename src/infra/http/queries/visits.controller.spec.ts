@@ -32,10 +32,13 @@ const REPORT: VisitsReport = {
       os: 'ios',
       country: 'BR',
       channel: 'paid',
+      source: 'google',
+      campaign: 'spring_sale',
       userId: 'u_7f3a',
     },
   ],
   nextCursor: { startedAt: new Date('2026-10-05T12:00:00.000Z'), sessionId: SESSION_ID },
+  total: 51,
 };
 
 function controllerAnswering(report: VisitsReport) {
@@ -63,6 +66,11 @@ describe('VisitsController', () => {
         channel: 'paid',
         device: 'mobile',
         identity: 'identified',
+        country: 'BR',
+        source: 'google',
+        campaign: 'spring_sale',
+        route: 'POST /orders/:id',
+        failed: 'true',
         cursor: `2026-10-05T13:00:00.000Z~${SESSION_ID}`,
       }),
     );
@@ -80,6 +88,11 @@ describe('VisitsController', () => {
           channel: 'paid',
           deviceType: 'mobile',
           identity: 'identified',
+          country: 'BR',
+          source: 'google',
+          campaign: 'spring_sale',
+          route: { method: 'POST', route: '/orders/:id' },
+          failed: true,
         },
         { startedAt: new Date('2026-10-05T13:00:00.000Z'), sessionId: SESSION_ID },
       ],
@@ -99,15 +112,18 @@ describe('VisitsController', () => {
           os: 'ios',
           country: 'BR',
           channel: 'paid',
+          source: 'google',
+          campaign: 'spring_sale',
           user_id: 'u_7f3a',
         },
       ],
       next_cursor: `2026-10-05T12:00:00.000Z~${SESSION_ID}`,
+      total: 51,
     });
   });
 
   it('asks with no filter and answers no cursor on the last page', async () => {
-    const { controller, calls } = controllerAnswering({ visits: [], nextCursor: null });
+    const { controller, calls } = controllerAnswering({ visits: [], nextCursor: null, total: 0 });
 
     const body = await controller.visits(
       { project: PROJECT } as FastifyRequest,
@@ -115,11 +131,11 @@ describe('VisitsController', () => {
     );
 
     expect(calls).toEqual([[PROJECT, RANGE, NO_VISIT_FILTERS, null]]);
-    expect(body).toEqual({ visits: [], next_cursor: null });
+    expect(body).toEqual({ visits: [], next_cursor: null, total: 0 });
   });
 
   it('takes an event without a property, and one page as a single text', async () => {
-    const { controller, calls } = controllerAnswering({ visits: [], nextCursor: null });
+    const { controller, calls } = controllerAnswering({ visits: [], nextCursor: null, total: 0 });
 
     await controller.visits(
       { project: PROJECT } as FastifyRequest,
@@ -157,11 +173,32 @@ describe('visitsQuerySchema', () => {
     ['an unknown channel', { channel: 'tv' }],
     ['an unknown device', { device: 'watch' }],
     ['an unknown identity', { identity: 'someone' }],
+    ['a country in lower case', { country: 'br' }],
+    ['a country name', { country: 'Brazil' }],
+    ['an empty source', { source: '' }],
+    ['a source over 128 characters', { source: 'a'.repeat(129) }],
+    ['a campaign over 64 characters', { campaign: 'c'.repeat(65) }],
+    ['a route without a method', { route: '/orders' }],
+    ['a route with an unknown method', { route: 'FETCH /orders' }],
+    ['a route without a leading slash', { route: 'POST orders' }],
+    ['a route over 100 characters', { route: `POST /${'r'.repeat(100)}` }],
+    ['a failed flag that is not true or false', { failed: 'yes' }],
     ['a cursor that is not a next_cursor', { cursor: 'yesterday' }],
     ['a cursor with a visit id that is not a UUID', { cursor: '2026-10-05T12:00:00.000Z~v1' }],
     ['an unknown parameter', { sort: 'oldest' }],
   ])('refuses %s', (_case, extra) => {
     expect(visitsQuerySchema.safeParse({ ...RANGE, ...extra }).success).toBe(false);
+  });
+
+  it('reads failed=false as no failure filter', () => {
+    expect(visitsQuerySchema.parse({ ...RANGE, failed: 'false' }).failed).toBe(false);
+  });
+
+  it('reads a route as its method and its route', () => {
+    expect(visitsQuerySchema.parse({ ...RANGE, route: 'GET /search/:term' }).route).toEqual({
+      method: 'GET',
+      route: '/search/:term',
+    });
   });
 
   it('keeps an equals sign inside a property value', () => {

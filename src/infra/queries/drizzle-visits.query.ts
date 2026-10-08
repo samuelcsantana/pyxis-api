@@ -1,20 +1,31 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
 import type { Channel } from '../../domain/entities/tracked-event.entity';
+import { API_REQUEST } from '../../domain/events/reserved-event-names';
 import { likePattern } from '../../domain/queries/funnel';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import {
   MAX_VISIT_HIGHLIGHTS,
   type VisitCursor,
+  type VisitEventFilter,
   type VisitFilters,
   type VisitIdentity,
   type VisitListItem,
+  type VisitMatches,
   type VisitsQuery,
 } from '../../domain/queries/visits';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isFailedRequest, isNamedEvent, isPageView } from './definitions';
+import {
+  entrySource,
+  hasFailed,
+  inScope,
+  isEntryPageView,
+  isFailedRequest,
+  isNamedEvent,
+  isPageView,
+} from './definitions';
 
 const inVisitOrder = sql`ORDER BY ${events.occurredAt}, ${events.id}`;
 
@@ -30,36 +41,65 @@ function allOf(conditions: readonly SQL[]): SQL {
   return sql.join([sql`true`, ...conditions], sql` AND `);
 }
 
-function activityConditions(filters: VisitFilters): readonly SQL[] {
-  const pages = filters.paths.map(
+function pageConditions(paths: readonly string[]): readonly SQL[] {
+  return paths.map(
     (path) => sql`bool_or(${isPageView} AND ${events.path} LIKE ${likePattern(path)} ESCAPE '\\')`,
   );
-  if (filters.event === null) {
-    return pages;
+}
+
+function eventConditions(event: VisitEventFilter | null): readonly SQL[] {
+  if (event === null) {
+    return [];
   }
-  const { name, property } = filters.event;
   const carries =
-    property === null
+    event.property === null
       ? sql``
-      : sql` AND ${events.properties}->>${property.key} = ${property.value}`;
-  return [...pages, sql`bool_or(${events.name} = ${name}${carries})`];
+      : sql` AND ${events.properties}->>${event.property.key} = ${event.property.value}`;
+  return [sql`bool_or(${events.name} = ${event.name}${carries})`];
+}
+
+function requestConditions(filters: VisitFilters): readonly SQL[] {
+  if (filters.route === null && !filters.failed) {
+    return [];
+  }
+  const toRoute =
+    filters.route === null
+      ? sql``
+      : sql` AND ${events.properties}->>'method' = ${filters.route.method}
+          AND ${events.properties}->>'route' = ${filters.route.route}`;
+  const failing = filters.failed ? sql` AND ${hasFailed}` : sql``;
+  return [sql`bool_or(${events.name} = ${API_REQUEST}${toRoute}${failing})`];
+}
+
+function activityConditions(filters: VisitFilters): readonly SQL[] {
+  return [
+    ...pageConditions(filters.paths),
+    ...eventConditions(filters.event),
+    ...requestConditions(filters),
+  ];
 }
 
 function identityCondition(identity: VisitIdentity): SQL {
   return identity === 'identified' ? sql`"userId" IS NOT NULL` : sql`"userId" IS NULL`;
 }
 
-function visitConditions(filters: VisitFilters, after: VisitCursor | null): readonly SQL[] {
+function visitConditions(filters: VisitFilters): readonly SQL[] {
   return [
     ...(filters.channel === null ? [] : [sql`"channel" = ${filters.channel}`]),
     ...(filters.deviceType === null ? [] : [sql`"deviceType" = ${filters.deviceType}`]),
     ...(filters.identity === null ? [] : [identityCondition(filters.identity)]),
-    ...(after === null
-      ? []
-      : [
-          sql`("startedAtValue", "sessionId") < (${after.startedAt.toISOString()}::timestamptz, ${after.sessionId}::uuid)`,
-        ]),
+    ...(filters.country === null ? [] : [sql`"country" = ${filters.country}`]),
+    ...(filters.source === null ? [] : [sql`"source" = ${filters.source}`]),
+    ...(filters.campaign === null ? [] : [sql`"campaign" = ${filters.campaign}`]),
   ];
+}
+
+function cursorConditions(after: VisitCursor | null): readonly SQL[] {
+  return after === null
+    ? []
+    : [
+        sql`("startedAtValue", "sessionId") < (${after.startedAt.toISOString()}::timestamptz, ${after.sessionId}::uuid)`,
+      ];
 }
 
 interface VisitRow {
@@ -75,7 +115,35 @@ interface VisitRow {
   readonly os: string;
   readonly country: string | null;
   readonly channel: Channel | null;
+  readonly source: string | null;
+  readonly campaign: string | null;
   readonly userId: string | null;
+}
+
+type MatchRow = { -readonly [Key in keyof VisitRow]: VisitRow[Key] | null } & { total: number };
+
+function isVisitRow(row: MatchRow): row is VisitRow & { total: number } {
+  return row.sessionId !== null;
+}
+
+function listItem(row: VisitRow): VisitListItem {
+  return {
+    sessionId: row.sessionId,
+    startedAt: new Date(row.startedAt),
+    endedAt: new Date(row.endedAt),
+    entryPath: row.entryPath,
+    pageViews: row.pageViews,
+    highlights: row.highlights,
+    failedRequests: row.failedRequests,
+    deviceType: row.deviceType,
+    browser: row.browser,
+    os: row.os,
+    country: row.country,
+    channel: row.channel,
+    source: row.source,
+    campaign: row.campaign,
+    userId: row.userId,
+  };
 }
 
 @Injectable()
@@ -87,8 +155,8 @@ export class DrizzleVisitsQuery implements VisitsQuery {
     filters: VisitFilters,
     after: VisitCursor | null,
     limit: number,
-  ): Promise<readonly VisitListItem[]> {
-    const rows = await this.db.execute<{ -readonly [Key in keyof VisitRow]: VisitRow[Key] }>(sql`
+  ): Promise<VisitMatches> {
+    const rows = await this.db.execute<MatchRow>(sql`
       WITH visits AS (
         SELECT ${events.sessionId} AS "sessionId",
           min(${events.occurredAt}) AS "startedAtValue",
@@ -101,6 +169,8 @@ export class DrizzleVisitsQuery implements VisitsQuery {
           ${firstOf(sql`${events.os}`)} AS "os",
           ${firstOf(sql`${events.country}`)} AS "country",
           ${firstOf(sql`${events.channel}`, sql`${events.channel} IS NOT NULL`)} AS "channel",
+          ${firstOf(entrySource, isEntryPageView)} AS "source",
+          ${firstOf(sql`${events.utmCampaign}`, isEntryPageView)} AS "campaign",
           ${firstOf(sql`${events.userId}`, sql`${events.userId} IS NOT NULL`)} AS "userId"
         FROM ${events}
         WHERE ${inScope(scope)}
@@ -114,28 +184,35 @@ export class DrizzleVisitsQuery implements VisitsQuery {
         WHERE ${inScope(scope)} AND ${isNamedEvent}
         GROUP BY 1, 2
       ),
+      matching AS (
+        SELECT * FROM visits WHERE ${allOf(visitConditions(filters))}
+      ),
       page AS (
-        SELECT * FROM visits
-        WHERE ${allOf(visitConditions(filters, after))}
+        SELECT * FROM matching
+        WHERE ${allOf(cursorConditions(after))}
         ORDER BY "startedAtValue" DESC, "sessionId" DESC
         LIMIT ${limit}
+      ),
+      totals AS (
+        SELECT count(*)::int AS "total" FROM matching
       )
-      SELECT "sessionId", "entryPath", "pageViews", "failedRequests", "deviceType", "browser",
-        "os", "country", "channel", "userId",
-        ${isoUtc(sql`"startedAtValue"`)} AS "startedAt",
-        ${isoUtc(sql`"endedAtValue"`)} AS "endedAt",
+      SELECT totals."total", page."sessionId", page."entryPath", page."pageViews",
+        page."failedRequests", page."deviceType", page."browser", page."os", page."country",
+        page."channel", page."source", page."campaign", page."userId",
+        ${isoUtc(sql`page."startedAtValue"`)} AS "startedAt",
+        ${isoUtc(sql`page."endedAtValue"`)} AS "endedAt",
         ARRAY(
           SELECT named."name" FROM named
           WHERE named."sessionId" = page."sessionId"
           ORDER BY named."firstAt", named."name"
           LIMIT ${MAX_VISIT_HIGHLIGHTS}
         ) AS "highlights"
-      FROM page
-      ORDER BY "startedAtValue" DESC, "sessionId" DESC`);
-    return rows.map((row) => ({
-      ...row,
-      startedAt: new Date(row.startedAt),
-      endedAt: new Date(row.endedAt),
-    }));
+      FROM totals
+      LEFT JOIN page ON true
+      ORDER BY page."startedAtValue" DESC, page."sessionId" DESC`);
+    return {
+      items: rows.filter(isVisitRow).map(listItem),
+      total: Math.max(0, ...rows.map((row) => row.total)),
+    };
   }
 }

@@ -1,4 +1,5 @@
 import type { Channel, DeviceType } from '../entities/tracked-event.entity';
+import type { ApiRequestMethod } from '../events/reserved-event-names';
 import type { QueryScope } from './query-scope';
 
 export const VISIT_LIST_PAGE_SIZE = 50;
@@ -18,12 +19,22 @@ export interface VisitEventFilter {
   readonly property: VisitPropertyFilter | null;
 }
 
+export interface VisitRouteFilter {
+  readonly method: ApiRequestMethod;
+  readonly route: string;
+}
+
 export interface VisitFilters {
   readonly paths: readonly string[];
   readonly event: VisitEventFilter | null;
   readonly channel: Channel | null;
   readonly deviceType: DeviceType | null;
   readonly identity: VisitIdentity | null;
+  readonly country: string | null;
+  readonly source: string | null;
+  readonly campaign: string | null;
+  readonly route: VisitRouteFilter | null;
+  readonly failed: boolean;
 }
 
 export const NO_VISIT_FILTERS: VisitFilters = {
@@ -32,6 +43,11 @@ export const NO_VISIT_FILTERS: VisitFilters = {
   channel: null,
   deviceType: null,
   identity: null,
+  country: null,
+  source: null,
+  campaign: null,
+  route: null,
+  failed: false,
 };
 
 export interface VisitCursor {
@@ -52,7 +68,14 @@ export interface VisitListItem {
   readonly os: string;
   readonly country: string | null;
   readonly channel: Channel | null;
+  readonly source: string | null;
+  readonly campaign: string | null;
   readonly userId: string | null;
+}
+
+export interface VisitMatches {
+  readonly items: readonly VisitListItem[];
+  readonly total: number;
 }
 
 export interface VisitsQuery {
@@ -61,7 +84,7 @@ export interface VisitsQuery {
     filters: VisitFilters,
     after: VisitCursor | null,
     limit: number,
-  ): Promise<readonly VisitListItem[]>;
+  ): Promise<VisitMatches>;
 }
 
 export const VISITS_QUERY = Symbol('VisitsQuery');
@@ -69,14 +92,16 @@ export const VISITS_QUERY = Symbol('VisitsQuery');
 export interface VisitsReport {
   readonly visits: readonly VisitListItem[];
   readonly nextCursor: VisitCursor | null;
+  readonly total: number;
 }
 
-export function visitsPage(items: readonly VisitListItem[], pageSize: number): VisitsReport {
-  const visits = items.slice(0, pageSize);
-  const [last] = items.length > pageSize ? visits.slice(-1) : [];
+export function visitsPage(matches: VisitMatches, pageSize: number): VisitsReport {
+  const visits = matches.items.slice(0, pageSize);
+  const [last] = matches.items.length > pageSize ? visits.slice(-1) : [];
   return {
     visits,
     nextCursor:
       last === undefined ? null : { startedAt: last.startedAt, sessionId: last.sessionId },
+    total: matches.total,
   };
 }
