@@ -100,10 +100,12 @@ Shipping now:
   included, or of one visit, newest first, 20 per page, with every event and the first id the
   visit was identified with, so a visit opened by its id leads to its person) and
   `/visits` (the visits of the range, newest first, 50 per page with a cursor, each with its
-  entry page, page views, first named events and failed requests; filtered by up to three pages
-  it viewed, a star matching any characters, a named event with an optional property value,
-  channel, device and whether it was identified; a visit is one browser tab, and nothing links
-  two of them). A project
+  entry page, page views, first named events, failed requests and the source and campaign it
+  came from, plus the total of matching visits; filtered by up to three pages it viewed, a star
+  matching any characters, a named event with an optional property value, channel, device,
+  country, source, campaign, whether it was identified, a request route (`POST /orders/:id`) and
+  whether a request, or a request to that route, failed; a visit is one browser tab, and nothing
+  links two of them). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
