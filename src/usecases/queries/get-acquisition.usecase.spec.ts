@@ -1,6 +1,6 @@
 import type { Project } from '../../domain/entities/project.entity';
 import { InvalidRangeError } from '../../domain/errors/query.errors';
-import { noChannelVisits, TOP_SOURCES } from '../../domain/queries/acquisition';
+import { noChannelVisits, TOP_CAMPAIGNS, TOP_SOURCES } from '../../domain/queries/acquisition';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubAcquisitionQuery } from '../../test-utils/stub-acquisition.query';
 import { GetAcquisitionUseCase } from './get-acquisition.usecase';
@@ -24,6 +24,8 @@ const SOURCE = {
   fromAdClickVisits: 3,
 } as const;
 
+const CAMPAIGN = { ...SOURCE, campaign: 'spring_sale', visits: 3 } as const;
+
 function setup(project: Project = PROJECT) {
   const query = new StubAcquisitionQuery();
   const useCase = new GetAcquisitionUseCase(
@@ -34,10 +36,11 @@ function setup(project: Project = PROJECT) {
 }
 
 describe('GetAcquisitionUseCase', () => {
-  it('fills the channels of every day and hands the sources on', async () => {
+  it('fills the channels of every day and hands the sources and campaigns on', async () => {
     const { query, run } = setup();
     query.byDay = [{ date: '2026-10-05', channel: 'paid', visits: 4 }];
     query.bySource = [SOURCE];
+    query.byCampaign = [CAMPAIGN];
 
     const report = await run('2026-10-04', '2026-10-05');
 
@@ -46,17 +49,20 @@ describe('GetAcquisitionUseCase', () => {
       { date: '2026-10-05', byChannel: { ...noChannelVisits(), paid: 4 } },
     ]);
     expect(report.sources).toEqual([SOURCE]);
-    expect(query.limits).toEqual([TOP_SOURCES]);
+    expect(report.campaigns).toEqual([CAMPAIGN]);
+    expect(query.limits).toEqual([TOP_SOURCES, TOP_CAMPAIGNS]);
     expect(query.scopes[0]?.range).toEqual({ from: '2026-10-04', to: '2026-10-05' });
   });
 
   it('answers null conversions without a conversion event', async () => {
     const { query, run } = setup({ ...PROJECT, conversionEvent: null });
     query.bySource = [SOURCE];
+    query.byCampaign = [CAMPAIGN];
 
-    expect((await run('2026-10-05', '2026-10-05')).sources).toEqual([
-      { ...SOURCE, conversions: null, convertingVisits: null },
-    ]);
+    const report = await run('2026-10-05', '2026-10-05');
+
+    expect(report.sources).toEqual([{ ...SOURCE, conversions: null, convertingVisits: null }]);
+    expect(report.campaigns).toEqual([{ ...CAMPAIGN, conversions: null, convertingVisits: null }]);
   });
 
   it('refuses an invalid range', async () => {

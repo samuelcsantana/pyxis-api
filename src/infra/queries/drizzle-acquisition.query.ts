@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
 import type {
   AcquisitionQuery,
+  CampaignCount,
   ChannelDayCount,
   SourceCount,
 } from '../../domain/queries/acquisition';
@@ -19,10 +20,51 @@ function sessionEntries(scope: QueryScope): SQL {
       ${events.fromAdClick} AS "fromAdClick",
       ${entrySource} AS "source",
       ${events.utmMedium} AS "medium",
+      ${events.utmCampaign} AS "campaign",
       ${localDay(scope)} AS "date"
     FROM ${events}
     WHERE ${inScope(scope)} AND ${isEntryPageView}
     ORDER BY ${events.sessionId}, ${events.occurredAt}`;
+}
+
+interface EntryGrouping {
+  readonly keys: SQL;
+  readonly order: SQL;
+  readonly only: SQL;
+}
+
+const BY_SOURCE: EntryGrouping = {
+  keys: sql`entries."source", entries."medium", entries."channel"`,
+  order: sql`entries."source", entries."medium" NULLS FIRST`,
+  only: sql`true`,
+};
+
+const BY_CAMPAIGN: EntryGrouping = {
+  keys: sql`entries."campaign", entries."source", entries."medium", entries."channel"`,
+  order: sql`entries."campaign", entries."source", entries."medium" NULLS FIRST`,
+  only: sql`entries."campaign" IS NOT NULL`,
+};
+
+function entryTotals(scope: QueryScope, grouping: EntryGrouping, limit: number): SQL {
+  return sql`
+    WITH entries AS (${sessionEntries(scope)}),
+    conversions AS (
+      SELECT ${events.sessionId} AS "sessionId", count(*)::int AS "conversions"
+      FROM ${events}
+      WHERE ${inScope(scope)} AND ${isConversion(scope)}
+      GROUP BY ${events.sessionId}
+    )
+    SELECT ${grouping.keys},
+      count(*)::int AS "visits",
+      coalesce(sum(conversions."conversions"), 0)::int AS "conversions",
+      count(conversions."sessionId")::int AS "convertingVisits",
+      count(*) FILTER (WHERE entries."fromAdClick")::int AS "fromAdClickVisits"
+    FROM entries
+    LEFT JOIN conversions ON conversions."sessionId" = entries."sessionId"
+    WHERE ${grouping.only}
+    GROUP BY ${grouping.keys}
+    ORDER BY "visits" DESC, ${grouping.order}
+    LIMIT ${limit}`;
 }
 
 @Injectable()
@@ -44,24 +86,14 @@ export class DrizzleAcquisitionQuery implements AcquisitionQuery {
   async sources(scope: QueryScope, limit: number): Promise<readonly SourceCount[]> {
     const rows = await this.db.execute<{
       -readonly [Key in keyof SourceCount]: SourceCount[Key];
-    }>(sql`
-      WITH entries AS (${sessionEntries(scope)}),
-      conversions AS (
-        SELECT ${events.sessionId} AS "sessionId", count(*)::int AS "conversions"
-        FROM ${events}
-        WHERE ${inScope(scope)} AND ${isConversion(scope)}
-        GROUP BY ${events.sessionId}
-      )
-      SELECT entries."source", entries."medium", entries."channel",
-        count(*)::int AS "visits",
-        coalesce(sum(conversions."conversions"), 0)::int AS "conversions",
-        count(conversions."sessionId")::int AS "convertingVisits",
-        count(*) FILTER (WHERE entries."fromAdClick")::int AS "fromAdClickVisits"
-      FROM entries
-      LEFT JOIN conversions ON conversions."sessionId" = entries."sessionId"
-      GROUP BY entries."source", entries."medium", entries."channel"
-      ORDER BY "visits" DESC, entries."source", entries."medium" NULLS FIRST
-      LIMIT ${limit}`);
+    }>(entryTotals(scope, BY_SOURCE, limit));
+    return [...rows];
+  }
+
+  async campaigns(scope: QueryScope, limit: number): Promise<readonly CampaignCount[]> {
+    const rows = await this.db.execute<{
+      -readonly [Key in keyof CampaignCount]: CampaignCount[Key];
+    }>(entryTotals(scope, BY_CAMPAIGN, limit));
     return [...rows];
   }
 }

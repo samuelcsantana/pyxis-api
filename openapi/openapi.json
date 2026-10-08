@@ -3,8 +3,85 @@
     "schemas": {
       "AcquisitionReport": {
         "additionalProperties": false,
-        "description": "Visits per day and channel, every channel named, and the top sources: the source is the campaign source, else the referring host, else \"(direct)\", taken from the first page view of the visit that carries a channel.",
+        "description": "Visits per day and channel, every channel named, the top sources and the top campaigns: the source is the campaign source, else the referring host, else \"(direct)\", and the campaign is utm_campaign, both taken from the first page view of the visit that carries a channel. Visits without a campaign are left out of campaigns.",
         "properties": {
+          "campaigns": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "campaign": {
+                  "type": "string"
+                },
+                "channel": {
+                  "enum": [
+                    "paid",
+                    "email",
+                    "social",
+                    "campaign",
+                    "organic",
+                    "referral",
+                    "direct"
+                  ],
+                  "type": "string"
+                },
+                "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "converting_visits": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "from_ad_click_visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "medium": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source": {
+                  "type": "string"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "campaign",
+                "source",
+                "medium",
+                "channel",
+                "visits",
+                "conversions",
+                "converting_visits",
+                "from_ad_click_visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
           "days": {
             "items": {
               "additionalProperties": false,
@@ -128,7 +205,8 @@
         },
         "required": [
           "days",
-          "sources"
+          "sources",
+          "campaigns"
         ],
         "type": "object"
       },

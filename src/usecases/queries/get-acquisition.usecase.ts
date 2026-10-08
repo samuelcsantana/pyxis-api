@@ -5,7 +5,9 @@ import {
   type AcquisitionQuery,
   type AcquisitionReport,
   channelsPerDay,
+  TOP_CAMPAIGNS,
   TOP_SOURCES,
+  withConversionsWhenCounted,
 } from '../../domain/queries/acquisition';
 import { daysIn } from '../../domain/queries/date-range';
 import { CLOCK, type Clock } from '../../domain/services/clock';
@@ -20,18 +22,18 @@ export class GetAcquisitionUseCase {
 
   async execute(project: Project, requested: RequestedRange): Promise<AcquisitionReport> {
     const { current } = scopedPeriods(project, requested, this.clock.now());
-    const [byDay, sources] = await Promise.all([
+    const [byDay, sources, campaigns] = await Promise.all([
       this.query.visitsByDayAndChannel(current),
       this.query.sources(current, TOP_SOURCES),
+      this.query.campaigns(current, TOP_CAMPAIGNS),
     ]);
     const countConversions = project.conversionEvent !== null;
     return {
       days: channelsPerDay(daysIn(current.range), byDay),
-      sources: sources.map((source) => ({
-        ...source,
-        conversions: countConversions ? source.conversions : null,
-        convertingVisits: countConversions ? source.convertingVisits : null,
-      })),
+      sources: sources.map((source) => withConversionsWhenCounted(source, countConversions)),
+      campaigns: campaigns.map((campaign) =>
+        withConversionsWhenCounted(campaign, countConversions),
+      ),
     };
   }
 }
