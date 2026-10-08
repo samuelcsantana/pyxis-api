@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.3.0...v0.4.0) (2026-10-08)
+
+
+### Features
+
+* **auth:** resolve the language a sign-in email is written in ([b411fb7](https://github.com/samuelcsantana/pyxis-api/commit/b411fb7aa5034027247df280350fd43b03b77c18))
+* **auth:** take the dashboard's language when it asks for a sign-in code ([d5e5be0](https://github.com/samuelcsantana/pyxis-api/commit/d5e5be08b2b97c129d7b005d36ceba37cc742c29))
+* **mail:** write the sign-in email in English or Brazilian Portuguese ([931f658](https://github.com/samuelcsantana/pyxis-api/commit/931f65831e03fb3fb3bc9df077d1484657882de5))
+
+
+### Documentation
+
+* **readme:** say the sign-in email follows the dashboard's language ([80bc31a](https://github.com/samuelcsantana/pyxis-api/commit/80bc31ad98570c234f3fe6d9dd9356e743e08f4c))
+
 ## [0.3.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.2.0...v0.3.0) (2026-10-08)
 
 
