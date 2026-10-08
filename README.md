@@ -97,7 +97,8 @@ Shipping now:
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
   a person's anonymous steps counting once they identify) and
   `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
-  included, or of one visit, newest first, 20 per page, with every event) and
+  included, or of one visit, newest first, 20 per page, with every event and the first id the
+  visit was identified with, so a visit opened by its id leads to its person) and
   `/visits` (the visits of the range, newest first, 50 per page with a cursor, each with its
   entry page, page views, first named events and failed requests; filtered by up to three pages
   it viewed, a star matching any characters, a named event with an optional property value,
