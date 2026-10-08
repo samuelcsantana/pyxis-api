@@ -147,6 +147,7 @@ function requestsBody(report: RequestsReport): RequestsReportBody {
       failed: route.failed,
       statuses: route.statuses.map((entry) => ({ ...entry })),
       median_duration_ms: route.medianDurationMs,
+      p95_duration_ms: route.p95DurationMs,
       screens: route.screens.map((entry) => ({ ...entry })),
       recent_failures: route.recentFailures.map((failure) => ({
         occurred_at: failure.occurredAt.toISOString(),
@@ -155,6 +156,17 @@ function requestsBody(report: RequestsReport): RequestsReportBody {
         session_id: failure.sessionId,
       })),
     })),
+    days: report.days.map((day) => ({ date: day.date, by_status_class: { ...day.byStatusClass } })),
+    route_days:
+      report.routeDays === null
+        ? null
+        : report.routeDays.map((day) => ({
+            date: day.date,
+            total: day.total,
+            failed: day.failed,
+            median_duration_ms: day.medianDurationMs,
+            p95_duration_ms: day.p95DurationMs,
+          })),
   };
 }
 
@@ -287,6 +299,12 @@ export class QueriesController {
     description: 'writes (the default): every non-GET call; reads: failed GET calls only',
     enum: ['writes', 'reads'],
   })
+  @ApiQuery({
+    name: 'route',
+    required: false,
+    description: 'Also answer route_days for this method and route: POST /orders/:id',
+    schema: { type: 'string' },
+  })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: requestsReportSchema })
   async requests(
     @Req() request: FastifyRequest,
@@ -299,6 +317,7 @@ export class QueriesController {
       range,
       query.screen ?? null,
       query.kind,
+      query.route ?? null,
     );
     return requestsBody(report);
   }
