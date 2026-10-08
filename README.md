@@ -70,6 +70,14 @@ Shipping now:
   any), so the dashboard can tell a project still waiting for its first event from a quiet
   period. There is no sign-up: `admin:grant` is the only way in
   ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
+- A branded sign-in email with a plain-text twin: the code first in the subject and in the
+  hidden inbox preview, then in a large monospace block a double-click copies whole; how long it
+  lasts, that it works once, never to share it, and what to do if the sign-in was not yours.
+  Table layout with inline styles for every client, light and dark through `color-scheme` and
+  `prefers-color-scheme`, `lang` and presentation-only tables for screen readers; every value
+  HTML-escaped, no tracking pixel and no tracked links. Its only image is the dashboard's PNG
+  logo (`https://pyxis.samuelsantana.dev/email/pyxis-logo.png`), and its words live in a typed
+  message table ready for a second language
 - Dashboard queries over any range of up to 400 days in the project's time zone:
   `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
   writes against the previous period, daily activity of both periods, top pages and events; a
@@ -283,7 +291,8 @@ src/
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
 ├── infra/queries/     the dashboard queries in SQL and the definitions they share
 ├── infra/rate-limit/  the per-project limiter
-├── infra/mail/        the sign-in email through Resend, or the log outside production
+├── infra/mail/        the sign-in email (its words, HTML and plain text) sent through Resend,
+│                      or the log outside production
 ├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion,
 │                      sign-in and sessions, rate limits, OpenAPI
 ├── shared/            pure utilities
