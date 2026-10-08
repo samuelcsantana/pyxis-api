@@ -77,11 +77,27 @@ describe('dashboard sign-in', () => {
 
       await requestCode.execute('  Ana@Example.com ');
 
-      expect(mail.sent).toEqual([{ email: ADMIN_EMAIL, code: '123456' }]);
+      expect(mail.sent).toEqual([{ email: ADMIN_EMAIL, code: '123456', language: 'en' }]);
       expect(codes.stored).toEqual([
         expect.objectContaining({ email: ADMIN_EMAIL, codeHash: sha256Hex('123456') }),
       ]);
       expect(JSON.stringify(codes.stored)).not.toContain('"123456"');
+    });
+
+    it('writes the email in the language the dashboard asks for', async () => {
+      const { requestCode, mail } = await setup();
+
+      await requestCode.execute(ADMIN_EMAIL, 'pt-BR');
+
+      expect(mail.sent).toEqual([{ email: ADMIN_EMAIL, code: '123456', language: 'pt-BR' }]);
+    });
+
+    it('writes in English when the dashboard asks for a language it has no email for', async () => {
+      const { requestCode, mail } = await setup();
+
+      await requestCode.execute(ADMIN_EMAIL, 'es');
+
+      expect(mail.sent.map(({ language }) => language)).toEqual(['en']);
     });
 
     it('does nothing for an email that is not an admin', async () => {

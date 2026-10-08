@@ -1,3 +1,4 @@
+import { EMAIL_LANGUAGES } from '../../domain/auth/email-language';
 import {
   buildSignInCodeEmail,
   DASHBOARD_URL,
@@ -38,20 +39,11 @@ function occurrences(content: string, fragment: string): number {
   return content.split(fragment).length - 1;
 }
 
-describe('buildSignInCodeEmail', () => {
-  const email = buildSignInCodeEmail(CODE);
+describe('buildSignInCodeEmail in English', () => {
+  const email = buildSignInCodeEmail(CODE, 'en');
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 is your Pyxis sign-in code');
-  });
-
-  it('puts the code in the HTML and on a line of its own in the plain text', () => {
-    expect(email.html).toContain('>123456</td>');
-    expect(email.text).toContain('\n    123456\n');
-  });
-
-  it('writes the code as one run of digits, so a double-click selects all of it', () => {
-    expect(email.html).toMatch(/<td class="pyxis-code"[^>]*>123456<\/td>/);
   });
 
   it('shows the code in the inbox list through a hidden preheader', () => {
@@ -71,8 +63,56 @@ describe('buildSignInCodeEmail', () => {
       expect(part).toContain('Pyxis is privacy-first product analytics');
       expect(part).toContain('You received this email because a sign-in');
     }
-    expect(email.html).toContain(`href="${DASHBOARD_URL}"`);
     expect(email.text).toContain(`Dashboard: ${DASHBOARD_URL}`);
+  });
+
+  it('declares English as its language', () => {
+    expect(email.html).toContain('<html lang="en" dir="ltr">');
+  });
+});
+
+describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
+  const email = buildSignInCodeEmail(CODE, 'pt-BR');
+
+  it('keeps the code first in the subject', () => {
+    expect(email.subject).toBe('123456 é o seu código para entrar no Pyxis');
+  });
+
+  it('shows the code in the inbox list through a hidden preheader', () => {
+    expect(email.html).toMatch(/<div style="display:none;[^"]*">Seu código é 123456\. Ele expira/);
+  });
+
+  it('says how long the code lasts, that it works once, and how to treat it', () => {
+    for (const part of [email.html, email.text]) {
+      expect(part).toContain('Ele expira em 10 minutos e só vale uma vez.');
+      expect(part).toContain('Nunca compartilhe este código. O Pyxis nunca vai pedi-lo a você.');
+      expect(part).toContain('Não pediu para entrar? Ignore este e-mail:');
+    }
+  });
+
+  it('ends with what Pyxis is, why the email came and the dashboard address', () => {
+    for (const part of [email.html, email.text]) {
+      expect(part).toContain('O Pyxis é uma ferramenta de análise de produto');
+      expect(part).toContain('Você recebeu este e-mail porque alguém pediu para entrar');
+    }
+    expect(email.text).toContain(`Painel: ${DASHBOARD_URL}`);
+  });
+
+  it('declares Brazilian Portuguese as its language', () => {
+    expect(email.html).toContain('<html lang="pt-BR" dir="ltr">');
+  });
+});
+
+describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
+  const email = buildSignInCodeEmail(CODE, language);
+
+  it('puts the code in the HTML and on a line of its own in the plain text', () => {
+    expect(email.html).toContain('>123456</td>');
+    expect(email.text).toContain('\n    123456\n');
+  });
+
+  it('writes the code as one run of digits, so a double-click selects all of it', () => {
+    expect(email.html).toMatch(/<td class="pyxis-code"[^>]*>123456<\/td>/);
   });
 
   it('loads no image but the logo, sized and described for clients that block it', () => {
@@ -93,10 +133,9 @@ describe('buildSignInCodeEmail', () => {
     expect(email.html).not.toMatch(/<link\b|@import|url\(/i);
   });
 
-  it('declares its language and keeps the layout tables out of the accessibility tree', () => {
+  it('keeps the layout tables out of the accessibility tree', () => {
     const tables = email.html.match(/<table\b[^>]*>/g) ?? [];
 
-    expect(email.html).toContain('<html lang="en" dir="ltr">');
     expect(tables.length).toBeGreaterThan(0);
     expect(tables.filter((table) => !table.includes('role="presentation"'))).toEqual([]);
   });

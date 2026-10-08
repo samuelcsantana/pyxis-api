@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { normalizeEmail } from '../../domain/auth/email';
+import { type EmailLanguage, resolveEmailLanguage } from '../../domain/auth/email-language';
 import { sha256Hex } from '../../domain/auth/hashing';
 import {
   generateSignInCode,
@@ -31,7 +32,7 @@ export class RequestSignInCodeUseCase {
     @Inject(RANDOM_SOURCE) private readonly random: RandomSource,
   ) {}
 
-  async execute(rawEmail: string): Promise<void> {
+  async execute(rawEmail: string, requestedLanguage?: string): Promise<void> {
     const email = normalizeEmail(rawEmail);
     if ((await this.admins.findByEmail(email)) === null) {
       return;
@@ -52,12 +53,16 @@ export class RequestSignInCodeUseCase {
       createdAt: now,
       expiresAt: new Date(now.getTime() + SIGN_IN_CODE_TTL_MS),
     });
-    await this.tryDeliverCode(email, code);
+    await this.tryDeliverCode(email, code, resolveEmailLanguage(requestedLanguage));
   }
 
-  private async tryDeliverCode(email: string, code: string): Promise<void> {
+  private async tryDeliverCode(
+    email: string,
+    code: string,
+    language: EmailLanguage,
+  ): Promise<void> {
     try {
-      await this.mail.sendSignInCode(email, code);
+      await this.mail.sendSignInCode(email, code, language);
     } catch (error) {
       this.logger.error({
         message: 'auth.code_delivery_failed',
