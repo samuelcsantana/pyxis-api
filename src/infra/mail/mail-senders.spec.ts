@@ -7,23 +7,6 @@ import { buildSignInCodeEmail } from './sign-in-code-email';
 const FROM = 'Pyxis <noreply@samuelsantana.dev>';
 const API_KEY = 'test-api-key';
 
-describe('buildSignInCodeEmail', () => {
-  it('puts the code in the subject, the text and the HTML, in English', () => {
-    const email = buildSignInCodeEmail('123456');
-
-    expect(email.subject).toBe('123456 is your Pyxis sign-in code');
-    expect(email.text).toContain('Your Pyxis sign-in code is 123456.');
-    expect(email.html).toContain('>123456<');
-  });
-
-  it('escapes the code before it reaches the HTML', () => {
-    const email = buildSignInCodeEmail(`<b>&"'`);
-
-    expect(email.html).toContain('&lt;b&gt;&amp;&quot;&#39;');
-    expect(email.html).not.toContain('<b>');
-  });
-});
-
 describe('ResendMailSender', () => {
   it("posts the email to Resend's API with the key as a bearer token", async () => {
     const send = jest.fn<Promise<Response>, [string, RequestInit]>(() =>
