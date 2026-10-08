@@ -15,6 +15,7 @@ export interface VisitSummary {
   readonly os: string;
   readonly country: string | null;
   readonly channel: Channel | null;
+  readonly userId: string | null;
 }
 
 export interface TimelineEvent {

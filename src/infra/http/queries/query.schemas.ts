@@ -182,6 +182,7 @@ export const timelineReportSchema = z
         os: z.string(),
         country: z.string().nullable(),
         channel: z.enum(CHANNELS).nullable(),
+        user_id: z.string().nullable(),
         events: z.array(
           z.strictObject({
             id: z.uuid(),
@@ -200,7 +201,8 @@ export const timelineReportSchema = z
     description:
       'The visits of a person (every visit with an event carrying the user id, the one they ' +
       'identified in included) or of one visit, newest first, 20 per page, with all their ' +
-      'events. next_before is the cursor for the older page, null on the last one.',
+      'events. user_id is the first id the visit was identified with, null for an anonymous ' +
+      'one. next_before is the cursor for the older page, null on the last one.',
   });
 
 export const featuresReportSchema = z

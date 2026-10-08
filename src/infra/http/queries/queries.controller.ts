@@ -184,6 +184,7 @@ function timelineBody(report: TimelineReport): TimelineReportBody {
       os: visit.os,
       country: visit.country,
       channel: visit.channel,
+      user_id: visit.userId,
       events: visit.events.map((event) => ({
         id: event.id,
         occurred_at: event.occurredAt.toISOString(),

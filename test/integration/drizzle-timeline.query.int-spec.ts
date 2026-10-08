@@ -15,6 +15,8 @@ const ANONYMOUS_VISIT = 'bbbbbbbb-0000-4000-8000-000000000001';
 const NEXT_DAY_VISIT = 'bbbbbbbb-0000-4000-8000-000000000002';
 const STRANGER_VISIT = 'bbbbbbbb-0000-4000-8000-000000000003';
 const BLOG_VISIT = 'bbbbbbbb-0000-4000-8000-000000000004';
+const ANONYMOUS_ONLY_VISIT = 'bbbbbbbb-0000-4000-8000-000000000005';
+const TWO_PEOPLE_VISIT = 'bbbbbbbb-0000-4000-8000-000000000006';
 
 let sequence = 0;
 
@@ -104,6 +106,7 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
         os: 'macos',
         country: null,
         channel: null,
+        userId: 'ana',
       },
       {
         sessionId: ANONYMOUS_VISIT,
@@ -114,6 +117,7 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
         os: 'ios',
         country: 'BR',
         channel: 'paid',
+        userId: 'ana',
       },
     ]);
   });
@@ -148,12 +152,27 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
     ).toEqual([ANONYMOUS_VISIT]);
   });
 
-  it('finds one visit by its session id', async () => {
+  it('finds one visit by its session id, with the person it was identified as', async () => {
     expect(
       (await query.visits(SHOP_ID, { sessionId: STRANGER_VISIT }, null, 21)).map(
-        (found) => found.sessionId,
+        ({ sessionId, userId }) => ({ sessionId, userId }),
       ),
-    ).toEqual([STRANGER_VISIT]);
+    ).toEqual([{ sessionId: STRANGER_VISIT, userId: 'bruno' }]);
+  });
+
+  it('names the first person a visit was identified as and none for an anonymous one', async () => {
+    await new DrizzleEventRepository(createDrizzleDatabase(app)).insertMany([
+      event(ANONYMOUS_ONLY_VISIT, '2026-10-06T08:00:00.000Z', 'page_view'),
+      event(TWO_PEOPLE_VISIT, '2026-10-06T09:00:00.000Z', 'page_view'),
+      event(TWO_PEOPLE_VISIT, '2026-10-06T09:01:00.000Z', 'identify', { userId: 'carla' }),
+      event(TWO_PEOPLE_VISIT, '2026-10-06T09:02:00.000Z', 'identify', { userId: 'davi' }),
+    ]);
+
+    const [anonymous] = await query.visits(SHOP_ID, { sessionId: ANONYMOUS_ONLY_VISIT }, null, 21);
+    const [shared] = await query.visits(SHOP_ID, { sessionId: TWO_PEOPLE_VISIT }, null, 21);
+
+    expect(anonymous?.userId).toBeNull();
+    expect(shared?.userId).toBe('carla');
   });
 
   it('finds nothing for an unknown person or in another project', async () => {

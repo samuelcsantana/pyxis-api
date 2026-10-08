@@ -140,6 +140,7 @@ const TIMELINE: TimelineReport = {
       os: 'ios',
       country: 'BR',
       channel: 'paid',
+      userId: 'ana',
       events: [
         {
           id: '9f1c2b3a-1d2e-4f5a-8b6c-000000000001',
@@ -369,6 +370,7 @@ describe('QueriesController', () => {
           os: 'ios',
           country: 'BR',
           channel: 'paid',
+          user_id: 'ana',
           events: [
             {
               id: '9f1c2b3a-1d2e-4f5a-8b6c-000000000001',

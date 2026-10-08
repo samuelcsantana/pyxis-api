@@ -23,6 +23,7 @@ function visit(index: number): VisitSummary {
     os: 'ios',
     country: 'BR',
     channel: index === 0 ? 'paid' : null,
+    userId: index === 0 ? 'ana' : null,
   };
 }
 
