@@ -1,6 +1,6 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
-import type { FunnelMode, FunnelStep } from '../../src/domain/queries/funnel';
+import type { FunnelMode, FunnelOutcome, FunnelStep } from '../../src/domain/queries/funnel';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
 import {
   createDrizzleDatabase,
@@ -137,6 +137,48 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
     ];
 
     expect(await counts(SCOPE, 'visit', steps)).toEqual([1, 1]);
+  });
+
+  describe('the visits or people behind one step', () => {
+    const visit = (sessionNumber: number) =>
+      `aaaaaaaa-1111-4000-8000-${String(sessionNumber).padStart(12, '0')}`;
+    const asked = (stepIndex: number, outcome: FunnelOutcome, mode: FunnelMode = 'visit') => ({
+      mode,
+      steps: CALCULATOR,
+      stepIndex,
+      outcome,
+    });
+
+    it('lists those who reached a step, the latest first, with when they reached it', async () => {
+      expect(await query.subjects(SCOPE, asked(0, 'reached'), null, 50)).toEqual([
+        { id: visit(3), lastStepAt: new Date('2026-10-05T10:05:00.000Z') },
+        { id: visit(1), lastStepAt: new Date('2026-10-04T12:00:00.000Z') },
+      ]);
+    });
+
+    it('lists those who reached the previous step and never this one', async () => {
+      expect(await query.subjects(SCOPE, asked(1, 'dropped'), null, 50)).toEqual([
+        { id: visit(3), lastStepAt: new Date('2026-10-05T10:05:00.000Z') },
+      ]);
+      expect(await query.subjects(SCOPE, asked(2, 'dropped'), null, 50)).toEqual([
+        { id: visit(1), lastStepAt: new Date('2026-10-04T12:05:00.000Z') },
+      ]);
+    });
+
+    it('names people by their user id in user mode', async () => {
+      expect(await query.subjects(SCOPE, asked(2, 'reached', 'user'), null, 50)).toEqual([
+        { id: 'ana', lastStepAt: new Date('2026-10-05T09:00:00.000Z') },
+      ]);
+    });
+
+    it('pages with a cursor and honors the limit', async () => {
+      const [first] = await query.subjects(SCOPE, asked(0, 'reached'), null, 1);
+      const rest =
+        first === undefined ? [] : await query.subjects(SCOPE, asked(0, 'reached'), first, 1);
+
+      expect(first?.id).toBe(visit(3));
+      expect(rest.map((subject) => subject.id)).toEqual([visit(1)]);
+    });
   });
 
   it('never counts another project', async () => {

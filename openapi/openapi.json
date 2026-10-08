@@ -577,6 +577,44 @@
         ],
         "type": "object"
       },
+      "FunnelSubjectsReport": {
+        "additionalProperties": false,
+        "description": "The visits (mode=visit: session ids) or identified people (mode=user: user ids) behind one step of a funnel: outcome=reached those who reached step n (1 is the first), outcome=dropped those who reached step n - 1 and never step n. last_step_at is when they reached the last step they did; newest first, 50 per page. next_cursor goes back as cursor for the older page, null on the last one.",
+        "properties": {
+          "next_cursor": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "subjects": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "last_step_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "last_step_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "subjects",
+          "next_cursor"
+        ],
+        "type": "object"
+      },
       "IncomingEvent": {
         "additionalProperties": false,
         "description": "One event. An event that breaks these rules is counted as rejected while the rest of its batch is kept.",
@@ -2806,6 +2844,145 @@
           }
         ],
         "summary": "How many visits or people reached each step of a funnel, in order",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/funnel/subjects": {
+      "get": {
+        "operationId": "FunnelSubjectsController_subjects",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": true,
+            "schema": {
+              "enum": [
+                "visit",
+                "user"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The steps of the funnel, as for /funnel",
+            "in": "query",
+            "name": "steps",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The step, 1 for the first; dropped needs 2 or more",
+            "in": "query",
+            "name": "step",
+            "required": true,
+            "schema": {
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outcome",
+            "required": true,
+            "schema": {
+              "enum": [
+                "reached",
+                "dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The next_cursor of the previous page",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunnelSubjectsReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The visits or people who reached, or dropped at, one funnel step",
         "tags": [
           "dashboard queries"
         ]

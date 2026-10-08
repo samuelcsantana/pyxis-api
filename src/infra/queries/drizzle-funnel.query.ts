@@ -6,6 +6,9 @@ import {
   type FunnelQuery,
   type FunnelReport,
   type FunnelStep,
+  type FunnelSubject,
+  type FunnelSubjectCursor,
+  type FunnelSubjectsAsked,
   likePattern,
 } from '../../domain/queries/funnel';
 import type { QueryScope } from '../../domain/queries/query-scope';
@@ -83,6 +86,32 @@ function medianSecondsBetween(later: number, earlier: number, alias: string): SQ
 
 type MeasureRow = Readonly<Record<string, number | null>>;
 
+function isoUtc(column: SQL): SQL {
+  return sql`to_char(${column} AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')`;
+}
+
+function chosenSubjects(asked: FunnelSubjectsAsked): SQL {
+  const step = stepName(asked.stepIndex);
+  if (asked.outcome === 'reached') {
+    return sql`SELECT ${step}."subject", ${step}."at" FROM ${step}`;
+  }
+  const previous = stepName(asked.stepIndex - 1);
+  return sql`
+    SELECT ${previous}."subject", ${previous}."at" FROM ${previous}
+    WHERE NOT EXISTS (SELECT 1 FROM ${step} WHERE ${step}."subject" = ${previous}."subject")`;
+}
+
+function subjectCursor(after: FunnelSubjectCursor | null): SQL {
+  return after === null
+    ? sql`true`
+    : sql`(chosen."at", chosen."subject") < (${after.lastStepAt.toISOString()}::timestamptz, ${after.id})`;
+}
+
+interface SubjectRow {
+  readonly id: string;
+  readonly lastStepAt: string;
+}
+
 @Injectable()
 export class DrizzleFunnelQuery implements FunnelQuery {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleDatabase) {}
@@ -113,5 +142,28 @@ export class DrizzleFunnelQuery implements FunnelQuery {
       })),
       medianSecondsOverall: row.overall ?? null,
     };
+  }
+
+  async subjects(
+    scope: QueryScope,
+    asked: FunnelSubjectsAsked,
+    after: FunnelSubjectCursor | null,
+    limit: number,
+  ): Promise<readonly FunnelSubject[]> {
+    const tables = asked.steps
+      .slice(0, asked.stepIndex + 1)
+      .map((step, index) => stepTable(step, index));
+    const rows = await this.db.execute<{ -readonly [Key in keyof SubjectRow]: SubjectRow[Key] }>(
+      sql`
+        WITH subject_events AS (${subjectEvents(scope, asked.mode)}),
+        ${sql.join(tables, sql`, `)},
+        chosen AS (${chosenSubjects(asked)})
+        SELECT chosen."subject" AS "id", ${isoUtc(sql`chosen."at"`)} AS "lastStepAt"
+        FROM chosen
+        WHERE ${subjectCursor(after)}
+        ORDER BY chosen."at" DESC, chosen."subject" DESC
+        LIMIT ${limit}`,
+    );
+    return rows.map((row) => ({ id: row.id, lastStepAt: new Date(row.lastStepAt) }));
   }
 }

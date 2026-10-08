@@ -278,6 +278,29 @@ describe('dashboard queries', () => {
     expect(people.json()).toEqual(timed);
   });
 
+  it('answers the visits that reached a funnel step, and refuses a drop at the first one', async () => {
+    const steps = encodeURIComponent(
+      JSON.stringify([
+        { type: 'page', path: '/pri*' },
+        { type: 'event', name: 'signup_completed' },
+      ]),
+    );
+    const base = `from=2026-10-04&to=2026-10-05&mode=visit&steps=${steps}`;
+
+    const reached = await get(
+      `/v1/projects/${SHOP_ID}/funnel/subjects?${base}&step=2&outcome=reached`,
+    );
+    const droppedFirst = await get(
+      `/v1/projects/${SHOP_ID}/funnel/subjects?${base}&step=1&outcome=dropped`,
+    );
+
+    expect(reached.json()).toEqual({
+      subjects: [{ id: SESSION_ID, last_step_at: '2026-10-05T10:01:00.000Z' }],
+      next_cursor: null,
+    });
+    expect(droppedFirst.statusCode).toBe(400);
+  });
+
   it('answers 400 to a funnel of nine steps', async () => {
     const steps = encodeURIComponent(
       JSON.stringify(
