@@ -11,6 +11,7 @@ import { VISITS_QUERY } from '../../../domain/queries/visits';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
+import { GetFunnelSubjectsUseCase } from '../../../usecases/queries/get-funnel-subjects.usecase';
 import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetPropertyBreakdownUseCase } from '../../../usecases/queries/get-property-breakdown.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
@@ -28,6 +29,7 @@ import { DrizzleOverviewQuery } from '../../queries/drizzle-overview.query';
 import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
 import { AuthModule } from '../auth/auth.module';
 import { SessionGuard } from '../auth/auth.guards';
+import { FunnelSubjectsController } from './funnel-subjects.controller';
 import { ProjectAccessGuard } from './project-access.guard';
 import { PropertyBreakdownController } from './property-breakdown.controller';
 import { QueriesController } from './queries.controller';
@@ -35,7 +37,12 @@ import { VisitsController } from './visits.controller';
 
 @Module({
   imports: [AuthModule],
-  controllers: [QueriesController, PropertyBreakdownController, VisitsController],
+  controllers: [
+    QueriesController,
+    PropertyBreakdownController,
+    VisitsController,
+    FunnelSubjectsController,
+  ],
   providers: [
     GetOverviewUseCase,
     { provide: OVERVIEW_QUERY, useClass: DrizzleOverviewQuery },
@@ -50,6 +57,7 @@ import { VisitsController } from './visits.controller';
     GetRequestsUseCase,
     { provide: REQUESTS_QUERY, useClass: DrizzleRequestsQuery },
     GetFunnelUseCase,
+    GetFunnelSubjectsUseCase,
     { provide: FUNNEL_QUERY, useClass: DrizzleFunnelQuery },
     GetTimelineUseCase,
     { provide: TIMELINE_QUERY, useClass: DrizzleTimelineQuery },
