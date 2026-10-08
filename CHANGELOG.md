@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.2.0...v0.3.0) (2026-10-08)
+
+
+### Features
+
+* **acquisition:** rank the campaigns that brought visits ([bfc7bd5](https://github.com/samuelcsantana/pyxis-api/commit/bfc7bd58b845a94095957f9c36f5b429acd09b09))
+* **funnel:** list the visits or people behind one step ([3ff5baf](https://github.com/samuelcsantana/pyxis-api/commit/3ff5baf44ebfe5ee68212fa924770fcf1d309ec2))
+* **funnel:** time each step from the previous one and the whole funnel ([5a65051](https://github.com/samuelcsantana/pyxis-api/commit/5a6505125bd11b7b1e6963b7e0d5911608cccf7a))
+* **requests:** count failures per day by status class and add the p95 ([977aa1f](https://github.com/samuelcsantana/pyxis-api/commit/977aa1f2aaf21ceba1cf07bc2db2b9dc5a70a8a5))
+* **timeline:** name the person each visit was identified as ([b9800f0](https://github.com/samuelcsantana/pyxis-api/commit/b9800f00107ac99e30f7e1623a20536f994b727e))
+* **visits:** filter by country, source, campaign and failed requests ([d632a02](https://github.com/samuelcsantana/pyxis-api/commit/d632a0298100c6242bd6c5b1de6895489876e9ec))
+
+
+### Refactoring
+
+* **queries:** name the entry page view and the source it carries ([6bd075e](https://github.com/samuelcsantana/pyxis-api/commit/6bd075eb08da1fa80f8a8d1705e2e5d5b3c1e080))
+
+
+### Documentation
+
+* **readme:** describe the new visit filters and the matching total ([cd47b70](https://github.com/samuelcsantana/pyxis-api/commit/cd47b706560c909b846e1978355732498a5891eb))
+* **readme:** describe the per-day health of the requests ([52298b9](https://github.com/samuelcsantana/pyxis-api/commit/52298b93d886c86e98ce0d27868630dc33b8da2e))
+* **readme:** describe the visits and people behind a funnel step ([3c287e9](https://github.com/samuelcsantana/pyxis-api/commit/3c287e90423109d9de106ed735a9963742f0ed3f))
+* **readme:** mention the campaigns in the acquisition answer ([b805853](https://github.com/samuelcsantana/pyxis-api/commit/b80585300c311f5e9e0e00649ee5d8a62cdc52c8))
+* **readme:** say the funnel gives the median time between steps ([a7d03c9](https://github.com/samuelcsantana/pyxis-api/commit/a7d03c9cfea4a2c6cb9a38817fd276e857b8d38d))
+* **readme:** say the timeline names the person of each visit ([c506ba8](https://github.com/samuelcsantana/pyxis-api/commit/c506ba8ebbb6e5fd0c00a1b363f14143f0b3795a))
+
 ## [0.2.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.1.1...v0.2.0) (2026-10-08)
 
 
