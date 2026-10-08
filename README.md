@@ -98,7 +98,8 @@ Shipping now:
   `kind=reads`, the failed reads instead, counted without a rate because sites send a read only
   when it fails) and
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
-  a person's anonymous steps counting once they identify) and
+  a person's anonymous steps counting once they identify, with the median time from each step
+  to the next and through the whole funnel) and
   `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
   included, or of one visit, newest first, 20 per page, with every event and the first id the
   visit was identified with, so a visit opened by its id leads to its person) and
