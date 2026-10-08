@@ -77,7 +77,10 @@ Shipping now:
   `prefers-color-scheme`, `lang` and presentation-only tables for screen readers; every value
   HTML-escaped, no tracking pixel and no tracked links. Its only image is the dashboard's PNG
   logo (`https://pyxis.samuelsantana.dev/email/pyxis-logo.png`), and its words live in a typed
-  message table ready for a second language
+  message table in English and Brazilian Portuguese. The dashboard sends its own language as an
+  optional `locale` in `POST /v1/auth/request-code` (`{"email":…,"locale":"pt-BR"}`), matched
+  on the language (`pt-PT` gets pt-BR); no `locale`, or one the API has no email for, gets
+  English, so sign-in never fails over a language
 - Dashboard queries over any range of up to 400 days in the project's time zone:
   `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
   writes against the previous period, daily activity of both periods, top pages and events; a
@@ -300,7 +303,7 @@ src/
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
 ├── infra/queries/     the dashboard queries in SQL and the definitions they share
 ├── infra/rate-limit/  the per-project limiter
-├── infra/mail/        the sign-in email (its words, HTML and plain text) sent through Resend,
+├── infra/mail/        the sign-in email (words per language, HTML, plain text) sent through Resend,
 │                      or the log outside production
 ├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion,
 │                      sign-in and sessions, rate limits, OpenAPI
