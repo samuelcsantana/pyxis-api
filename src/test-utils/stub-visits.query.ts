@@ -3,6 +3,7 @@ import type {
   VisitCursor,
   VisitFilters,
   VisitListItem,
+  VisitMatches,
   VisitsQuery,
 } from '../domain/queries/visits';
 
@@ -14,14 +15,15 @@ export class StubVisitsQuery implements VisitsQuery {
     readonly limit: number;
   }[] = [];
   items: readonly VisitListItem[] = [];
+  total = 0;
 
   list(
     scope: QueryScope,
     filters: VisitFilters,
     after: VisitCursor | null,
     limit: number,
-  ): Promise<readonly VisitListItem[]> {
+  ): Promise<VisitMatches> {
     this.calls.push({ scope, filters, after, limit });
-    return Promise.resolve(this.items);
+    return Promise.resolve({ items: this.items, total: this.total });
   }
 }

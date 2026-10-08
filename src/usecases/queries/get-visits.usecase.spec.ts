@@ -36,6 +36,8 @@ function item(index: number): VisitListItem {
     os: 'ios',
     country: 'BR',
     channel: 'paid',
+    source: 'google',
+    campaign: 'spring_sale',
     userId: null,
   };
 }
@@ -44,15 +46,19 @@ describe('GetVisitsUseCase', () => {
   it('asks one visit more than a page, in the project time zone, with the filters as given', async () => {
     const query = new StubVisitsQuery();
     query.items = [item(0), item(1)];
+    query.total = 2;
     const filters: VisitFilters = {
       ...NO_VISIT_FILTERS,
       paths: ['/calculator-*'],
       identity: 'anonymous',
+      country: 'BR',
+      route: { method: 'POST', route: '/orders' },
+      failed: true,
     };
 
     const report = await new GetVisitsUseCase(query, CLOCK).execute(PROJECT, RANGE, filters, null);
 
-    expect(report).toEqual({ visits: [item(0), item(1)], nextCursor: null });
+    expect(report).toEqual({ visits: [item(0), item(1)], nextCursor: null, total: 2 });
     expect(query.calls).toEqual([
       {
         scope: {
@@ -81,6 +87,7 @@ describe('GetVisitsUseCase', () => {
     );
 
     const last = item(VISIT_LIST_PAGE_SIZE - 1);
+    expect(report.total).toBe(0);
     expect(report.visits).toHaveLength(VISIT_LIST_PAGE_SIZE);
     expect(report.nextCursor).toEqual({ startedAt: last.startedAt, sessionId: last.sessionId });
     expect(query.calls[0]?.after).toBe(after);

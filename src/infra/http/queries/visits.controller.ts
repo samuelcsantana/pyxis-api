@@ -10,6 +10,10 @@ import {
 import type { FastifyRequest } from 'fastify';
 import { CHANNELS, DEVICE_TYPES } from '../../../domain/entities/tracked-event.entity';
 import {
+  MAX_REFERRER_HOST_LENGTH,
+  MAX_UTM_VALUE_LENGTH,
+} from '../../../domain/events/event-limits';
+import {
   MAX_VISIT_PATH_FILTERS,
   VISIT_IDENTITIES,
   type VisitFilters,
@@ -37,6 +41,11 @@ function visitFilters(query: VisitsQueryParams): VisitFilters {
     channel: query.channel ?? null,
     deviceType: query.device ?? null,
     identity: query.identity ?? null,
+    country: query.country ?? null,
+    source: query.source ?? null,
+    campaign: query.campaign ?? null,
+    route: query.route ?? null,
+    failed: query.failed ?? false,
   };
 }
 
@@ -55,9 +64,12 @@ function visitsBody(report: VisitsReport): VisitsReportBody {
       os: visit.os,
       country: visit.country,
       channel: visit.channel,
+      source: visit.source,
+      campaign: visit.campaign,
       user_id: visit.userId,
     })),
     next_cursor: report.nextCursor === null ? null : visitCursorText(report.nextCursor),
+    total: report.total,
   };
 }
 
@@ -111,6 +123,38 @@ export class VisitsController {
   @ApiQuery({ name: 'channel', required: false, enum: CHANNELS })
   @ApiQuery({ name: 'device', required: false, enum: DEVICE_TYPES })
   @ApiQuery({ name: 'identity', required: false, enum: VISIT_IDENTITIES })
+  @ApiQuery({
+    name: 'country',
+    required: false,
+    description: 'The two-letter country code of the visit',
+    schema: { type: 'string', pattern: '^[A-Z]{2}$' },
+  })
+  @ApiQuery({
+    name: 'source',
+    required: false,
+    description:
+      'The source of the visit as Acquisition names it: campaign source, referring host or (direct)',
+    schema: { type: 'string', maxLength: MAX_REFERRER_HOST_LENGTH },
+  })
+  @ApiQuery({
+    name: 'campaign',
+    required: false,
+    description: 'The campaign (utm_campaign) of the visit entry',
+    schema: { type: 'string', maxLength: MAX_UTM_VALUE_LENGTH },
+  })
+  @ApiQuery({
+    name: 'route',
+    required: false,
+    description: 'A request the visit made, as method and route: POST /orders/:id',
+    schema: { type: 'string' },
+  })
+  @ApiQuery({
+    name: 'failed',
+    required: false,
+    description:
+      'true: the visit had a failed request (status 0 or 400 and above); with route, on that route',
+    schema: { type: 'string', enum: ['true', 'false'] },
+  })
   @ApiQuery({
     name: 'cursor',
     required: false,

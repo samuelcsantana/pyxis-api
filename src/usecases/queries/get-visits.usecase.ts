@@ -26,7 +26,7 @@ export class GetVisitsUseCase {
     after: VisitCursor | null,
   ): Promise<VisitsReport> {
     const { current } = scopedPeriods(project, requested, this.clock.now());
-    const items = await this.query.list(current, filters, after, VISIT_LIST_PAGE_SIZE + 1);
-    return visitsPage(items, VISIT_LIST_PAGE_SIZE);
+    const matches = await this.query.list(current, filters, after, VISIT_LIST_PAGE_SIZE + 1);
+    return visitsPage(matches, VISIT_LIST_PAGE_SIZE);
   }
 }
