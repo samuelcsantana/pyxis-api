@@ -69,7 +69,7 @@ export class AuthController {
     @Body({ schema: requestCodeSchema, pipes: [new SchemaPipe(requestCodeSchema)] })
     body: RequestCodeBody,
   ): Promise<void> {
-    await this.requestSignInCode.execute(body.email);
+    await this.requestSignInCode.execute(body.email, body.locale);
   }
 
   @Post('verify-code')
