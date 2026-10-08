@@ -1,6 +1,7 @@
 import type { AdminSession } from '../entities/admin-session.entity';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { normalizeEmail } from './email';
+import { resolveEmailLanguage } from './email-language';
 import { sha256Hex } from './hashing';
 import {
   isSessionActive,
@@ -26,6 +27,29 @@ function at(offsetMs: number): Date {
 describe('normalizeEmail', () => {
   it('trims and lower-cases the address', () => {
     expect(normalizeEmail('  Ana@Example.COM ')).toBe('ana@example.com');
+  });
+});
+
+describe('resolveEmailLanguage', () => {
+  it('writes in English when no language is asked for', () => {
+    expect(resolveEmailLanguage(undefined)).toBe('en');
+  });
+
+  it('matches a supported language whatever its case', () => {
+    expect(resolveEmailLanguage('pt-BR')).toBe('pt-BR');
+    expect(resolveEmailLanguage('PT-br')).toBe('pt-BR');
+    expect(resolveEmailLanguage('en')).toBe('en');
+  });
+
+  it('matches on the language alone when the region differs', () => {
+    expect(resolveEmailLanguage('pt-PT')).toBe('pt-BR');
+    expect(resolveEmailLanguage('pt')).toBe('pt-BR');
+    expect(resolveEmailLanguage('en-GB')).toBe('en');
+  });
+
+  it('falls back to English for a language it has no email for', () => {
+    expect(resolveEmailLanguage('es')).toBe('en');
+    expect(resolveEmailLanguage('es-419')).toBe('en');
   });
 });
 
