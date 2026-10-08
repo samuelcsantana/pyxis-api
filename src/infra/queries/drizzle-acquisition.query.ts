@@ -1,16 +1,15 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
-import {
-  type AcquisitionQuery,
-  type ChannelDayCount,
-  DIRECT_SOURCE,
-  type SourceCount,
+import type {
+  AcquisitionQuery,
+  ChannelDayCount,
+  SourceCount,
 } from '../../domain/queries/acquisition';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isConversion, isPageView, localDay } from './definitions';
+import { entrySource, inScope, isConversion, isEntryPageView, localDay } from './definitions';
 
 function sessionEntries(scope: QueryScope): SQL {
   return sql`
@@ -18,11 +17,11 @@ function sessionEntries(scope: QueryScope): SQL {
       ${events.sessionId} AS "sessionId",
       ${events.channel} AS "channel",
       ${events.fromAdClick} AS "fromAdClick",
-      coalesce(${events.utmSource}, ${events.referrerHost}, ${DIRECT_SOURCE}) AS "source",
+      ${entrySource} AS "source",
       ${events.utmMedium} AS "medium",
       ${localDay(scope)} AS "date"
     FROM ${events}
-    WHERE ${inScope(scope)} AND ${isPageView} AND ${events.channel} IS NOT NULL
+    WHERE ${inScope(scope)} AND ${isEntryPageView}
     ORDER BY ${events.sessionId}, ${events.occurredAt}`;
 }
 
