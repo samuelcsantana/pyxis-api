@@ -122,29 +122,31 @@ export const devicesReportSchema = z
       'countries included.',
   });
 
+const sourceShareShape = {
+  source: z.string(),
+  medium: z.string().nullable(),
+  channel: z.enum(CHANNELS),
+  visits: z.int(),
+  conversions: z.int().nullable(),
+  converting_visits: z.int().nullable(),
+  from_ad_click_visits: z.int(),
+};
+
 export const acquisitionReportSchema = z
   .strictObject({
     days: z.array(
       z.strictObject({ date: z.iso.date(), by_channel: z.record(z.enum(CHANNELS), z.int()) }),
     ),
-    sources: z.array(
-      z.strictObject({
-        source: z.string(),
-        medium: z.string().nullable(),
-        channel: z.enum(CHANNELS),
-        visits: z.int(),
-        conversions: z.int().nullable(),
-        converting_visits: z.int().nullable(),
-        from_ad_click_visits: z.int(),
-      }),
-    ),
+    sources: z.array(z.strictObject(sourceShareShape)),
+    campaigns: z.array(z.strictObject({ campaign: z.string(), ...sourceShareShape })),
   })
   .meta({
     id: 'AcquisitionReport',
     description:
-      'Visits per day and channel, every channel named, and the top sources: the source is the ' +
-      'campaign source, else the referring host, else "(direct)", taken from the first page view ' +
-      'of the visit that carries a channel.',
+      'Visits per day and channel, every channel named, the top sources and the top campaigns: ' +
+      'the source is the campaign source, else the referring host, else "(direct)", and the ' +
+      'campaign is utm_campaign, both taken from the first page view of the visit that carries ' +
+      'a channel. Visits without a campaign are left out of campaigns.',
   });
 
 export const featuresQuerySchema = rangeQuerySchema.extend({ kind: z.enum(FEATURE_KINDS) });

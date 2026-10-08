@@ -54,10 +54,11 @@ function attribution(overrides: Partial<Attribution>): Attribution {
 }
 
 const AD = attribution({ utmSource: 'google', utmMedium: 'cpc', fromAdClick: true });
-const SEARCH = attribution({ referrerHost: 'duckduckgo.com' });
+const SPRING_AD = { ...AD, utmCampaign: 'spring_sale' };
+const SEARCH = attribution({ referrerHost: 'duckduckgo.com', utmCampaign: 'autumn' });
 
 const SEEDED: readonly TrackedEvent[] = [
-  event(1, '2026-10-05T12:00:00.000Z', 'page_view', { channel: 'paid', attribution: AD }),
+  event(1, '2026-10-05T12:00:00.000Z', 'page_view', { channel: 'paid', attribution: SPRING_AD }),
   event(1, '2026-10-05T12:01:00.000Z', 'page_view', { path: '/pricing' }),
   event(1, '2026-10-05T12:02:00.000Z', 'signup_completed'),
   event(1, '2026-10-05T12:03:00.000Z', 'signup_completed'),
@@ -139,8 +140,34 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
     ]);
   });
 
+  it('groups the visits that came with a campaign by campaign, source, medium and channel', async () => {
+    expect(await query.campaigns(SCOPE, 20)).toEqual([
+      {
+        campaign: 'autumn',
+        source: 'duckduckgo.com',
+        medium: null,
+        channel: 'organic',
+        visits: 1,
+        conversions: 0,
+        convertingVisits: 0,
+        fromAdClickVisits: 0,
+      },
+      {
+        campaign: 'spring_sale',
+        source: 'google',
+        medium: 'cpc',
+        channel: 'paid',
+        visits: 1,
+        conversions: 2,
+        convertingVisits: 1,
+        fromAdClickVisits: 1,
+      },
+    ]);
+  });
+
   it('honors the limit', async () => {
     expect(await query.sources(SCOPE, 1)).toHaveLength(1);
+    expect(await query.campaigns(SCOPE, 1)).toHaveLength(1);
   });
 
   it('never counts another project', async () => {

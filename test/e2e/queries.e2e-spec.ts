@@ -167,6 +167,7 @@ describe('dashboard queries', () => {
           from_ad_click_visits: 1,
         },
       ],
+      campaigns: [],
     });
   });
 

@@ -101,6 +101,18 @@ const ACQUISITION: AcquisitionReport = {
       fromAdClickVisits: 2,
     },
   ],
+  campaigns: [
+    {
+      campaign: 'spring_sale',
+      source: 'google',
+      medium: 'cpc',
+      channel: 'paid',
+      visits: 1,
+      conversions: null,
+      convertingVisits: null,
+      fromAdClickVisits: 1,
+    },
+  ],
 };
 
 const FEATURES: FeaturesReport = {
@@ -279,6 +291,18 @@ describe('QueriesController', () => {
           conversions: null,
           converting_visits: null,
           from_ad_click_visits: 2,
+        },
+      ],
+      campaigns: [
+        {
+          campaign: 'spring_sale',
+          source: 'google',
+          medium: 'cpc',
+          channel: 'paid',
+          visits: 1,
+          conversions: null,
+          converting_visits: null,
+          from_ad_click_visits: 1,
         },
       ],
     });

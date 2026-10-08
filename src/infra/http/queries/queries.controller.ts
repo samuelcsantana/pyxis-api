@@ -16,7 +16,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import type { AcquisitionReport } from '../../../domain/queries/acquisition';
+import type { AcquisitionReport, SourceShare } from '../../../domain/queries/acquisition';
 import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
 import type { FeaturesReport } from '../../../domain/queries/features';
 import type { RequestsReport } from '../../../domain/queries/requests';
@@ -118,17 +118,25 @@ function devicesBody(report: DevicesReport): DevicesReportBody {
   };
 }
 
+function sourceShareBody(share: SourceShare) {
+  return {
+    source: share.source,
+    medium: share.medium,
+    channel: share.channel,
+    visits: share.visits,
+    conversions: share.conversions,
+    converting_visits: share.convertingVisits,
+    from_ad_click_visits: share.fromAdClickVisits,
+  };
+}
+
 function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
   return {
     days: report.days.map((day) => ({ date: day.date, by_channel: { ...day.byChannel } })),
-    sources: report.sources.map((source) => ({
-      source: source.source,
-      medium: source.medium,
-      channel: source.channel,
-      visits: source.visits,
-      conversions: source.conversions,
-      converting_visits: source.convertingVisits,
-      from_ad_click_visits: source.fromAdClickVisits,
+    sources: report.sources.map(sourceShareBody),
+    campaigns: report.campaigns.map((share) => ({
+      campaign: share.campaign,
+      ...sourceShareBody(share),
     })),
   };
 }
