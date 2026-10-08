@@ -85,7 +85,8 @@ Shipping now:
   answer says which time that was:
   [ADR 0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)),
   `/devices` (device type, browser, system and country, top five and "other") and
-  `/acquisition` (visits per day and channel, sources with conversions and ad clicks); wherever
+  `/acquisition` (visits per day and channel, sources and campaigns with conversions and ad
+  clicks); wherever
   conversions are counted, both the conversion events and the converting visits (visits that
   sent the conversion event at least once) are given, so a conversion rate never passes 100 %,
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
