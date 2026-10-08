@@ -268,11 +268,13 @@ describe('dashboard queries', () => {
 
     expect(response.statusCode).toBe(200);
     const body = response.json<{
-      visits: { session_id: string; events: { name: string }[] }[];
+      visits: { session_id: string; user_id: string | null; events: { name: string }[] }[];
       next_before: string | null;
     }>();
     expect(body.next_before).toBeNull();
-    expect(body.visits.map((visit) => visit.session_id)).toEqual([SESSION_ID]);
+    expect(body.visits.map((visit) => [visit.session_id, visit.user_id])).toEqual([
+      [SESSION_ID, 'u-1'],
+    ]);
     expect(body.visits[0]?.events.map((event) => event.name)).toEqual([
       'page_view',
       'signup_completed',

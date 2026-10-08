@@ -1468,7 +1468,7 @@
       },
       "TimelineReport": {
         "additionalProperties": false,
-        "description": "The visits of a person (every visit with an event carrying the user id, the one they identified in included) or of one visit, newest first, 20 per page, with all their events. next_before is the cursor for the older page, null on the last one.",
+        "description": "The visits of a person (every visit with an event carrying the user id, the one they identified in included) or of one visit, newest first, 20 per page, with all their events. user_id is the first id the visit was identified with, null for an anonymous one. next_before is the cursor for the older page, null on the last one.",
         "properties": {
           "next_before": {
             "anyOf": [
@@ -1579,6 +1579,12 @@
                   "format": "date-time",
                   "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
                   "type": "string"
+                },
+                "user_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [
@@ -1590,6 +1596,7 @@
                 "os",
                 "country",
                 "channel",
+                "user_id",
                 "events"
               ],
               "type": "object"
