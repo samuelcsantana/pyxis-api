@@ -1,4 +1,4 @@
-import type { FunnelMode, FunnelQuery, FunnelStep } from '../domain/queries/funnel';
+import type { FunnelMode, FunnelQuery, FunnelReport, FunnelStep } from '../domain/queries/funnel';
 import type { QueryScope } from '../domain/queries/query-scope';
 
 export class StubFunnelQuery implements FunnelQuery {
@@ -7,14 +7,14 @@ export class StubFunnelQuery implements FunnelQuery {
     readonly mode: FunnelMode;
     readonly steps: readonly FunnelStep[];
   }[] = [];
-  counts: readonly number[] = [];
+  report: FunnelReport = { steps: [], medianSecondsOverall: null };
 
-  count(
+  measure(
     scope: QueryScope,
     mode: FunnelMode,
     steps: readonly FunnelStep[],
-  ): Promise<readonly number[]> {
+  ): Promise<FunnelReport> {
     this.asked.push({ scope, mode, steps });
-    return Promise.resolve(this.counts);
+    return Promise.resolve(this.report);
   }
 }

@@ -24,7 +24,6 @@ export class GetFunnelUseCase {
     steps: readonly FunnelStep[],
   ): Promise<FunnelReport> {
     const { current } = scopedPeriods(project, requested, this.clock.now());
-    const counts = await this.query.count(current, mode, steps);
-    return { steps: counts.map((count) => ({ count })) };
+    return this.query.measure(current, mode, steps);
   }
 }

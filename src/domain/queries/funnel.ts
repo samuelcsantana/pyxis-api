@@ -10,19 +10,21 @@ export type FunnelStep =
   | { readonly type: 'page'; readonly path: string }
   | { readonly type: 'event'; readonly name: string };
 
+export interface FunnelStepMeasure {
+  readonly count: number;
+  readonly medianSecondsFromPrevious: number | null;
+}
+
+export interface FunnelReport {
+  readonly steps: readonly FunnelStepMeasure[];
+  readonly medianSecondsOverall: number | null;
+}
+
 export interface FunnelQuery {
-  count(
-    scope: QueryScope,
-    mode: FunnelMode,
-    steps: readonly FunnelStep[],
-  ): Promise<readonly number[]>;
+  measure(scope: QueryScope, mode: FunnelMode, steps: readonly FunnelStep[]): Promise<FunnelReport>;
 }
 
 export const FUNNEL_QUERY = Symbol('FunnelQuery');
-
-export interface FunnelReport {
-  readonly steps: readonly { readonly count: number }[];
-}
 
 const LIKE_METACHARACTER = /[\\%_]/g;
 const WILDCARD = /\*/g;

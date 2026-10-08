@@ -349,7 +349,13 @@ export class QueriesController {
   ): Promise<FunnelReportBody> {
     const range = { from: query.from, to: query.to };
     const report = await this.getFunnel.execute(projectOf(request), range, query.mode, query.steps);
-    return { steps: report.steps.map((step) => ({ count: step.count })) };
+    return {
+      steps: report.steps.map((step) => ({
+        count: step.count,
+        median_seconds_from_previous: step.medianSecondsFromPrevious,
+      })),
+      median_seconds_overall: report.medianSecondsOverall,
+    };
   }
 
   @Get('timeline')

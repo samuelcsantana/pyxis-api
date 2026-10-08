@@ -267,8 +267,15 @@ describe('dashboard queries', () => {
     const visits = await get(`/v1/projects/${SHOP_ID}/funnel?${range}&mode=visit&steps=${steps}`);
     const people = await get(`/v1/projects/${SHOP_ID}/funnel?${range}&mode=user&steps=${steps}`);
 
-    expect(visits.json()).toEqual({ steps: [{ count: 1 }, { count: 1 }] });
-    expect(people.json()).toEqual({ steps: [{ count: 1 }, { count: 1 }] });
+    const timed = {
+      steps: [
+        { count: 1, median_seconds_from_previous: null },
+        { count: 1, median_seconds_from_previous: 60 },
+      ],
+      median_seconds_overall: 60,
+    };
+    expect(visits.json()).toEqual(timed);
+    expect(people.json()).toEqual(timed);
   });
 
   it('answers 400 to a funnel of nine steps', async () => {
