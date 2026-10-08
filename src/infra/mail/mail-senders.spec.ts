@@ -15,6 +15,13 @@ describe('buildSignInCodeEmail', () => {
     expect(email.text).toContain('Your Pyxis sign-in code is 123456.');
     expect(email.html).toContain('>123456<');
   });
+
+  it('escapes the code before it reaches the HTML', () => {
+    const email = buildSignInCodeEmail(`<b>&"'`);
+
+    expect(email.html).toContain('&lt;b&gt;&amp;&quot;&#39;');
+    expect(email.html).not.toContain('<b>');
+  });
 });
 
 describe('ResendMailSender', () => {
