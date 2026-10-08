@@ -13,7 +13,11 @@ describe('ResendMailSender', () => {
       Promise.resolve(new Response('{"id":"email-1"}', { status: 200 })),
     );
 
-    await new ResendMailSender(API_KEY, FROM, send).sendSignInCode('ana@example.com', '123456');
+    await new ResendMailSender(API_KEY, FROM, send).sendSignInCode(
+      'ana@example.com',
+      '123456',
+      'pt-BR',
+    );
 
     const [url, init] = send.mock.calls[0] ?? [];
     expect(url).toBe(RESEND_EMAILS_URL);
@@ -25,7 +29,7 @@ describe('ResendMailSender', () => {
     expect(JSON.parse(init?.body as string)).toEqual({
       from: FROM,
       to: 'ana@example.com',
-      ...buildSignInCodeEmail('123456'),
+      ...buildSignInCodeEmail('123456', 'pt-BR'),
     });
   });
 
@@ -34,7 +38,7 @@ describe('ResendMailSender', () => {
       Promise.resolve(new Response('{"message":"ana@example.com is invalid"}', { status: 422 }));
 
     await expect(
-      new ResendMailSender(API_KEY, FROM, send).sendSignInCode('ana@example.com', '123456'),
+      new ResendMailSender(API_KEY, FROM, send).sendSignInCode('ana@example.com', '123456', 'en'),
     ).rejects.toThrow(/^Resend answered 422$/);
   });
 
@@ -48,15 +52,15 @@ describe('LoggingMailSender', () => {
     jest.restoreAllMocks();
   });
 
-  it('logs the code for local development, never the address', async () => {
+  it('logs the code and its language for local development, never the address', async () => {
     const logs: unknown[] = [];
     jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
       logs.push(message);
     });
 
-    await new LoggingMailSender().sendSignInCode('ana@example.com', '123456');
+    await new LoggingMailSender().sendSignInCode('ana@example.com', '123456', 'pt-BR');
 
-    expect(logs).toEqual([{ message: 'mail.sign_in_code', code: '123456' }]);
+    expect(logs).toEqual([{ message: 'mail.sign_in_code', code: '123456', language: 'pt-BR' }]);
   });
 });
 

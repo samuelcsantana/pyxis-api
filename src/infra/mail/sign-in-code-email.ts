@@ -1,3 +1,4 @@
+import type { EmailLanguage } from '../../domain/auth/email-language';
 import { SIGN_IN_CODE_TTL_MS } from '../../domain/auth/sign-in-code';
 import { escapeHtml } from './escape-html';
 import {
@@ -240,6 +241,6 @@ export function renderSignInCodeEmail(
   };
 }
 
-export function buildSignInCodeEmail(code: string): EmailContent {
-  return renderSignInCodeEmail(code, SIGN_IN_CODE_EMAIL_MESSAGES.en);
+export function buildSignInCodeEmail(code: string, language: EmailLanguage): EmailContent {
+  return renderSignInCodeEmail(code, SIGN_IN_CODE_EMAIL_MESSAGES[language]);
 }
