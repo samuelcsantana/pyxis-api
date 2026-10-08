@@ -4,6 +4,7 @@ import { openCliContext } from '../../src/cli/cli-context';
 import { sha256Hex } from '../../src/domain/auth/hashing';
 import { MAX_SIGN_IN_CODE_ATTEMPTS } from '../../src/domain/auth/sign-in-code';
 import { MAIL_SENDER } from '../../src/domain/services/mail-sender';
+import { MAX_LANGUAGE_TAG_LENGTH } from '../../src/infra/http/auth/auth.schemas';
 import { SESSION_COOKIE_NAME } from '../../src/infra/http/auth/session-cookie';
 import { SIGN_IN_REQUESTS_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
 import { RecordingMailSender } from '../../src/test-utils/recording-mail-sender';
@@ -125,6 +126,34 @@ describe('dashboard sign-in', () => {
     ]);
     const rows = await owner`SELECT email, code_hash FROM otp_codes`;
     expect(rows).toEqual([{ email: ADMIN_EMAIL, code_hash: sha256Hex(latestCode()) }]);
+  });
+
+  it('writes the email in the language the dashboard asks for, matched on the language', async () => {
+    const brazilian = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'pt-BR' });
+    const portuguese = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'pt-PT' });
+    const spanish = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'es' });
+
+    expect([brazilian, portuguese, spanish].map((answer) => answer.statusCode)).toEqual([
+      202, 202, 202,
+    ]);
+    expect(mail.sent.map(({ language }) => language)).toEqual(['pt-BR', 'pt-BR', 'en']);
+  });
+
+  it('answers 400 to a language that is not a well-formed tag, and mails nothing', async () => {
+    const malformed = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'pt_BR' });
+    const wellFormedButTooLong = ['pt', 'BR', ...Array.from({ length: 4 }, () => 'variants')].join(
+      '-',
+    );
+    const tooLong = await post('/v1/auth/request-code', {
+      email: ADMIN_EMAIL,
+      locale: wellFormedButTooLong,
+    });
+
+    expect(malformed.statusCode).toBe(400);
+    expect(malformed.json()).toMatchObject({ error: 'invalid_request' });
+    expect(wellFormedButTooLong.length).toBeGreaterThan(MAX_LANGUAGE_TAG_LENGTH);
+    expect(tooLong.statusCode).toBe(400);
+    expect(mail.sent).toEqual([]);
   });
 
   it('trades the right code for an HttpOnly session cookie whose token is stored hashed', async () => {

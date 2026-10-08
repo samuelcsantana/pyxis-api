@@ -62,7 +62,15 @@ describe('AuthController', () => {
 
     await controller.requestCode({ email: EMAIL });
 
-    expect(calls).toEqual([{ useCase: 'request', args: [EMAIL] }]);
+    expect(calls).toEqual([{ useCase: 'request', args: [EMAIL, undefined] }]);
+  });
+
+  it('passes on the language the dashboard asks the email to be written in', async () => {
+    const { controller, calls } = authController();
+
+    await controller.requestCode({ email: EMAIL, locale: 'pt-BR' });
+
+    expect(calls).toEqual([{ useCase: 'request', args: [EMAIL, 'pt-BR'] }]);
   });
 
   it('sets the session cookie and answers only the email', async () => {
