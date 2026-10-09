@@ -119,6 +119,9 @@
           ]
         },
         "testEnvironment": "node",
+        "setupFiles": [
+          "<rootDir>/test/integration/env-setup.ts"
+        ],
         "globalSetup": "<rootDir>/test/integration/global-setup.ts"
       }
     ],

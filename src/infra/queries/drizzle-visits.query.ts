@@ -201,12 +201,12 @@ export class DrizzleVisitsQuery implements VisitsQuery {
         page."channel", page."source", page."campaign", page."userId",
         ${isoUtc(sql`page."startedAtValue"`)} AS "startedAt",
         ${isoUtc(sql`page."endedAtValue"`)} AS "endedAt",
-        ARRAY(
+        to_jsonb(ARRAY(
           SELECT named."name" FROM named
           WHERE named."sessionId" = page."sessionId"
           ORDER BY named."firstAt", named."name"
           LIMIT ${MAX_VISIT_HIGHLIGHTS}
-        ) AS "highlights"
+        )) AS "highlights"
       FROM totals
       LEFT JOIN page ON true
       ORDER BY page."startedAtValue" DESC, page."sessionId" DESC`);
