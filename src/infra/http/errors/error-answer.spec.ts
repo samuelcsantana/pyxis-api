@@ -7,6 +7,7 @@ import {
   UnknownProjectKeyError,
 } from '../../../domain/errors/ingest.errors';
 import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
+import { ProjectNotFoundError } from '../../../domain/errors/project.errors';
 import { InvalidRangeError } from '../../../domain/errors/query.errors';
 import { UnknownCursorError } from '../../../domain/errors/subject.errors';
 import { toErrorAnswer } from './error-answer';
@@ -44,6 +45,7 @@ describe('toErrorAnswer', () => {
     [new UnauthenticatedError(), 401, 'unauthenticated'],
     [new InvalidRangeError(), 400, 'invalid_range'],
     [new UnknownCursorError(), 400, 'invalid_cursor'],
+    [new ProjectNotFoundError(), 404, 'project_not_found'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },

@@ -1,4 +1,5 @@
 import {
+  boolean,
   char,
   index,
   integer,
@@ -9,6 +10,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../../../domain/auth/email-language';
+import { WEEKLY_DIGEST_BY_DEFAULT } from '../../../domain/entities/email-preferences.entity';
 import { projects } from './projects';
 
 export const MAX_EMAIL_LENGTH = 254;
@@ -37,6 +39,7 @@ export const adminProjectAccess = pgTable(
     projectId: uuid('project_id')
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
+    weeklyDigest: boolean('weekly_digest').notNull().default(WEEKLY_DIGEST_BY_DEFAULT),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
