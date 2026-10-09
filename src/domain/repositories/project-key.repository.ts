@@ -14,6 +14,7 @@ export interface ProjectKeyRepository {
   create(key: NewProjectKey): Promise<ProjectKey>;
   revoke(keyId: string, revokedAt: Date): Promise<boolean>;
   findLiveSecret(secretHash: string): Promise<LiveSecretKey | null>;
+  liveKeysOf(projectId: string): Promise<readonly ProjectKey[]>;
 }
 
 export const PROJECT_KEY_REPOSITORY = Symbol('ProjectKeyRepository');

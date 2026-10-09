@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, asc, eq, isNull } from 'drizzle-orm';
 import type { ProjectKey } from '../../domain/entities/project-key.entity';
 import type {
   LiveSecretKey,
@@ -67,5 +67,14 @@ export class DrizzleProjectKeyRepository implements ProjectKeyRepository {
           projectId: row.projectId,
           secretHash: requiredColumn(row.secretHash, 'secret_hash'),
         };
+  }
+
+  async liveKeysOf(projectId: string): Promise<readonly ProjectKey[]> {
+    const rows = await this.db
+      .select()
+      .from(projectKeys)
+      .where(and(eq(projectKeys.projectId, projectId), isNull(projectKeys.revokedAt)))
+      .orderBy(asc(projectKeys.createdAt), asc(projectKeys.id));
+    return rows.map(toProjectKey);
   }
 }

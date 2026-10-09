@@ -89,6 +89,7 @@ describe('AuthenticateSecretKeyUseCase', () => {
       revoke: () => Promise.reject(new Error('unused')),
       findLiveSecret: () =>
         Promise.resolve({ keyId: 'key-x', projectId: 'project-x', secretHash: 'f'.repeat(64) }),
+      liveKeysOf: () => Promise.reject(new Error('unused')),
     };
 
     await expect(
