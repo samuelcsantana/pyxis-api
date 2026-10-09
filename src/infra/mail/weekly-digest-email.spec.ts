@@ -83,10 +83,18 @@ describe('the weekly digest in English', () => {
     );
   });
 
-  it('dates the week in full, in the time zone of the project', () => {
+  it('dates the week in full, naming the time zone of the project as people say it', () => {
     expect(textOf(email.html)).toContain(
-      'Monday, October 5 – Sunday, October 11, 2026 · America/Sao_Paulo time',
+      'Monday, October 5 – Sunday, October 11, 2026 · Brasilia Standard Time',
     );
+  });
+
+  it('keeps the time zone id when the only name known for it is an offset', () => {
+    for (const timeZone of ['UTC', 'Etc/GMT+12']) {
+      const email = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone }, 'en');
+
+      expect(email.text).toContain(`Sunday, October 11, 2026 · ${timeZone}\n`);
+    }
   });
 
   it('compares each figure with the week before, saying so when nothing changed', () => {
@@ -130,7 +138,7 @@ describe('the weekly digest in English', () => {
     expect(email.text).toBe(
       [
         'Weekly digest: Acme Store',
-        `Monday, October 5${RANGE_DASH}Sunday, October 11, 2026 · America/Sao_Paulo time`,
+        `Monday, October 5${RANGE_DASH}Sunday, October 11, 2026 · Brasilia Standard Time`,
         '',
         'Visits: 812 · +12% vs. the week before (725)',
         'Identified users: 120 (signed in at least once) · no change vs. the week',
@@ -201,11 +209,18 @@ describe('the weekly digest in Brazilian Portuguese', () => {
     expect(text).toContain('Para parar de receber, desligue o resumo semanal em Configurações');
   });
 
-  it('dates the week in Portuguese', () => {
-    expect(email.text).toContain(
-      `segunda-feira, 5 de outubro${RANGE_DASH}domingo, 11 de outubro de 2026`,
+  it('dates the week and names the time zone in Portuguese', () => {
+    expect(textOf(email.html)).toContain(
+      `segunda-feira, 5 de outubro${RANGE_DASH}domingo, 11 de outubro de 2026 · ` +
+        'Horário Padrão de Brasília',
     );
     expect(email.text).toContain('  seg.  130');
+  });
+
+  it('keeps the time zone id in Portuguese too when only an offset names it', () => {
+    const utc = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone: 'UTC' }, 'pt-BR');
+
+    expect(utc.text).toContain('domingo, 11 de outubro de 2026 · UTC\n');
   });
 
   it('declares Brazilian Portuguese as its language', () => {

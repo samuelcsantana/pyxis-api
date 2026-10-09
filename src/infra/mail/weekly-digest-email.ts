@@ -61,9 +61,11 @@ interface Formats {
   readonly longWeek: (week: DateRange) => string;
   readonly weekday: (isoDate: string) => string;
   readonly moment: (at: Date, timeZone: string) => string;
+  readonly zone: (timeZone: string, on: Date) => string;
 }
 
 const NARROW_SPACES = /[\u2009\u202f]/g;
+const OFFSET_ZONE_NAME_PREFIX = 'GMT';
 
 function calendarDay(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00.000Z`);
@@ -115,6 +117,14 @@ function formatsFor(language: EmailLanguage): Formats {
       new Intl.DateTimeFormat(locale, { dateStyle: 'long', timeStyle: 'short', timeZone }).format(
         at,
       ),
+    zone: (timeZone, on) => {
+      const name = new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: 'longGeneric' })
+        .formatToParts(on)
+        .filter((part) => part.type === 'timeZoneName')
+        .map((part) => part.value)
+        .join('');
+      return name.startsWith(OFFSET_ZONE_NAME_PREFIX) ? timeZone : name;
+    },
   };
 }
 
@@ -211,6 +221,13 @@ function overviewUrl(digest: WeeklyDigest): string {
 
 function settingsUrl(digest: WeeklyDigest): string {
   return `${DASHBOARD_URL}${encodeURIComponent(digest.projectId)}/settings`;
+}
+
+function weekLine({ digest, messages, formats }: Wording): string {
+  return messages.weekLine(
+    formats.longWeek(digest.week),
+    formats.zone(digest.timeZone, calendarDay(digest.week.to)),
+  );
 }
 
 function quietWeekLines({ digest, messages, formats }: Wording): readonly string[] {
@@ -400,14 +417,11 @@ function button(href: string, label: string): readonly string[] {
 }
 
 function card(wording: Wording): readonly string[] {
-  const { digest, messages, formats } = wording;
+  const { digest, messages } = wording;
   return cardRow([
     paragraph({ ...SMALL_MUTED, margin: '0 0 4px 0' }, escapeHtml(messages.kicker)),
     heading(digest.projectName),
-    paragraph(
-      SMALL_MUTED,
-      escapeHtml(messages.weekLine(formats.longWeek(digest.week), digest.timeZone)),
-    ),
+    paragraph(SMALL_MUTED, escapeHtml(weekLine(wording))),
     ...noticeBlock(quietWeekLines(wording)),
     ...tileGrid(tiles(wording)),
     ...dayBars(wording),
@@ -467,7 +481,7 @@ function buildText(wording: Wording): string {
   const quiet = quietWeekLines(wording);
   return [
     `${messages.kicker}: ${digest.projectName}`,
-    ...wrapped(messages.weekLine(formats.longWeek(digest.week), digest.timeZone)),
+    ...wrapped(weekLine(wording)),
     '',
     ...(quiet.length === 0 ? [] : [...quiet.flatMap(wrapped), '']),
     ...tileLines.flatMap(wrapped),
