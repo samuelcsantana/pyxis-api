@@ -43,6 +43,7 @@ async function setup() {
   return {
     clock,
     admin,
+    admins,
     codes,
     sessions,
     mail,
@@ -84,12 +85,13 @@ describe('dashboard sign-in', () => {
       expect(JSON.stringify(codes.stored)).not.toContain('"123456"');
     });
 
-    it('writes the email in the language the dashboard asks for', async () => {
-      const { requestCode, mail } = await setup();
+    it('writes the email in the language the dashboard asks for, and keeps it on the code', async () => {
+      const { requestCode, mail, codes } = await setup();
 
       await requestCode.execute(ADMIN_EMAIL, 'pt-BR');
 
       expect(mail.sent).toEqual([{ email: ADMIN_EMAIL, code: '123456', language: 'pt-BR' }]);
+      expect(codes.stored.map((code) => code.emailLanguage)).toEqual(['pt-BR']);
     });
 
     it('writes in English when the dashboard asks for a language it has no email for', async () => {
@@ -164,6 +166,26 @@ describe('dashboard sign-in', () => {
       ]);
     });
 
+    it('remembers the language of the code for the admin who signs in with it', async () => {
+      const { requestCode, verifyCode, admins, admin } = await setup();
+      await requestCode.execute(ADMIN_EMAIL, 'pt-BR');
+
+      await verifyCode.execute(ADMIN_EMAIL, '123456');
+
+      expect((await admins.findById(admin.id))?.emailLanguage).toBe('pt-BR');
+    });
+
+    it('leaves the language of the admin alone when the code is wrong', async () => {
+      const { requestCode, verifyCode, admins, admin } = await setup();
+      await requestCode.execute(ADMIN_EMAIL, 'pt-BR');
+
+      await expect(verifyCode.execute(ADMIN_EMAIL, '000000')).rejects.toBeInstanceOf(
+        InvalidSignInCodeError,
+      );
+
+      expect((await admins.findById(admin.id))?.emailLanguage).toBe('en');
+    });
+
     it('refuses a code used once already', async () => {
       const { requestCode, verifyCode } = await setup();
       await requestCode.execute(ADMIN_EMAIL);
@@ -228,6 +250,7 @@ describe('dashboard sign-in', () => {
       await codes.create({
         email: 'former@example.com',
         codeHash: sha256Hex('123456'),
+        emailLanguage: 'en',
         createdAt: clock.now(),
         expiresAt: new Date(clock.now().getTime() + SIGN_IN_CODE_TTL_MS),
       });

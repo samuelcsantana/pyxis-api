@@ -35,6 +35,17 @@ describe('InMemoryAdminUserRepository', () => {
     expect(await admins.accessibleProject(admin.id, 'other-project')).toBeNull();
     expect(await admins.accessibleProject('stranger', PROJECT.id)).toBeNull();
   });
+
+  it('changes the language of one admin only', async () => {
+    const admins = new InMemoryAdminUserRepository();
+    const ana = await admins.grantAccess('ana@example.com', PROJECT.id);
+    const bruno = await admins.grantAccess('bruno@example.com', PROJECT.id);
+
+    await admins.setEmailLanguage(ana.id, 'pt-BR');
+
+    expect(await admins.findById(ana.id)).toEqual({ ...ana, emailLanguage: 'pt-BR' });
+    expect(await admins.findById(bruno.id)).toEqual(bruno);
+  });
 });
 
 describe('InMemoryOtpCodeRepository', () => {

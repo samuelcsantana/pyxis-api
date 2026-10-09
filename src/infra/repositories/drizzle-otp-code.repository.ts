@@ -10,7 +10,13 @@ import { otpCodes } from '../database/schema/admins';
 type OtpCodeRow = typeof otpCodes.$inferSelect;
 
 function toOtpCode(row: OtpCodeRow): OtpCode {
-  return { id: row.id, email: row.email, codeHash: row.codeHash, expiresAt: row.expiresAt };
+  return {
+    id: row.id,
+    email: row.email,
+    codeHash: row.codeHash,
+    emailLanguage: row.emailLanguage,
+    expiresAt: row.expiresAt,
+  };
 }
 
 @Injectable()

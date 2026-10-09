@@ -1,3 +1,4 @@
+import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../domain/auth/email-language';
 import type { AdminUser } from '../domain/entities/admin-user.entity';
 import type { Project } from '../domain/entities/project.entity';
 import type { AdminUserRepository } from '../domain/repositories/admin-user.repository';
@@ -5,7 +6,7 @@ import type { AdminUserRepository } from '../domain/repositories/admin-user.repo
 const CREATED_AT = new Date('2026-10-01T00:00:00.000Z');
 
 export class InMemoryAdminUserRepository implements AdminUserRepository {
-  private readonly admins: AdminUser[] = [];
+  private admins: readonly AdminUser[] = [];
   private readonly projects = new Map<string, Project>();
   private readonly access: { readonly adminUserId: string; readonly projectId: string }[] = [];
 
@@ -47,13 +48,21 @@ export class InMemoryAdminUserRepository implements AdminUserRepository {
     return admin;
   }
 
+  setEmailLanguage(adminUserId: string, language: EmailLanguage): Promise<void> {
+    this.admins = this.admins.map((admin) =>
+      admin.id === adminUserId ? { ...admin, emailLanguage: language } : admin,
+    );
+    return Promise.resolve();
+  }
+
   private createAdmin(email: string): AdminUser {
     const admin: AdminUser = {
       id: `00000000-0000-4000-a000-${String(this.admins.length + 1).padStart(12, '0')}`,
       email,
+      emailLanguage: DEFAULT_EMAIL_LANGUAGE,
       createdAt: CREATED_AT,
     };
-    this.admins.push(admin);
+    this.admins = [...this.admins, admin];
     return admin;
   }
 }

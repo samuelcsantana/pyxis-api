@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, asc, eq } from 'drizzle-orm';
+import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { AdminUser } from '../../domain/entities/admin-user.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import type { AdminUserRepository } from '../../domain/repositories/admin-user.repository';
@@ -13,7 +14,12 @@ import { toProject } from './drizzle-project.repository';
 type AdminUserRow = typeof adminUsers.$inferSelect;
 
 function toAdminUser(row: AdminUserRow): AdminUser {
-  return { id: row.id, email: row.email, createdAt: row.createdAt };
+  return {
+    id: row.id,
+    email: row.email,
+    emailLanguage: row.emailLanguage,
+    createdAt: row.createdAt,
+  };
 }
 
 @Injectable()
@@ -75,5 +81,12 @@ export class DrizzleAdminUserRepository implements AdminUserRepository {
         .onConflictDoNothing();
       return toAdminUser(admin);
     });
+  }
+
+  async setEmailLanguage(adminUserId: string, language: EmailLanguage): Promise<void> {
+    await this.db
+      .update(adminUsers)
+      .set({ emailLanguage: language })
+      .where(eq(adminUsers.id, adminUserId));
   }
 }

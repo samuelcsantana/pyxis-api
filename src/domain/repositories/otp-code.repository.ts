@@ -1,8 +1,10 @@
+import type { EmailLanguage } from '../auth/email-language';
 import type { OtpCode } from '../entities/otp-code.entity';
 
 export interface NewOtpCode {
   readonly email: string;
   readonly codeHash: string;
+  readonly emailLanguage: EmailLanguage;
   readonly createdAt: Date;
   readonly expiresAt: Date;
 }

@@ -55,6 +55,7 @@ export class VerifySignInCodeUseCase {
     if (admin === null) {
       throw new InvalidSignInCodeError();
     }
+    await this.admins.setEmailLanguage(admin.id, latest.emailLanguage);
     const sessionToken = generateSessionToken(this.random);
     await this.sessions.create({
       adminUserId: admin.id,
