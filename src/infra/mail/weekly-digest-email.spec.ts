@@ -218,13 +218,13 @@ describe('a week without visits', () => {
     expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11 · 0 visits (-100%)`);
     expect(email.html).toContain('class="pyxis-notice"');
     expect(email.text).toContain(
-      'No visits arrived this week.\nThe last event was received on October 2, 2026 at 11:31 AM.',
+      'No visits arrived last week.\nThe last event was received on October 2, 2026 at 11:31 AM.',
     );
   });
 
   it('says when the last event arrived in Portuguese too', () => {
     expect(buildWeeklyDigestEmail(QUIET_WEEK, 'pt-BR').text).toContain(
-      'Nenhuma visita chegou nesta semana.\nO último evento foi recebido em 2 de outubro de 2026 às 11:31.',
+      'Nenhuma visita chegou na semana passada.\nO último evento foi recebido em 2 de outubro de 2026 às 11:31.',
     );
   });
 
@@ -237,10 +237,13 @@ describe('a week without visits', () => {
   });
 
   it('says when no event ever arrived', () => {
-    const never = buildWeeklyDigestEmail({ ...QUIET_WEEK, lastEventAt: null }, 'pt-BR');
+    const never = { ...QUIET_WEEK, lastEventAt: null };
 
-    expect(never.text).toContain(
-      'Nenhuma visita chegou nesta semana.\nNenhum evento chegou ainda para este projeto.',
+    expect(buildWeeklyDigestEmail(never, 'en').text).toContain(
+      'No visits arrived last week.\nNo events have arrived for this project yet.',
+    );
+    expect(buildWeeklyDigestEmail(never, 'pt-BR').text).toContain(
+      'Nenhuma visita chegou na semana passada.\nNenhum evento chegou ainda para este projeto.',
     );
   });
 
@@ -251,9 +254,9 @@ describe('a week without visits', () => {
 
   it('says there were no writes, and that nothing is listed', () => {
     expect(email.text).toContain('Failed writes: 0 (no writes) · 0 the week before');
-    expect(email.text).toContain('Top pages\n  No page views this week.');
-    expect(email.text).toContain('Top events\n  No named events this week.');
-    expect(email.text).toContain('Writes that failed\n  No write failed this week.');
+    expect(email.text).toContain('Top pages\n  No page views last week.');
+    expect(email.text).toContain('Top events\n  No named events last week.');
+    expect(email.text).toContain('Writes that failed\n  No writes failed last week.');
     expect(email.html).not.toContain('class="pyxis-ink pyxis-rule"');
   });
 
