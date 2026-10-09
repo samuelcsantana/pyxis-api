@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ACQUISITION_QUERY } from '../../../domain/queries/acquisition';
 import { DEVICES_QUERY } from '../../../domain/queries/devices';
+import { ENGAGEMENT_QUERY } from '../../../domain/queries/engagement';
 import { FEATURES_QUERY } from '../../../domain/queries/features';
 import { FUNNEL_QUERY } from '../../../domain/queries/funnel';
 import { PROPERTY_BREAKDOWN_QUERY } from '../../../domain/queries/property-breakdown';
@@ -13,6 +14,7 @@ import { VISITS_QUERY } from '../../../domain/queries/visits';
 import { PROJECT_KEY_REPOSITORY } from '../../../domain/repositories/project-key.repository';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
+import { GetEngagementUseCase } from '../../../usecases/queries/get-engagement.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
 import { GetFunnelSubjectsUseCase } from '../../../usecases/queries/get-funnel-subjects.usecase';
 import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
@@ -25,6 +27,7 @@ import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { GetProjectSettingsUseCase } from '../../../usecases/projects/get-project-settings.usecase';
 import { DrizzleAcquisitionQuery } from '../../queries/drizzle-acquisition.query';
 import { DrizzleDevicesQuery } from '../../queries/drizzle-devices.query';
+import { DrizzleEngagementQuery } from '../../queries/drizzle-engagement.query';
 import { DrizzleFeaturesQuery } from '../../queries/drizzle-features.query';
 import { DrizzleFunnelQuery } from '../../queries/drizzle-funnel.query';
 import { DrizzlePropertyBreakdownQuery } from '../../queries/drizzle-property-breakdown.query';
@@ -37,6 +40,7 @@ import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
 import { DrizzleProjectKeyRepository } from '../../repositories/drizzle-project-key.repository';
 import { AuthModule } from '../auth/auth.module';
 import { SessionGuard } from '../auth/auth.guards';
+import { EngagementController } from './engagement.controller';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
 import { ProjectAccessGuard } from './project-access.guard';
 import { ProjectSettingsController } from './project-settings.controller';
@@ -54,12 +58,15 @@ import { VisitsController } from './visits.controller';
     FunnelSubjectsController,
     ProjectSettingsController,
     TimeOfDayController,
+    EngagementController,
   ],
   providers: [
     GetOverviewUseCase,
     { provide: OVERVIEW_QUERY, useClass: DrizzleOverviewQuery },
     GetDevicesUseCase,
     { provide: DEVICES_QUERY, useClass: DrizzleDevicesQuery },
+    GetEngagementUseCase,
+    { provide: ENGAGEMENT_QUERY, useClass: DrizzleEngagementQuery },
     GetAcquisitionUseCase,
     { provide: ACQUISITION_QUERY, useClass: DrizzleAcquisitionQuery },
     GetFeaturesUseCase,

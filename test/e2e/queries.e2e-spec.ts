@@ -509,6 +509,25 @@ describe('dashboard queries', () => {
     expect(weekdays.flatMap((day) => day.hours).reduce((sum, visits) => sum + visits, 0)).toBe(2);
   });
 
+  it('answers how the visits of the range entered, left and lasted', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/engagement?from=2026-09-20&to=2026-10-05`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      visits: 2,
+      single_page_visits: 2,
+      median_visit_seconds: 60,
+      entry_pages: [
+        { path: '/', visits: 1, single_page_visits: 1 },
+        { path: '/pricing', visits: 1, single_page_visits: 1 },
+      ],
+      exit_pages: [
+        { path: '/', visits: 1 },
+        { path: '/pricing', visits: 1 },
+      ],
+    });
+  });
+
   it('answers 401 without a session', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/overview?from=2026-10-05&to=2026-10-05`,
