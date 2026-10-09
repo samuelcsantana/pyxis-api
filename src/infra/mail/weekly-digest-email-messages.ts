@@ -3,7 +3,9 @@ import type { EmailLanguage } from '../../domain/auth/email-language';
 export interface WeeklyDigestEmailMessages {
   readonly language: EmailLanguage;
   readonly subject: (project: string, week: string, visits: string) => string;
-  readonly preheader: (project: string) => string;
+  readonly identifiedUserCount: (users: string, count: number) => string;
+  readonly convertingVisitCount: (visits: string, count: number) => string;
+  readonly failedWriteCount: (writes: string, count: number) => string;
   readonly kicker: string;
   readonly weekLine: (week: string, zoneName: string) => string;
   readonly noVisits: string;
@@ -45,8 +47,12 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
   en: {
     language: 'en',
     subject: (project, week, visits) => `${project} · ${week} · ${visits}`,
-    preheader: (project) =>
-      `Visits, conversions and failed writes of ${project} last week, against the week before.`,
+    identifiedUserCount: (users, count) =>
+      count === 1 ? `${users} identified user` : `${users} identified users`,
+    convertingVisitCount: (visits, count) =>
+      count === 1 ? `${visits} converting visit` : `${visits} converting visits`,
+    failedWriteCount: (writes, count) =>
+      count === 1 ? `${writes} failed write` : `${writes} failed writes`,
     kicker: 'Weekly digest',
     weekLine: (week, zoneName) => `${week} · ${zoneName}`,
     noVisits: 'No visits arrived last week.',
@@ -84,9 +90,12 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
   'pt-BR': {
     language: 'pt-BR',
     subject: (project, week, visits) => `${project} · ${week} · ${visits}`,
-    preheader: (project) =>
-      `Visitas, conversões e gravações com falha de ${project} na semana passada, ` +
-      'comparadas com a semana anterior.',
+    identifiedUserCount: (users, count) =>
+      count === 1 ? `${users} usuário identificado` : `${users} usuários identificados`,
+    convertingVisitCount: (visits, count) =>
+      count === 1 ? `${visits} visita com conversão` : `${visits} visitas com conversão`,
+    failedWriteCount: (writes, count) =>
+      count === 1 ? `${writes} gravação com falha` : `${writes} gravações com falha`,
     kicker: 'Resumo semanal',
     weekLine: (week, zoneName) => `${week} · ${zoneName}`,
     noVisits: 'Nenhuma visita chegou na semana passada.',

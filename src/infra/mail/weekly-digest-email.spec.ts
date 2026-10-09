@@ -63,6 +63,10 @@ function hrefs(html: string): readonly string[] {
   return [...html.matchAll(/href="([^"]*)"/g)].map(([, href]) => href ?? '');
 }
 
+function preheaderOf(html: string): string {
+  return /<div style="display:none;[^"]*">([^\n<]*)/.exec(html)?.[1] ?? '';
+}
+
 function textOf(html: string): string {
   return html
     .replace(/<style>[\s\S]*?<\/style>/, '')
@@ -77,9 +81,9 @@ describe('the weekly digest in English', () => {
     expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11 · 812 visits (+12%)`);
   });
 
-  it('says in the inbox preview what the e-mail compares', () => {
-    expect(email.html).toMatch(
-      /<div style="display:none;[^"]*">Visits, conversions and failed writes of Acme Store last week/,
+  it('previews the identified users, converting visits and failed writes in the inbox', () => {
+    expect(preheaderOf(email.html)).toBe(
+      '120 identified users · 41 converting visits · 3 failed writes',
     );
   });
 
@@ -223,8 +227,50 @@ describe('the weekly digest in Brazilian Portuguese', () => {
     expect(utc.text).toContain('domingo, 11 de outubro de 2026 · UTC\n');
   });
 
+  it('previews the week in Portuguese in the inbox', () => {
+    expect(preheaderOf(email.html)).toBe(
+      '120 usuários identificados · 41 visitas com conversão · 3 gravações com falha',
+    );
+  });
+
   it('declares Brazilian Portuguese as its language', () => {
     expect(email.html).toContain('<html lang="pt-BR" dir="ltr">');
+  });
+});
+
+describe('the inbox preview of the weekly digest', () => {
+  const single: WeeklyDigest = {
+    ...BUSY_WEEK,
+    identifiedUsers: { current: 1, previous: 0 },
+    convertingVisits: { current: 1, previous: 0 },
+    failedWrites: { current: { failed: 1, total: 9 }, previous: { failed: 0, total: 0 } },
+  };
+
+  it('counts one of each in the singular', () => {
+    expect(preheaderOf(buildWeeklyDigestEmail(single, 'en').html)).toBe(
+      '1 identified user · 1 converting visit · 1 failed write',
+    );
+    expect(preheaderOf(buildWeeklyDigestEmail(single, 'pt-BR').html)).toBe(
+      '1 usuário identificado · 1 visita com conversão · 1 gravação com falha',
+    );
+  });
+
+  it('leaves converting visits out for a project without a conversion event', () => {
+    const withoutConversion = { ...BUSY_WEEK, convertingVisits: null };
+
+    expect(preheaderOf(buildWeeklyDigestEmail(withoutConversion, 'en').html)).toBe(
+      '120 identified users · 3 failed writes',
+    );
+  });
+
+  it('says that no visit arrived, and when the last event did, in a week without visits', () => {
+    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'en').html)).toMatch(
+      /^No visits arrived last week\. The last event was received on October 2, 2026 at 11:31/,
+    );
+    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'pt-BR').html)).toBe(
+      'Nenhuma visita chegou na semana passada. ' +
+        'O último evento foi recebido em 2 de outubro de 2026 às 11:31.',
+    );
   });
 });
 
@@ -348,7 +394,7 @@ describe('customer data in the weekly digest', () => {
 
     expect(html).not.toContain('<i>');
     expect(html).toContain(`<h1 class="pyxis-ink"`);
-    expect(html.split(ESCAPED_HOSTILE).length - 1).toBe(7);
+    expect(html.split(ESCAPED_HOSTILE).length - 1).toBe(6);
   });
 
   it('puts the project id in the links as a path segment only', () => {

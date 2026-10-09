@@ -52,6 +52,7 @@ const DIGEST_NARROW_RULES = [
 
 const SMALL_MUTED: TextBlock = { tone: 'muted', size: 'small', margin: '0' };
 const SECTION_GAP = '28px 0 8px 0';
+const PREHEADER_SEPARATOR = ' · ';
 
 interface Formats {
   readonly number: (value: number) => string;
@@ -239,6 +240,31 @@ function quietWeekLines({ digest, messages, formats }: Wording): readonly string
       ? messages.noEventEver
       : messages.lastEventAt(formats.moment(digest.lastEventAt, digest.timeZone));
   return [messages.noVisits, lastEvent];
+}
+
+function counted(
+  { formats }: Wording,
+  value: number,
+  phrase: (formatted: string, count: number) => string,
+): string {
+  return phrase(formats.number(value), value);
+}
+
+function preheader(wording: Wording): string {
+  const quiet = quietWeekLines(wording);
+  if (quiet.length > 0) {
+    return quiet.join(' ');
+  }
+  const { digest, messages } = wording;
+  const converting =
+    digest.convertingVisits === null
+      ? []
+      : [counted(wording, digest.convertingVisits.current, messages.convertingVisitCount)];
+  return [
+    counted(wording, digest.identifiedUsers.current, messages.identifiedUserCount),
+    ...converting,
+    counted(wording, digest.failedWrites.current.failed, messages.failedWriteCount),
+  ].join(PREHEADER_SEPARATOR);
 }
 
 function sectionTitle(title: string): string {
@@ -453,7 +479,7 @@ function buildHtml(wording: Wording, subject: string): string {
   return emailDocument({
     language: wording.messages.language,
     title: subject,
-    preheader: wording.messages.preheader(wording.digest.projectName),
+    preheader: preheader(wording),
     rows: [...brandHeader(wording.messages.logoAlt), ...card(wording), ...footer(wording)],
     darkRules: DIGEST_DARK_RULES,
     narrowRules: DIGEST_NARROW_RULES,
