@@ -121,7 +121,9 @@ describe('the weekly digest in English', () => {
 
   it('links to the week in the dashboard and to the Settings where it can be turned off', () => {
     expect(hrefs(email.html)).toEqual([OVERVIEW_HREF, SETTINGS_URL]);
-    expect(textOf(email.html)).toContain('To stop it, turn off the weekly digest in Settings .');
+    expect(textOf(email.html)).toContain(
+      'To stop receiving it, turn off the weekly digest in Settings .',
+    );
   });
 
   it('writes a plain-text twin with the same figures and both links', () => {
@@ -151,13 +153,13 @@ describe('the weekly digest in English', () => {
         'Top events',
         '  signup_completed  50 times',
         '',
-        'Writes that failed',
+        'Failing routes',
         '  POST /orders  2 of 340 failed',
         '',
         `Open the week in the dashboard: ${OVERVIEW_URL}`,
         '',
-        'You receive this e-mail on Mondays as an admin of Acme Store in Pyxis.',
-        `To stop it, turn off the weekly digest in Settings: ${SETTINGS_URL}`,
+        'You receive this email on Mondays as an admin of Acme Store in Pyxis.',
+        `To stop receiving it, turn off the weekly digest in Settings: ${SETTINGS_URL}`,
         'Pyxis is privacy-first product analytics: no cookies, no personal data',
         'in events.',
       ].join('\n'),
@@ -194,7 +196,7 @@ describe('the weekly digest in Brazilian Portuguese', () => {
     expect(text).toContain('Gravações com falha 3 de 1.204 gravações, 0,2%');
     expect(text).toContain('Páginas mais vistas /orders/:id 1.500 visualizações');
     expect(text).toContain('Principais eventos signup_completed 50 vezes');
-    expect(text).toContain('Gravações que falharam POST /orders 2 de 340 falharam');
+    expect(text).toContain('Rotas com falha POST /orders 2 de 340 falharam');
     expect(text).toContain('Abrir a semana no painel');
     expect(text).toContain('Para parar de receber, desligue o resumo semanal em Configurações');
   });
@@ -256,7 +258,7 @@ describe('a week without visits', () => {
     expect(email.text).toContain('Failed writes: 0 (no writes) · 0 the week before');
     expect(email.text).toContain('Top pages\n  No page views last week.');
     expect(email.text).toContain('Top events\n  No named events last week.');
-    expect(email.text).toContain('Writes that failed\n  No writes failed last week.');
+    expect(email.text).toContain('Failing routes\n  No writes failed last week.');
     expect(email.html).not.toContain('class="pyxis-ink pyxis-rule"');
   });
 
