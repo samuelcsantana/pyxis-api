@@ -700,6 +700,50 @@
         ],
         "type": "object"
       },
+      "FunnelSegmentsReport": {
+        "additionalProperties": false,
+        "description": "The funnel per visit segment (visit mode only: a person has many devices): for each segment that reached the first step, the visits that reached each step, the largest segment first. The segments add up to the /funnel counts of the same steps.",
+        "properties": {
+          "by": {
+            "enum": [
+              "device",
+              "channel"
+            ],
+            "type": "string"
+          },
+          "segments": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "segment": {
+                  "description": "The device type of the visit, or the channel of its first attributed page view; \"unknown\" when the visit has none",
+                  "type": "string"
+                },
+                "steps": {
+                  "description": "How many visits of the segment reached each step",
+                  "items": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "type": "array"
+                }
+              },
+              "required": [
+                "segment",
+                "steps"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "by",
+          "segments"
+        ],
+        "type": "object"
+      },
       "FunnelSubjectsReport": {
         "additionalProperties": false,
         "description": "The visits (mode=visit: session ids) or identified people (mode=user: user ids) behind one step of a funnel: outcome=reached those who reached step n (1 is the first), outcome=dropped those who reached step n - 1 and never step n. last_step_at is when they reached the last step they did; newest first, 50 per page. next_cursor goes back as cursor for the older page, null on the last one.",
@@ -3239,6 +3283,114 @@
           }
         ],
         "summary": "How many visits or people reached each step of a funnel, in order",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/funnel/segments": {
+      "get": {
+        "operationId": "FunnelSegmentsController_segments",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The steps of the funnel, as for /funnel",
+            "in": "query",
+            "name": "steps",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "by",
+            "required": true,
+            "schema": {
+              "enum": [
+                "device",
+                "channel"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunnelSegmentsReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "A funnel per device type or channel of the visit",
         "tags": [
           "dashboard queries"
         ]

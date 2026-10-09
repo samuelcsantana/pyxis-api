@@ -17,6 +17,7 @@ import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase
 import { GetEngagementUseCase } from '../../../usecases/queries/get-engagement.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
 import { GetFunnelSubjectsUseCase } from '../../../usecases/queries/get-funnel-subjects.usecase';
+import { GetFunnelSegmentsUseCase } from '../../../usecases/queries/get-funnel-segments.usecase';
 import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetPropertyBreakdownUseCase } from '../../../usecases/queries/get-property-breakdown.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
@@ -42,6 +43,7 @@ import { AuthModule } from '../auth/auth.module';
 import { SessionGuard } from '../auth/auth.guards';
 import { EngagementController } from './engagement.controller';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
+import { FunnelSegmentsController } from './funnel-segments.controller';
 import { ProjectAccessGuard } from './project-access.guard';
 import { ProjectSettingsController } from './project-settings.controller';
 import { PropertyBreakdownController } from './property-breakdown.controller';
@@ -56,6 +58,7 @@ import { VisitsController } from './visits.controller';
     PropertyBreakdownController,
     VisitsController,
     FunnelSubjectsController,
+    FunnelSegmentsController,
     ProjectSettingsController,
     TimeOfDayController,
     EngagementController,
@@ -77,6 +80,7 @@ import { VisitsController } from './visits.controller';
     { provide: REQUESTS_QUERY, useClass: DrizzleRequestsQuery },
     GetFunnelUseCase,
     GetFunnelSubjectsUseCase,
+    GetFunnelSegmentsUseCase,
     { provide: FUNNEL_QUERY, useClass: DrizzleFunnelQuery },
     GetTimelineUseCase,
     { provide: TIMELINE_QUERY, useClass: DrizzleTimelineQuery },
