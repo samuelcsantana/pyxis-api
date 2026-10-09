@@ -6,13 +6,13 @@ filled-in values live with the operator, never in this public repository.
 
 ## What runs where
 
-| Piece                                  | Where                                                                                                                     |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| HTTP function `pyxis-api`              | Lambda in sa-east-1, container image from ECR, behind a public Function URL                                               |
-| Migration function `pyxis-api-migrate` | Same image, `dist/lambda/migrate-entry.handler`; invoked by the deploy script                                             |
-| CloudFront distribution                | In front of the Function URL; adds the `x-origin-verify` secret header; serves `api.pyxis.samuelsantana.dev`              |
-| Configuration                          | Parameter Store under `/pyxis-api/app/` (HTTP) and `/pyxis-api/migrate/` (migrations)                                     |
-| Database                               | Neon, São Paulo; the HTTP function connects as `pyxis_app` through the pooler, migrations as the owner on the direct host |
+| Piece                                  | Where                                                                                                                                                           |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP function `pyxis-api`              | Lambda in sa-east-1, container image from ECR, behind a public Function URL                                                                                     |
+| Migration function `pyxis-api-migrate` | Same image, `dist/lambda/migrate-entry.handler`; invoked by the deploy script                                                                                   |
+| CloudFront distribution                | In front of the Function URL; adds the `x-origin-verify` secret header; serves `api.pyxis-analytics.dev` and, while clients move, `api.pyxis.samuelsantana.dev` |
+| Configuration                          | Parameter Store under `/pyxis-api/app/` (HTTP) and `/pyxis-api/migrate/` (migrations)                                                                           |
+| Database                               | Neon, São Paulo; the HTTP function connects as `pyxis_app` through the pooler, migrations as the owner on the direct host                                       |
 
 | Jobs function `pyxis-api-jobs` | Same image, `dist/lambda/jobs-entry.handler`; run daily at 06:00 UTC by the EventBridge schedule `pyxis-api-retention`, and on Mondays at 11:00 UTC by `pyxis-api-weekly-digest` with `{"job":"weekly-digest"}`, as the application role; reads `/pyxis-api/jobs/` |
 
@@ -70,10 +70,19 @@ others, but fails the run, and the scheduler retries it twice within the hour.
 8. **Migrate and deploy:** `scripts/deploy-lambda.sh`.
    Then confirm the alarm subscription: AWS emails `alert_email` a link, and the SNS topic
    `pyxis-api-alerts` delivers nothing until it is clicked.
-9. **Domain.** Add the certificate's validation CNAME (`terraform output
-certificate_validation_record`) and keep a CAA record allowing `amazon.com` on the apex if it
-   has CAA records. Once the certificate is issued, set `api_domain_enabled = true`, apply, and
-   add a CNAME from `api.pyxis.samuelsantana.dev` to `terraform output cloudfront_domain`.
+9. **Domain.** Add the certificate's validation CNAMEs (`terraform output
+certificate_validation_record`, one per domain) and keep a CAA record allowing `amazon.com` on
+   each apex that has CAA records. Once the certificate is issued, set `api_domain_enabled = true`,
+   apply, and add a CNAME from `api_domain` and from each of `api_domain_aliases` to `terraform
+output cloudfront_domain`.
+
+### Moving the API to another domain
+
+Set the new domain as `api_domain` and keep the current one in `api_domain_aliases`. Terraform
+creates a certificate for both before replacing the old one, so: `terraform apply
+-target=aws_acm_certificate.api`, add the new validation CNAME, run the full apply (the
+distribution then answers on both names), add the new domain's CNAME to the distribution, and only
+then point the clients at it. Drop the old domain from `api_domain_aliases` once nothing calls it.
 
 ## Deploy
 
@@ -88,7 +97,7 @@ Merging a pull request never deploys.
 ## Checks after a deploy
 
 ```bash
-curl -s https://api.pyxis.samuelsantana.dev/health                       # {"status":"ok"}
+curl -s https://api.pyxis-analytics.dev/health                       # {"status":"ok"}
 curl -s -o /dev/null -w '%{http_code}\n' "$(terraform -chdir=infra output -raw function_url)health"   # 403
 aws logs tail /aws/lambda/pyxis-api --since 15m --profile pyxis-api | grep -E 'client_ip.sources|database.role_ok'
 ```

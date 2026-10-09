@@ -1,8 +1,9 @@
 resource "aws_acm_certificate" "api" {
   provider = aws.us_east_1
 
-  domain_name       = var.api_domain
-  validation_method = "DNS"
+  domain_name               = var.api_domain
+  subject_alternative_names = var.api_domain_aliases
+  validation_method         = "DNS"
 
   lifecycle {
     create_before_destroy = true

@@ -5,7 +5,7 @@ export MSYS_NO_PATHCONV=1
 export AWS_PROFILE="${AWS_PROFILE:-pyxis-api}"
 REGION="${AWS_REGION:-sa-east-1}"
 PROJECT=pyxis-api
-API_HOST="${API_HOST:-api.pyxis.samuelsantana.dev}"
+API_HOST="${API_HOST:-api.pyxis-analytics.dev}"
 
 IMAGE_ONLY=false
 case "${1:-}" in
