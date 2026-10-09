@@ -1,0 +1,1 @@
+ALTER TABLE "admin_project_access" ADD COLUMN "weekly_digest" boolean DEFAULT true NOT NULL;
