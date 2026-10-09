@@ -496,6 +496,19 @@ describe('dashboard queries', () => {
     expect((await get(`/v1/projects/${FOREIGN_ID}/settings`)).statusCode).toBe(404);
   });
 
+  it('answers the visits of the range by the weekday and hour they started', async () => {
+    const response = await get(`/v1/projects/${SHOP_ID}/time-of-day?from=2026-09-20&to=2026-10-05`);
+
+    expect(response.statusCode).toBe(200);
+    const { weekdays } = response.json<{
+      weekdays: { weekday: number; hours: number[] }[];
+    }>();
+    expect(weekdays.map((day) => day.weekday)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    expect(weekdays[0]?.hours[10]).toBe(1);
+    expect(weekdays[6]?.hours[10]).toBe(1);
+    expect(weekdays.flatMap((day) => day.hours).reduce((sum, visits) => sum + visits, 0)).toBe(2);
+  });
+
   it('answers 401 without a session', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/overview?from=2026-10-05&to=2026-10-05`,

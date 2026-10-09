@@ -2006,6 +2006,48 @@
         ],
         "type": "object"
       },
+      "TimeOfDayReport": {
+        "additionalProperties": false,
+        "description": "When the visits of the range started: for each weekday, Monday first, and each local hour, the visits whose first page view happened then. The grid adds up to the visits.",
+        "properties": {
+          "weekdays": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "hours": {
+                  "description": "Visits that started in each hour, 0 to 23, in the project time zone",
+                  "items": {
+                    "maximum": 9007199254740991,
+                    "minimum": -9007199254740991,
+                    "type": "integer"
+                  },
+                  "maxItems": 24,
+                  "minItems": 24,
+                  "type": "array"
+                },
+                "weekday": {
+                  "description": "ISO weekday: 1 is Monday, 7 is Sunday",
+                  "maximum": 7,
+                  "minimum": 1,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "weekday",
+                "hours"
+              ],
+              "type": "object"
+            },
+            "maxItems": 7,
+            "minItems": 7,
+            "type": "array"
+          }
+        },
+        "required": [
+          "weekdays"
+        ],
+        "type": "object"
+      },
       "VerifyCodeRequest": {
         "additionalProperties": false,
         "description": "The email and the six-digit code it received.",
@@ -3388,6 +3430,93 @@
           }
         ],
         "summary": "The settings of the project, its live keys and its activity",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/time-of-day": {
+      "get": {
+        "operationId": "TimeOfDayController_timeOfDay",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeOfDayReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The visits of the range by the weekday and local hour they started",
         "tags": [
           "dashboard queries"
         ]
