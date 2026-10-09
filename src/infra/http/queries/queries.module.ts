@@ -6,6 +6,7 @@ import { FUNNEL_QUERY } from '../../../domain/queries/funnel';
 import { PROPERTY_BREAKDOWN_QUERY } from '../../../domain/queries/property-breakdown';
 import { REQUESTS_QUERY } from '../../../domain/queries/requests';
 import { TIMELINE_QUERY } from '../../../domain/queries/timeline';
+import { TIME_OF_DAY_QUERY } from '../../../domain/queries/time-of-day';
 import { OVERVIEW_QUERY } from '../../../domain/queries/overview';
 import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
 import { VISITS_QUERY } from '../../../domain/queries/visits';
@@ -18,6 +19,7 @@ import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetPropertyBreakdownUseCase } from '../../../usecases/queries/get-property-breakdown.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.usecase';
+import { GetTimeOfDayUseCase } from '../../../usecases/queries/get-time-of-day.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { GetProjectSettingsUseCase } from '../../../usecases/projects/get-project-settings.usecase';
@@ -28,6 +30,7 @@ import { DrizzleFunnelQuery } from '../../queries/drizzle-funnel.query';
 import { DrizzlePropertyBreakdownQuery } from '../../queries/drizzle-property-breakdown.query';
 import { DrizzleRequestsQuery } from '../../queries/drizzle-requests.query';
 import { DrizzleTimelineQuery } from '../../queries/drizzle-timeline.query';
+import { DrizzleTimeOfDayQuery } from '../../queries/drizzle-time-of-day.query';
 import { DrizzleOverviewQuery } from '../../queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
 import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
@@ -39,6 +42,7 @@ import { ProjectAccessGuard } from './project-access.guard';
 import { ProjectSettingsController } from './project-settings.controller';
 import { PropertyBreakdownController } from './property-breakdown.controller';
 import { QueriesController } from './queries.controller';
+import { TimeOfDayController } from './time-of-day.controller';
 import { VisitsController } from './visits.controller';
 
 @Module({
@@ -49,6 +53,7 @@ import { VisitsController } from './visits.controller';
     VisitsController,
     FunnelSubjectsController,
     ProjectSettingsController,
+    TimeOfDayController,
   ],
   providers: [
     GetOverviewUseCase,
@@ -68,6 +73,8 @@ import { VisitsController } from './visits.controller';
     { provide: FUNNEL_QUERY, useClass: DrizzleFunnelQuery },
     GetTimelineUseCase,
     { provide: TIMELINE_QUERY, useClass: DrizzleTimelineQuery },
+    GetTimeOfDayUseCase,
+    { provide: TIME_OF_DAY_QUERY, useClass: DrizzleTimeOfDayQuery },
     GetVisitsUseCase,
     { provide: VISITS_QUERY, useClass: DrizzleVisitsQuery },
     GetProjectSettingsUseCase,
