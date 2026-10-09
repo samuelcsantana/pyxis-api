@@ -102,7 +102,9 @@ Shipping now:
   when it fails) and
   `/funnel?mode=visit|user&steps=` (how many visits or people reached each of 2 to 8 ordered steps,
   a person's anonymous steps counting once they identify, with the median time from each step
-  to the next and through the whole funnel), `/funnel/subjects?step=&outcome=reached|dropped`
+  to the next and through the whole funnel), `/funnel/segments?steps=&by=device|channel` (the
+  same funnel per device type or channel of the visit, visit mode only, adding up to it),
+  `/funnel/subjects?step=&outcome=reached|dropped`
   (the visits, or identified people, who reached one step or reached the one before and never
   it, newest first with a cursor) and
   `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
