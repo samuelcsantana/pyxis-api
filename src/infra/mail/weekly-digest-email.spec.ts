@@ -74,7 +74,7 @@ describe('the weekly digest in English', () => {
   const email = buildWeeklyDigestEmail(BUSY_WEEK, 'en');
 
   it('names the project, the week and the visits with their change in the subject', () => {
-    expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11: 812 visits (+12%)`);
+    expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11 · 812 visits (+12%)`);
   });
 
   it('says in the inbox preview what the e-mail compares', () => {
@@ -179,7 +179,7 @@ describe('the weekly digest in Brazilian Portuguese', () => {
   const email = buildWeeklyDigestEmail(BUSY_WEEK, 'pt-BR');
 
   it('names the project, the week and the visits with their change in the subject', () => {
-    expect(email.subject).toBe(`Acme Store · 5${RANGE_DASH}11 de out.: 812 visitas (+12%)`);
+    expect(email.subject).toBe(`Acme Store · 5${RANGE_DASH}11 de out. · 812 visitas (+12%)`);
   });
 
   it('uses the words of the dashboard and Brazilian number formats', () => {
@@ -215,7 +215,7 @@ describe('a week without visits', () => {
   const email = buildWeeklyDigestEmail(QUIET_WEEK, 'en');
 
   it('says so first, with when the last event arrived in the project time zone', () => {
-    expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11: 0 visits (-100%)`);
+    expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11 · 0 visits (-100%)`);
     expect(email.html).toContain('class="pyxis-notice"');
     expect(email.text).toContain(
       'No visits arrived this week.\nThe last event was received on October 2, 2026 at 11:31 AM.',
@@ -267,10 +267,10 @@ describe('a week with one visit and none the week before', () => {
     const single = { ...QUIET_WEEK, visits: { current: 1, previous: 0 } };
 
     expect(buildWeeklyDigestEmail(single, 'en').subject).toBe(
-      `Acme Store · Oct 5${RANGE_DASH}11: 1 visit`,
+      `Acme Store · Oct 5${RANGE_DASH}11 · 1 visit`,
     );
     expect(buildWeeklyDigestEmail(single, 'pt-BR').subject).toBe(
-      `Acme Store · 5${RANGE_DASH}11 de out.: 1 visita`,
+      `Acme Store · 5${RANGE_DASH}11 de out. · 1 visita`,
     );
   });
 
@@ -278,7 +278,7 @@ describe('a week with one visit and none the week before', () => {
     const steady = { ...BUSY_WEEK, visits: { current: 1001, previous: 1000 } };
 
     expect(buildWeeklyDigestEmail(steady, 'en').subject).toBe(
-      `Acme Store · Oct 5${RANGE_DASH}11: 1,001 visits`,
+      `Acme Store · Oct 5${RANGE_DASH}11 · 1,001 visits`,
     );
   });
 });
