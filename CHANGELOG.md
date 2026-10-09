@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.6.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.5.0...v0.6.0) (2026-10-09)
+
+
+### Features
+
+* **auth:** remember the language of the admin's last sign-in ([06d246d](https://github.com/samuelcsantana/pyxis-api/commit/06d246d355574e8a3305e397776ea853b7969434))
+* **digest:** assemble a project's week from the dashboard queries ([0b7aff4](https://github.com/samuelcsantana/pyxis-api/commit/0b7aff40d112f11bc636f6d22a1bb9204d075439))
+* **digest:** find the last closed week of a project ([c925768](https://github.com/samuelcsantana/pyxis-api/commit/c925768e0e6141f014be56a2637868fc961a25c2))
+* **digest:** list the digest recipients and remember what was sent ([94d92ba](https://github.com/samuelcsantana/pyxis-api/commit/94d92baa32bc6cc0eea43692855e230b7a3ad8dc))
+* **digest:** send each admin the last closed week of their projects ([ffb609a](https://github.com/samuelcsantana/pyxis-api/commit/ffb609abdb5e72b4b0121981cc6ab52a6945f535))
+* **infra:** schedule the weekly digest on Mondays ([7376ddd](https://github.com/samuelcsantana/pyxis-api/commit/7376ddd48eac79fa73a7a2523f5dd4319ec02af3))
+* **jobs:** run the weekly digest when the schedule asks for it ([524913b](https://github.com/samuelcsantana/pyxis-api/commit/524913b6a14f5138e116129ef702220a8a2ff90e))
+* **mail:** send the weekly digest through Resend ([616b949](https://github.com/samuelcsantana/pyxis-api/commit/616b949c26ff3b13be417ffdd7ca6decffe939ea))
+* **mail:** write the weekly digest e-mail in English and Portuguese ([f4ab5bb](https://github.com/samuelcsantana/pyxis-api/commit/f4ab5bbfce8b8c1fd962d3771c774e28e38c8cc6))
+* **preferences:** keep a weekly digest switch per admin and project ([ed6ba53](https://github.com/samuelcsantana/pyxis-api/commit/ed6ba53f2f684f96689a93d56d167ef92c2601a0))
+* **preferences:** serve the e-mail preferences of the signed-in admin ([7babf0e](https://github.com/samuelcsantana/pyxis-api/commit/7babf0ecfc354ef41b6a83f12ca807922e508823))
+
+
+### Refactoring
+
+* **mail:** share the e-mail layout between messages ([b0650f7](https://github.com/samuelcsantana/pyxis-api/commit/b0650f7ef3ca412220f58b15044010a4c33d28fa))
+
+
+### Documentation
+
+* describe the weekly digest ([885ebd8](https://github.com/samuelcsantana/pyxis-api/commit/885ebd8f8fc400e32a964e18ae0fc98ccf514450))
+* **readme:** describe the e-mail preferences routes ([72be655](https://github.com/samuelcsantana/pyxis-api/commit/72be655d27571b82e6b0ee3730b332d8a8c73a10))
+
 ## [0.5.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.4.0...v0.5.0) (2026-10-09)
 
 
