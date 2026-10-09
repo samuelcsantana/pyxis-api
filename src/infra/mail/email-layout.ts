@@ -7,7 +7,7 @@ export interface EmailContent {
   readonly text: string;
 }
 
-export const DASHBOARD_URL = 'https://pyxis.samuelsantana.dev/';
+export const DASHBOARD_URL = 'https://app.pyxis-analytics.dev/';
 export const DASHBOARD_HOST = new URL(DASHBOARD_URL).host;
 export const EMAIL_LOGO_URL = `${DASHBOARD_URL}email/pyxis-logo.png`;
 export const EMAIL_LOGO_2X_URL = `${DASHBOARD_URL}email/pyxis-logo@2x.png`;
