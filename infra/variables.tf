@@ -69,9 +69,9 @@ variable "session_cookie_domain" {
 }
 
 variable "mail_from" {
-  description = "From header of the sign-in code emails."
+  description = "From header of the sign-in code and weekly digest emails; its domain must be verified in Resend."
   type        = string
-  default     = "Pyxis <noreply@samuelsantana.dev>"
+  default     = "Pyxis <noreply@pyxis-analytics.dev>"
 }
 
 variable "alert_email" {
