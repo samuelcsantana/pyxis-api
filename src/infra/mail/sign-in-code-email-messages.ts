@@ -25,9 +25,9 @@ export const SIGN_IN_CODE_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, SignInC
       heading: 'Your sign-in code',
       instruction: 'Enter this code on the Pyxis sign-in page to open your dashboard.',
       expiry: (minutes) => `It expires in ${String(minutes)} minutes and works once.`,
-      neverShare: 'Never share this code. Pyxis will never ask you for it.',
+      neverShare: 'Never share this code. No one from Pyxis will ever ask you for it.',
       notRequested:
-        'Did not ask to sign in? Ignore this email: nobody can sign in without the code.',
+        'Didn’t ask to sign in? You can ignore this email: no one can sign in without this code.',
       about: 'Pyxis is privacy-first product analytics: no cookies, no personal data in events.',
       reason:
         'You received this email because a sign-in to the Pyxis dashboard was requested for this address.',
@@ -40,10 +40,11 @@ export const SIGN_IN_CODE_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, SignInC
       preheader: (code, minutes) =>
         `Seu código é ${code}. Ele expira em ${String(minutes)} minutos e só vale uma vez.`,
       heading: 'Seu código para entrar',
-      instruction: 'Digite este código na página de entrada do Pyxis para abrir o seu painel.',
+      instruction: 'Digite este código na página “Entrar no Pyxis” para abrir o seu painel.',
       expiry: (minutes) => `Ele expira em ${String(minutes)} minutos e só vale uma vez.`,
-      neverShare: 'Nunca compartilhe este código. O Pyxis nunca vai pedi-lo a você.',
-      notRequested: 'Não pediu para entrar? Ignore este e-mail: ninguém entra sem o código.',
+      neverShare: 'Nunca compartilhe este código. Ninguém do Pyxis vai pedir esse código a você.',
+      notRequested:
+        'Não pediu para entrar? Pode ignorar este e-mail: ninguém entra sem este código.',
       about:
         'O Pyxis é uma ferramenta de análise de produto que respeita a privacidade: ' +
         'sem cookies e sem dados pessoais nos eventos.',

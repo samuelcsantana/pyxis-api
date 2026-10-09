@@ -47,8 +47,8 @@ describe('buildSignInCodeEmail in English', () => {
   it('says how long the code lasts, that it works once, and how to treat it', () => {
     for (const part of [email.html, email.text]) {
       expect(part).toContain('It expires in 10 minutes and works once.');
-      expect(part).toContain('Never share this code. Pyxis will never ask you for it.');
-      expect(part).toContain('Did not ask to sign in? Ignore this email:');
+      expect(part).toContain('Never share this code. No one from Pyxis will ever ask you for it.');
+      expect(part).toContain('Didn’t ask to sign in? You can ignore this email:');
     }
   });
 
@@ -76,11 +76,18 @@ describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
     expect(email.html).toMatch(/<div style="display:none;[^"]*">Seu código é 123456\. Ele expira/);
   });
 
+  it('names the page where the code goes by the title the dashboard gives it', () => {
+    expect(email.html).toContain('Digite este código na página “Entrar no Pyxis”');
+    expect(email.text).toContain('Digite este código na página “Entrar no Pyxis”');
+  });
+
   it('says how long the code lasts, that it works once, and how to treat it', () => {
-    for (const part of [email.html, email.text]) {
+    for (const part of [email.html, email.text.replaceAll('\n', ' ')]) {
       expect(part).toContain('Ele expira em 10 minutos e só vale uma vez.');
-      expect(part).toContain('Nunca compartilhe este código. O Pyxis nunca vai pedi-lo a você.');
-      expect(part).toContain('Não pediu para entrar? Ignore este e-mail:');
+      expect(part).toContain(
+        'Nunca compartilhe este código. Ninguém do Pyxis vai pedir esse código a você.',
+      );
+      expect(part).toContain('Não pediu para entrar? Pode ignorar este e-mail:');
     }
   });
 
