@@ -144,6 +144,14 @@ Shipping now:
 - A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
   codes; each step logs its count, and a failed step fails the run so the scheduler retries
 
+- A weekly digest by e-mail, on Mondays at 11:00 UTC: each admin gets, per project, the week that
+  closed on Sunday in the project's time zone against the week before (visits, identified users,
+  converting visits, failed writes, visits per day, top pages and events, the write routes that
+  failed), in the language of their last sign-in, with a link to the same week in the dashboard. A
+  week without visits says when the last event arrived. The numbers come from the dashboard's own
+  queries; each digest is sent once per admin, project and week, and one failed e-mail does not
+  stop the others ([ADR 0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md))
+
 ## Architecture
 
 ```mermaid
@@ -155,12 +163,17 @@ flowchart LR
   Dashboard["pyxis-web<br>(dashboard)"]
   subgraph AWS["AWS · sa-east-1"]
     CF["CloudFront"] --> Lambda["Lambda<br>NestJS + Fastify"]
+    Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · weekly digest"]
   end
   DB[("Postgres<br>(Neon)")]
+  Resend["Resend"]
   SDK -- "POST /v1/batch · public key" --> CF
   Dashboard -- "queries · session cookie" --> CF
   Backend -- "DELETE /v1/subjects/{id} · secret key" --> CF
   Lambda --> DB
+  Jobs --> DB
+  Lambda -- "sign-in codes" --> Resend
+  Jobs -- "weekly digest" --> Resend
 ```
 
 Inside the service, dependencies point inward ([ADR 0002](docs/adr/0002-clean-architecture.md)):
@@ -315,7 +328,7 @@ src/
 ├── domain/            entities, event validation, the PII barrier, derivations, key formats,
 │                      date ranges and the report shapes of the dashboard queries
 ├── cli/               the project, key and admin scripts
-├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations, daily jobs)
+├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations, scheduled jobs)
 ├── usecases/          one class per operation (ingestion, projects, keys, sign-in, queries)
 ├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
@@ -383,6 +396,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   credentials; a request from another origin gets 403 and nothing it can read
 - A dashboard query for a project the admin was not granted answers exactly like one for a
   project that does not exist (404 `not_found`), so the API never confirms that a project exists
+- The weekly digest carries aggregates, paths, event names and routes only, never a user id or a
+  link to a visit, and its logs name projects and admins by id, never by address
 - Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
   use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out
@@ -409,6 +424,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 | [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)               | Answer dashboard queries from the raw events, without rollups    |
 | [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)       | Erase a person together with the visits they identified in       |
 | [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md) | Compare an unfinished day up to the same time of day             |
+| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)          | Send a weekly digest by e-mail from the jobs function            |
 
 ## Roadmap
 
@@ -428,7 +444,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Load test script, run against the local stack
 - [x] Load test through CloudFront
 - [x] E-mail preferences: the weekly digest switch and the admin's language
-- [ ] Weekly digest e-mail on Mondays
+- [x] Weekly digest e-mail on Mondays
 
 ## Contributing and license
 
