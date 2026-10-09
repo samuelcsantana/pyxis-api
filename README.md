@@ -260,19 +260,19 @@ DATABASE_URL=postgres://pyxis_app:pyxis_app@localhost:5446/pyxis npm start
 
 Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.schema.ts)):
 
-| Variable                 | Default                             | Meaning                                                                                                                                                         |
-| ------------------------ | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                   | `3040`                              | HTTP port                                                                                                                                                       |
-| `NODE_ENV`               | `development`                       | `development`, `production` or `test`                                                                                                                           |
-| `SWAGGER_ENABLED`        | unset                               | `true`/`false`; unset means on everywhere except production                                                                                                     |
-| `DATABASE_URL`           | required                            | The API's connection, as the application role                                                                                                                   |
-| `MIGRATION_DATABASE_URL` | unset                               | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
-| `APP_DB_ROLE`            | unset                               | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
-| `CLIENT_IP_HEADER`       | unset                               | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
-| `DASHBOARD_ORIGIN`       | unset; required in production       | The only origin allowed to call the sign-in routes and read `/v1/me` with credentials; unset refuses them all                                                   |
-| `SESSION_COOKIE_DOMAIN`  | unset                               | `Domain` of the session cookie (`pyxis-analytics.dev`, so the dashboard's server receives it); unset means the API host only                                    |
-| `RESEND_API_KEY`         | unset; required in production       | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                               |
-| `MAIL_FROM`              | `Pyxis <noreply@samuelsantana.dev>` | Sender of the sign-in emails; its domain must be verified in Resend                                                                                             |
+| Variable                 | Default                               | Meaning                                                                                                                                                         |
+| ------------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                   | `3040`                                | HTTP port                                                                                                                                                       |
+| `NODE_ENV`               | `development`                         | `development`, `production` or `test`                                                                                                                           |
+| `SWAGGER_ENABLED`        | unset                                 | `true`/`false`; unset means on everywhere except production                                                                                                     |
+| `DATABASE_URL`           | required                              | The API's connection, as the application role                                                                                                                   |
+| `MIGRATION_DATABASE_URL` | unset                                 | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
+| `APP_DB_ROLE`            | unset                                 | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
+| `CLIENT_IP_HEADER`       | unset                                 | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
+| `DASHBOARD_ORIGIN`       | unset; required in production         | The only origin allowed to call the sign-in routes and read `/v1/me` with credentials; unset refuses them all                                                   |
+| `SESSION_COOKIE_DOMAIN`  | unset                                 | `Domain` of the session cookie (`pyxis-analytics.dev`, so the dashboard's server receives it); unset means the API host only                                    |
+| `RESEND_API_KEY`         | unset; required in production         | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                               |
+| `MAIL_FROM`              | `Pyxis <noreply@pyxis-analytics.dev>` | Sender of the sign-in and weekly digest emails; its domain must be verified in Resend                                                                           |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.

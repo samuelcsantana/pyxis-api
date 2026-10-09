@@ -6,7 +6,7 @@ import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
 import { buildSignInCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
-const FROM = 'Pyxis <noreply@samuelsantana.dev>';
+const FROM = 'Pyxis <noreply@pyxis-analytics.dev>';
 const API_KEY = 'test-api-key';
 const DIGEST: WeeklyDigest = {
   projectId: 'd2e07854-0000-4000-8000-000000000001',
