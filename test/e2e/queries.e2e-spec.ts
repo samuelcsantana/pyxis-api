@@ -466,6 +466,36 @@ describe('dashboard queries', () => {
     expect(response.json()).toMatchObject({ error: 'invalid_request' });
   });
 
+  it('answers the settings of the project with its live keys, never a secret one', async () => {
+    const publicKey = `pyxis_pk_${'Q'.repeat(32)}`;
+    const secretHash = 'b'.repeat(64);
+    await owner`
+      INSERT INTO project_keys (project_id, kind, public_key, secret_hash, created_at, revoked_at)
+      VALUES (${SHOP_ID}, 'public', ${publicKey}, NULL, '2026-10-01T08:00:00Z', NULL),
+             (${SHOP_ID}, 'public', ${`pyxis_pk_${'R'.repeat(32)}`}, NULL, '2026-09-01T08:00:00Z',
+              '2026-09-15T08:00:00Z'),
+             (${SHOP_ID}, 'secret', NULL, ${secretHash}, '2026-10-02T08:00:00Z', NULL)
+    `;
+
+    const response = await get(`/v1/projects/${SHOP_ID}/settings`);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      id: SHOP_ID,
+      name: 'Queries Shop',
+      timezone: 'UTC',
+      conversion_event: 'signup_completed',
+      allowed_origins: ['https://shop.example.com'],
+      first_event_at: '2026-09-20T10:00:00.000Z',
+      last_event_at: '2026-10-05T10:02:00.000Z',
+      event_retention_months: 13,
+      public_keys: [{ key: publicKey, created_at: '2026-10-01T08:00:00.000Z' }],
+      secret_keys: [{ created_at: '2026-10-02T08:00:00.000Z' }],
+    });
+    expect(response.body).not.toContain(secretHash);
+    expect((await get(`/v1/projects/${FOREIGN_ID}/settings`)).statusCode).toBe(404);
+  });
+
   it('answers 401 without a session', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/overview?from=2026-10-05&to=2026-10-05`,

@@ -7,7 +7,9 @@ import { PROPERTY_BREAKDOWN_QUERY } from '../../../domain/queries/property-break
 import { REQUESTS_QUERY } from '../../../domain/queries/requests';
 import { TIMELINE_QUERY } from '../../../domain/queries/timeline';
 import { OVERVIEW_QUERY } from '../../../domain/queries/overview';
+import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
 import { VISITS_QUERY } from '../../../domain/queries/visits';
+import { PROJECT_KEY_REPOSITORY } from '../../../domain/repositories/project-key.repository';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
@@ -18,6 +20,7 @@ import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.useca
 import { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
+import { GetProjectSettingsUseCase } from '../../../usecases/projects/get-project-settings.usecase';
 import { DrizzleAcquisitionQuery } from '../../queries/drizzle-acquisition.query';
 import { DrizzleDevicesQuery } from '../../queries/drizzle-devices.query';
 import { DrizzleFeaturesQuery } from '../../queries/drizzle-features.query';
@@ -26,11 +29,14 @@ import { DrizzlePropertyBreakdownQuery } from '../../queries/drizzle-property-br
 import { DrizzleRequestsQuery } from '../../queries/drizzle-requests.query';
 import { DrizzleTimelineQuery } from '../../queries/drizzle-timeline.query';
 import { DrizzleOverviewQuery } from '../../queries/drizzle-overview.query';
+import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
 import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
+import { DrizzleProjectKeyRepository } from '../../repositories/drizzle-project-key.repository';
 import { AuthModule } from '../auth/auth.module';
 import { SessionGuard } from '../auth/auth.guards';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
 import { ProjectAccessGuard } from './project-access.guard';
+import { ProjectSettingsController } from './project-settings.controller';
 import { PropertyBreakdownController } from './property-breakdown.controller';
 import { QueriesController } from './queries.controller';
 import { VisitsController } from './visits.controller';
@@ -42,6 +48,7 @@ import { VisitsController } from './visits.controller';
     PropertyBreakdownController,
     VisitsController,
     FunnelSubjectsController,
+    ProjectSettingsController,
   ],
   providers: [
     GetOverviewUseCase,
@@ -63,6 +70,9 @@ import { VisitsController } from './visits.controller';
     { provide: TIMELINE_QUERY, useClass: DrizzleTimelineQuery },
     GetVisitsUseCase,
     { provide: VISITS_QUERY, useClass: DrizzleVisitsQuery },
+    GetProjectSettingsUseCase,
+    { provide: PROJECT_KEY_REPOSITORY, useClass: DrizzleProjectKeyRepository },
+    { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     SessionGuard,
     ProjectAccessGuard,
   ],
