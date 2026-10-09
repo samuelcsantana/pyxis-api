@@ -44,7 +44,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
 > = {
   en: {
     language: 'en',
-    subject: (project, week, visits) => `${project} · ${week}: ${visits}`,
+    subject: (project, week, visits) => `${project} · ${week} · ${visits}`,
     preheader: (project) =>
       `Visits, conversions and failed writes of ${project} last week, against the week before.`,
     kicker: 'Weekly digest',
@@ -83,7 +83,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
   },
   'pt-BR': {
     language: 'pt-BR',
-    subject: (project, week, visits) => `${project} · ${week}: ${visits}`,
+    subject: (project, week, visits) => `${project} · ${week} · ${visits}`,
     preheader: (project) =>
       `Visitas, conversões e gravações com falha de ${project} na semana passada, ` +
       'comparadas com a semana anterior.',
