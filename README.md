@@ -147,10 +147,12 @@ Shipping now:
 - A weekly digest by e-mail, on Mondays at 11:00 UTC: each admin gets, per project, the week that
   closed on Sunday in the project's time zone against the week before (visits, identified users,
   converting visits, failed writes, visits per day, top pages and events, the write routes that
-  failed), in the language of their last sign-in, with a link to the same week in the dashboard. A
-  week without visits says when the last event arrived. The numbers come from the dashboard's own
-  queries; each digest is sent once per admin, project and week, and one failed e-mail does not
-  stop the others ([ADR 0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md))
+  failed), in the language of their last sign-in, with a link to the same week in the dashboard.
+  The inbox preview carries the identified users, converting visits and failed writes, and the
+  time zone is named in the reader's language ("Horário Padrão de Brasília"). A week without
+  visits says when the last event arrived, in the preview too. The numbers come from the
+  dashboard's own queries; each digest is sent once per admin, project and week, and one failed
+  e-mail does not stop the others ([ADR 0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md))
 
 ## Architecture
 
