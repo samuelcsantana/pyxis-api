@@ -14,7 +14,7 @@ filled-in values live with the operator, never in this public repository.
 | Configuration                          | Parameter Store under `/pyxis-api/app/` (HTTP) and `/pyxis-api/migrate/` (migrations)                                     |
 | Database                               | Neon, São Paulo; the HTTP function connects as `pyxis_app` through the pooler, migrations as the owner on the direct host |
 
-| Jobs function `pyxis-api-jobs` | Same image, `dist/lambda/jobs-entry.handler`; run daily at 06:00 UTC by the EventBridge schedule `pyxis-api-retention`, as the application role; reads `/pyxis-api/jobs/` |
+| Jobs function `pyxis-api-jobs` | Same image, `dist/lambda/jobs-entry.handler`; run daily at 06:00 UTC by the EventBridge schedule `pyxis-api-retention`, and on Mondays at 11:00 UTC by `pyxis-api-weekly-digest` with `{"job":"weekly-digest"}`, as the application role; reads `/pyxis-api/jobs/` |
 
 The daily job deletes events older than 13 months (per project, 10,000 rows at a time), then
 expired or revoked dashboard sessions and expired sign-in codes. A failed step does not skip the
@@ -59,6 +59,7 @@ others, but fails the run, and the scheduler retries it twice within the hour.
    `sslmode=verify-full`), `/pyxis-api/app/EDGE_SHARED_SECRET` (a long random value),
    `/pyxis-api/app/RESEND_API_KEY` (a Resend key allowed to send only),
    `/pyxis-api/jobs/DATABASE_URL` (the same value as `/pyxis-api/app/DATABASE_URL`),
+   `/pyxis-api/jobs/RESEND_API_KEY` (the same value as `/pyxis-api/app/RESEND_API_KEY`; rotate both),
    `/pyxis-api/migrate/MIGRATION_DATABASE_URL` (direct host, owner, `sslmode=verify-full`).
    `DASHBOARD_ORIGIN`, `SESSION_COOKIE_DOMAIN` and `MAIL_FROM` are plain parameters Terraform sets
    from its variables; the domain of `MAIL_FROM` must be verified in Resend before the first
@@ -103,7 +104,7 @@ Run them once by hand, for example after the first deploy:
 
 ```bash
 aws lambda invoke --function-name pyxis-api-jobs --region sa-east-1 --profile pyxis-api \
-  --cli-read-timeout 910 jobs.json && cat jobs.json   # {"ok":true,"databaseSize":{...},"retention":{...}}
+  --cli-read-timeout 910 jobs.json && cat jobs.json   # {"ok":true,"job":"daily","databaseSize":{...},"retention":{...}}
 aws logs tail /aws/lambda/pyxis-api-jobs --since 1h --profile pyxis-api | grep -E 'database.size|retention.'
 ```
 
@@ -120,6 +121,26 @@ aws cloudwatch set-alarm-state --alarm-name pyxis-api-database-size --state-valu
 Then `retention.step_done { step, deleted }` is logged for each step; `retention.step_failed`
 names a step that failed and why. The schedule can be paused with `aws scheduler update-schedule`
 or by setting its state to `DISABLED` in Terraform.
+
+## The weekly digest
+
+On Mondays at 11:00 UTC the schedule `pyxis-api-weekly-digest` invokes the jobs function with
+`{"job":"weekly-digest"}`. Every admin who keeps the digest on gets, per project, the week that
+ended on Sunday in the project's time zone. To run it by hand:
+
+```bash
+aws lambda invoke --function-name pyxis-api-jobs --region sa-east-1 --profile pyxis-api \
+  --cli-binary-format raw-in-base64-out --payload '{"job":"weekly-digest"}' \
+  --cli-read-timeout 910 digest.json && cat digest.json   # {"ok":true,"job":"weekly-digest",...}
+aws logs tail /aws/lambda/pyxis-api-jobs --since 1h --profile pyxis-api | grep -E 'digest\.'
+```
+
+Each e-mail Resend accepted logs `digest.sent { projectId, adminUserId, weekStart }` and adds a
+row to `digest_deliveries`; a failed one logs `digest.delivery_failed` with Resend's status and is
+tried again by the next run. `digest.completed { sent, alreadySent, failed }` closes the run. A run
+never sends the same week twice to an admin: to send a week again, delete its row from
+`digest_deliveries` first. Without `/pyxis-api/jobs/RESEND_API_KEY` the digest run fails at once
+and the daily run is not affected.
 
 ## Rollback
 
