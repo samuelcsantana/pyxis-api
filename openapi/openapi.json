@@ -440,6 +440,129 @@
         ],
         "type": "object"
       },
+      "EngagementReport": {
+        "additionalProperties": false,
+        "description": "How the visits of the range entered, left and lasted: entry and exit pages, single-page visits and visit length, from the first to the last event of each visit.",
+        "properties": {
+          "entry_pages": {
+            "description": "The ten pages most visits started on",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "single_page_visits": {
+                  "description": "Visits that started here and saw nothing else",
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "visits",
+                "single_page_visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "exit_pages": {
+            "description": "The ten pages most visits ended on, by their last page view",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "path",
+                "visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "median_visit_seconds": {
+            "anyOf": [
+              {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Median time from the first to the last event of a visit; null without visits"
+          },
+          "single_page_visits": {
+            "description": "Visits that viewed one page only",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "visit_lengths": {
+            "description": "The visits by length: under 10 s, 30 s, 1 min, 3 min, 10 min, 30 min, and more",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "up_to_seconds": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Upper bound, exclusive, of the bucket; null for the last, open one"
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "up_to_seconds",
+                "visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "visits": {
+            "description": "Visits with a page view, the same count as the overview",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "visits",
+          "single_page_visits",
+          "median_visit_seconds",
+          "visit_lengths",
+          "entry_pages",
+          "exit_pages"
+        ],
+        "type": "object"
+      },
       "ErasedSubject": {
         "additionalProperties": false,
         "description": "How many events were deleted: the user's and those of every visit they identified in. Zero is success too, so a retry after a timeout is safe.",
@@ -2724,6 +2847,93 @@
           }
         ],
         "summary": "Visits and conversions by device type, browser, system and country",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/engagement": {
+      "get": {
+        "operationId": "EngagementController_engagement",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Entry and exit pages, single-page visits and visit length",
         "tags": [
           "dashboard queries"
         ]
