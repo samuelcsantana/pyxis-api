@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.5.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.4.0...v0.5.0) (2026-10-09)
+
+
+### Features
+
+* **keys:** list the live keys of a project ([af781f7](https://github.com/samuelcsantana/pyxis-api/commit/af781f73b888eb8a6171b0be167d750d480a8776))
+* **projects:** answer the settings of a project on GET /settings ([8464562](https://github.com/samuelcsantana/pyxis-api/commit/846456240ed44c787eedee3955c27c25293a5100))
+* **projects:** describe the settings of a project for its admin ([cdc42ba](https://github.com/samuelcsantana/pyxis-api/commit/cdc42bac209a6f53b9f65d3d52c211381f038d86))
+* **queries:** answer a funnel per device or channel on GET /funnel/segments ([0e9e7d2](https://github.com/samuelcsantana/pyxis-api/commit/0e9e7d2b001d8895f971a5f0a154e97da1106f5e))
+* **queries:** answer how visits entered, left and lasted on GET /engagement ([9357428](https://github.com/samuelcsantana/pyxis-api/commit/9357428fa6982e5bbdbf894119a30be2fccbb0f9))
+* **queries:** answer when the visits started on GET /time-of-day ([99809c9](https://github.com/samuelcsantana/pyxis-api/commit/99809c9c14f82f6db1ad05e127cdb379ee4543ed))
+* **queries:** count a funnel per device type or channel of the visit ([943769a](https://github.com/samuelcsantana/pyxis-api/commit/943769a3ad420cfb531fd7496ee8e25b8ca0721e))
+* **queries:** count visits by the weekday and hour they started ([4ece273](https://github.com/samuelcsantana/pyxis-api/commit/4ece2732fc878d217fd8057ae1fc44ec1946da14))
+* **queries:** describe how the visits of a range entered, left and lasted ([127cce7](https://github.com/samuelcsantana/pyxis-api/commit/127cce7a41cae7441a4d74843d9214deddaa099c))
+* **queries:** describe when the visits of a range started ([390ca09](https://github.com/samuelcsantana/pyxis-api/commit/390ca0943dc913012f7c1a5c2ee4e5acc2873c8a))
+* **queries:** measure how visits enter, leave and last ([f7869d9](https://github.com/samuelcsantana/pyxis-api/commit/f7869d95c2f1c3024a5a2946a6fa70bbbebdf759))
+
+
+### Documentation
+
+* **readme:** describe the engagement route ([53b325b](https://github.com/samuelcsantana/pyxis-api/commit/53b325b8ecf2ccc0f4d4d74648001868e4f78e42))
+* **readme:** describe the funnel segments route ([2a7c2e9](https://github.com/samuelcsantana/pyxis-api/commit/2a7c2e9df625a7dd2c3610c387553cb3fe8490e7))
+* **readme:** describe the read-only settings route ([10cc573](https://github.com/samuelcsantana/pyxis-api/commit/10cc5737eda3f489497aa63ed6bf573dfb2ae62a))
+* **readme:** describe the time-of-day route ([bae9d30](https://github.com/samuelcsantana/pyxis-api/commit/bae9d3065bef38a93bfd431c75e05a794b1d4c20))
+
 ## [0.4.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.3.0...v0.4.0) (2026-10-08)
 
 
