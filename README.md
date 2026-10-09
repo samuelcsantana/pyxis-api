@@ -127,6 +127,15 @@ Shipping now:
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
+- `GET` and `PUT /v1/projects/{projectId}/email-preferences` (`{"weekly_digest":true}`): the
+  signed-in admin chooses, for one project and for themselves only, whether to receive the
+  weekly digest, on by default. Saving changes an existing access and never grants one. The
+  dashboard's server sends the change with the admin's session cookie; another site cannot,
+  because a `PUT` is never a simple cross-origin request and the cookie is `SameSite=Lax`. The
+  admin's e-mails are written in the language of their last sign-in: it is kept on the sign-in
+  code and copied to the admin only when that code is verified, so knowing an admin's address
+  is not enough to change it
+
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
   site's backend with a secret project key
@@ -418,6 +427,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Database size report and alarm (in Terraform, applied with the stack)
 - [x] Load test script, run against the local stack
 - [x] Load test through CloudFront
+- [x] E-mail preferences: the weekly digest switch and the admin's language
+- [ ] Weekly digest e-mail on Mondays
 
 ## Contributing and license
 
