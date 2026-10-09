@@ -25,9 +25,9 @@ queries and erases a person's events on request, without cookies or personal dat
 
 </div>
 
-> **Status:** early development. Ingestion, dashboard sign-in, every dashboard query, erasure and
-> retention work end to end on the local stack; the first apply to AWS is next (see
-> [Roadmap](#roadmap)).
+> **Status:** in production since 2026-10-06 at `api.pyxis-analytics.dev` (AWS Lambda behind
+> CloudFront, sa-east-1): ingestion, dashboard sign-in and queries, erasure, retention and the
+> weekly digest. `main` is deployed by the deploy script on request (see [Roadmap](#roadmap)).
 
 ## Ecosystem
 
