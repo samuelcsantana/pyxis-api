@@ -5,7 +5,7 @@ export interface WeeklyDigestEmailMessages {
   readonly subject: (project: string, week: string, visits: string) => string;
   readonly preheader: (project: string) => string;
   readonly kicker: string;
-  readonly weekLine: (week: string, timeZone: string) => string;
+  readonly weekLine: (week: string, zoneName: string) => string;
   readonly noVisits: string;
   readonly lastEventAt: (when: string) => string;
   readonly noEventEver: string;
@@ -48,7 +48,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
     preheader: (project) =>
       `Visits, conversions and failed writes of ${project} last week, against the week before.`,
     kicker: 'Weekly digest',
-    weekLine: (week, timeZone) => `${week} · ${timeZone} time`,
+    weekLine: (week, zoneName) => `${week} · ${zoneName}`,
     noVisits: 'No visits arrived last week.',
     lastEventAt: (when) => `The last event was received on ${when}.`,
     noEventEver: 'No events have arrived for this project yet.',
@@ -88,7 +88,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
       `Visitas, conversões e gravações com falha de ${project} na semana passada, ` +
       'comparadas com a semana anterior.',
     kicker: 'Resumo semanal',
-    weekLine: (week, timeZone) => `${week} · horário de ${timeZone}`,
+    weekLine: (week, zoneName) => `${week} · ${zoneName}`,
     noVisits: 'Nenhuma visita chegou na semana passada.',
     lastEventAt: (when) => `O último evento foi recebido em ${when}.`,
     noEventEver: 'Nenhum evento chegou ainda para este projeto.',
