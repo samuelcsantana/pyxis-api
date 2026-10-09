@@ -5,11 +5,14 @@ import {
   type FunnelMode,
   type FunnelQuery,
   type FunnelReport,
+  type FunnelSegment,
+  type FunnelSegmentDimension,
   type FunnelStep,
   type FunnelSubject,
   type FunnelSubjectCursor,
   type FunnelSubjectsAsked,
   likePattern,
+  UNKNOWN_SEGMENT,
 } from '../../domain/queries/funnel';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
@@ -107,6 +110,13 @@ function subjectCursor(after: FunnelSubjectCursor | null): SQL {
     : sql`(chosen."at", chosen."subject") < (${after.lastStepAt.toISOString()}::timestamptz, ${after.id})`;
 }
 
+function segmentOfVisit(by: FunnelSegmentDimension): SQL {
+  return by === 'device'
+    ? sql`min(${events.deviceType})`
+    : sql`(array_agg(${events.channel} ORDER BY ${events.occurredAt})
+        FILTER (WHERE ${events.channel} IS NOT NULL))[1]`;
+}
+
 interface SubjectRow {
   readonly id: string;
   readonly lastStepAt: string;
@@ -165,5 +175,35 @@ export class DrizzleFunnelQuery implements FunnelQuery {
         LIMIT ${limit}`,
     );
     return rows.map((row) => ({ id: row.id, lastStepAt: new Date(row.lastStepAt) }));
+  }
+
+  async segments(
+    scope: QueryScope,
+    steps: readonly FunnelStep[],
+    by: FunnelSegmentDimension,
+  ): Promise<readonly FunnelSegment[]> {
+    const tables = steps.map((step, index) => stepTable(step, index));
+    const joins = steps
+      .slice(1)
+      .map((_, offset) => sql`LEFT JOIN ${stepName(offset + 1)} USING ("subject")`);
+    const counts = steps.map((_, index) => sql`count(${stepName(index)}."subject")::int`);
+    const rows = await this.db.execute<{ segment: string; counts: number[] }>(sql`
+      WITH subject_events AS (${subjectEvents(scope, 'visit')}),
+      ${sql.join(tables, sql`, `)},
+      visit_segments AS (
+        SELECT ${events.sessionId}::text AS "subject",
+          coalesce(${segmentOfVisit(by)}, ${UNKNOWN_SEGMENT}) AS "segment"
+        FROM ${events}
+        WHERE ${inScope(scope)}
+        GROUP BY ${events.sessionId}
+      )
+      SELECT visit_segments."segment" AS "segment",
+        ARRAY[${sql.join(counts, sql`, `)}] AS "counts"
+      FROM ${stepName(0)}
+      JOIN visit_segments USING ("subject")
+      ${sql.join(joins, sql` `)}
+      GROUP BY visit_segments."segment"
+      ORDER BY count(${stepName(0)}."subject") DESC, visit_segments."segment"`);
+    return rows.map((row) => ({ segment: row.segment, counts: row.counts.map(Number) }));
   }
 }

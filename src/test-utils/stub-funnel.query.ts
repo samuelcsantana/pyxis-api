@@ -2,6 +2,8 @@ import type {
   FunnelMode,
   FunnelQuery,
   FunnelReport,
+  FunnelSegment,
+  FunnelSegmentDimension,
   FunnelStep,
   FunnelSubject,
   FunnelSubjectCursor,
@@ -23,6 +25,12 @@ export class StubFunnelQuery implements FunnelQuery {
     readonly limit: number;
   }[] = [];
   found: readonly FunnelSubject[] = [];
+  readonly segmentCalls: {
+    readonly scope: QueryScope;
+    readonly steps: readonly FunnelStep[];
+    readonly by: FunnelSegmentDimension;
+  }[] = [];
+  segmented: readonly FunnelSegment[] = [];
 
   measure(
     scope: QueryScope,
@@ -41,5 +49,14 @@ export class StubFunnelQuery implements FunnelQuery {
   ): Promise<readonly FunnelSubject[]> {
     this.subjectCalls.push({ scope, asked, after, limit });
     return Promise.resolve(this.found);
+  }
+
+  segments(
+    scope: QueryScope,
+    steps: readonly FunnelStep[],
+    by: FunnelSegmentDimension,
+  ): Promise<readonly FunnelSegment[]> {
+    this.segmentCalls.push({ scope, steps, by });
+    return Promise.resolve(this.segmented);
   }
 }

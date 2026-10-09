@@ -8,6 +8,14 @@ export const MAX_FUNNEL_STEPS = 8;
 export const FUNNEL_OUTCOMES = ['reached', 'dropped'] as const;
 export type FunnelOutcome = (typeof FUNNEL_OUTCOMES)[number];
 export const FUNNEL_SUBJECTS_PAGE_SIZE = 50;
+export const FUNNEL_SEGMENT_DIMENSIONS = ['device', 'channel'] as const;
+export type FunnelSegmentDimension = (typeof FUNNEL_SEGMENT_DIMENSIONS)[number];
+export const UNKNOWN_SEGMENT = 'unknown';
+
+export interface FunnelSegment {
+  readonly segment: string;
+  readonly counts: readonly number[];
+}
 
 export type FunnelStep =
   | { readonly type: 'page'; readonly path: string }
@@ -48,6 +56,11 @@ export interface FunnelQuery {
     after: FunnelSubjectCursor | null,
     limit: number,
   ): Promise<readonly FunnelSubject[]>;
+  segments(
+    scope: QueryScope,
+    steps: readonly FunnelStep[],
+    by: FunnelSegmentDimension,
+  ): Promise<readonly FunnelSegment[]>;
 }
 
 export const FUNNEL_QUERY = Symbol('FunnelQuery');
