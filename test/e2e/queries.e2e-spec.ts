@@ -528,6 +528,30 @@ describe('dashboard queries', () => {
     });
   });
 
+  it('answers a funnel per device type and per channel of the visit', async () => {
+    const steps = encodeURIComponent(
+      JSON.stringify([
+        { type: 'page', path: '/pricing' },
+        { type: 'event', name: 'signup_completed' },
+      ]),
+    );
+    const path = `/v1/projects/${SHOP_ID}/funnel/segments?from=2026-09-20&to=2026-10-05&steps=${steps}`;
+
+    const byDevice = await get(`${path}&by=device`);
+    const byChannel = await get(`${path}&by=channel`);
+
+    expect(byDevice.statusCode).toBe(200);
+    expect(byDevice.json()).toEqual({
+      by: 'device',
+      segments: [{ segment: 'desktop', steps: [1, 1] }],
+    });
+    expect(byChannel.json()).toEqual({
+      by: 'channel',
+      segments: [{ segment: 'unknown', steps: [1, 1] }],
+    });
+    expect((await get(`${path}&by=country`)).statusCode).toBe(400);
+  });
+
   it('answers 401 without a session', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/overview?from=2026-10-05&to=2026-10-05`,

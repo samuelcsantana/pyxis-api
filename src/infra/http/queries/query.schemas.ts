@@ -165,7 +165,7 @@ const funnelStepSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('event'), name: z.string().regex(EVENT_NAME_PATTERN) }),
 ]);
 
-const funnelStepsSchema = z
+export const funnelStepsSchema = z
   .string()
   .transform((text, context) => {
     try {
