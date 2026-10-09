@@ -413,7 +413,7 @@ function card(wording: Wording): readonly string[] {
     ...dayBars(wording),
     ...listBlock(messages.topPages, pageRows(wording), messages.noPageViews),
     ...listBlock(messages.topEvents, eventRows(wording), messages.noNamedEvents),
-    ...listBlock(messages.failingWrites, routeRows(wording), messages.noFailedWrites),
+    ...listBlock(messages.failingRoutes, routeRows(wording), messages.noFailedWrites),
     ...button(overviewUrl(digest), messages.openWeek),
   ]);
 }
@@ -481,7 +481,7 @@ function buildText(wording: Wording): string {
     messages.topEvents,
     ...textTable(eventRows(wording), messages.noNamedEvents),
     '',
-    messages.failingWrites,
+    messages.failingRoutes,
     ...textTable(routeRows(wording), messages.noFailedWrites),
     '',
     `${messages.openWeek}: ${overviewUrl(digest)}`,

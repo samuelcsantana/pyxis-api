@@ -28,7 +28,7 @@ export interface WeeklyDigestEmailMessages {
   readonly topEvents: string;
   readonly noNamedEvents: string;
   readonly times: string;
-  readonly failingWrites: string;
+  readonly failingRoutes: string;
   readonly failedOf: (failed: string, total: string) => string;
   readonly noFailedWrites: string;
   readonly openWeek: string;
@@ -71,12 +71,12 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
     topEvents: 'Top events',
     noNamedEvents: 'No named events last week.',
     times: 'times',
-    failingWrites: 'Writes that failed',
+    failingRoutes: 'Failing routes',
     failedOf: (failed, total) => `${failed} of ${total} failed`,
     noFailedWrites: 'No writes failed last week.',
     openWeek: 'Open the week in the dashboard',
-    reason: (project) => `You receive this e-mail on Mondays as an admin of ${project} in Pyxis.`,
-    turnOff: 'To stop it, turn off the weekly digest in',
+    reason: (project) => `You receive this email on Mondays as an admin of ${project} in Pyxis.`,
+    turnOff: 'To stop receiving it, turn off the weekly digest in',
     settings: 'Settings',
     about: 'Pyxis is privacy-first product analytics: no cookies, no personal data in events.',
     logoAlt: 'Pyxis',
@@ -111,7 +111,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
     topEvents: 'Principais eventos',
     noNamedEvents: 'Nenhum evento nomeado na semana passada.',
     times: 'vezes',
-    failingWrites: 'Gravações que falharam',
+    failingRoutes: 'Rotas com falha',
     failedOf: (failed, total) => `${failed} de ${total} falharam`,
     noFailedWrites: 'Nenhuma gravação falhou na semana passada.',
     openWeek: 'Abrir a semana no painel',
