@@ -79,10 +79,21 @@ output cloudfront_domain`.
 ### Moving the API to another domain
 
 Set the new domain as `api_domain` and keep the current one in `api_domain_aliases`. Terraform
-creates a certificate for both before replacing the old one, so: `terraform apply
--target=aws_acm_certificate.api`, add the new validation CNAME, run the full apply (the
-distribution then answers on both names), add the new domain's CNAME to the distribution, and only
-then point the clients at it. Drop the old domain from `api_domain_aliases` once nothing calls it.
+creates a certificate for both before replacing the old one, so:
+
+1. `terraform apply -target=aws_acm_certificate.api` creates the new certificate. It then fails to
+   delete the old one, still in use by the distribution (`ResourceInUseException`, after about ten
+   minutes of retries); that is expected, and the full apply removes it later.
+2. Add the new domain's validation CNAME (`terraform output certificate_validation_record`; the
+   names already validated in this account keep their record).
+3. Check CAA before ACM does. Every name in the certificate, and each of its parents, must allow
+   `amazon.com` or have no CAA records. A parent that is a CNAME answers with its target's CAA
+   records: a dashboard name pointing at a host's CNAME can forbid Amazon for the API's name below
+   it. Make such a parent an ALIAS or an A record instead. A certificate that failed (`CAA_ERROR`)
+   never revalidates: `terraform apply -replace=aws_acm_certificate.api`.
+4. Run the full apply: the distribution then answers on every name.
+5. Add the new domain's CNAME to the distribution, check `/health` on every name, and only then
+   point the clients at it. Drop the old domain from `api_domain_aliases` once nothing calls it.
 
 ## Deploy
 
