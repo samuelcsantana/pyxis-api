@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.7.0...v0.8.0) (2026-10-09)
+
+
+### Features
+
+* **mail:** name the project's time zone in the digest as readers say it ([727874a](https://github.com/samuelcsantana/pyxis-api/commit/727874a7a9d776bddc3affa508b0c444244582ab))
+* **mail:** preview the week's numbers in the digest's inbox line ([647739d](https://github.com/samuelcsantana/pyxis-api/commit/647739d6b973c0456d04ef17cf547c6a87f01bf3))
+* **mail:** send email from noreply@pyxis-analytics.dev ([a3bbabe](https://github.com/samuelcsantana/pyxis-api/commit/a3bbabec1a99c3dc66aa60f5624a4701ee50e4bf))
+
+
+### Bug Fixes
+
+* **mail:** correct the warnings and the pt-BR instruction of the sign-in email ([4c05915](https://github.com/samuelcsantana/pyxis-api/commit/4c05915555be3bf868e6bd844d94d3380d9213be))
+* **mail:** name the digest's route list and footer as the dashboard does ([2427bb0](https://github.com/samuelcsantana/pyxis-api/commit/2427bb0cc3f26d9dde837bbd22e00ca52e4770fe))
+* **mail:** separate the week from the visits in the digest subject with a dot ([9b22b1d](https://github.com/samuelcsantana/pyxis-api/commit/9b22b1dea34d218fdca1e8eb25f20323526a45e0))
+* **mail:** word the digest's empty states for the week that ended ([2240507](https://github.com/samuelcsantana/pyxis-api/commit/224050761ff02b5c5ef003f5bdf48092362dcde1))
+
 ## [0.7.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.6.1...v0.7.0) (2026-10-09)
 
 
