@@ -4,6 +4,7 @@ export const MAX_RANGE_DAYS = 400;
 
 const ISO_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MILLISECONDS_PER_DAY = 86_400_000;
+const SUNDAY_ISO_WEEKDAY = 7;
 
 export interface DateRange {
   readonly from: string;
@@ -67,6 +68,14 @@ export function checkedRange(from: string, to: string, today: string): DateRange
 export function previousRange(range: DateRange): DateRange {
   const from = calendarDate(range.from);
   return { from: shift(from, -dayCount(range)), to: shift(from, -1) };
+}
+
+export function shiftDays(isoDate: string, days: number): string {
+  return shift(calendarDate(isoDate), days);
+}
+
+export function isoWeekday(isoDate: string): number {
+  return calendarDate(isoDate).getUTCDay() || SUNDAY_ISO_WEEKDAY;
 }
 
 export function daysIn(range: DateRange): readonly string[] {

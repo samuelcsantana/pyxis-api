@@ -4,9 +4,11 @@ import {
   comparisonCutoff,
   dayCount,
   daysIn,
+  isoWeekday,
   localTimeIn,
   MAX_RANGE_DAYS,
   previousRange,
+  shiftDays,
   todayIn,
 } from './date-range';
 
@@ -117,5 +119,26 @@ describe('daysIn', () => {
       '2026-10-01',
       '2026-10-02',
     ]);
+  });
+});
+
+describe('shiftDays', () => {
+  it('moves a date forwards and backwards across month and year ends', () => {
+    expect(shiftDays('2026-12-30', 3)).toBe('2027-01-02');
+    expect(shiftDays('2026-10-01', -1)).toBe('2026-09-30');
+  });
+
+  it('refuses a date that does not exist', () => {
+    expect(() => shiftDays('2026-02-30', 1)).toThrow(InvalidRangeError);
+  });
+});
+
+describe('isoWeekday', () => {
+  it.each([
+    ['2026-10-05', 1],
+    ['2026-10-10', 6],
+    ['2026-10-11', 7],
+  ])('numbers %s from Monday 1 to Sunday 7', (isoDate, weekday) => {
+    expect(isoWeekday(isoDate)).toBe(weekday);
   });
 });
