@@ -47,13 +47,15 @@ export class RequestSignInCodeUseCase {
       return;
     }
     const code = generateSignInCode(this.random);
+    const language = resolveEmailLanguage(requestedLanguage);
     await this.codes.create({
       email,
       codeHash: sha256Hex(code),
+      emailLanguage: language,
       createdAt: now,
       expiresAt: new Date(now.getTime() + SIGN_IN_CODE_TTL_MS),
     });
-    await this.tryDeliverCode(email, code, resolveEmailLanguage(requestedLanguage));
+    await this.tryDeliverCode(email, code, language);
   }
 
   private async tryDeliverCode(

@@ -15,6 +15,13 @@
       "when": 1791244384565,
       "tag": "0001_dashboard-auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791541608111,
+      "tag": "0002_admin-email-language",
+      "breakpoints": true
     }
   ]
 }

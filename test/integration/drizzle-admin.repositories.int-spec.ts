@@ -57,6 +57,7 @@ describe('admin repositories against a real Postgres', () => {
       expect(admin).toEqual({
         id: expect.any(String) as string,
         email: 'ana@example.com',
+        emailLanguage: 'en',
         createdAt: expect.any(Date) as Date,
       });
       expect((await admins.projectsOf(admin.id)).map((project) => project.name)).toEqual([
@@ -74,6 +75,17 @@ describe('admin repositories against a real Postgres', () => {
       expect(await admins.findById(admin.id)).toEqual(admin);
       expect(await admins.findByEmail('stranger@example.com')).toBeNull();
       expect(await admins.findById('ffffffff-ffff-4fff-bfff-ffffffffffff')).toBeNull();
+    });
+
+    it('stores the language of an admin, leaving the other admins alone', async () => {
+      const ana = await admins.grantAccess('ana@example.com', SHOP_ID);
+      const bruno = await admins.grantAccess('bruno@example.com', SHOP_ID);
+
+      await admins.setEmailLanguage(ana.id, 'pt-BR');
+
+      expect((await admins.findById(ana.id))?.emailLanguage).toBe('pt-BR');
+      expect((await admins.findByEmail('bruno@example.com'))?.emailLanguage).toBe('en');
+      expect(bruno.emailLanguage).toBe('en');
     });
 
     it('never shows another admin the projects they were not granted', async () => {
@@ -104,18 +116,21 @@ describe('admin repositories against a real Postgres', () => {
       await codes.create({
         email: 'ana@example.com',
         codeHash: sha256Hex('1'),
+        emailLanguage: 'en',
         createdAt: at(-90 * MINUTE),
         expiresAt: at(-80 * MINUTE),
       });
       await codes.create({
         email: 'ana@example.com',
         codeHash: sha256Hex('2'),
+        emailLanguage: 'en',
         createdAt: at(-10 * MINUTE),
         expiresAt: at(0),
       });
       await codes.create({
         email: 'bruno@example.com',
         codeHash: sha256Hex('3'),
+        emailLanguage: 'en',
         createdAt: at(-5 * MINUTE),
         expiresAt: at(5 * MINUTE),
       });
@@ -127,12 +142,14 @@ describe('admin repositories against a real Postgres', () => {
       await codes.create({
         email: 'ana@example.com',
         codeHash: sha256Hex('old'),
+        emailLanguage: 'en',
         createdAt: at(-8 * MINUTE),
         expiresAt: at(2 * MINUTE),
       });
       const latest = await codes.create({
         email: 'ana@example.com',
         codeHash: sha256Hex('new'),
+        emailLanguage: 'pt-BR',
         createdAt: at(-1 * MINUTE),
         expiresAt: at(9 * MINUTE),
       });
@@ -150,6 +167,7 @@ describe('admin repositories against a real Postgres', () => {
       const code = await codes.create({
         email: 'ana@example.com',
         codeHash: sha256Hex('1'),
+        emailLanguage: 'en',
         createdAt: NOW,
         expiresAt: at(10 * MINUTE),
       });
@@ -166,6 +184,7 @@ describe('admin repositories against a real Postgres', () => {
       const code = await codes.create({
         email: 'ana@example.com',
         codeHash: sha256Hex('1'),
+        emailLanguage: 'en',
         createdAt: NOW,
         expiresAt: at(10 * MINUTE),
       });
