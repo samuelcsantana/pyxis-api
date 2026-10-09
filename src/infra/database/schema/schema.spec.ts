@@ -3,6 +3,7 @@ import {
   adminProjectAccess,
   adminSessions,
   adminUsers,
+  digestDeliveries,
   events,
   otpCodes,
   projectKeys,
@@ -10,7 +11,12 @@ import {
 } from '.';
 
 function foreignKeyTargets(
-  table: typeof events | typeof projectKeys | typeof adminProjectAccess | typeof adminSessions,
+  table:
+    | typeof events
+    | typeof projectKeys
+    | typeof adminProjectAccess
+    | typeof adminSessions
+    | typeof digestDeliveries,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -83,6 +89,18 @@ describe('database schema', () => {
       'project_id',
     ]);
     expect(foreignKeyTargets(adminProjectAccess)).toEqual(['admin_users.id', 'projects.id']);
+  });
+
+  it('remembers one digest per project, admin and week, deleted with either', () => {
+    const config = getTableConfig(digestDeliveries);
+
+    expect(config.primaryKeys[0]?.getName()).toBe('digest_deliveries_pkey');
+    expect(config.primaryKeys[0]?.columns.map((column) => column.name)).toEqual([
+      'project_id',
+      'admin_user_id',
+      'week_start',
+    ]);
+    expect(foreignKeyTargets(digestDeliveries)).toEqual(['projects.id', 'admin_users.id']);
   });
 
   it('ties sessions to their admin and indexes them by admin', () => {
