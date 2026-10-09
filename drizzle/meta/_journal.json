@@ -29,6 +29,13 @@
       "when": 1791541761791,
       "tag": "0003_weekly-digest-preference",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791542607831,
+      "tag": "0004_digest-deliveries",
+      "breakpoints": true
     }
   ]
 }
