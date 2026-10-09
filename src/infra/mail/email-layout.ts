@@ -15,6 +15,7 @@ export const TEXT_LINE_WIDTH = 72;
 
 const CONTENT_WIDTH_PX = 560;
 const LOGO_SIZE_PX = 40;
+const NARROW_SCREEN_PX = 480;
 const PREHEADER_FILLER_REPEAT = 20;
 const PREHEADER_FILLER = '&#847;&zwnj;&nbsp;'.repeat(PREHEADER_FILLER_REPEAT);
 
@@ -120,7 +121,8 @@ export interface EmailDocument {
   readonly title: string;
   readonly preheader: string;
   readonly rows: readonly string[];
-  readonly darkRules?: readonly string[];
+  readonly darkRules: readonly string[];
+  readonly narrowRules?: readonly string[];
 }
 
 export function emailDocument({
@@ -128,7 +130,8 @@ export function emailDocument({
   title,
   preheader,
   rows,
-  darkRules = [],
+  darkRules,
+  narrowRules = [],
 }: EmailDocument): string {
   const contentTableStyle = `width:100%;max-width:${String(CONTENT_WIDTH_PX)}px;`;
   return [
@@ -148,6 +151,9 @@ export function emailDocument({
     ...BASE_DARK_RULES,
     ...darkRules,
     '}',
+    ...(narrowRules.length === 0
+      ? []
+      : [`@media (max-width:${String(NARROW_SCREEN_PX)}px){`, ...narrowRules, '}']),
     '</style>',
     '</head>',
     `<body class="pyxis-page" style="margin:0;padding:0;background-color:${LIGHT.page};">`,
