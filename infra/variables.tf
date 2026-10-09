@@ -18,7 +18,13 @@ variable "provisioning_role_arn" {
 variable "api_domain" {
   description = "The API's own domain. A Lambda Function URL cannot carry a custom domain, which is why CloudFront sits in front of it."
   type        = string
-  default     = "api.pyxis.samuelsantana.dev"
+  default     = "api.pyxis-analytics.dev"
+}
+
+variable "api_domain_aliases" {
+  description = "Earlier domains the API keeps answering on, from the same certificate and distribution, while the sites that send to them move to api_domain."
+  type        = list(string)
+  default     = ["api.pyxis.samuelsantana.dev"]
 }
 
 variable "api_domain_enabled" {

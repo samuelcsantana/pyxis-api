@@ -26,7 +26,7 @@ resource "aws_cloudfront_distribution" "api" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "${var.project}: CloudFront in front of the HTTP function's URL"
-  aliases         = var.api_domain_enabled ? [var.api_domain] : []
+  aliases         = var.api_domain_enabled ? concat([var.api_domain], var.api_domain_aliases) : []
   price_class     = "PriceClass_All"
 
   origin {
