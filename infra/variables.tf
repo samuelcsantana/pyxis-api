@@ -59,13 +59,13 @@ variable "http_reserved_concurrency" {
 variable "dashboard_origin" {
   description = "Origin of the dashboard: scheme and host, no path. The API refuses to start in production without it."
   type        = string
-  default     = "https://pyxis.samuelsantana.dev"
+  default     = "https://app.pyxis-analytics.dev"
 }
 
 variable "session_cookie_domain" {
   description = "Domain the session cookie is scoped to. The API on a subdomain of it may set it, and the dashboard's server receives it."
   type        = string
-  default     = "pyxis.samuelsantana.dev"
+  default     = "pyxis-analytics.dev"
 }
 
 variable "mail_from" {

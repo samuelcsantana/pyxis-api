@@ -76,7 +76,7 @@ Shipping now:
   Table layout with inline styles for every client, light and dark through `color-scheme` and
   `prefers-color-scheme`, `lang` and presentation-only tables for screen readers; every value
   HTML-escaped, no tracking pixel and no tracked links. Its only image is the dashboard's PNG
-  logo (`https://pyxis.samuelsantana.dev/email/pyxis-logo.png`), and its words live in a typed
+  logo (`https://app.pyxis-analytics.dev/email/pyxis-logo.png`), and its words live in a typed
   message table in English and Brazilian Portuguese. The dashboard sends its own language as an
   optional `locale` in `POST /v1/auth/request-code` (`{"email":…,"locale":"pt-BR"}`), matched
   on the language (`pt-PT` gets pt-BR); no `locale`, or one the API has no email for, gets
@@ -268,7 +268,7 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `APP_DB_ROLE`            | unset                               | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
 | `CLIENT_IP_HEADER`       | unset                               | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
 | `DASHBOARD_ORIGIN`       | unset; required in production       | The only origin allowed to call the sign-in routes and read `/v1/me` with credentials; unset refuses them all                                                   |
-| `SESSION_COOKIE_DOMAIN`  | unset                               | `Domain` of the session cookie (`pyxis.samuelsantana.dev`, so the dashboard's server receives it); unset means the API host only                                |
+| `SESSION_COOKIE_DOMAIN`  | unset                               | `Domain` of the session cookie (`pyxis-analytics.dev`, so the dashboard's server receives it); unset means the API host only                                    |
 | `RESEND_API_KEY`         | unset; required in production       | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                               |
 | `MAIL_FROM`              | `Pyxis <noreply@samuelsantana.dev>` | Sender of the sign-in emails; its domain must be verified in Resend                                                                                             |
 
