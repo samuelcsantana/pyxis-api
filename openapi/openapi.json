@@ -440,6 +440,20 @@
         ],
         "type": "object"
       },
+      "EmailPreferences": {
+        "additionalProperties": false,
+        "description": "The e-mails the signed-in admin receives about one project.",
+        "properties": {
+          "weekly_digest": {
+            "description": "Whether the admin receives the weekly digest of this project, sent on Mondays with the week that closed on Sunday in the project time zone",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "weekly_digest"
+        ],
+        "type": "object"
+      },
       "EngagementReport": {
         "additionalProperties": false,
         "description": "How the visits of the range entered, left and lasted: entry and exit pages, single-page visits and visit length, from the first to the last event of each visit.",
@@ -2893,6 +2907,139 @@
         "summary": "Visits and conversions by device type, browser, system and country",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/email-preferences": {
+      "get": {
+        "operationId": "EmailPreferencesController_preferences",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailPreferences"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The e-mails the signed-in admin receives about the project",
+        "tags": [
+          "dashboard preferences"
+        ]
+      },
+      "put": {
+        "description": "Changes only the signed-in admin, for this project only.",
+        "operationId": "EmailPreferencesController_choose",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailPreferences"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailPreferences"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Choose the e-mails the signed-in admin receives about the project",
+        "tags": [
+          "dashboard preferences"
         ]
       }
     },
