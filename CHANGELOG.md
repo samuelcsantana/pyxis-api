@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.6.1...v0.7.0) (2026-10-09)
+
+
+### Features
+
+* **infra:** move the dashboard settings to app.pyxis-analytics.dev ([5c770a0](https://github.com/samuelcsantana/pyxis-api/commit/5c770a0db909ad11148c71d4edffa34cbc14fa46))
+* **infra:** serve the API on api.pyxis-analytics.dev, keeping the old name ([c1925fa](https://github.com/samuelcsantana/pyxis-api/commit/c1925fabab1b2ed87f67fa83ac9e523bbe4f099e))
+
+
+### Documentation
+
+* **runbook:** note the traps of moving the API to another domain ([dd76264](https://github.com/samuelcsantana/pyxis-api/commit/dd7626452ba6ac16c0709c359b05b8f6099144c6))
+
 ## [0.6.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.6.0...v0.6.1) (2026-10-09)
 
 
