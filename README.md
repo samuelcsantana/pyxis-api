@@ -117,7 +117,9 @@ Shipping now:
   links two of them) and
   `/settings` (read-only: time zone, conversion event, allowed origins, first and latest event,
   how many months events are kept, the live public keys, and when each live secret key was
-  created; a secret key never leaves the API, not even as its hash). A project
+  created; a secret key never leaves the API, not even as its hash) and
+  `/time-of-day` (for each weekday, Monday first, and each local hour, the visits whose first page
+  view happened then; the grid adds up to the visits of the range). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
