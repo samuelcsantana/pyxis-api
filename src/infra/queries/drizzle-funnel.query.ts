@@ -198,7 +198,7 @@ export class DrizzleFunnelQuery implements FunnelQuery {
         GROUP BY ${events.sessionId}
       )
       SELECT visit_segments."segment" AS "segment",
-        ARRAY[${sql.join(counts, sql`, `)}] AS "counts"
+        to_jsonb(ARRAY[${sql.join(counts, sql`, `)}]) AS "counts"
       FROM ${stepName(0)}
       JOIN visit_segments USING ("subject")
       ${sql.join(joins, sql` `)}

@@ -288,7 +288,10 @@ npm run test:tooling      # the lint rule and the comment check
 
 Coverage must stay at **100% of statements, branches, functions and lines**; CI fails below it.
 Database adapters are never mocked: they are tested against a real Postgres, so the coverage gate
-counts the unit and integration suites together. Files outside the measurement, and why:
+counts the unit and integration suites together. The integration and e2e suites connect the way the
+Lambda does (`LAMBDA_CLIENT_OPTIONS`: no prepared statements and no type lookup), so a value the
+driver cannot parse without that lookup, like a Postgres array, fails a test before it reaches
+production; queries return lists as `jsonb`. Files outside the measurement, and why:
 
 | Excluded                    | Reason                                                                                          |
 | --------------------------- | ----------------------------------------------------------------------------------------------- |
