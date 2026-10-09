@@ -89,7 +89,7 @@ resource "aws_lambda_function" "migrate" {
 
 resource "aws_lambda_function" "jobs" {
   function_name                  = "${var.project}-jobs"
-  description                    = "Pyxis daily jobs, run by EventBridge Scheduler as the application role."
+  description                    = "Pyxis scheduled jobs (daily retention, weekly digest), run by EventBridge Scheduler as the application role."
   role                           = aws_iam_role.jobs.arn
   package_type                   = "Image"
   image_uri                      = local.image_uri

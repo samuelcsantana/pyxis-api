@@ -72,3 +72,21 @@ resource "aws_ssm_parameter" "jobs_database_url" {
     ignore_changes = [value]
   }
 }
+
+resource "aws_ssm_parameter" "jobs_resend_api_key" {
+  name        = "/${var.project}/jobs/RESEND_API_KEY"
+  type        = "SecureString"
+  value       = "placeholder-set-in-the-console"
+  description = "The Resend key the weekly digest is sent with; the same value as /app/RESEND_API_KEY."
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "jobs_mail_from" {
+  name        = "/${var.project}/jobs/MAIL_FROM"
+  type        = "String"
+  value       = var.mail_from
+  description = "Sender of the weekly digest. Its domain must be verified in Resend."
+}
