@@ -114,7 +114,10 @@ Shipping now:
   matching any characters, a named event with an optional property value, channel, device,
   country, source, campaign, whether it was identified, a request route (`POST /orders/:id`) and
   whether a request, or a request to that route, failed; a visit is one browser tab, and nothing
-  links two of them). A project
+  links two of them) and
+  `/settings` (read-only: time zone, conversion event, allowed origins, first and latest event,
+  how many months events are kept, the live public keys, and when each live secret key was
+  created; a secret key never leaves the API, not even as its hash). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
