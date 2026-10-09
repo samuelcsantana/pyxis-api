@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.6.0...v0.6.1) (2026-10-09)
+
+
+### Bug Fixes
+
+* **queries:** return lists as jsonb so the Lambda's connection reads them ([9104d54](https://github.com/samuelcsantana/pyxis-api/commit/9104d543c8c45fef2b09111a8758a689649b5a4c))
+
 ## [0.6.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.5.0...v0.6.0) (2026-10-09)
 
 
