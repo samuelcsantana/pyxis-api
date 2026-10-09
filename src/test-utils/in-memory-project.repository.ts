@@ -96,6 +96,12 @@ export class InMemoryProjectRepository
     );
   }
 
+  liveKeysOf(projectId: string): Promise<readonly ProjectKey[]> {
+    return Promise.resolve(
+      this.keys.filter((key) => key.projectId === projectId && key.revokedAt === null),
+    );
+  }
+
   private nextId(): string {
     this.sequence += 1;
     return `00000000-0000-4000-8000-${String(this.sequence).padStart(12, '0')}`;

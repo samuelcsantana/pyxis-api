@@ -142,6 +142,31 @@ describe('project settings and keys against a real Postgres', () => {
     expect((await lookups.findByPublicKey(publicKey('B')))?.id).toBe(project.id);
   });
 
+  it('lists the live keys of a project, oldest first, and no key of another project', async () => {
+    const { project, publicKeyId } = await settings.createWithPublicKey(SHOP, publicKey('A'));
+    const other = await settings.createWithPublicKey({ ...SHOP, name: 'Other' }, publicKey('C'));
+    const secret = await keys.create({
+      projectId: project.id,
+      kind: 'secret',
+      secretHash: hashSecretKey(`${SECRET_KEY_PREFIX}${'s'.repeat(32)}`),
+    });
+    const revoked = await keys.create({
+      projectId: project.id,
+      kind: 'public',
+      publicKey: publicKey('B'),
+    });
+    await keys.revoke(revoked.id, new Date('2026-10-06T14:00:00.000Z'));
+
+    const live = await keys.liveKeysOf(project.id);
+
+    expect(live.map((key) => key.id)).toEqual([publicKeyId, secret.id]);
+    expect(live[0]).toMatchObject({ kind: 'public', publicKey: publicKey('A'), revokedAt: null });
+    expect((await keys.liveKeysOf(other.project.id)).map((key) => key.id)).toEqual([
+      other.publicKeyId,
+    ]);
+    expect(await keys.liveKeysOf(MISSING_ID)).toEqual([]);
+  });
+
   it('revokes a live key once, after which it resolves nothing', async () => {
     const { publicKeyId } = await settings.createWithPublicKey(SHOP, publicKey('A'));
     const revokedAt = new Date('2026-10-06T14:00:00.000Z');
