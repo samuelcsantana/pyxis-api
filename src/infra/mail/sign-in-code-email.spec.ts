@@ -1,12 +1,6 @@
 import { EMAIL_LANGUAGES } from '../../domain/auth/email-language';
-import {
-  buildSignInCodeEmail,
-  DASHBOARD_URL,
-  EMAIL_LOGO_2X_URL,
-  EMAIL_LOGO_URL,
-  renderSignInCodeEmail,
-  TEXT_LINE_WIDTH,
-} from './sign-in-code-email';
+import { DASHBOARD_URL, EMAIL_LOGO_2X_URL, EMAIL_LOGO_URL, TEXT_LINE_WIDTH } from './email-layout';
+import { buildSignInCodeEmail, renderSignInCodeEmail } from './sign-in-code-email';
 import type { SignInCodeEmailMessages } from './sign-in-code-email-messages';
 
 const CODE = '123456';
