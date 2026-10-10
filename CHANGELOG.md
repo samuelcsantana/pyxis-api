@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.10.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.9.0...v0.10.0) (2026-10-10)
+
+
+### Features
+
+* **auth:** list the sessions of an admin and end one by id ([46f67cc](https://github.com/samuelcsantana/pyxis-api/commit/46f67cc69e05e3442485bcf1fb84da3eb8673650))
+* **auth:** sign an admin out of every device at once ([5376363](https://github.com/samuelcsantana/pyxis-api/commit/53763630bb36cd434faa623ac9e3db6f43504d36))
+
+
+### Documentation
+
+* **readme:** describe the sessions list among the ways a session ends ([7bea4af](https://github.com/samuelcsantana/pyxis-api/commit/7bea4af93a3cfbeadd6819f227b27542ad16f0c6))
+* **readme:** name the sign-out-everywhere route among the ways a session ends ([0b978ec](https://github.com/samuelcsantana/pyxis-api/commit/0b978ec561efca592d58a2338324f110b3d73fff))
+
 ## [0.9.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.8.0...v0.9.0) (2026-10-10)
 
 
