@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.9.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.8.0...v0.9.0) (2026-10-10)
+
+
+### Features
+
+* **auth:** answer the session token in the sign-in body ([9d194a8](https://github.com/samuelcsantana/pyxis-api/commit/9d194a82659c4d130cf64b89fb904a5e0f18ae49))
+* **infra:** alarm when sign-in codes are guessed or an inbox flooded ([911735b](https://github.com/samuelcsantana/pyxis-api/commit/911735b5ec00b3e835919c6dcade7a63a8f76c74))
+
+
+### Bug Fixes
+
+* **subjects:** throttle the client address before the key is checked ([c7e60ff](https://github.com/samuelcsantana/pyxis-api/commit/c7e60ffcdefbeb6b5f83aff5ebdc6a43a7c30772))
+
+
+### Refactoring
+
+* **auth:** stop setting the session cookie, the dashboard keeps it ([099db3d](https://github.com/samuelcsantana/pyxis-api/commit/099db3ddd69f8bbab0b30f31c360bf4bf2429737))
+
+
+### Documentation
+
+* **adr:** mark ADR 0007 as amended by the dashboard-set cookie ([7bdbef6](https://github.com/samuelcsantana/pyxis-api/commit/7bdbef6adcea2ff7443007408176e8532b8d71f8))
+* **adr:** record the session cookie moving to the dashboard's host ([7d13f9c](https://github.com/samuelcsantana/pyxis-api/commit/7d13f9ca86f7eeabd92fa5e4a898985055550425))
+* **readme:** state the production status ([fc7935d](https://github.com/samuelcsantana/pyxis-api/commit/fc7935d6ace451315fbd70287532c0f47bb1cabd))
+
 ## [0.8.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.7.0...v0.8.0) (2026-10-09)
 
 
