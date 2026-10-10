@@ -4,7 +4,9 @@ Date: 2026-10-05
 
 ## Status
 
-Accepted
+Accepted. Amended by [ADR 0012](0012-session-cookie-set-by-the-dashboard.md): the API no longer
+sets the session cookie; it answers the token and the dashboard keeps it in a cookie of its own
+host.
 
 ## Context
 
