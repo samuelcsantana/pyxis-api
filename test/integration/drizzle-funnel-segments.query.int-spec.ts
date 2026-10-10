@@ -108,6 +108,12 @@ describe('DrizzleFunnelQuery segments against a real Postgres', () => {
     ]);
   });
 
+  it('never counts a visit of another project', async () => {
+    expect(await query.segments({ ...SCOPE, projectId: BLOG_ID }, SIGNUP, 'channel')).toEqual([
+      { segment: 'paid', counts: [1, 0] },
+    ]);
+  });
+
   it('lists no segment when nobody reached the first step', async () => {
     expect(
       await query.segments(SCOPE, [{ type: 'page', path: '/nowhere' }, ...SIGNUP], 'device'),
