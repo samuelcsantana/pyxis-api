@@ -68,6 +68,31 @@ export const meSchema = z
   })
   .meta({ id: 'Me', description: 'The signed-in admin and the projects they may read.' });
 
+export const sessionIdSchema = z.uuid();
+
+export const sessionsSchema = z
+  .strictObject({
+    sessions: z.array(
+      z.strictObject({
+        id: z.uuid(),
+        browser: z.string().nullable(),
+        os: z.string().nullable(),
+        device_type: z.string().nullable(),
+        created_at: z.iso.datetime(),
+        last_used_at: z.iso.datetime(),
+        current: z.boolean().describe('Whether this is the session making the request'),
+      }),
+    ),
+  })
+  .meta({
+    id: 'Sessions',
+    description:
+      'The live sessions of the signed-in admin, the most recently used first. Browser, system ' +
+      'and device type are the families classified at sign-in (chrome, windows, desktop…), null ' +
+      'for a session that predates them; the user agent and the address are never kept.',
+  });
+
+export type SessionsBody = z.infer<typeof sessionsSchema>;
 export type RequestCodeBody = z.infer<typeof requestCodeSchema>;
 export type VerifyCodeBody = z.infer<typeof verifyCodeSchema>;
 export type SignedInBody = z.infer<typeof signedInSchema>;

@@ -252,6 +252,54 @@ describe('dashboard sign-in', () => {
     expect(response.headers['access-control-allow-credentials']).toBeUndefined();
   });
 
+  it('lists the live sessions of the admin, the caller marked, with the client classified at sign-in', async () => {
+    const phone = await signIn();
+    const laptop = await signIn();
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/v1/me/sessions',
+      headers: { origin: E2E_DASHBOARD_ORIGIN, cookie: laptop },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const { sessions } = response.json<{
+      sessions: { id: string; current: boolean; browser: string | null; os: string | null }[];
+    }>();
+    expect(sessions.length).toBeGreaterThanOrEqual(2);
+    expect(sessions[0]).toMatchObject({ current: true, browser: 'other', os: 'other' });
+    expect(sessions.filter((session) => session.current)).toHaveLength(1);
+    expect(sessions[1]).toMatchObject({ current: false });
+    expect((await me(phone)).statusCode).toBe(200);
+  });
+
+  it('ends one session by id, refusing an unknown one and one of another admin', async () => {
+    const phone = await signIn();
+    const laptop = await signIn();
+    const listed = await app.inject({
+      method: 'GET',
+      url: '/v1/me/sessions',
+      headers: { origin: E2E_DASHBOARD_ORIGIN, cookie: laptop },
+    });
+    const other = listed.json<{ sessions: { id: string; current: boolean }[] }>().sessions[1];
+    const end = (sessionId: string, cookie: string, origin: string = E2E_DASHBOARD_ORIGIN) =>
+      app.inject({
+        method: 'DELETE',
+        url: `/v1/me/sessions/${sessionId}`,
+        headers: { origin, cookie },
+      });
+
+    expect((await end(String(other?.id), laptop)).statusCode).toBe(204);
+    expect((await me(phone)).statusCode).toBe(401);
+    expect((await me(laptop)).statusCode).toBe(200);
+    expect((await end(String(other?.id), laptop)).statusCode).toBe(404);
+    expect((await end('not-a-uuid', laptop)).statusCode).toBe(400);
+    expect((await end(String(other?.id), laptop, 'https://evil.example.com')).statusCode).toBe(403);
+    expect(
+      (await end(String(other?.id), `${SESSION_COOKIE_NAME}=${'A'.repeat(43)}`)).statusCode,
+    ).toBe(401);
+  });
+
   it('describes the signed-in admin and their projects, and nobody else', async () => {
     const anonymous = await me();
     const forged = await me(`${SESSION_COOKIE_NAME}=${'A'.repeat(43)}`);

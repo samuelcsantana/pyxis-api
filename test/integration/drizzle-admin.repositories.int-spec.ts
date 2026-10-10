@@ -210,6 +210,7 @@ describe('admin repositories against a real Postgres', () => {
         adminUserId: admin.id,
         createdAt: NOW,
         lastUsedAt: NOW,
+        device: null,
       });
 
       await sessions.touch(created.id, at(6 * MINUTE));
@@ -249,6 +250,46 @@ describe('admin repositories against a real Postgres', () => {
       expect(await sessions.findLiveByTokenHash(sha256Hex('laptop'))).toBeNull();
       expect((await sessions.findLiveByTokenHash(sha256Hex('bruno')))?.adminUserId).toBe(bruno.id);
       expect(await sessions.revokeAllOf(ana.id, at(3 * MINUTE))).toBe(0);
+    });
+
+    it('keeps the client classified at sign-in, lists the live sessions newest-used first, and ends one', async () => {
+      const ana = await admins.grantAccess('ana@example.com', SHOP_ID);
+      const bruno = await admins.grantAccess('bruno@example.com', SHOP_ID);
+      const phone = await sessions.create({
+        adminUserId: ana.id,
+        tokenHash: sha256Hex('phone'),
+        createdAt: NOW,
+        device: { deviceType: 'mobile', browser: 'safari', os: 'ios' },
+      });
+      const laptop = await sessions.create({
+        adminUserId: ana.id,
+        tokenHash: sha256Hex('laptop'),
+        createdAt: at(MINUTE),
+      });
+      const gone = await sessions.create({
+        adminUserId: ana.id,
+        tokenHash: sha256Hex('gone'),
+        createdAt: at(2 * MINUTE),
+      });
+      await sessions.revoke(gone.id, at(3 * MINUTE));
+      const brunos = await sessions.create({
+        adminUserId: bruno.id,
+        tokenHash: sha256Hex('bruno'),
+        createdAt: NOW,
+      });
+      await sessions.touch(phone.id, at(10 * MINUTE));
+
+      const listed = await sessions.listLiveOf(ana.id);
+
+      expect(listed.map((session) => session.id)).toEqual([phone.id, laptop.id]);
+      expect(listed[0]?.device).toEqual({ deviceType: 'mobile', browser: 'safari', os: 'ios' });
+      expect(listed[1]?.device).toBeNull();
+
+      expect(await sessions.revokeOneOf(ana.id, brunos.id, at(11 * MINUTE))).toBe(false);
+      expect(await sessions.revokeOneOf(ana.id, laptop.id, at(11 * MINUTE))).toBe(true);
+      expect(await sessions.revokeOneOf(ana.id, laptop.id, at(12 * MINUTE))).toBe(false);
+      expect((await sessions.listLiveOf(ana.id)).map((session) => session.id)).toEqual([phone.id]);
+      expect((await sessions.findLiveByTokenHash(sha256Hex('bruno')))?.id).toBe(brunos.id);
     });
 
     it('has no column for the address or the user agent', async () => {

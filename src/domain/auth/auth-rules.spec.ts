@@ -18,7 +18,13 @@ import { generateSignInCode, SIGN_IN_CODE_LENGTH } from './sign-in-code';
 const CREATED_AT = new Date('2026-10-06T12:00:00.000Z');
 
 function session(lastUsedAt: Date = CREATED_AT): AdminSession {
-  return { id: 'session-1', adminUserId: 'admin-1', createdAt: CREATED_AT, lastUsedAt };
+  return {
+    id: 'session-1',
+    adminUserId: 'admin-1',
+    createdAt: CREATED_AT,
+    lastUsedAt,
+    device: null,
+  };
 }
 
 function at(offsetMs: number): Date {

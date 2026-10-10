@@ -4,6 +4,7 @@ import { sha256Hex } from '../../domain/auth/hashing';
 import { generateSessionToken } from '../../domain/auth/session-policy';
 import { MAX_SIGN_IN_CODE_ATTEMPTS } from '../../domain/auth/sign-in-code';
 import { InvalidSignInCodeError } from '../../domain/errors/auth.errors';
+import { type ClientHints, classifyUserAgent } from '../../domain/events/user-agent';
 import {
   ADMIN_SESSION_REPOSITORY,
   type AdminSessionRepository,
@@ -18,6 +19,11 @@ import {
 } from '../../domain/repositories/otp-code.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { RANDOM_SOURCE, type RandomSource } from '../../domain/services/random-source';
+
+export interface SignInClient {
+  readonly userAgent: string | undefined;
+  readonly clientHints: ClientHints;
+}
 
 export interface SignedIn {
   readonly email: string;
@@ -36,7 +42,7 @@ export class VerifySignInCodeUseCase {
     @Inject(RANDOM_SOURCE) private readonly random: RandomSource,
   ) {}
 
-  async execute(rawEmail: string, code: string): Promise<SignedIn> {
+  async execute(rawEmail: string, code: string, client: SignInClient): Promise<SignedIn> {
     const email = normalizeEmail(rawEmail);
     const now = this.clock.now();
     const latest = await this.codes.findLatestValid(email, now);
@@ -61,6 +67,7 @@ export class VerifySignInCodeUseCase {
       adminUserId: admin.id,
       tokenHash: sha256Hex(sessionToken),
       createdAt: now,
+      device: classifyUserAgent(client.userAgent, client.clientHints),
     });
     this.logger.log({ message: 'auth.signed_in', adminUserId: admin.id });
     return { email: admin.email, sessionToken };

@@ -10,6 +10,8 @@ import { MAIL_SENDER } from '../../../domain/services/mail-sender';
 import { RANDOM_SOURCE } from '../../../domain/services/random-source';
 import { AuthenticateSessionUseCase } from '../../../usecases/auth/authenticate-session.usecase';
 import { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
+import { EndSessionUseCase } from '../../../usecases/auth/end-session.usecase';
+import { ListSessionsUseCase } from '../../../usecases/auth/list-sessions.usecase';
 import { RequestSignInCodeUseCase } from '../../../usecases/auth/request-sign-in-code.usecase';
 import { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
@@ -32,6 +34,8 @@ import { DashboardOriginGuard, SessionGuard } from './auth.guards';
     AuthenticateSessionUseCase,
     SignOutUseCase,
     SignOutEverywhereUseCase,
+    ListSessionsUseCase,
+    EndSessionUseCase,
     DescribeAdminUseCase,
     DashboardOriginGuard,
     SessionGuard,

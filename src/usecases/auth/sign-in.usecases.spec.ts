@@ -7,7 +7,11 @@ import {
   SIGN_IN_CODE_TTL_MS,
 } from '../../domain/auth/sign-in-code';
 import type { Project } from '../../domain/entities/project.entity';
-import { InvalidSignInCodeError, UnauthenticatedError } from '../../domain/errors/auth.errors';
+import {
+  InvalidSignInCodeError,
+  SessionNotFoundError,
+  UnauthenticatedError,
+} from '../../domain/errors/auth.errors';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAdminSessionRepository } from '../../test-utils/in-memory-admin-session.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
@@ -18,11 +22,18 @@ import { AuthenticateSessionUseCase } from './authenticate-session.usecase';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 import { RequestSignInCodeUseCase } from './request-sign-in-code.usecase';
+import { EndSessionUseCase } from './end-session.usecase';
+import { ListSessionsUseCase } from './list-sessions.usecase';
 import { SignOutEverywhereUseCase } from './sign-out-everywhere.usecase';
 import { SignOutUseCase } from './sign-out.usecase';
 import { VerifySignInCodeUseCase } from './verify-sign-in-code.usecase';
 
 const ADMIN_EMAIL = 'ana@example.com';
+const CLIENT = {
+  userAgent:
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+  clientHints: {},
+};
 const PROJECT: Project = {
   id: 'project-1',
   name: 'Shop',
@@ -53,9 +64,74 @@ async function setup() {
     authenticate: new AuthenticateSessionUseCase(sessions, admins, clock),
     signOut: new SignOutUseCase(sessions, clock),
     signOutEverywhere: new SignOutEverywhereUseCase(sessions, clock),
+    listSessions: new ListSessionsUseCase(sessions, clock),
+    endSession: new EndSessionUseCase(sessions, clock),
     describe: new DescribeAdminUseCase(admins, new StubProjectActivityQuery()),
   };
 }
+
+describe('listing and ending sessions', () => {
+  it('lists the live, unexpired sessions newest-used first, marking the current one', async () => {
+    const { admin, sessions, listSessions, clock } = await setup();
+    const now = clock.now();
+    const phone = await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('phone'),
+      createdAt: new Date(now.getTime() - 3 * 60 * 60 * 1000),
+      device: { deviceType: 'mobile', browser: 'safari', os: 'ios' },
+    });
+    const laptop = await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('laptop'),
+      createdAt: now,
+    });
+    const idle = await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('idle'),
+      createdAt: new Date(now.getTime() - 25 * 60 * 60 * 1000),
+    });
+    const gone = await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('gone'),
+      createdAt: now,
+    });
+    await sessions.revoke(gone.id, now);
+
+    const listed = await listSessions.execute(admin, laptop);
+
+    expect(listed.map((session) => [session.id, session.current])).toEqual([
+      [laptop.id, true],
+      [phone.id, false],
+    ]);
+    expect(listed[1]?.device).toEqual({ deviceType: 'mobile', browser: 'safari', os: 'ios' });
+    expect(listed[0]?.device).toBeNull();
+    expect(listed.map((session) => session.id)).not.toContain(idle.id);
+  });
+
+  it('ends one session of the admin, and refuses one that is not theirs or already gone', async () => {
+    const { admin, admins, sessions, endSession, authenticate, clock } = await setup();
+    const bruno = await admins.grantAccess('bruno@example.com', PROJECT.id);
+    const now = clock.now();
+    const phone = await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('phone'),
+      createdAt: now,
+    });
+    const brunos = await sessions.create({
+      adminUserId: bruno.id,
+      tokenHash: sha256Hex('bruno'),
+      createdAt: now,
+    });
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+
+    await endSession.execute(admin, phone.id);
+
+    await expect(authenticate.execute('phone')).rejects.toBeInstanceOf(UnauthenticatedError);
+    await expect(endSession.execute(admin, phone.id)).rejects.toBeInstanceOf(SessionNotFoundError);
+    await expect(endSession.execute(admin, brunos.id)).rejects.toBeInstanceOf(SessionNotFoundError);
+    expect((await authenticate.execute('bruno')).admin.id).toBe(bruno.id);
+  });
+});
 
 describe('signing out everywhere', () => {
   it('revokes every live session of the admin, this one included, and none of another admin', async () => {
@@ -81,7 +157,7 @@ describe('signing out everywhere', () => {
 
     await expect(authenticate.execute('phone')).rejects.toBeInstanceOf(UnauthenticatedError);
     await expect(authenticate.execute('laptop')).rejects.toBeInstanceOf(UnauthenticatedError);
-    expect((await authenticate.execute('bruno')).id).toBe(bruno.id);
+    expect((await authenticate.execute('bruno')).admin.id).toBe(bruno.id);
     expect(logSpy).toHaveBeenCalledWith({
       message: 'auth.signed_out_everywhere',
       adminUserId: admin.id,
@@ -194,7 +270,7 @@ describe('dashboard sign-in', () => {
       const { requestCode, verifyCode, sessions } = await setup();
       await requestCode.execute(ADMIN_EMAIL);
 
-      const signedIn = await verifyCode.execute(ADMIN_EMAIL, '123456');
+      const signedIn = await verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT);
 
       expect(signedIn.email).toBe(ADMIN_EMAIL);
       expect(sessions.stored).toEqual([
@@ -206,7 +282,7 @@ describe('dashboard sign-in', () => {
       const { requestCode, verifyCode, admins, admin } = await setup();
       await requestCode.execute(ADMIN_EMAIL, 'pt-BR');
 
-      await verifyCode.execute(ADMIN_EMAIL, '123456');
+      await verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT);
 
       expect((await admins.findById(admin.id))?.emailLanguage).toBe('pt-BR');
     });
@@ -215,7 +291,7 @@ describe('dashboard sign-in', () => {
       const { requestCode, verifyCode, admins, admin } = await setup();
       await requestCode.execute(ADMIN_EMAIL, 'pt-BR');
 
-      await expect(verifyCode.execute(ADMIN_EMAIL, '000000')).rejects.toBeInstanceOf(
+      await expect(verifyCode.execute(ADMIN_EMAIL, '000000', CLIENT)).rejects.toBeInstanceOf(
         InvalidSignInCodeError,
       );
 
@@ -225,9 +301,9 @@ describe('dashboard sign-in', () => {
     it('refuses a code used once already', async () => {
       const { requestCode, verifyCode } = await setup();
       await requestCode.execute(ADMIN_EMAIL);
-      await verifyCode.execute(ADMIN_EMAIL, '123456');
+      await verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT);
 
-      await expect(verifyCode.execute(ADMIN_EMAIL, '123456')).rejects.toBeInstanceOf(
+      await expect(verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT)).rejects.toBeInstanceOf(
         InvalidSignInCodeError,
       );
     });
@@ -237,8 +313,8 @@ describe('dashboard sign-in', () => {
       await requestCode.execute(ADMIN_EMAIL);
 
       const outcomes = await Promise.allSettled([
-        verifyCode.execute(ADMIN_EMAIL, '123456'),
-        verifyCode.execute(ADMIN_EMAIL, '123456'),
+        verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT),
+        verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT),
       ]);
 
       expect(outcomes.map((outcome) => outcome.status).sort()).toEqual(['fulfilled', 'rejected']);
@@ -253,12 +329,12 @@ describe('dashboard sign-in', () => {
       await requestCode.execute(ADMIN_EMAIL);
 
       for (let guess = 0; guess < MAX_SIGN_IN_CODE_ATTEMPTS; guess += 1) {
-        await expect(verifyCode.execute(ADMIN_EMAIL, '000000')).rejects.toBeInstanceOf(
+        await expect(verifyCode.execute(ADMIN_EMAIL, '000000', CLIENT)).rejects.toBeInstanceOf(
           InvalidSignInCodeError,
         );
       }
 
-      await expect(verifyCode.execute(ADMIN_EMAIL, '123456')).rejects.toBeInstanceOf(
+      await expect(verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT)).rejects.toBeInstanceOf(
         InvalidSignInCodeError,
       );
     });
@@ -268,7 +344,7 @@ describe('dashboard sign-in', () => {
       await requestCode.execute(ADMIN_EMAIL);
       clock.advanceBy(SIGN_IN_CODE_TTL_MS);
 
-      await expect(verifyCode.execute(ADMIN_EMAIL, '123456')).rejects.toBeInstanceOf(
+      await expect(verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT)).rejects.toBeInstanceOf(
         InvalidSignInCodeError,
       );
     });
@@ -276,9 +352,9 @@ describe('dashboard sign-in', () => {
     it('refuses any code for an email that never asked for one', async () => {
       const { verifyCode } = await setup();
 
-      await expect(verifyCode.execute('stranger@example.com', '123456')).rejects.toBeInstanceOf(
-        InvalidSignInCodeError,
-      );
+      await expect(
+        verifyCode.execute('stranger@example.com', '123456', CLIENT),
+      ).rejects.toBeInstanceOf(InvalidSignInCodeError);
     });
 
     it('never creates an admin: a valid code for an email that is no longer an admin fails', async () => {
@@ -291,9 +367,9 @@ describe('dashboard sign-in', () => {
         expiresAt: new Date(clock.now().getTime() + SIGN_IN_CODE_TTL_MS),
       });
 
-      await expect(verifyCode.execute('former@example.com', '123456')).rejects.toBeInstanceOf(
-        InvalidSignInCodeError,
-      );
+      await expect(
+        verifyCode.execute('former@example.com', '123456', CLIENT),
+      ).rejects.toBeInstanceOf(InvalidSignInCodeError);
       expect(sessions.stored).toEqual([]);
     });
   });
@@ -302,7 +378,7 @@ describe('dashboard sign-in', () => {
     async function signedIn() {
       const context = await setup();
       await context.requestCode.execute(ADMIN_EMAIL);
-      const { sessionToken } = await context.verifyCode.execute(ADMIN_EMAIL, '123456');
+      const { sessionToken } = await context.verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT);
       return { ...context, sessionToken };
     }
 
@@ -311,8 +387,13 @@ describe('dashboard sign-in', () => {
 
       const authenticated = await authenticate.execute(sessionToken);
 
-      expect(authenticated).toEqual(admin);
-      expect(await describeAdmin.execute(authenticated)).toEqual({
+      expect(authenticated.admin).toEqual(admin);
+      expect(authenticated.session.device).toEqual({
+        deviceType: 'desktop',
+        browser: 'chrome',
+        os: 'windows',
+      });
+      expect(await describeAdmin.execute(authenticated.admin)).toEqual({
         email: ADMIN_EMAIL,
         projects: [{ ...PROJECT, firstEventAt: null, lastEventAt: null }],
       });

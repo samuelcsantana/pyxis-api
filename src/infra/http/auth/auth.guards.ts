@@ -2,6 +2,7 @@ import { type CanActivate, type ExecutionContext, Inject, Injectable } from '@ne
 import { ConfigService } from '@nestjs/config';
 import type { FastifyRequest } from 'fastify';
 import type { EnvConfig } from '../../../config/env.schema';
+import type { AdminSession } from '../../../domain/entities/admin-session.entity';
 import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import { AuthenticateSessionUseCase } from '../../../usecases/auth/authenticate-session.usecase';
 import { DashboardOriginRequiredError } from '../errors/http-errors';
@@ -11,6 +12,7 @@ import { readSessionToken } from './session-cookie';
 declare module 'fastify' {
   interface FastifyRequest {
     admin?: AdminUser;
+    session?: AdminSession;
   }
 }
 
@@ -34,9 +36,11 @@ export class SessionGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
-    request.admin = await this.authenticateSession.execute(
+    const authenticated = await this.authenticateSession.execute(
       readSessionToken(singleHeader(request, 'cookie')),
     );
+    request.admin = authenticated.admin;
+    request.session = authenticated.session;
     return true;
   }
 }
@@ -46,4 +50,11 @@ export function adminOf(request: FastifyRequest): AdminUser {
     throw new Error('SessionGuard must run before a route reads the admin.');
   }
   return request.admin;
+}
+
+export function sessionOf(request: FastifyRequest): AdminSession {
+  if (request.session === undefined) {
+    throw new Error('SessionGuard must run before a route reads the session.');
+  }
+  return request.session;
 }

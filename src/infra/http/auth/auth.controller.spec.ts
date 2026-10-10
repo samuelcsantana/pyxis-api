@@ -2,6 +2,8 @@ import type { FastifyRequest } from 'fastify';
 import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type { Project } from '../../../domain/entities/project.entity';
 import type { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
+import type { EndSessionUseCase } from '../../../usecases/auth/end-session.usecase';
+import type { ListSessionsUseCase } from '../../../usecases/auth/list-sessions.usecase';
 import type { RequestSignInCodeUseCase } from '../../../usecases/auth/request-sign-in-code.usecase';
 import type { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import type { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
@@ -61,12 +63,31 @@ describe('AuthController', () => {
     expect(calls).toEqual([{ useCase: 'request', args: [EMAIL, 'pt-BR'] }]);
   });
 
-  it('answers the email with the session token, for the dashboard to keep', async () => {
+  it('answers the email with the session token, naming the client the session was opened from', async () => {
     const { controller, calls } = authController();
+    const request = {
+      headers: {
+        'user-agent': 'Mozilla/5.0 (iPhone) Safari/604.1',
+        'sec-ch-ua-mobile': '?1',
+        'sec-ch-ua-platform': '"iOS"',
+      },
+    } as unknown as FastifyRequest;
 
-    const answer = await controller.verifyCode({ email: EMAIL, code: '123456' });
+    const answer = await controller.verifyCode({ email: EMAIL, code: '123456' }, request);
 
-    expect(calls).toEqual([{ useCase: 'verify', args: [EMAIL, '123456'] }]);
+    expect(calls).toEqual([
+      {
+        useCase: 'verify',
+        args: [
+          EMAIL,
+          '123456',
+          {
+            userAgent: 'Mozilla/5.0 (iPhone) Safari/604.1',
+            clientHints: { mobile: '?1', platform: '"iOS"' },
+          },
+        ],
+      },
+    ]);
     expect(answer).toEqual({ email: EMAIL, session_token: 'fresh-token' });
   });
 
@@ -91,6 +112,86 @@ describe('AuthController', () => {
   });
 });
 
+describe('MeController sessions', () => {
+  const CURRENT = {
+    id: '00000000-0000-4000-c000-000000000001',
+    adminUserId: ADMIN.id,
+    createdAt: new Date('2026-10-10T09:00:00.000Z'),
+    lastUsedAt: new Date('2026-10-10T09:30:00.000Z'),
+    device: { deviceType: 'desktop', browser: 'chrome', os: 'windows' },
+  } as const;
+  const OLDER = {
+    id: '00000000-0000-4000-c000-000000000002',
+    adminUserId: ADMIN.id,
+    createdAt: new Date('2026-10-09T18:00:00.000Z'),
+    lastUsedAt: new Date('2026-10-09T18:05:00.000Z'),
+    device: null,
+  } as const;
+
+  function meController() {
+    const calls: unknown[][] = [];
+    const listSessions = {
+      execute: (...args: unknown[]) => {
+        calls.push(['list', ...args]);
+        return Promise.resolve([
+          { ...CURRENT, current: true },
+          { ...OLDER, current: false },
+        ]);
+      },
+    } as unknown as ListSessionsUseCase;
+    const endSession = {
+      execute: (...args: unknown[]) => {
+        calls.push(['end', ...args]);
+        return Promise.resolve();
+      },
+    } as unknown as EndSessionUseCase;
+    return {
+      calls,
+      controller: new MeController({} as unknown as DescribeAdminUseCase, listSessions, endSession),
+    };
+  }
+
+  const request = { admin: ADMIN, session: CURRENT } as unknown as FastifyRequest;
+
+  it('lists the sessions in snake case, null for a device the session never recorded', async () => {
+    const { controller, calls } = meController();
+
+    const body = await controller.sessions(request);
+
+    expect(calls).toEqual([['list', ADMIN, CURRENT]]);
+    expect(body).toEqual({
+      sessions: [
+        {
+          id: CURRENT.id,
+          browser: 'chrome',
+          os: 'windows',
+          device_type: 'desktop',
+          created_at: '2026-10-10T09:00:00.000Z',
+          last_used_at: '2026-10-10T09:30:00.000Z',
+          current: true,
+        },
+        {
+          id: OLDER.id,
+          browser: null,
+          os: null,
+          device_type: null,
+          created_at: '2026-10-09T18:00:00.000Z',
+          last_used_at: '2026-10-09T18:05:00.000Z',
+          current: false,
+        },
+      ],
+    });
+  });
+
+  it('ends the session asked for, on behalf of the signed-in admin', async () => {
+    const { controller, calls } = meController();
+
+    await controller.end(request, OLDER.id);
+
+    expect(calls).toEqual([['end', ADMIN, OLDER.id]]);
+  });
+});
+
 describe('MeController', () => {
   it('describes the signed-in admin and their projects in snake case', async () => {
     const quiet = { ...PROJECT, id: 'quiet-project', firstEventAt: null, lastEventAt: null };
@@ -105,7 +206,11 @@ describe('MeController', () => {
     } as unknown as DescribeAdminUseCase;
     const request = { admin: ADMIN } as unknown as FastifyRequest;
 
-    const body = await new MeController(describeAdmin).me(request);
+    const body = await new MeController(
+      describeAdmin,
+      {} as unknown as ListSessionsUseCase,
+      {} as unknown as EndSessionUseCase,
+    ).me(request);
 
     expect(body).toEqual({
       email: EMAIL,
