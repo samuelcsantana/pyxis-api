@@ -269,8 +269,7 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `MIGRATION_DATABASE_URL` | unset                                 | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
 | `APP_DB_ROLE`            | unset                                 | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
 | `CLIENT_IP_HEADER`       | unset                                 | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
-| `DASHBOARD_ORIGIN`       | unset; required in production         | The only origin allowed to call the sign-in routes and read `/v1/me` with credentials; unset refuses them all                                                   |
-| `SESSION_COOKIE_DOMAIN`  | unset                                 | `Domain` of the session cookie (`pyxis-analytics.dev`, so the dashboard's server receives it); unset means the API host only                                    |
+| `DASHBOARD_ORIGIN`       | unset; required in production         | The only origin allowed to call the sign-in routes from a browser; unset refuses them all                                                                       |
 | `RESEND_API_KEY`         | unset; required in production         | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                               |
 | `MAIL_FROM`              | `Pyxis <noreply@pyxis-analytics.dev>` | Sender of the sign-in and weekly digest emails; its domain must be verified in Resend                                                                           |
 
@@ -405,8 +404,10 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   link to a visit, and its logs name projects and admins by id, never by address
 - Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
-  use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out
-- The sign-in routes accept only the dashboard's `Origin`, on top of a `SameSite=Lax` cookie,
+  use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out.
+  The API sets no cookie: the token is answered once, and the dashboard keeps it in a cookie of
+  its own host and forwards it from its server (ADR 0012)
+- The sign-in routes accept only the dashboard's `Origin`, grant CORS to it without credentials,
   and allow five requests per address every fifteen minutes on each route. Two CloudWatch alarms
   e-mail the operator when codes are being guessed (20 rejected codes in 15 minutes) or an
   admin's inbox flooded (5 refused code requests in an hour), counted from log lines that carry

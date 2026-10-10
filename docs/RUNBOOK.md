@@ -61,7 +61,7 @@ others, but fails the run, and the scheduler retries it twice within the hour.
    `/pyxis-api/jobs/DATABASE_URL` (the same value as `/pyxis-api/app/DATABASE_URL`),
    `/pyxis-api/jobs/RESEND_API_KEY` (the same value as `/pyxis-api/app/RESEND_API_KEY`; rotate both),
    `/pyxis-api/migrate/MIGRATION_DATABASE_URL` (direct host, owner, `sslmode=verify-full`).
-   `DASHBOARD_ORIGIN`, `SESSION_COOKIE_DOMAIN` and `MAIL_FROM` are plain parameters Terraform sets
+   `DASHBOARD_ORIGIN` and `MAIL_FROM` are plain parameters Terraform sets
    from its variables; the domain of `MAIL_FROM` must be verified in Resend before the first
    sign-in.
 7. **Edge secret in CloudFront.** In the distribution's origin, set the `x-origin-verify` custom
