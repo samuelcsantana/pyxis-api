@@ -407,7 +407,10 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
   use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle or at sign-out
 - The sign-in routes accept only the dashboard's `Origin`, on top of a `SameSite=Lax` cookie,
-  and allow five requests per address every fifteen minutes on each route
+  and allow five requests per address every fifteen minutes on each route. Two CloudWatch alarms
+  e-mail the operator when codes are being guessed (20 rejected codes in 15 minutes) or an
+  admin's inbox flooded (5 refused code requests in an hour), counted from log lines that carry
+  neither the e-mail nor the address
 - Erasure deletes the person's events and every visit they identified in, in one statement, and
   logs only how many rows went, never the user id. Secret keys are looked up by hash on every call
   (no cache, so revoking one takes effect at once) and limited to 60 calls a minute each; the
@@ -452,6 +455,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - [x] Load test through CloudFront
 - [x] E-mail preferences: the weekly digest switch and the admin's language
 - [x] Weekly digest e-mail on Mondays
+- [x] Sign-in abuse alarms: rejected codes and refused code requests, read from the logs
 
 ## Contributing and license
 

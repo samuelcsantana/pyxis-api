@@ -90,3 +90,15 @@ variable "metrics_namespace" {
   type        = string
   default     = "Pyxis"
 }
+
+variable "rejected_sign_in_codes_alarm_threshold" {
+  description = "Rejected dashboard sign-in codes within 15 minutes at which the alarm fires. A code allows five guesses, so twenty means at least four codes under attack."
+  type        = number
+  default     = 20
+}
+
+variable "refused_sign_in_code_requests_alarm_threshold" {
+  description = "Sign-in code requests refused within an hour, because the email already got its five codes, at which the alarm fires."
+  type        = number
+  default     = 5
+}
