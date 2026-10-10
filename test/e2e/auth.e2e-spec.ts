@@ -17,9 +17,6 @@ const PROJECT_ID = 'd6a4f5e7-8e91-4203-b425-d6e7f8091a2b';
 const ADMIN_ID = 'e7b5a6f8-9fa2-4314-a536-e7f8091a2b3c';
 const ADMIN_EMAIL = 'ana@example.com';
 const STRANGER_EMAIL = 'nobody@example.com';
-const SESSION_COOKIE_PATTERN = new RegExp(
-  `^${SESSION_COOKIE_NAME}=([A-Za-z0-9_-]{43}); HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800$`,
-);
 
 let clientCounter = 0;
 
@@ -157,7 +154,7 @@ describe('dashboard sign-in', () => {
     expect(mail.sent).toEqual([]);
   });
 
-  it('trades the right code for a session token, answered in the body and in an HttpOnly cookie, stored hashed', async () => {
+  it('trades the right code for a session token answered in the body, stored hashed, never in a cookie', async () => {
     await post('/v1/auth/request-code', { email: ADMIN_EMAIL });
 
     const response = await post('/v1/auth/verify-code', {
@@ -172,9 +169,8 @@ describe('dashboard sign-in', () => {
       session_token: expect.stringMatching(SESSION_TOKEN_PATTERN) as string,
     });
     expect(response.headers['access-control-allow-origin']).toBe(E2E_DASHBOARD_ORIGIN);
-    expect(response.headers['access-control-allow-credentials']).toBe('true');
-    const cookieToken = SESSION_COOKIE_PATTERN.exec(String(response.headers['set-cookie']))?.[1];
-    expect(cookieToken).toBe(body.session_token);
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
+    expect(response.headers['set-cookie']).toBeUndefined();
     const sessions = await owner`
       SELECT token_hash FROM admin_sessions WHERE token_hash = ${sha256Hex(body.session_token)}
     `;
@@ -190,7 +186,6 @@ describe('dashboard sign-in', () => {
 
     expect(replay.statusCode).toBe(400);
     expect(replay.json()).toMatchObject({ error: 'invalid_code' });
-    expect(replay.headers['set-cookie']).toBeUndefined();
   });
 
   it('burns the code after five concurrent wrong guesses, so the right one fails too', async () => {
@@ -251,10 +246,10 @@ describe('dashboard sign-in', () => {
     expect(response.statusCode).toBe(204);
     expect(response.headers).toMatchObject({
       'access-control-allow-origin': E2E_DASHBOARD_ORIGIN,
-      'access-control-allow-credentials': 'true',
       'access-control-allow-methods': 'GET, POST, OPTIONS',
       'access-control-allow-headers': 'Content-Type',
     });
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
   });
 
   it('describes the signed-in admin and their projects, and nobody else', async () => {
@@ -281,16 +276,14 @@ describe('dashboard sign-in', () => {
     });
   });
 
-  it('signs out: the session stops working and the cookie is cleared', async () => {
+  it('signs out: the session stops working, and no cookie is touched', async () => {
     const cookie = await signIn();
 
     const response = await post('/v1/auth/logout', {}, { cookie });
     const after = await me(cookie);
 
     expect(response.statusCode).toBe(204);
-    expect(response.headers['set-cookie']).toBe(
-      `${SESSION_COOKIE_NAME}=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0`,
-    );
+    expect(response.headers['set-cookie']).toBeUndefined();
     expect(after.statusCode).toBe(401);
   });
 
@@ -306,9 +299,9 @@ describe('dashboard sign-in', () => {
       email: 'bia@example.com',
       code: latestCode(),
     });
-    const token = SESSION_COOKIE_PATTERN.exec(String(verified.headers['set-cookie']))?.[1];
+    const { session_token: token } = verified.json<{ session_token: string }>();
 
-    const described = await me(`${SESSION_COOKIE_NAME}=${String(token)}`);
+    const described = await me(`${SESSION_COOKIE_NAME}=${token}`);
 
     expect(verified.statusCode).toBe(200);
     expect(described.json()).toMatchObject({

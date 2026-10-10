@@ -5,7 +5,6 @@ export const DEFAULT_MAIL_FROM = 'Pyxis <noreply@pyxis-analytics.dev>';
 
 export const POSTGRES_ROLE_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 export const HTTP_HEADER_NAME = /^[a-z0-9-]+$/;
-export const COOKIE_DOMAIN = /^[a-z0-9-]+(\.[a-z0-9-]+)+$/;
 
 const emptyAsUnset = (value: unknown): unknown => (value === '' ? undefined : value);
 
@@ -34,7 +33,6 @@ export const envSchema = z.object({
       .refine(isBareOrigin, 'Write the origin only: scheme, host and port')
       .optional(),
   ),
-  SESSION_COOKIE_DOMAIN: z.preprocess(emptyAsUnset, z.string().regex(COOKIE_DOMAIN).optional()),
 });
 
 export const serverEnvSchema = envSchema

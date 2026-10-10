@@ -1,6 +1,4 @@
-import type { ConfigService } from '@nestjs/config';
-import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { EnvConfig } from '../../../config/env.schema';
+import type { FastifyRequest } from 'fastify';
 import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type { Project } from '../../../domain/entities/project.entity';
 import type { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
@@ -11,7 +9,6 @@ import { AuthController, MeController } from './auth.controller';
 import { SESSION_COOKIE_NAME } from './session-cookie';
 
 const EMAIL = 'ana@example.com';
-const COOKIE_DOMAIN = 'pyxis.example.com';
 const ADMIN: AdminUser = {
   id: '00000000-0000-4000-a000-000000000001',
   email: EMAIL,
@@ -27,17 +24,6 @@ const PROJECT: Project = {
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 
-function replySpy() {
-  const headers: Record<string, string> = {};
-  const reply = {
-    header(name: string, value: string) {
-      headers[name] = value;
-      return reply;
-    },
-  };
-  return { reply: reply as unknown as FastifyReply, headers };
-}
-
 function authController() {
   const calls: { readonly useCase: string; readonly args: readonly unknown[] }[] = [];
   const record =
@@ -52,7 +38,6 @@ function authController() {
       execute: record('verify', { email: EMAIL, sessionToken: 'fresh-token' }),
     } as unknown as VerifySignInCodeUseCase,
     { execute: record('signOut', undefined) } as unknown as SignOutUseCase,
-    { get: () => COOKIE_DOMAIN } as unknown as ConfigService<EnvConfig, true>,
   );
   return { controller, calls };
 }
@@ -74,32 +59,24 @@ describe('AuthController', () => {
     expect(calls).toEqual([{ useCase: 'request', args: [EMAIL, 'pt-BR'] }]);
   });
 
-  it('answers the email with the session token, and still sets the session cookie', async () => {
+  it('answers the email with the session token, for the dashboard to keep', async () => {
     const { controller, calls } = authController();
-    const { reply, headers } = replySpy();
 
-    const answer = await controller.verifyCode({ email: EMAIL, code: '123456' }, reply);
+    const answer = await controller.verifyCode({ email: EMAIL, code: '123456' });
 
     expect(calls).toEqual([{ useCase: 'verify', args: [EMAIL, '123456'] }]);
     expect(answer).toEqual({ email: EMAIL, session_token: 'fresh-token' });
-    expect(headers['set-cookie']).toBe(
-      `${SESSION_COOKIE_NAME}=fresh-token; HttpOnly; Secure; SameSite=Lax; Path=/; ` +
-        `Max-Age=604800; Domain=${COOKIE_DOMAIN}`,
-    );
   });
 
-  it('revokes the session of the cookie and clears the cookie', async () => {
+  it('revokes the session of the cookie the dashboard forwards', async () => {
     const { controller, calls } = authController();
-    const { reply, headers } = replySpy();
     const request = {
       headers: { cookie: `${SESSION_COOKIE_NAME}=old-token` },
     } as unknown as FastifyRequest;
 
-    await controller.logout(request, reply);
+    await controller.logout(request);
 
     expect(calls).toEqual([{ useCase: 'signOut', args: ['old-token'] }]);
-    expect(headers['set-cookie']).toContain(`${SESSION_COOKIE_NAME}=; `);
-    expect(headers['set-cookie']).toContain('Max-Age=0');
   });
 });
 

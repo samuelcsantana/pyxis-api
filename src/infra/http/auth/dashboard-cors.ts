@@ -11,9 +11,7 @@ export function isDashboardPath(url: string): boolean {
 }
 
 function grantDashboard(reply: FastifyReply, origin: string): void {
-  void reply
-    .header('access-control-allow-origin', origin)
-    .header('access-control-allow-credentials', 'true');
+  void reply.header('access-control-allow-origin', origin);
 }
 
 async function answerPreflight(reply: FastifyReply, granted: boolean): Promise<void> {
