@@ -404,8 +404,11 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   link to a visit, and its logs name projects and admins by id, never by address
 - Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
-  use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle, at sign-out, or
-  all at once when the admin signs out everywhere (`POST /v1/auth/logout-all`).
+  use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle, at sign-out,
+  one by one from the sessions list (`GET /v1/me/sessions`, `DELETE /v1/me/sessions/:id`), or
+  all at once when the admin signs out everywhere (`POST /v1/auth/logout-all`). A session keeps
+  only the browser, system and device type classified at sign-in (chrome, windows, desktop…), so
+  the list can tell devices apart; the user agent and the address are never stored.
   The API sets no cookie: the token is answered once, and the dashboard keeps it in a cookie of
   its own host and forwards it from its server (ADR 0012)
 - The sign-in routes accept only the dashboard's `Origin`, grant CORS to it without credentials,
