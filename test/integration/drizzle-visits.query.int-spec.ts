@@ -211,6 +211,14 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
     expect(visits[4]).toMatchObject({ source: '(direct)', campaign: null });
   });
 
+  it('never lists a visit of another project', async () => {
+    const blog = { ...SCOPE, projectId: BLOG_ID };
+
+    expect(await sessions({}, blog)).toEqual([visitId(6)]);
+    expect((await query.list(blog, NO_VISIT_FILTERS, null, ALL)).total).toBe(1);
+    expect(await sessions({})).not.toContain(visitId(6));
+  });
+
   it('keeps the first five named events of a visit, in the order they happened', async () => {
     const {
       items: [visit],
