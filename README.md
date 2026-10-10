@@ -435,6 +435,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 | [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)       | Erase a person together with the visits they identified in       |
 | [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md) | Compare an unfinished day up to the same time of day             |
 | [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)          | Send a weekly digest by e-mail from the jobs function            |
+| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)           | Let the dashboard keep the session in a cookie of its own host   |
 
 ## Roadmap
 
