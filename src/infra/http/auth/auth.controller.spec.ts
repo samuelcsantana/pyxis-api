@@ -74,14 +74,14 @@ describe('AuthController', () => {
     expect(calls).toEqual([{ useCase: 'request', args: [EMAIL, 'pt-BR'] }]);
   });
 
-  it('sets the session cookie and answers only the email', async () => {
+  it('answers the email with the session token, and still sets the session cookie', async () => {
     const { controller, calls } = authController();
     const { reply, headers } = replySpy();
 
     const answer = await controller.verifyCode({ email: EMAIL, code: '123456' }, reply);
 
     expect(calls).toEqual([{ useCase: 'verify', args: [EMAIL, '123456'] }]);
-    expect(answer).toEqual({ email: EMAIL });
+    expect(answer).toEqual({ email: EMAIL, session_token: 'fresh-token' });
     expect(headers['set-cookie']).toBe(
       `${SESSION_COOKIE_NAME}=fresh-token; HttpOnly; Secure; SameSite=Lax; Path=/; ` +
         `Max-Age=604800; Domain=${COOKIE_DOMAIN}`,

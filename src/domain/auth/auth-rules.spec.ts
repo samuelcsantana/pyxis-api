@@ -9,6 +9,7 @@ import {
   SESSION_ABSOLUTE_TTL_MS,
   SESSION_IDLE_TTL_MS,
   SESSION_TOKEN_BYTES,
+  SESSION_TOKEN_PATTERN,
   SESSION_TOUCH_INTERVAL_MS,
   generateSessionToken,
 } from './session-policy';
@@ -83,7 +84,13 @@ describe('generateSessionToken', () => {
     const token = generateSessionToken(new SequenceRandomSource([251, 255, 0]));
 
     expect(Buffer.from(token, 'base64url')).toHaveLength(SESSION_TOKEN_BYTES);
-    expect(token).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(token).toMatch(SESSION_TOKEN_PATTERN);
+  });
+
+  it('has a shape the dashboard can check before keeping a token', () => {
+    expect(SESSION_TOKEN_PATTERN.test('a'.repeat(43))).toBe(true);
+    expect(SESSION_TOKEN_PATTERN.test('a'.repeat(42))).toBe(false);
+    expect(SESSION_TOKEN_PATTERN.test(`${'a'.repeat(42)}=`)).toBe(false);
   });
 });
 

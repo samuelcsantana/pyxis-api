@@ -2,6 +2,7 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
 import { openCliContext } from '../../src/cli/cli-context';
 import { sha256Hex } from '../../src/domain/auth/hashing';
+import { SESSION_TOKEN_PATTERN } from '../../src/domain/auth/session-policy';
 import { MAX_SIGN_IN_CODE_ATTEMPTS } from '../../src/domain/auth/sign-in-code';
 import { MAIL_SENDER } from '../../src/domain/services/mail-sender';
 import { MAX_LANGUAGE_TAG_LENGTH } from '../../src/infra/http/auth/auth.schemas';
@@ -78,10 +79,10 @@ describe('dashboard sign-in', () => {
       email: ADMIN_EMAIL,
       code: latestCode(),
     });
-    const token = SESSION_COOKIE_PATTERN.exec(String(response.headers['set-cookie']))?.[1];
-    if (token === undefined) {
+    if (response.statusCode !== 200) {
       throw new Error(`Unexpected sign-in answer ${String(response.statusCode)}.`);
     }
+    const { session_token: token } = response.json<{ session_token: string }>();
     return `${SESSION_COOKIE_NAME}=${token}`;
   };
 
@@ -156,7 +157,7 @@ describe('dashboard sign-in', () => {
     expect(mail.sent).toEqual([]);
   });
 
-  it('trades the right code for an HttpOnly session cookie whose token is stored hashed', async () => {
+  it('trades the right code for a session token, answered in the body and in an HttpOnly cookie, stored hashed', async () => {
     await post('/v1/auth/request-code', { email: ADMIN_EMAIL });
 
     const response = await post('/v1/auth/verify-code', {
@@ -165,13 +166,17 @@ describe('dashboard sign-in', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ email: ADMIN_EMAIL });
+    const body = response.json<{ email: string; session_token: string }>();
+    expect(body).toEqual({
+      email: ADMIN_EMAIL,
+      session_token: expect.stringMatching(SESSION_TOKEN_PATTERN) as string,
+    });
     expect(response.headers['access-control-allow-origin']).toBe(E2E_DASHBOARD_ORIGIN);
     expect(response.headers['access-control-allow-credentials']).toBe('true');
-    const token = SESSION_COOKIE_PATTERN.exec(String(response.headers['set-cookie']))?.[1];
-    expect(token).toBeDefined();
+    const cookieToken = SESSION_COOKIE_PATTERN.exec(String(response.headers['set-cookie']))?.[1];
+    expect(cookieToken).toBe(body.session_token);
     const sessions = await owner`
-      SELECT token_hash FROM admin_sessions WHERE token_hash = ${sha256Hex(String(token))}
+      SELECT token_hash FROM admin_sessions WHERE token_hash = ${sha256Hex(body.session_token)}
     `;
     expect(sessions).toHaveLength(1);
   });

@@ -78,7 +78,9 @@ export class AuthController {
   @ApiOperation({ summary: 'Exchange a sign-in code for a session cookie' })
   @ApiResponse({
     status: HttpStatus.OK,
-    description: 'Signed in; the session cookie is set.',
+    description:
+      'Signed in; the body carries the session token for the dashboard to keep in a cookie of its ' +
+      'own host. The API still sets its cookie as well while the dashboard moves to the body.',
     standardSchema: signedInSchema,
   })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
@@ -91,7 +93,7 @@ export class AuthController {
   ): Promise<SignedInBody> {
     const signedIn = await this.verifySignInCode.execute(body.email, body.code);
     void reply.header('set-cookie', sessionCookie(signedIn.sessionToken, this.cookieDomain()));
-    return { email: signedIn.email };
+    return { email: signedIn.email, session_token: signedIn.sessionToken };
   }
 
   @Post('logout')

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SESSION_TOKEN_PATTERN } from '../../../domain/auth/session-policy';
 import { MAX_EMAIL_LENGTH } from '../../database/schema/admins';
 
 const SIGN_IN_CODE_PATTERN = /^\d{6}$/;
@@ -28,8 +29,22 @@ export const verifyCodeSchema = z
   .meta({ id: 'VerifyCodeRequest', description: 'The email and the six-digit code it received.' });
 
 export const signedInSchema = z
-  .strictObject({ email: z.email() })
-  .meta({ id: 'SignedIn', description: 'The signed-in admin; the session travels in a cookie.' });
+  .strictObject({
+    email: z.email(),
+    session_token: z
+      .string()
+      .regex(SESSION_TOKEN_PATTERN)
+      .describe(
+        'The opaque session token, for the dashboard to keep in a cookie of its own host. ' +
+          'Stored only as a hash; never logged.',
+      ),
+  })
+  .meta({
+    id: 'SignedIn',
+    description:
+      'The signed-in admin and their session token. The dashboard keeps the token in an HttpOnly ' +
+      'cookie and sends it back as the pyxis_session cookie on every call.',
+  });
 
 export const meSchema = z
   .strictObject({
