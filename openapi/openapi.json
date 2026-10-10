@@ -2486,6 +2486,47 @@
         ]
       }
     },
+    "/v1/auth/logout-all": {
+      "post": {
+        "description": "Signs the admin out of every device at once. Needs a live session.",
+        "operationId": "AuthController_logoutAll",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": "Signed out everywhere."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Revoke every session of the signed-in admin, this one included",
+        "tags": [
+          "dashboard sign-in"
+        ]
+      }
+    },
     "/v1/auth/request-code": {
       "post": {
         "description": "Always answers 202: a code is created and emailed only when the email belongs to an admin.",

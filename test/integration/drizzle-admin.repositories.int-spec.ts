@@ -222,6 +222,35 @@ describe('admin repositories against a real Postgres', () => {
       expect(await sessions.findLiveByTokenHash(sha256Hex('unknown'))).toBeNull();
     });
 
+    it('revokes every live session of one admin at once, counting them, and spares the other admins', async () => {
+      const ana = await admins.grantAccess('ana@example.com', SHOP_ID);
+      const bruno = await admins.grantAccess('bruno@example.com', SHOP_ID);
+      await sessions.create({ adminUserId: ana.id, tokenHash: sha256Hex('phone'), createdAt: NOW });
+      await sessions.create({
+        adminUserId: ana.id,
+        tokenHash: sha256Hex('laptop'),
+        createdAt: NOW,
+      });
+      const old = await sessions.create({
+        adminUserId: ana.id,
+        tokenHash: sha256Hex('old'),
+        createdAt: NOW,
+      });
+      await sessions.revoke(old.id, at(MINUTE));
+      await sessions.create({
+        adminUserId: bruno.id,
+        tokenHash: sha256Hex('bruno'),
+        createdAt: NOW,
+      });
+
+      expect(await sessions.revokeAllOf(ana.id, at(2 * MINUTE))).toBe(2);
+
+      expect(await sessions.findLiveByTokenHash(sha256Hex('phone'))).toBeNull();
+      expect(await sessions.findLiveByTokenHash(sha256Hex('laptop'))).toBeNull();
+      expect((await sessions.findLiveByTokenHash(sha256Hex('bruno')))?.adminUserId).toBe(bruno.id);
+      expect(await sessions.revokeAllOf(ana.id, at(3 * MINUTE))).toBe(0);
+    });
+
     it('has no column for the address or the user agent', async () => {
       const columns = await owner<{ column_name: string }[]>`
         SELECT column_name FROM information_schema.columns WHERE table_name = 'admin_sessions'

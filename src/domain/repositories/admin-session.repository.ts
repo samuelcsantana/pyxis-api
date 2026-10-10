@@ -11,6 +11,7 @@ export interface AdminSessionRepository {
   findLiveByTokenHash(tokenHash: string): Promise<AdminSession | null>;
   touch(sessionId: string, usedAt: Date): Promise<void>;
   revoke(sessionId: string, revokedAt: Date): Promise<void>;
+  revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number>;
 }
 
 export const ADMIN_SESSION_REPOSITORY = Symbol('AdminSessionRepository');

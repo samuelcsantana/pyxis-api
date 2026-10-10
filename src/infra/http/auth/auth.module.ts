@@ -11,6 +11,7 @@ import { RANDOM_SOURCE } from '../../../domain/services/random-source';
 import { AuthenticateSessionUseCase } from '../../../usecases/auth/authenticate-session.usecase';
 import { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
 import { RequestSignInCodeUseCase } from '../../../usecases/auth/request-sign-in-code.usecase';
+import { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { SystemClock } from '../../clock/system-clock';
@@ -30,6 +31,7 @@ import { DashboardOriginGuard, SessionGuard } from './auth.guards';
     VerifySignInCodeUseCase,
     AuthenticateSessionUseCase,
     SignOutUseCase,
+    SignOutEverywhereUseCase,
     DescribeAdminUseCase,
     DashboardOriginGuard,
     SessionGuard,

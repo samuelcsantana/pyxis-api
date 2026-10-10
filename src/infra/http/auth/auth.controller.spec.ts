@@ -3,6 +3,7 @@ import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type { Project } from '../../../domain/entities/project.entity';
 import type { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
 import type { RequestSignInCodeUseCase } from '../../../usecases/auth/request-sign-in-code.usecase';
+import type { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import type { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import type { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { AuthController, MeController } from './auth.controller';
@@ -38,6 +39,7 @@ function authController() {
       execute: record('verify', { email: EMAIL, sessionToken: 'fresh-token' }),
     } as unknown as VerifySignInCodeUseCase,
     { execute: record('signOut', undefined) } as unknown as SignOutUseCase,
+    { execute: record('signOutEverywhere', 2) } as unknown as SignOutEverywhereUseCase,
   );
   return { controller, calls };
 }
@@ -77,6 +79,15 @@ describe('AuthController', () => {
     await controller.logout(request);
 
     expect(calls).toEqual([{ useCase: 'signOut', args: ['old-token'] }]);
+  });
+
+  it('signs the admin of the session out of every device', async () => {
+    const { controller, calls } = authController();
+    const request = { admin: ADMIN } as unknown as FastifyRequest;
+
+    await controller.logoutAll(request);
+
+    expect(calls).toEqual([{ useCase: 'signOutEverywhere', args: [ADMIN] }]);
   });
 });
 
