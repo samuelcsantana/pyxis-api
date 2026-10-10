@@ -1905,16 +1905,22 @@
       },
       "SignedIn": {
         "additionalProperties": false,
-        "description": "The signed-in admin; the session travels in a cookie.",
+        "description": "The signed-in admin and their session token. The dashboard keeps the token in an HttpOnly cookie and sends it back as the pyxis_session cookie on every call.",
         "properties": {
           "email": {
             "format": "email",
             "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
             "type": "string"
+          },
+          "session_token": {
+            "description": "The opaque session token, for the dashboard to keep in a cookie of its own host. Stored only as a hash; never logged.",
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "type": "string"
           }
         },
         "required": [
-          "email"
+          "email",
+          "session_token"
         ],
         "type": "object"
       },
@@ -2559,7 +2565,7 @@
                 }
               }
             },
-            "description": "Signed in; the session cookie is set."
+            "description": "Signed in; the body carries the session token for the dashboard to keep in a cookie of its own host. The API still sets its cookie as well while the dashboard moves to the body."
           },
           "400": {
             "content": {
