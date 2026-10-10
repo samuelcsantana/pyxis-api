@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import type { AdminSession } from '../../domain/entities/admin-session.entity';
 import type { AdminUser } from '../../domain/entities/admin-user.entity';
 import { sha256Hex } from '../../domain/auth/hashing';
 import { isSessionActive, needsTouch } from '../../domain/auth/session-policy';
@@ -13,6 +14,11 @@ import {
 } from '../../domain/repositories/admin-user.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 
+export interface AuthenticatedSession {
+  readonly admin: AdminUser;
+  readonly session: AdminSession;
+}
+
 @Injectable()
 export class AuthenticateSessionUseCase {
   constructor(
@@ -21,7 +27,7 @@ export class AuthenticateSessionUseCase {
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  async execute(sessionToken: string | undefined): Promise<AdminUser> {
+  async execute(sessionToken: string | undefined): Promise<AuthenticatedSession> {
     if (sessionToken === undefined) {
       throw new UnauthenticatedError();
     }
@@ -37,6 +43,6 @@ export class AuthenticateSessionUseCase {
     if (admin === null) {
       throw new UnauthenticatedError();
     }
-    return admin;
+    return { admin, session };
   }
 }

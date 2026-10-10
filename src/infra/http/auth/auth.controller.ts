@@ -1,29 +1,59 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiCookieAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
+import type { ListedSession } from '../../../usecases/auth/list-sessions.usecase';
 import { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
+import { EndSessionUseCase } from '../../../usecases/auth/end-session.usecase';
+import { ListSessionsUseCase } from '../../../usecases/auth/list-sessions.usecase';
 import { RequestSignInCodeUseCase } from '../../../usecases/auth/request-sign-in-code.usecase';
 import { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
-import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
+import {
+  type SignInClient,
+  VerifySignInCodeUseCase,
+} from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import { INGEST_THROTTLER, SUBJECTS_THROTTLER } from '../rate-limit/rate-limits';
 import { singleHeader } from '../request-headers';
 import { SchemaPipe } from '../schema-pipe';
-import { adminOf, DashboardOriginGuard, SessionGuard } from './auth.guards';
+import { adminOf, DashboardOriginGuard, SessionGuard, sessionOf } from './auth.guards';
 import {
   type MeBody,
   meSchema,
   type RequestCodeBody,
   requestCodeSchema,
+  sessionIdSchema,
+  type SessionsBody,
+  sessionsSchema,
   type SignedInBody,
   signedInSchema,
   type VerifyCodeBody,
   verifyCodeSchema,
 } from './auth.schemas';
 import { readSessionToken, SESSION_COOKIE_NAME } from './session-cookie';
+
+function clientOf(request: FastifyRequest): SignInClient {
+  return {
+    userAgent: singleHeader(request, 'user-agent'),
+    clientHints: {
+      mobile: singleHeader(request, 'sec-ch-ua-mobile'),
+      platform: singleHeader(request, 'sec-ch-ua-platform'),
+    },
+  };
+}
 
 @ApiTags('dashboard sign-in')
 @Controller('v1/auth')
@@ -58,7 +88,12 @@ export class AuthController {
   @Post('verify-code')
   @UseGuards(DashboardOriginGuard, ClientAddressThrottlerGuard)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Exchange a sign-in code for a session token' })
+  @ApiOperation({
+    summary: 'Exchange a sign-in code for a session token',
+    description:
+      'The session records the browser, system and device type classified from the request, ' +
+      'for the sessions list; the user agent itself is never kept.',
+  })
   @ApiResponse({
     status: HttpStatus.OK,
     description:
@@ -72,8 +107,9 @@ export class AuthController {
   async verifyCode(
     @Body({ schema: verifyCodeSchema, pipes: [new SchemaPipe(verifyCodeSchema)] })
     body: VerifyCodeBody,
+    @Req() request: FastifyRequest,
   ): Promise<SignedInBody> {
-    const signedIn = await this.verifySignInCode.execute(body.email, body.code);
+    const signedIn = await this.verifySignInCode.execute(body.email, body.code, clientOf(request));
     return { email: signedIn.email, session_token: signedIn.sessionToken };
   }
 
@@ -108,10 +144,26 @@ function isoOrNull(at: Date | null): string | null {
   return at === null ? null : at.toISOString();
 }
 
+function sessionBody(session: ListedSession): SessionsBody['sessions'][number] {
+  return {
+    id: session.id,
+    browser: session.device?.browser ?? null,
+    os: session.device?.os ?? null,
+    device_type: session.device?.deviceType ?? null,
+    created_at: session.createdAt.toISOString(),
+    last_used_at: session.lastUsedAt.toISOString(),
+    current: session.current,
+  };
+}
+
 @ApiTags('dashboard sign-in')
 @Controller('v1/me')
 export class MeController {
-  constructor(private readonly describeAdmin: DescribeAdminUseCase) {}
+  constructor(
+    private readonly describeAdmin: DescribeAdminUseCase,
+    private readonly listSessions: ListSessionsUseCase,
+    private readonly endSession: EndSessionUseCase,
+  ) {}
 
   @Get()
   @UseGuards(SessionGuard)
@@ -132,5 +184,38 @@ export class MeController {
         last_event_at: isoOrNull(project.lastEventAt),
       })),
     };
+  }
+
+  @Get('sessions')
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: 'The live sessions of the signed-in admin, this one marked' })
+  @ApiCookieAuth(SESSION_COOKIE_NAME)
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: sessionsSchema })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: errorResponseSchema })
+  async sessions(@Req() request: FastifyRequest): Promise<SessionsBody> {
+    const listed = await this.listSessions.execute(adminOf(request), sessionOf(request));
+    return { sessions: listed.map(sessionBody) };
+  }
+
+  @Delete('sessions/:sessionId')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'End one session of the signed-in admin, this one included' })
+  @ApiCookieAuth(SESSION_COOKIE_NAME)
+  @ApiParam({ name: 'sessionId', schema: { type: 'string', format: 'uuid' } })
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'The session ended.' })
+  @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'No live session of this admin has this id; the answer never says more.',
+    standardSchema: errorResponseSchema,
+  })
+  async end(
+    @Req() request: FastifyRequest,
+    @Param('sessionId', new SchemaPipe(sessionIdSchema)) sessionId: string,
+  ): Promise<void> {
+    await this.endSession.execute(adminOf(request), sessionId);
   }
 }

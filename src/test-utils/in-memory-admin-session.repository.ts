@@ -19,6 +19,7 @@ export class InMemoryAdminSessionRepository implements AdminSessionRepository {
       adminUserId: input.adminUserId,
       createdAt: input.createdAt,
       lastUsedAt: input.createdAt,
+      device: input.device ?? null,
     };
     this.stored.push({ session, tokenHash: input.tokenHash, revokedAt: null });
     return Promise.resolve(session);
@@ -29,6 +30,17 @@ export class InMemoryAdminSessionRepository implements AdminSessionRepository {
       (candidate) => candidate.tokenHash === tokenHash && candidate.revokedAt === null,
     );
     return Promise.resolve(entry?.session ?? null);
+  }
+
+  listLiveOf(adminUserId: string): Promise<readonly AdminSession[]> {
+    const live = this.stored
+      .filter(
+        (candidate) =>
+          candidate.session.adminUserId === adminUserId && candidate.revokedAt === null,
+      )
+      .map((entry) => entry.session)
+      .sort((a, b) => b.lastUsedAt.getTime() - a.lastUsedAt.getTime());
+    return Promise.resolve(live);
   }
 
   touch(sessionId: string, usedAt: Date): Promise<void> {
@@ -43,6 +55,20 @@ export class InMemoryAdminSessionRepository implements AdminSessionRepository {
       entry.revokedAt = revokedAt;
     }
     return Promise.resolve();
+  }
+
+  revokeOneOf(adminUserId: string, sessionId: string, revokedAt: Date): Promise<boolean> {
+    const entry = this.stored.find(
+      (candidate) =>
+        candidate.session.id === sessionId &&
+        candidate.session.adminUserId === adminUserId &&
+        candidate.revokedAt === null,
+    );
+    if (entry === undefined) {
+      return Promise.resolve(false);
+    }
+    entry.revokedAt = revokedAt;
+    return Promise.resolve(true);
   }
 
   revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number> {

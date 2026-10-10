@@ -15,3 +15,11 @@ export class UnauthenticatedError extends DomainError {
     super('Sign in to continue.');
   }
 }
+
+export class SessionNotFoundError extends DomainError {
+  readonly code = 'session_not_found';
+
+  constructor() {
+    super('The session does not exist, is not yours, or has already ended.');
+  }
+}

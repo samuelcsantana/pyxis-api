@@ -11,6 +11,11 @@ import {
 } from 'drizzle-orm/pg-core';
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../../../domain/auth/email-language';
 import { WEEKLY_DIGEST_BY_DEFAULT } from '../../../domain/entities/email-preferences.entity';
+import type {
+  BrowserFamily,
+  DeviceType,
+  OsFamily,
+} from '../../../domain/entities/tracked-event.entity';
 import { projects } from './projects';
 
 export const MAX_EMAIL_LENGTH = 254;
@@ -61,6 +66,9 @@ export const adminSessions = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }).notNull(),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    deviceType: varchar('device_type', { length: 16 }).$type<DeviceType>(),
+    browser: varchar('browser', { length: 32 }).$type<BrowserFamily>(),
+    os: varchar('os', { length: 32 }).$type<OsFamily>(),
   },
   (table) => [index('admin_sessions_admin_user_id_idx').on(table.adminUserId)],
 );

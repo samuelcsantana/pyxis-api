@@ -9,7 +9,7 @@ import { InMemoryAdminSessionRepository } from '../../../test-utils/in-memory-ad
 import { InMemoryAdminUserRepository } from '../../../test-utils/in-memory-admin-user.repository';
 import { AuthenticateSessionUseCase } from '../../../usecases/auth/authenticate-session.usecase';
 import { DashboardOriginRequiredError } from '../errors/http-errors';
-import { adminOf, DashboardOriginGuard, SessionGuard } from './auth.guards';
+import { adminOf, DashboardOriginGuard, SessionGuard, sessionOf } from './auth.guards';
 import { SESSION_COOKIE_NAME } from './session-cookie';
 
 const DASHBOARD_ORIGIN = 'https://pyxis.example.com';
@@ -79,6 +79,11 @@ describe('SessionGuard', () => {
 
     await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
     expect(adminOf(request)).toEqual(admin);
+    expect(sessionOf(request).adminUserId).toBe(admin.id);
+  });
+
+  it('fails loudly when a route reads the session without the guard', () => {
+    expect(() => sessionOf(requestWith({}))).toThrow('SessionGuard must run before');
   });
 
   it('refuses a request without a session cookie', async () => {
