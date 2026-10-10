@@ -4400,7 +4400,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "Too many calls from this address, or with this key."
           }
         },
         "security": [
@@ -4476,7 +4476,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "Too many calls from this address, or with this key."
           }
         },
         "security": [

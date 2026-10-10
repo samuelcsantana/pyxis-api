@@ -5,6 +5,17 @@ import type { CliContext } from '../../src/cli/cli-command';
 import { SUBJECT_REQUESTS_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
+import { E2E_CLIENT_IP_HEADER } from './env-setup';
+
+const SITE_ADDRESS = '198.51.100.10';
+const UNKNOWN_SECRET_KEY = `pyxis_sk_${'U'.repeat(32)}`;
+
+let addressCounter = 0;
+
+function nextAddress(): string {
+  addressCounter += 1;
+  return `203.0.113.${String(addressCounter)}`;
+}
 
 describe('subject erasure and export', () => {
   let app: NestFastifyApplication;
@@ -14,11 +25,19 @@ describe('subject erasure and export', () => {
   let secretKey: string;
   let otherSecretKey: string;
 
-  const call = (method: 'GET' | 'DELETE', url: string, key: string | null = secretKey) =>
+  const call = (
+    method: 'GET' | 'DELETE',
+    url: string,
+    key: string | null = secretKey,
+    address: string = SITE_ADDRESS,
+  ) =>
     app.inject({
       method,
       url,
-      headers: key === null ? {} : { authorization: `Bearer ${key}` },
+      headers: {
+        [E2E_CLIENT_IP_HEADER]: address,
+        ...(key === null ? {} : { authorization: `Bearer ${key}` }),
+      },
     });
 
   beforeAll(async () => {
@@ -99,7 +118,7 @@ describe('subject erasure and export', () => {
   it.each([
     ['no key', null],
     ['a public key', `pyxis_pk_${'P'.repeat(32)}`],
-    ['an unknown secret key', `pyxis_sk_${'U'.repeat(32)}`],
+    ['an unknown secret key', UNKNOWN_SECRET_KEY],
   ])('answers 401 to %s', async (_case, key) => {
     const response = await call('DELETE', '/v1/subjects/ana', key);
 
@@ -113,14 +132,26 @@ describe('subject erasure and export', () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it('limits each key to sixty calls a minute', async () => {
+  it('limits each key to sixty calls a minute, wherever the calls come from', async () => {
     const answers = [];
     for (let attempt = 0; attempt <= SUBJECT_REQUESTS_PER_WINDOW; attempt += 1) {
-      answers.push(await call('DELETE', '/v1/subjects/nobody', otherSecretKey));
+      answers.push(await call('DELETE', '/v1/subjects/nobody', otherSecretKey, nextAddress()));
     }
 
     expect(answers.at(-2)?.statusCode).toBe(200);
     expect(answers.at(-1)?.statusCode).toBe(429);
     expect(Number(answers.at(-1)?.headers['retry-after'])).toBeGreaterThan(0);
+  });
+
+  it('limits each address to sixty calls a minute before any key is checked', async () => {
+    const address = nextAddress();
+    const answers = [];
+    for (let attempt = 0; attempt <= SUBJECT_REQUESTS_PER_WINDOW; attempt += 1) {
+      answers.push(await call('GET', '/v1/subjects/nobody/events', UNKNOWN_SECRET_KEY, address));
+    }
+
+    expect(answers.at(-2)?.statusCode).toBe(401);
+    expect(answers.at(-1)?.statusCode).toBe(429);
+    expect(answers.at(-1)?.json()).toMatchObject({ error: 'rate_limited' });
   });
 });
