@@ -1,4 +1,5 @@
 import type { ExecutionContext } from '@nestjs/common';
+import { GUARDS_METADATA } from '@nestjs/common/constants';
 import type { FastifyRequest } from 'fastify';
 import type { ProjectKey } from '../../../domain/entities/project-key.entity';
 import type { Project } from '../../../domain/entities/project.entity';
@@ -10,6 +11,7 @@ import { AuthenticateSecretKeyUseCase } from '../../../usecases/subjects/authent
 import type { EraseSubjectUseCase } from '../../../usecases/subjects/erase-subject.usecase';
 import type { ExportSubjectEventsUseCase } from '../../../usecases/subjects/export-subject-events.usecase';
 import { ClientRateLimitedError } from '../errors/http-errors';
+import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import { SecretKeyThrottlerGuard } from './secret-key-throttler.guard';
 import { SecretKeyGuard, secretKeyOf } from './secret-key.guard';
 import { erasedSubjectSchema, subjectEventsSchema } from './subject.schemas';
@@ -136,6 +138,14 @@ describe('SubjectsController', () => {
   }
 
   const request = { secretKey: LIVE_KEY } as unknown as FastifyRequest;
+
+  it('throttles the client address before the key is checked, then throttles the key', () => {
+    expect(Reflect.getMetadata(GUARDS_METADATA, SubjectsController)).toEqual([
+      ClientAddressThrottlerGuard,
+      SecretKeyGuard,
+      SecretKeyThrottlerGuard,
+    ]);
+  });
 
   it('erases in the project of the key and answers the count', async () => {
     const { subjects, calls } = controller();

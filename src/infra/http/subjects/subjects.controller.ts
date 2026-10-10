@@ -23,6 +23,7 @@ import type { SubjectEventsPage } from '../../../domain/subjects/subject-events'
 import { EraseSubjectUseCase } from '../../../usecases/subjects/erase-subject.usecase';
 import { ExportSubjectEventsUseCase } from '../../../usecases/subjects/export-subject-events.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
+import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import { AUTH_THROTTLER, INGEST_THROTTLER } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
 import { SecretKeyThrottlerGuard } from './secret-key-throttler.guard';
@@ -67,9 +68,13 @@ function subjectEventsBody(page: SubjectEventsPage): SubjectEventsBody {
 @ApiParam({ name: 'userId', description: 'The user id the site sent to identify' })
 @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
 @ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: errorResponseSchema })
-@ApiResponse({ status: HttpStatus.TOO_MANY_REQUESTS, standardSchema: errorResponseSchema })
+@ApiResponse({
+  status: HttpStatus.TOO_MANY_REQUESTS,
+  description: 'Too many calls from this address, or with this key.',
+  standardSchema: errorResponseSchema,
+})
 @Controller('v1/subjects/:userId')
-@UseGuards(SecretKeyGuard, SecretKeyThrottlerGuard)
+@UseGuards(ClientAddressThrottlerGuard, SecretKeyGuard, SecretKeyThrottlerGuard)
 @SkipThrottle({ [INGEST_THROTTLER]: true, [AUTH_THROTTLER]: true })
 export class SubjectsController {
   constructor(

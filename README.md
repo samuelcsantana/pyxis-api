@@ -410,7 +410,9 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   and allow five requests per address every fifteen minutes on each route
 - Erasure deletes the person's events and every visit they identified in, in one statement, and
   logs only how many rows went, never the user id. Secret keys are looked up by hash on every call
-  (no cache, so revoking one takes effect at once) and limited to 60 calls a minute each
+  (no cache, so revoking one takes effect at once) and limited to 60 calls a minute each; the
+  same 60 a minute applies per client address and is counted before the key is checked, so an
+  unknown key cannot be tried without limit
 - Secrets live in AWS Parameter Store, never in the repository; secret scanning and push protection
   are on
 - Vulnerabilities: see [SECURITY.md](SECURITY.md)
