@@ -4,11 +4,7 @@ locals {
   app_settings = {
     DASHBOARD_ORIGIN = {
       value       = var.dashboard_origin
-      description = "The only origin the dashboard sign-in routes accept and grant credentialed CORS to."
-    }
-    SESSION_COOKIE_DOMAIN = {
-      value       = var.session_cookie_domain
-      description = "Domain attribute of the session cookie, so the dashboard's own server can read it too."
+      description = "The only origin the dashboard sign-in routes accept and grant CORS to."
     }
     MAIL_FROM = {
       value       = var.mail_from

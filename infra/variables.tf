@@ -62,12 +62,6 @@ variable "dashboard_origin" {
   default     = "https://app.pyxis-analytics.dev"
 }
 
-variable "session_cookie_domain" {
-  description = "Domain the session cookie is scoped to. The API on a subdomain of it may set it, and the dashboard's server receives it."
-  type        = string
-  default     = "pyxis-analytics.dev"
-}
-
 variable "mail_from" {
   description = "From header of the sign-in code and weekly digest emails; its domain must be verified in Resend."
   type        = string
