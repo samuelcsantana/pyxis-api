@@ -44,4 +44,14 @@ export class InMemoryAdminSessionRepository implements AdminSessionRepository {
     }
     return Promise.resolve();
   }
+
+  revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number> {
+    const live = this.stored.filter(
+      (candidate) => candidate.session.adminUserId === adminUserId && candidate.revokedAt === null,
+    );
+    for (const entry of live) {
+      entry.revokedAt = revokedAt;
+    }
+    return Promise.resolve(live.length);
+  }
 }

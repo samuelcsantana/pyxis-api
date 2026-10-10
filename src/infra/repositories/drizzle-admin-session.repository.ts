@@ -54,4 +54,13 @@ export class DrizzleAdminSessionRepository implements AdminSessionRepository {
   async revoke(sessionId: string, revokedAt: Date): Promise<void> {
     await this.db.update(adminSessions).set({ revokedAt }).where(eq(adminSessions.id, sessionId));
   }
+
+  async revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number> {
+    const revoked = await this.db
+      .update(adminSessions)
+      .set({ revokedAt })
+      .where(and(eq(adminSessions.adminUserId, adminUserId), isNull(adminSessions.revokedAt)))
+      .returning({ id: adminSessions.id });
+    return revoked.length;
+  }
 }

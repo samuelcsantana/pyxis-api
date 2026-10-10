@@ -287,6 +287,28 @@ describe('dashboard sign-in', () => {
     expect(after.statusCode).toBe(401);
   });
 
+  it('signs out everywhere: every session of the admin stops working at once', async () => {
+    const phone = await signIn();
+    const laptop = await signIn();
+
+    const response = await post('/v1/auth/logout-all', {}, { cookie: laptop });
+
+    expect(response.statusCode).toBe(204);
+    expect((await me(phone)).statusCode).toBe(401);
+    expect((await me(laptop)).statusCode).toBe(401);
+  });
+
+  it('refuses to sign out everywhere without a live session, or from another origin', async () => {
+    const cookie = await signIn();
+
+    expect((await post('/v1/auth/logout-all', {})).statusCode).toBe(401);
+    expect(
+      (await post('/v1/auth/logout-all', {}, { cookie, origin: 'https://evil.example.com' }))
+        .statusCode,
+    ).toBe(403);
+    expect((await me(cookie)).statusCode).toBe(200);
+  });
+
   it('lets an admin granted by the admin:grant script sign in and see the project', async () => {
     const scripts = openCliContext({ MIGRATION_DATABASE_URL: e2eOwnerUrl() });
     try {

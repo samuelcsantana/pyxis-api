@@ -4,6 +4,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { DescribeAdminUseCase } from '../../../usecases/auth/describe-admin.usecase';
 import { RequestSignInCodeUseCase } from '../../../usecases/auth/request-sign-in-code.usecase';
+import { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
@@ -32,6 +33,7 @@ export class AuthController {
     private readonly requestSignInCode: RequestSignInCodeUseCase,
     private readonly verifySignInCode: VerifySignInCodeUseCase,
     private readonly signOut: SignOutUseCase,
+    private readonly signOutEverywhere: SignOutEverywhereUseCase,
   ) {}
 
   @Post('request-code')
@@ -84,6 +86,21 @@ export class AuthController {
   @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
   async logout(@Req() request: FastifyRequest): Promise<void> {
     await this.signOut.execute(readSessionToken(singleHeader(request, 'cookie')));
+  }
+
+  @Post('logout-all')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Revoke every session of the signed-in admin, this one included',
+    description: 'Signs the admin out of every device at once. Needs a live session.',
+  })
+  @ApiCookieAuth(SESSION_COOKIE_NAME)
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Signed out everywhere.' })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  async logoutAll(@Req() request: FastifyRequest): Promise<void> {
+    await this.signOutEverywhere.execute(adminOf(request));
   }
 }
 

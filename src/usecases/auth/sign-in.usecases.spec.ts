@@ -18,6 +18,7 @@ import { AuthenticateSessionUseCase } from './authenticate-session.usecase';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 import { RequestSignInCodeUseCase } from './request-sign-in-code.usecase';
+import { SignOutEverywhereUseCase } from './sign-out-everywhere.usecase';
 import { SignOutUseCase } from './sign-out.usecase';
 import { VerifySignInCodeUseCase } from './verify-sign-in-code.usecase';
 
@@ -51,9 +52,44 @@ async function setup() {
     verifyCode: new VerifySignInCodeUseCase(admins, codes, sessions, clock, random),
     authenticate: new AuthenticateSessionUseCase(sessions, admins, clock),
     signOut: new SignOutUseCase(sessions, clock),
+    signOutEverywhere: new SignOutEverywhereUseCase(sessions, clock),
     describe: new DescribeAdminUseCase(admins, new StubProjectActivityQuery()),
   };
 }
+
+describe('signing out everywhere', () => {
+  it('revokes every live session of the admin, this one included, and none of another admin', async () => {
+    const { admin, admins, sessions, signOutEverywhere, authenticate, clock } = await setup();
+    const bruno = await admins.grantAccess('bruno@example.com', PROJECT.id);
+    const now = clock.now();
+    await sessions.create({ adminUserId: admin.id, tokenHash: sha256Hex('phone'), createdAt: now });
+    await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('laptop'),
+      createdAt: now,
+    });
+    const revokedEarlier = await sessions.create({
+      adminUserId: admin.id,
+      tokenHash: sha256Hex('old'),
+      createdAt: now,
+    });
+    await sessions.revoke(revokedEarlier.id, now);
+    await sessions.create({ adminUserId: bruno.id, tokenHash: sha256Hex('bruno'), createdAt: now });
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+
+    expect(await signOutEverywhere.execute(admin)).toBe(2);
+
+    await expect(authenticate.execute('phone')).rejects.toBeInstanceOf(UnauthenticatedError);
+    await expect(authenticate.execute('laptop')).rejects.toBeInstanceOf(UnauthenticatedError);
+    expect((await authenticate.execute('bruno')).id).toBe(bruno.id);
+    expect(logSpy).toHaveBeenCalledWith({
+      message: 'auth.signed_out_everywhere',
+      adminUserId: admin.id,
+      revoked: 2,
+    });
+    logSpy.mockRestore();
+  });
+});
 
 describe('dashboard sign-in', () => {
   let logs: { level: string; message: unknown }[];
