@@ -52,7 +52,7 @@ describe('registerDashboardCors', () => {
     await fastify.close();
   });
 
-  it('lets the dashboard read the answer and send its cookie', async () => {
+  it('lets the dashboard read the answer, never with credentials', async () => {
     const response = await fastify.inject({
       method: 'GET',
       url: '/v1/me',
@@ -62,9 +62,9 @@ describe('registerDashboardCors', () => {
     expect(response.statusCode).toBe(200);
     expect(response.headers).toMatchObject({
       'access-control-allow-origin': DASHBOARD_ORIGIN,
-      'access-control-allow-credentials': 'true',
       vary: 'Origin',
     });
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
   });
 
   it('grants nothing to another origin, yet says the answer varies by origin', async () => {
@@ -89,7 +89,6 @@ describe('registerDashboardCors', () => {
     expect(response.statusCode).toBe(204);
     expect(response.headers).toMatchObject({
       'access-control-allow-origin': DASHBOARD_ORIGIN,
-      'access-control-allow-credentials': 'true',
       'access-control-allow-methods': 'GET, POST, OPTIONS',
       'access-control-allow-headers': 'Content-Type',
       'access-control-max-age': String(DASHBOARD_PREFLIGHT_MAX_AGE_SECONDS),

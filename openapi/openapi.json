@@ -2480,7 +2480,7 @@
             "pyxis_session": []
           }
         ],
-        "summary": "Revoke the session and clear its cookie",
+        "summary": "Revoke the session of the pyxis_session cookie",
         "tags": [
           "dashboard sign-in"
         ]
@@ -2565,7 +2565,7 @@
                 }
               }
             },
-            "description": "Signed in; the body carries the session token for the dashboard to keep in a cookie of its own host. The API still sets its cookie as well while the dashboard moves to the body."
+            "description": "Signed in; the body carries the session token for the dashboard to keep in a cookie of its own host and send back as the pyxis_session cookie."
           },
           "400": {
             "content": {
@@ -2598,7 +2598,7 @@
             "description": ""
           }
         },
-        "summary": "Exchange a sign-in code for a session cookie",
+        "summary": "Exchange a sign-in code for a session token",
         "tags": [
           "dashboard sign-in"
         ]

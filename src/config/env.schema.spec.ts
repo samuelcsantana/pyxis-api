@@ -112,23 +112,6 @@ describe('validateEnv', () => {
   it('treats an empty DASHBOARD_ORIGIN as unset', () => {
     expect(validateEnv({ DASHBOARD_ORIGIN: '' }).DASHBOARD_ORIGIN).toBeUndefined();
   });
-
-  it('accepts a host name as the session cookie domain', () => {
-    expect(validateEnv({ SESSION_COOKIE_DOMAIN: 'pyxis.example.com' }).SESSION_COOKIE_DOMAIN).toBe(
-      'pyxis.example.com',
-    );
-  });
-
-  it.each(['localhost', '.example.com', 'example.com; Secure', 'Example.com'])(
-    'rejects %s as the session cookie domain',
-    (domain) => {
-      expect(() => validateEnv({ SESSION_COOKIE_DOMAIN: domain })).toThrow(/SESSION_COOKIE_DOMAIN/);
-    },
-  );
-
-  it('treats an empty SESSION_COOKIE_DOMAIN as unset', () => {
-    expect(validateEnv({ SESSION_COOKIE_DOMAIN: '' }).SESSION_COOKIE_DOMAIN).toBeUndefined();
-  });
 });
 
 describe('validateServerEnv', () => {
