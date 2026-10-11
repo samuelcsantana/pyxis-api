@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.11.0...v0.12.0) (2026-10-11)
+
+
+### Features
+
+* **domain:** classify a visit tagged with a social network source as social ([b54a069](https://github.com/samuelcsantana/pyxis-api/commit/b54a069c646696ad6a3125cecf2af627df7eb355))
+
 ## [0.11.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.10.0...v0.11.0) (2026-10-11)
 
 
