@@ -11,6 +11,7 @@ import { TIME_OF_DAY_QUERY } from '../../../domain/queries/time-of-day';
 import { OVERVIEW_QUERY } from '../../../domain/queries/overview';
 import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
 import { VISITS_QUERY } from '../../../domain/queries/visits';
+import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
 import { PROJECT_KEY_REPOSITORY } from '../../../domain/repositories/project-key.repository';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
@@ -25,6 +26,7 @@ import { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.useca
 import { GetTimeOfDayUseCase } from '../../../usecases/queries/get-time-of-day.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
+import { GetProjectIconUseCase } from '../../../usecases/projects/get-project-icon.usecase';
 import { GetProjectSettingsUseCase } from '../../../usecases/projects/get-project-settings.usecase';
 import { DrizzleAcquisitionQuery } from '../../queries/drizzle-acquisition.query';
 import { DrizzleDevicesQuery } from '../../queries/drizzle-devices.query';
@@ -38,6 +40,7 @@ import { DrizzleTimeOfDayQuery } from '../../queries/drizzle-time-of-day.query';
 import { DrizzleOverviewQuery } from '../../queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
 import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
+import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
 import { DrizzleProjectKeyRepository } from '../../repositories/drizzle-project-key.repository';
 import { AuthModule } from '../auth/auth.module';
 import { SessionGuard } from '../auth/auth.guards';
@@ -45,6 +48,7 @@ import { EngagementController } from './engagement.controller';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
 import { FunnelSegmentsController } from './funnel-segments.controller';
 import { ProjectAccessGuard } from './project-access.guard';
+import { ProjectIconController } from './project-icon.controller';
 import { ProjectSettingsController } from './project-settings.controller';
 import { PropertyBreakdownController } from './property-breakdown.controller';
 import { QueriesController } from './queries.controller';
@@ -60,6 +64,7 @@ import { VisitsController } from './visits.controller';
     FunnelSubjectsController,
     FunnelSegmentsController,
     ProjectSettingsController,
+    ProjectIconController,
     TimeOfDayController,
     EngagementController,
   ],
@@ -89,6 +94,8 @@ import { VisitsController } from './visits.controller';
     GetVisitsUseCase,
     { provide: VISITS_QUERY, useClass: DrizzleVisitsQuery },
     GetProjectSettingsUseCase,
+    GetProjectIconUseCase,
+    { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
     { provide: PROJECT_KEY_REPOSITORY, useClass: DrizzleProjectKeyRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     SessionGuard,

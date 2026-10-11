@@ -5,6 +5,7 @@ import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
 import { ADMIN_USER_REPOSITORY } from '../../../domain/repositories/admin-user.repository';
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
+import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
 import { CLOCK } from '../../../domain/services/clock';
 import { MAIL_SENDER } from '../../../domain/services/mail-sender';
 import { RANDOM_SOURCE } from '../../../domain/services/random-source';
@@ -23,6 +24,7 @@ import { CryptoRandomSource } from '../../random/crypto-random-source';
 import { DrizzleAdminSessionRepository } from '../../repositories/drizzle-admin-session.repository';
 import { DrizzleAdminUserRepository } from '../../repositories/drizzle-admin-user.repository';
 import { DrizzleOtpCodeRepository } from '../../repositories/drizzle-otp-code.repository';
+import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
 import { AuthController, MeController } from './auth.controller';
 import { DashboardOriginGuard, SessionGuard } from './auth.guards';
 
@@ -45,6 +47,7 @@ import { DashboardOriginGuard, SessionGuard } from './auth.guards';
     { provide: OTP_CODE_REPOSITORY, useClass: DrizzleOtpCodeRepository },
     { provide: ADMIN_SESSION_REPOSITORY, useClass: DrizzleAdminSessionRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
+    { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
     {
       provide: MAIL_SENDER,
       inject: [ConfigService],
