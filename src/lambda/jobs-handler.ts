@@ -1,5 +1,7 @@
+import { Logger } from '@nestjs/common';
 import type { DatabaseSizeReport } from '../domain/monitoring/database-size';
 import type { DigestReport } from '../usecases/digest/send-weekly-digests.usecase';
+import type { ProjectIconsReport } from '../usecases/projects/refresh-project-icons.usecase';
 import type { RetentionReport } from '../usecases/retention/run-retention.usecase';
 
 export const WEEKLY_DIGEST_JOB = 'weekly-digest';
@@ -9,6 +11,7 @@ export interface JobsHandlerDependencies {
   readonly reportDatabaseSize: () => Promise<DatabaseSizeReport>;
   readonly runRetention: () => Promise<RetentionReport>;
   readonly sendWeeklyDigests: () => Promise<DigestReport>;
+  readonly refreshProjectIcons: () => Promise<ProjectIconsReport>;
 }
 
 export type JobsOutcome =
@@ -17,6 +20,7 @@ export type JobsOutcome =
       readonly job: 'daily';
       readonly databaseSize: DatabaseSizeReport;
       readonly retention: RetentionReport;
+      readonly projectIcons: ProjectIconsReport | null;
     }
   | {
       readonly ok: true;
@@ -30,6 +34,22 @@ function asksForWeeklyDigest(event: unknown): boolean {
   );
 }
 
+const logger = new Logger('JobsHandler');
+
+async function bestEffortRefreshProjectIcons(
+  refresh: () => Promise<ProjectIconsReport>,
+): Promise<ProjectIconsReport | null> {
+  try {
+    return await refresh();
+  } catch (error) {
+    logger.error({
+      message: 'jobs.project_icons_failed',
+      reason: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 export function createJobsHandler(
   dependencies: JobsHandlerDependencies,
 ): (event?: unknown) => Promise<JobsOutcome> {
@@ -39,6 +59,8 @@ export function createJobsHandler(
       return { ok: true, job: WEEKLY_DIGEST_JOB, digest: await dependencies.sendWeeklyDigests() };
     }
     const databaseSize = await dependencies.reportDatabaseSize();
-    return { ok: true, job: 'daily', databaseSize, retention: await dependencies.runRetention() };
+    const retention = await dependencies.runRetention();
+    const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
+    return { ok: true, job: 'daily', databaseSize, retention, projectIcons };
   };
 }

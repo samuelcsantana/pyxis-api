@@ -9,10 +9,13 @@ import { DrizzleProjectActivityQuery } from '../infra/queries/drizzle-project-ac
 import { DrizzleRequestsQuery } from '../infra/queries/drizzle-requests.query';
 import { DrizzleDigestDeliveryRepository } from '../infra/repositories/drizzle-digest-delivery.repository';
 import { DrizzleRetentionRepository } from '../infra/repositories/drizzle-retention.repository';
+import { DrizzleProjectIconRepository } from '../infra/repositories/drizzle-project-icon.repository';
 import { PostgresDatabaseSizeProbe } from '../infra/repositories/postgres-database-size.probe';
+import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher';
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest.usecase';
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
+import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
 import { RunRetentionUseCase } from '../usecases/retention/run-retention.usecase';
 import { createJobsHandler } from './jobs-handler';
 import { loadParameters, ssmParameterPages } from './load-parameters';
@@ -54,6 +57,14 @@ export const handler = createJobsHandler({
           new DrizzleProjectActivityQuery(database),
         ),
         createMailSender(validateEnv(process.env)),
+        new SystemClock(),
+      ).execute(),
+    ),
+  refreshProjectIcons: () =>
+    withDatabase((database) =>
+      new RefreshProjectIconsUseCase(
+        new DrizzleProjectIconRepository(database),
+        new HttpSiteIconFetcher(),
         new SystemClock(),
       ).execute(),
     ),
