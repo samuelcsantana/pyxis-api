@@ -6,6 +6,7 @@ import {
   digestDeliveries,
   events,
   otpCodes,
+  projectIcons,
   projectKeys,
   projects,
 } from '.';
@@ -16,7 +17,8 @@ function foreignKeyTargets(
     | typeof projectKeys
     | typeof adminProjectAccess
     | typeof adminSessions
-    | typeof digestDeliveries,
+    | typeof digestDeliveries
+    | typeof projectIcons,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -25,6 +27,17 @@ function foreignKeyTargets(
 }
 
 describe('database schema', () => {
+  it('keeps one icon per project, as bytes, gone with its project', () => {
+    const config = getTableConfig(projectIcons);
+    const bytes = config.columns.find((column) => column.name === 'bytes');
+
+    expect(config.columns.find((column) => column.primary)?.name).toBe('project_id');
+    expect(bytes?.getSQLType()).toBe('bytea');
+    expect(bytes?.notNull).toBe(true);
+    expect(foreignKeyTargets(projectIcons)).toEqual(['projects.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+  });
+
   it('keys events by project and event id, which makes a resent event a no-op', () => {
     const [primaryKey] = getTableConfig(events).primaryKeys;
 
