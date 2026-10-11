@@ -182,6 +182,7 @@ export class MeController {
         conversion_event: project.conversionEvent,
         first_event_at: isoOrNull(project.firstEventAt),
         last_event_at: isoOrNull(project.lastEventAt),
+        icon_version: project.iconVersion,
       })),
     };
   }

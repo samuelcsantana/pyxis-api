@@ -194,11 +194,18 @@ describe('MeController sessions', () => {
 
 describe('MeController', () => {
   it('describes the signed-in admin and their projects in snake case', async () => {
-    const quiet = { ...PROJECT, id: 'quiet-project', firstEventAt: null, lastEventAt: null };
+    const quiet = {
+      ...PROJECT,
+      id: 'quiet-project',
+      firstEventAt: null,
+      lastEventAt: null,
+      iconVersion: null,
+    };
     const active = {
       ...PROJECT,
       firstEventAt: new Date('2026-10-01T12:00:00.000Z'),
       lastEventAt: new Date('2026-10-05T09:30:00.000Z'),
+      iconVersion: '0123456789abcdef',
     };
     const describeAdmin = {
       execute: (admin: AdminUser) =>
@@ -222,6 +229,7 @@ describe('MeController', () => {
           conversion_event: null,
           first_event_at: '2026-10-01T12:00:00.000Z',
           last_event_at: '2026-10-05T09:30:00.000Z',
+          icon_version: '0123456789abcdef',
         },
         {
           id: 'quiet-project',
@@ -230,6 +238,7 @@ describe('MeController', () => {
           conversion_event: null,
           first_event_at: null,
           last_event_at: null,
+          icon_version: null,
         },
       ],
     });

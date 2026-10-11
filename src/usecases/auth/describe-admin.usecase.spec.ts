@@ -1,5 +1,6 @@
 import type { Project } from '../../domain/entities/project.entity';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
+import { InMemoryProjectIconRepository } from '../../test-utils/in-memory-project-icon.repository';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 
@@ -18,7 +19,7 @@ const SHOP = project('11111111-0000-4000-8000-000000000001', 'Shop');
 const BLOG = project('11111111-0000-4000-8000-000000000002', 'Blog');
 
 describe('DescribeAdminUseCase', () => {
-  it('tells, for each project, when its first and its latest event happened', async () => {
+  it('tells, for each project, when its first and latest events happened and its icon version', async () => {
     const admins = new InMemoryAdminUserRepository();
     admins.addProject(SHOP);
     admins.addProject(BLOG);
@@ -28,15 +29,24 @@ describe('DescribeAdminUseCase', () => {
     const firstEventAt = new Date('2026-10-01T12:00:00.000Z');
     const lastEventAt = new Date('2026-10-05T09:30:00.000Z');
     activity.activity.set(SHOP.id, { firstEventAt, lastEventAt });
+    const icons = new InMemoryProjectIconRepository();
+    await icons.save({
+      projectId: BLOG.id,
+      contentType: 'image/png',
+      bytes: Uint8Array.from([1]),
+      version: '0123456789abcdef',
+      sourceUrl: 'https://blog.example.com/icon.png',
+      fetchedAt: lastEventAt,
+    });
 
-    const description = await new DescribeAdminUseCase(admins, activity).execute(admin);
+    const description = await new DescribeAdminUseCase(admins, activity, icons).execute(admin);
 
     expect(activity.asked).toEqual([[SHOP.id, BLOG.id]]);
     expect(description).toEqual({
       email: 'owner@shop.example.com',
       projects: [
-        { ...SHOP, firstEventAt, lastEventAt },
-        { ...BLOG, firstEventAt: null, lastEventAt: null },
+        { ...SHOP, firstEventAt, lastEventAt, iconVersion: null },
+        { ...BLOG, firstEventAt: null, lastEventAt: null, iconVersion: '0123456789abcdef' },
       ],
     });
   });

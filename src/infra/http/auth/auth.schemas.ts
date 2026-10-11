@@ -63,6 +63,13 @@ export const meSchema = z
           .datetime()
           .nullable()
           .describe('When the newest event of the project happened; null before the first'),
+        icon_version: z
+          .string()
+          .nullable()
+          .describe(
+            'A short hash of the icon taken from the project site, which changes only when the ' +
+              'icon does (add it to the icon URL to cache it); null when the site shows none',
+          ),
       }),
     ),
   })

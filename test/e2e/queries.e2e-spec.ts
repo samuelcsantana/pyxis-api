@@ -496,6 +496,47 @@ describe('dashboard queries', () => {
     expect((await get(`/v1/projects/${FOREIGN_ID}/settings`)).statusCode).toBe(404);
   });
 
+  it('answers the icon of the project with its type and a private cache, and tells /me its version', async () => {
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0xff]);
+    await owner`
+      INSERT INTO project_icons (project_id, content_type, bytes, version, source_url, fetched_at)
+      VALUES (${SHOP_ID}, 'image/png', decode(${png.toString('base64')}, 'base64'),
+              '0123456789abcdef', 'https://shop.example.com/icon.png', ${NOW})
+    `;
+
+    const response = await get(`/v1/projects/${SHOP_ID}/icon`);
+    const me = await get('/v1/me');
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-type']).toBe('image/png');
+    expect(response.headers['cache-control']).toBe('private, max-age=86400');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['content-security-policy']).toContain("default-src 'none'");
+    expect(response.rawPayload).toEqual(png);
+    expect(me.json()).toMatchObject({
+      projects: [{ id: SHOP_ID, icon_version: '0123456789abcdef' }],
+    });
+  });
+
+  it('answers 404 for a project without an icon or of another admin, and 401 without a session', async () => {
+    await owner`DELETE FROM project_icons WHERE project_id = ${SHOP_ID}`;
+    await owner`
+      INSERT INTO project_icons (project_id, content_type, bytes, version, source_url, fetched_at)
+      VALUES (${FOREIGN_ID}, 'image/png', decode('iVBORw==', 'base64'), 'ffffffffffffffff',
+              'https://else.example.com/icon.png', ${NOW})
+    `;
+
+    const missing = await get(`/v1/projects/${SHOP_ID}/icon`);
+    const foreign = await get(`/v1/projects/${FOREIGN_ID}/icon`);
+    const anonymous = await get(`/v1/projects/${SHOP_ID}/icon`, null);
+
+    expect(missing.statusCode).toBe(404);
+    expect(missing.json()).toMatchObject({ error: 'project_icon_not_found' });
+    expect(foreign.statusCode).toBe(404);
+    expect(foreign.json()).toMatchObject({ error: 'not_found' });
+    expect(anonymous.statusCode).toBe(401);
+  });
+
   it('answers the visits of the range by the weekday and hour they started', async () => {
     const response = await get(`/v1/projects/${SHOP_ID}/time-of-day?from=2026-09-20&to=2026-10-05`);
 

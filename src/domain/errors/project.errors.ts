@@ -26,3 +26,11 @@ export class ProjectKeyNotFoundError extends DomainError {
     super('No live key has this id: it does not exist or is already revoked.');
   }
 }
+
+export class ProjectIconNotFoundError extends DomainError {
+  readonly code = 'project_icon_not_found';
+
+  constructor() {
+    super('The project has no icon: its site shows none, or it was not fetched yet.');
+  }
+}

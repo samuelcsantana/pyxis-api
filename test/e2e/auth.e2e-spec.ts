@@ -319,6 +319,7 @@ describe('dashboard sign-in', () => {
           conversion_event: 'signup_completed',
           first_event_at: null,
           last_event_at: null,
+          icon_version: null,
         },
       ],
     });

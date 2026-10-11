@@ -26,6 +26,7 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['invalid_range', HttpStatus.BAD_REQUEST],
   ['invalid_cursor', HttpStatus.BAD_REQUEST],
   ['project_not_found', HttpStatus.NOT_FOUND],
+  ['project_icon_not_found', HttpStatus.NOT_FOUND],
 ]);
 
 const HTTP_ERRORS: ReadonlyMap<number, { readonly error: string; readonly message: string }> =

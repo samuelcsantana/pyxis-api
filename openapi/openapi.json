@@ -959,6 +959,13 @@
                   ],
                   "description": "When the oldest event kept for the project happened; null before the first"
                 },
+                "icon_version": {
+                  "description": "A short hash of the icon taken from the project site, which changes only when the icon does (add it to the icon URL to cache it); null when the site shows none",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "id": {
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
@@ -990,7 +997,8 @@
                 "timezone",
                 "conversion_event",
                 "first_event_at",
-                "last_event_at"
+                "last_event_at",
+                "icon_version"
               ],
               "type": "object"
             },
@@ -3897,6 +3905,89 @@
           }
         ],
         "summary": "The visits or people who reached, or dropped at, one funnel step",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/icon": {
+      "get": {
+        "description": "Taken from the first allowed origin once a day: the touch icon or the largest icon the home page declares, else /favicon.ico; raster images only, up to 100 KB. Cache it by adding icon_version from GET /v1/me to the URL.",
+        "operationId": "ProjectIconController_icon",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/gif": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              },
+              "image/x-icon": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The image, as the site serves it."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist, the admin may not read it, or its site shows no icon (yet)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The icon of the project's site",
         "tags": [
           "dashboard queries"
         ]
