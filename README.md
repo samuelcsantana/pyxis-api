@@ -127,6 +127,13 @@ Shipping now:
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
+- `GET /v1/projects/{projectId}/icon` answers the icon of the project's site, so the dashboard
+  can show it beside the project's name: the touch icon or the largest icon the home page of the
+  first allowed origin declares, else `/favicon.ico`, PNG, ICO, JPEG, WEBP or GIF only, up to
+  100 KB, cached privately for a day. `GET /v1/me` carries its `icon_version`, a hash of the
+  bytes that changes only when the icon does; a project whose site shows none answers 404 and
+  `icon_version: null`, and the dashboard keeps the initials
+
 - `GET` and `PUT /v1/projects/{projectId}/email-preferences` (`{"weekly_digest":true}`): the
   signed-in admin chooses, for one project and for themselves only, whether to receive the
   weekly digest, on by default. Saving changes an existing access and never grants one. The
@@ -142,7 +149,9 @@ Shipping now:
   ([ADR 0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md))
 
 - A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
-  codes; each step logs its count, and a failed step fails the run so the scheduler retries
+  codes; each step logs its count, and a failed step fails the run so the scheduler retries.
+  Last, it refreshes the project icons, best effort: an icon found replaces the stored one, a
+  site that answers without one loses it, and a site that cannot be reached keeps it
 
 - A weekly digest by e-mail, on Mondays at 11:00 UTC: each admin gets, per project, the week that
   closed on Sunday in the project's time zone against the week before (visits, identified users,
@@ -165,7 +174,7 @@ flowchart LR
   Dashboard["pyxis-web<br>(dashboard)"]
   subgraph AWS["AWS · sa-east-1"]
     CF["CloudFront"] --> Lambda["Lambda<br>NestJS + Fastify"]
-    Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · weekly digest"]
+    Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · icons · weekly digest"]
   end
   DB[("Postgres<br>(Neon)")]
   Resend["Resend"]
@@ -421,6 +430,12 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
   (no cache, so revoking one takes effect at once) and limited to 60 calls a minute each; the
   same 60 a minute applies per client address and is counted before the key is checked, so an
   unknown key cannot be tried without limit
+- Fetching a site's icon is the API's only request to an address it does not choose: https only,
+  the host resolved before every request (redirects too, at most three, followed by hand) and
+  refused when any address is loopback, private, link-local, carrier-grade NAT, unique-local,
+  multicast or reserved, five seconds per request, the home page read up to 512 KB and the icon
+  up to 100 KB, and the image accepted only when its first bytes are a PNG, ICO, JPEG, WEBP or
+  GIF, never SVG. The icon is served with the same strict headers as every response
 - Secrets live in AWS Parameter Store, never in the repository; secret scanning and push protection
   are on
 - Vulnerabilities: see [SECURITY.md](SECURITY.md)
@@ -441,6 +456,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 | [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md) | Compare an unfinished day up to the same time of day             |
 | [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)          | Send a weekly digest by e-mail from the jobs function            |
 | [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)           | Let the dashboard keep the session in a cookie of its own host   |
+| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)           | Fetch each project's icon from its site, and keep a copy         |
 
 ## Roadmap
 
