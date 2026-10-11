@@ -43,10 +43,54 @@ describe('classifyChannel', () => {
   );
 
   it.each([
+    'instagram',
+    'Instagram',
+    'ig',
+    'facebook',
+    'fb',
+    'threads',
+    'x',
+    'twitter',
+    'linkedin',
+    'reddit',
+    'youtube',
+    'tiktok',
+    'pinterest',
+    'whatsapp',
+    'l.instagram.com',
+    'www.facebook.com',
+    'm.facebook.com',
+    'wa.me',
+  ])('is social for the source %s with a medium no list knows', (utmSource) => {
+    expect(classifyChannel(attribution({ utmSource, utmMedium: 'bio' }))).toBe('social');
+  });
+
+  it('is social for a social network source without a medium', () => {
+    expect(classifyChannel(attribution({ utmSource: 'instagram', utmCampaign: 'launch' }))).toBe(
+      'social',
+    );
+  });
+
+  it('is email when a social network source is sent by email', () => {
+    expect(classifyChannel(attribution({ utmSource: 'instagram', utmMedium: 'email' }))).toBe(
+      'email',
+    );
+  });
+
+  it('is paid when a social network source has a paid medium', () => {
+    expect(classifyChannel(attribution({ utmSource: 'instagram', utmMedium: 'cpc' }))).toBe('paid');
+  });
+
+  it.each([
     ['an unknown medium', { utmSource: 'partner', utmMedium: 'affiliate' }],
     ['only a source', { utmSource: 'partner' }],
     ['only a campaign', { utmCampaign: 'black-friday' }],
     ['utm tags on a visit from a search engine', { utmSource: 'blog', referrerHost: 'google.com' }],
+    ['a source that only contains a network name', { utmSource: 'myinstagram', utmMedium: 'bio' }],
+    [
+      'a social referrer with a source of its own',
+      { utmSource: 'partner', referrerHost: 'instagram.com' },
+    ],
   ])('is campaign for %s', (_, overrides) => {
     expect(classifyChannel(attribution(overrides))).toBe('campaign');
   });

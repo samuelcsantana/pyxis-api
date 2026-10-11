@@ -32,6 +32,21 @@ const SOCIAL_DOMAINS = [
   'whatsapp.com',
   'wa.me',
 ] as const;
+const SOCIAL_SOURCES: ReadonlySet<string> = new Set([
+  'facebook',
+  'fb',
+  'instagram',
+  'ig',
+  'threads',
+  'x',
+  'twitter',
+  'linkedin',
+  'reddit',
+  'youtube',
+  'tiktok',
+  'pinterest',
+  'whatsapp',
+]);
 const SEARCH_ENGINE_HOSTS: readonly RegExp[] = [
   /^google(\.[a-z]{2,3}){1,2}$/,
   /^bing\.com$/,
@@ -58,11 +73,20 @@ function belongsTo(host: string, domain: string): boolean {
   return host === domain || host.endsWith(`.${domain}`);
 }
 
-function channelFromMedium(medium: string | undefined): Channel {
+function isSocialHost(host: string): boolean {
+  const bare = host.replace(WWW_PREFIX, '');
+  return SOCIAL_DOMAINS.some((domain) => belongsTo(bare, domain));
+}
+
+function isSocialSource(source: string | undefined): boolean {
+  return source !== undefined && (SOCIAL_SOURCES.has(source) || isSocialHost(source));
+}
+
+function channelFromTags(medium: string | undefined, source: string | undefined): Channel {
   if (medium !== undefined && EMAIL_MEDIUMS.has(medium)) {
     return 'email';
   }
-  if (medium !== undefined && SOCIAL_MEDIUMS.has(medium)) {
+  if ((medium !== undefined && SOCIAL_MEDIUMS.has(medium)) || isSocialSource(source)) {
     return 'social';
   }
   return 'campaign';
@@ -73,7 +97,7 @@ function channelFromReferrer(referrerHost: string | null): Channel {
     return 'direct';
   }
   const host = referrerHost.replace(WWW_PREFIX, '');
-  if (SOCIAL_DOMAINS.some((domain) => belongsTo(host, domain))) {
+  if (isSocialHost(host)) {
     return 'social';
   }
   if (SEARCH_ENGINE_HOSTS.some((pattern) => pattern.test(host))) {
@@ -88,7 +112,7 @@ export function classifyChannel(attribution: Attribution): Channel {
     return 'paid';
   }
   if (hasUtm(attribution)) {
-    return channelFromMedium(medium);
+    return channelFromTags(medium, attribution.utmSource?.toLowerCase());
   }
   return channelFromReferrer(attribution.referrerHost);
 }
