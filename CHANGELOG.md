@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.11.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.10.0...v0.11.0) (2026-10-11)
+
+
+### Features
+
+* **projects:** choose and recognise a site's icon ([75d322d](https://github.com/samuelcsantana/pyxis-api/commit/75d322db627674f096b6c5d622e6b34bf6fa0dde))
+* **projects:** fetch a site's icon behind an address guard ([17ed3af](https://github.com/samuelcsantana/pyxis-api/commit/17ed3afca04b4d323500df2905511a8995fd4145))
+* **projects:** keep project icons in Postgres ([696edcf](https://github.com/samuelcsantana/pyxis-api/commit/696edcfc1d5a32b15310c10836ba488bcd44f98e))
+* **projects:** refresh the project icons in the daily job ([c71fc3f](https://github.com/samuelcsantana/pyxis-api/commit/c71fc3f89deefeb35ce4bc2539cd64dba641607e))
+* **projects:** serve a project's icon and tell its version in /me ([15a8494](https://github.com/samuelcsantana/pyxis-api/commit/15a8494edfe2993a09ff91a62f187077134a7394))
+
+
+### Documentation
+
+* describe project icons in the README and ADR 0013 ([7147186](https://github.com/samuelcsantana/pyxis-api/commit/714718695c5aacdd1a4fa7e29ab4b0fd0d343092))
+
 ## [0.10.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.9.0...v0.10.0) (2026-10-10)
 
 
