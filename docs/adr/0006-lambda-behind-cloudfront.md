@@ -18,8 +18,8 @@ public: anyone who learns its address can call it directly, bypassing whatever r
 - The app runs as a container image on Lambda in sa-east-1, next to the database, with a Function
   URL as its only entry.
 - CloudFront serves the API's domain in front of that URL, caches nothing, and forwards every
-  viewer header except Host, so `CloudFront-Viewer-Address` and `CloudFront-Viewer-Country` reach
-  the app.
+  viewer header except Host, so `CloudFront-Viewer-Address`, `CloudFront-Viewer-Country` and the
+  region headers ([ADR 0014](0014-store-the-region-never-the-city.md)) reach the app.
 - CloudFront adds a secret header to every origin request; the handler answers 403 to any request
   without it, before building the app. That is what makes trusting `CloudFront-Viewer-Address`
   for the per-address rate limit sound.

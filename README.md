@@ -62,8 +62,9 @@ Shipping now:
   twice; bots are recognized and rejected
 - A server-side barrier that drops any property or campaign value that looks like an email, a
   phone number or a tax id, and re-templates paths
-- Device, browser, operating system, channel and country derived on the server; the user agent
-  and the address are read, classified and discarded
+- Device, browser, operating system, channel, country and region derived on the server; the user
+  agent and the address are read, classified and discarded, and the city is never read
+  ([ADR 0014](docs/adr/0014-store-the-region-never-the-city.md))
 - Dashboard sign-in with a six-digit code sent by email, exchanged for an opaque session in an
   `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
   the admin's projects, each with when its first and its latest events happened (null before
@@ -87,7 +88,8 @@ Shipping now:
   range that ends today is compared with the previous period up to the same time of day, and the
   answer says which time that was:
   [ADR 0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)),
-  `/devices` (device type, browser, system and country, top five and "other") and
+  `/devices` (device type, browser, system and country, top five and "other", plus the top ten
+  regions, "other" and the visits without a region) and
   `/acquisition` (visits per day and channel, sources and campaigns with conversions and ad
   clicks); wherever
   conversions are counted, both the conversion events and the converting visits (visits that
@@ -114,7 +116,8 @@ Shipping now:
   entry page, page views, first named events, failed requests and the source and campaign it
   came from, plus the total of matching visits; filtered by up to three pages it viewed, a star
   matching any characters, a named event with an optional property value, channel, device,
-  country, source, campaign, whether it was identified, a request route (`POST /orders/:id`) and
+  country, region, source, campaign, whether it was identified, a request route
+  (`POST /orders/:id`) and
   whether a request, or a request to that route, failed; a visit is one browser tab, and nothing
   links two of them) and
   `/settings` (read-only: time zone, conversion event, allowed origins, first and latest event,
@@ -396,7 +399,8 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 - Paths are re-templated on the server with the SDK's rules (UUIDs, numbers, long digit runs and
   email addresses become `:id`), a second layer behind the browser's
 - Device, browser and operating system are classified by own code from the user agent and client
-  hints, then the user agent is discarded; the country comes from CloudFront, never from the IP
+  hints, then the user agent is discarded; the country and the region (`BR-SP`) come from
+  CloudFront, never from the IP, and the city is never read
 - Strict response headers: a CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default
 - `X-Forwarded-For` is never trusted for the client address
@@ -457,6 +461,7 @@ rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never de
 | [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)          | Send a weekly digest by e-mail from the jobs function            |
 | [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)           | Let the dashboard keep the session in a cookie of its own host   |
 | [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)           | Fetch each project's icon from its site, and keep a copy         |
+| [0014](docs/adr/0014-store-the-region-never-the-city.md)               | Store the viewer's region, never the city                        |
 
 ## Roadmap
 
