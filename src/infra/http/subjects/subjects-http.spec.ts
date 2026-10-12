@@ -114,6 +114,8 @@ describe('SubjectsController', () => {
         browser: 'safari',
         os: 'ios',
         country: 'BR',
+        region: 'BR-SP',
+        regionName: 'São Paulo',
         properties: { plan: 'mei' },
       },
     ],
@@ -167,6 +169,9 @@ describe('SubjectsController', () => {
       session_id: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e',
       referrer_host: 'duckduckgo.com',
       from_ad_click: false,
+      country: 'BR',
+      region: 'BR-SP',
+      region_name: 'São Paulo',
       properties: { plan: 'mei' },
     });
     expect(body.next_after).toBeNull();

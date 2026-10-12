@@ -30,6 +30,8 @@ export const subjectEventsSchema = z
         browser: z.string(),
         os: z.string(),
         country: z.string().nullable(),
+        region: z.string().nullable(),
+        region_name: z.string().nullable(),
         properties: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
       }),
     ),

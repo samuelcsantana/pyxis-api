@@ -121,6 +121,8 @@ describe('subject repositories against a real Postgres', () => {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
+      region: null,
+      regionName: null,
       properties: { plan: 'mei' },
     });
   });
