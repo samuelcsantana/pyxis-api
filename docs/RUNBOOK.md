@@ -115,8 +115,9 @@ aws logs tail /aws/lambda/pyxis-api --since 15m --profile pyxis-api | grep -E 'c
 
 `client_ip.sources` must show `"cloudfrontViewerAddress":true` and `"resolvedFrom":"header"`;
 `database.role_ok` confirms the function connects as the least-privilege role. A batch sent from
-an allowed origin must store a row whose `country` is filled, which proves
-`CloudFront-Viewer-Country` arrives.
+an allowed origin must store a row whose `country`, `region` and `region_name` are filled, which
+proves `CloudFront-Viewer-Country` and `CloudFront-Viewer-Country-Region(-Name)` arrive. Send it
+from a browser outside AWS: CloudFront sets no region for requests from AWS's own network.
 
 ## The daily jobs
 
