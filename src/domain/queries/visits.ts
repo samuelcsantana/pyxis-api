@@ -31,6 +31,7 @@ export interface VisitFilters {
   readonly deviceType: DeviceType | null;
   readonly identity: VisitIdentity | null;
   readonly country: string | null;
+  readonly region: string | null;
   readonly source: string | null;
   readonly campaign: string | null;
   readonly route: VisitRouteFilter | null;
@@ -44,6 +45,7 @@ export const NO_VISIT_FILTERS: VisitFilters = {
   deviceType: null,
   identity: null,
   country: null,
+  region: null,
   source: null,
   campaign: null,
   route: null,
@@ -67,6 +69,8 @@ export interface VisitListItem {
   readonly browser: string;
   readonly os: string;
   readonly country: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
   readonly channel: Channel | null;
   readonly source: string | null;
   readonly campaign: string | null;

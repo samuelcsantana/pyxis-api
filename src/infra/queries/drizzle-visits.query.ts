@@ -89,6 +89,7 @@ function visitConditions(filters: VisitFilters): readonly SQL[] {
     ...(filters.deviceType === null ? [] : [sql`"deviceType" = ${filters.deviceType}`]),
     ...(filters.identity === null ? [] : [identityCondition(filters.identity)]),
     ...(filters.country === null ? [] : [sql`"country" = ${filters.country}`]),
+    ...(filters.region === null ? [] : [sql`"region" = ${filters.region}`]),
     ...(filters.source === null ? [] : [sql`"source" = ${filters.source}`]),
     ...(filters.campaign === null ? [] : [sql`"campaign" = ${filters.campaign}`]),
   ];
@@ -114,6 +115,8 @@ interface VisitRow {
   readonly browser: string;
   readonly os: string;
   readonly country: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
   readonly channel: Channel | null;
   readonly source: string | null;
   readonly campaign: string | null;
@@ -139,6 +142,8 @@ function listItem(row: VisitRow): VisitListItem {
     browser: row.browser,
     os: row.os,
     country: row.country,
+    region: row.region,
+    regionName: row.regionName,
     channel: row.channel,
     source: row.source,
     campaign: row.campaign,
@@ -168,6 +173,8 @@ export class DrizzleVisitsQuery implements VisitsQuery {
           ${firstOf(sql`${events.browser}`)} AS "browser",
           ${firstOf(sql`${events.os}`)} AS "os",
           ${firstOf(sql`${events.country}`)} AS "country",
+          ${firstOf(sql`${events.region}`)} AS "region",
+          ${firstOf(sql`${events.regionName}`)} AS "regionName",
           ${firstOf(sql`${events.channel}`, sql`${events.channel} IS NOT NULL`)} AS "channel",
           ${firstOf(entrySource, isEntryPageView)} AS "source",
           ${firstOf(sql`${events.utmCampaign}`, isEntryPageView)} AS "campaign",
@@ -198,7 +205,7 @@ export class DrizzleVisitsQuery implements VisitsQuery {
       )
       SELECT totals."total", page."sessionId", page."entryPath", page."pageViews",
         page."failedRequests", page."deviceType", page."browser", page."os", page."country",
-        page."channel", page."source", page."campaign", page."userId",
+        page."region", page."regionName", page."channel", page."source", page."campaign", page."userId",
         ${isoUtc(sql`page."startedAtValue"`)} AS "startedAt",
         ${isoUtc(sql`page."endedAtValue"`)} AS "endedAt",
         to_jsonb(ARRAY(

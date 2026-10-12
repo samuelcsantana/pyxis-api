@@ -2474,6 +2474,18 @@
                   "minimum": -9007199254740991,
                   "type": "integer"
                 },
+                "region": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "region_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "session_id": {
                   "format": "uuid",
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
@@ -2509,6 +2521,8 @@
                 "browser",
                 "os",
                 "country",
+                "region",
+                "region_name",
                 "channel",
                 "source",
                 "campaign",
@@ -4599,6 +4613,16 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The region of the visit: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
               "type": "string"
             }
           },

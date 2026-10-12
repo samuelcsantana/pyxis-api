@@ -35,6 +35,8 @@ function item(index: number): VisitListItem {
     browser: 'safari',
     os: 'ios',
     country: 'BR',
+    region: 'BR-SP',
+    regionName: 'São Paulo',
     channel: 'paid',
     source: 'google',
     campaign: 'spring_sale',

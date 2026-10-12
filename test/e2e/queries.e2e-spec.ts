@@ -370,6 +370,8 @@ describe('dashboard queries', () => {
           browser: 'chrome',
           os: 'macos',
           country: null,
+          region: null,
+          region_name: null,
           channel: null,
           source: null,
           campaign: null,

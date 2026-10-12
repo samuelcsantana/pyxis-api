@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CHANNELS, DEVICE_TYPES } from '../../../domain/entities/tracked-event.entity';
 import { COUNTRY_CODE_PATTERN } from '../../../domain/events/country';
+import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import {
   EVENT_NAME_PATTERN,
   MAX_PATH_LENGTH,
@@ -70,6 +71,7 @@ export const visitsQuerySchema = rangeQuerySchema
     device: z.enum(DEVICE_TYPES).optional(),
     identity: z.enum(VISIT_IDENTITIES).optional(),
     country: z.string().regex(COUNTRY_CODE_PATTERN).optional(),
+    region: z.string().regex(REGION_CODE_PATTERN).optional(),
     source: z.string().min(1).max(MAX_REFERRER_HOST_LENGTH).optional(),
     campaign: z.string().min(1).max(MAX_UTM_VALUE_LENGTH).optional(),
     route: routeFilterSchema.optional(),
@@ -99,6 +101,8 @@ export const visitsReportSchema = z
         browser: z.string(),
         os: z.string(),
         country: z.string().nullable(),
+        region: z.string().nullable(),
+        region_name: z.string().nullable(),
         channel: z.enum(CHANNELS).nullable(),
         source: z.string().nullable(),
         campaign: z.string().nullable(),
