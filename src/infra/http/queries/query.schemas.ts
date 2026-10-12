@@ -7,6 +7,7 @@ import {
   USER_ID_PATTERN,
 } from '../../../domain/events/event-limits';
 import { API_REQUEST_METHODS } from '../../../domain/events/reserved-event-names';
+import { TOP_REGIONS } from '../../../domain/queries/devices';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
 import { REQUEST_KINDS, STATUS_CLASSES } from '../../../domain/queries/requests';
@@ -107,19 +108,32 @@ const valueSharesSchema = z.array(
   }),
 );
 
+const regionSharesSchema = z.array(
+  z.strictObject({
+    value: z.string().nullable(),
+    name: z.string().nullable(),
+    visits: z.int(),
+    conversions: z.int().nullable(),
+    converting_visits: z.int().nullable(),
+  }),
+);
+
 export const devicesReportSchema = z
   .strictObject({
     device_types: valueSharesSchema,
     browsers: valueSharesSchema,
     operating_systems: valueSharesSchema,
     countries: valueSharesSchema,
+    regions: regionSharesSchema,
   })
   .meta({
     id: 'DevicesReport',
     description:
       'Visits, conversion events and converting visits (both null without a conversion event) ' +
       'per value, sorted by visits: the top five values and "other" for the rest, unknown ' +
-      'countries included.',
+      `countries included. regions lists the top ${String(TOP_REGIONS)} regions (the first ` +
+      'subdivision of the country, as an ISO 3166-2 code such as BR-SP, with the name CloudFront ' +
+      'gave it), then "other" for the rest, then a null value for visits without a region.',
   });
 
 const sourceShareShape = {

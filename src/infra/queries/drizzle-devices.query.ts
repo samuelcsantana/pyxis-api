@@ -1,6 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
-import type { DeviceDimension, DevicesQuery, ValueCount } from '../../domain/queries/devices';
+import type {
+  DeviceDimension,
+  DevicesQuery,
+  RegionCount,
+  ValueCount,
+} from '../../domain/queries/devices';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
@@ -34,6 +39,27 @@ export class DrizzleDevicesQuery implements DevicesQuery {
         FROM ${events}
         WHERE ${inScope(scope)}
         GROUP BY ${column}`,
+    );
+    return [...rows];
+  }
+
+  async regions(scope: QueryScope): Promise<readonly RegionCount[]> {
+    const rows = await this.db.execute<{
+      region: string | null;
+      name: string | null;
+      visits: number;
+      conversions: number;
+      convertingVisits: number;
+    }>(
+      sql`
+        SELECT ${events.region} AS "region",
+          max(${events.regionName}) AS "name",
+          ${visits} AS "visits",
+          count(*) FILTER (WHERE ${isConversion(scope)})::int AS "conversions",
+          ${convertingVisits(scope)} AS "convertingVisits"
+        FROM ${events}
+        WHERE ${inScope(scope)}
+        GROUP BY ${events.region}`,
     );
     return [...rows];
   }

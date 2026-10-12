@@ -5,6 +5,7 @@ import {
   DEVICES_QUERY,
   type DevicesQuery,
   type DevicesReport,
+  topRegionsAndRest,
   topValuesAndOther,
 } from '../../domain/queries/devices';
 import { CLOCK, type Clock } from '../../domain/services/clock';
@@ -22,12 +23,13 @@ export class GetDevicesUseCase {
     const countConversions = project.conversionEvent !== null;
     const shares = async (dimension: DeviceDimension) =>
       topValuesAndOther(await this.query.breakdown(current, dimension), countConversions);
-    const [deviceType, browser, os, country] = await Promise.all([
+    const [deviceType, browser, os, country, regions] = await Promise.all([
       shares('deviceType'),
       shares('browser'),
       shares('os'),
       shares('country'),
+      this.query.regions(current).then((counts) => topRegionsAndRest(counts, countConversions)),
     ]);
-    return { deviceType, browser, os, country };
+    return { deviceType, browser, os, country, regions };
   }
 }
