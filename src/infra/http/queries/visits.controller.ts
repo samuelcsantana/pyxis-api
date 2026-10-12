@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import { CHANNELS, DEVICE_TYPES } from '../../../domain/entities/tracked-event.entity';
+import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import {
   MAX_REFERRER_HOST_LENGTH,
   MAX_UTM_VALUE_LENGTH,
@@ -42,6 +43,7 @@ function visitFilters(query: VisitsQueryParams): VisitFilters {
     deviceType: query.device ?? null,
     identity: query.identity ?? null,
     country: query.country ?? null,
+    region: query.region ?? null,
     source: query.source ?? null,
     campaign: query.campaign ?? null,
     route: query.route ?? null,
@@ -63,6 +65,8 @@ function visitsBody(report: VisitsReport): VisitsReportBody {
       browser: visit.browser,
       os: visit.os,
       country: visit.country,
+      region: visit.region,
+      region_name: visit.regionName,
       channel: visit.channel,
       source: visit.source,
       campaign: visit.campaign,
@@ -128,6 +132,13 @@ export class VisitsController {
     required: false,
     description: 'The two-letter country code of the visit',
     schema: { type: 'string', pattern: '^[A-Z]{2}$' },
+  })
+  @ApiQuery({
+    name: 'region',
+    required: false,
+    description:
+      'The region of the visit: its ISO 3166-2 code, the country code, a hyphen and the subdivision',
+    schema: { type: 'string', pattern: REGION_CODE_PATTERN.source },
   })
   @ApiQuery({
     name: 'source',

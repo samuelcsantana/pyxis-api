@@ -113,7 +113,12 @@ const SEEDED: readonly TrackedEvent[] = [
   ...['e_one', 'e_two', 'e_three', 'e_four', 'e_five', 'e_six'].map((name, index) =>
     event(3, `2026-10-04T08:0${String(index + 1)}:00.000Z`, name, desktop),
   ),
-  event(4, '2026-10-04T08:00:00.000Z', 'page_view', { path: '/blog/post', country: 'PT' }),
+  event(4, '2026-10-04T08:00:00.000Z', 'page_view', {
+    path: '/blog/post',
+    country: 'PT',
+    region: 'PT-11',
+    regionName: 'Lisboa',
+  }),
   event(7, '2026-10-05T01:00:00.000Z', 'page_view', {
     path: '/inicio',
     channel: 'referral',
@@ -195,6 +200,8 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
+      region: null,
+      regionName: null,
       channel: 'paid',
       source: 'google',
       campaign: 'spring_sale',
@@ -210,6 +217,7 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       userId: 'ana',
     });
     expect(visits[2]).toMatchObject({ source: 'news.example.com', campaign: null });
+    expect(visits[3]).toMatchObject({ country: 'PT', region: 'PT-11', regionName: 'Lisboa' });
     expect(visits[4]).toMatchObject({ source: '(direct)', campaign: null });
   });
 
@@ -295,8 +303,10 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
     expect(await sessions({}, inSaoPaulo)).toEqual([visitId(7), visitId(4), visitId(3)]);
   });
 
-  it('filters by country, and by the entry source and campaign as Acquisition names them', async () => {
+  it('filters by country, region, and the entry source and campaign as Acquisition names them', async () => {
     expect(await sessions({ country: 'PT' })).toEqual([visitId(4)]);
+    expect(await sessions({ region: 'PT-11' })).toEqual([visitId(4)]);
+    expect(await sessions({ country: 'BR', region: 'PT-11' })).toEqual([]);
     expect(await sessions({ source: 'google' })).toEqual([visitId(1)]);
     expect(await sessions({ source: 'news.example.com' })).toEqual([visitId(7)]);
     expect(await sessions({ source: '(direct)' })).toEqual([visitId(3)]);
