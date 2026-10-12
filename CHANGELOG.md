@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.13.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.12.0...v0.13.0) (2026-10-12)
+
+
+### Features
+
+* **devices:** break the visits down by region ([1fb66d5](https://github.com/samuelcsantana/pyxis-api/commit/1fb66d5c33eeca40262b62d71fdb704fe3f4b199))
+* **events:** normalize the viewer's region from CloudFront headers ([9011ef7](https://github.com/samuelcsantana/pyxis-api/commit/9011ef75045a525e3e393246a4e4bcd51edd496e))
+* **ingest:** store the viewer's region next to the country ([127fb61](https://github.com/samuelcsantana/pyxis-api/commit/127fb61a805b1b5d4b8026105b2bee444efb5f19))
+* **subjects:** include the region in a person's exported events ([c5dfdee](https://github.com/samuelcsantana/pyxis-api/commit/c5dfdee5996cae2bde1d8cc421c1d68c6a732d4a))
+* **timeline:** show the region of each visit ([9c1adec](https://github.com/samuelcsantana/pyxis-api/commit/9c1adece3aeb9047aa976f2c25f4f001dd163f69))
+* **visits:** show and filter the visits by region ([a88a110](https://github.com/samuelcsantana/pyxis-api/commit/a88a1105364661c6d26428a72b04b7fe963c75b3))
+
+
+### Documentation
+
+* record why the region is kept and the city never is ([a7e46e8](https://github.com/samuelcsantana/pyxis-api/commit/a7e46e87008236c2a72afc57f017d88051de35bf))
+
 ## [0.12.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.11.0...v0.12.0) (2026-10-11)
 
 
