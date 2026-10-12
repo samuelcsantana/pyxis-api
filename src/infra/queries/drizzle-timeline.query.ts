@@ -34,6 +34,8 @@ interface VisitRow {
   readonly browser: string;
   readonly os: string;
   readonly country: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
   readonly channel: Channel | null;
   readonly userId: string | null;
 }
@@ -66,7 +68,8 @@ export class DrizzleTimelineQuery implements TimelineQuery {
       session_events AS (
         SELECT ${events.sessionId} AS "sessionId", ${events.occurredAt} AS "occurredAt",
           ${events.deviceType} AS "deviceType", ${events.browser} AS "browser",
-          ${events.os} AS "os", ${events.country} AS "country", ${events.channel} AS "channel",
+          ${events.os} AS "os", ${events.country} AS "country", ${events.region} AS "region",
+          ${events.regionName} AS "regionName", ${events.channel} AS "channel",
           ${events.userId} AS "userId"
         FROM ${events}
         WHERE ${events.projectId} = ${projectId}
@@ -74,7 +77,7 @@ export class DrizzleTimelineQuery implements TimelineQuery {
       ),
       visits AS (
         SELECT DISTINCT ON ("sessionId")
-          "sessionId", "deviceType", "browser", "os", "country",
+          "sessionId", "deviceType", "browser", "os", "country", "region", "regionName",
           min("occurredAt") OVER (PARTITION BY "sessionId") AS "startedAtValue",
           max("occurredAt") OVER (PARTITION BY "sessionId") AS "endedAtValue",
           (SELECT entry."channel" FROM session_events AS entry
@@ -86,7 +89,8 @@ export class DrizzleTimelineQuery implements TimelineQuery {
         FROM session_events
         ORDER BY "sessionId", "occurredAt"
       )
-      SELECT "sessionId", "deviceType", "browser", "os", "country", "channel", "userId",
+      SELECT "sessionId", "deviceType", "browser", "os", "country", "region", "regionName",
+        "channel", "userId",
         ${isoUtc(sql`"startedAtValue"`)} AS "startedAt",
         ${isoUtc(sql`"endedAtValue"`)} AS "endedAt"
       FROM visits

@@ -210,6 +210,8 @@ function timelineBody(report: TimelineReport): TimelineReportBody {
       browser: visit.browser,
       os: visit.os,
       country: visit.country,
+      region: visit.region,
+      region_name: visit.regionName,
       channel: visit.channel,
       user_id: visit.userId,
       events: visit.events.map((event) => ({
