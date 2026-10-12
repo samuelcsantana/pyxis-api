@@ -57,6 +57,8 @@ function subjectEventsBody(page: SubjectEventsPage): SubjectEventsBody {
       browser: event.browser,
       os: event.os,
       country: event.country,
+      region: event.region,
+      region_name: event.regionName,
       properties: { ...event.properties },
     })),
     next_after: page.nextAfter,

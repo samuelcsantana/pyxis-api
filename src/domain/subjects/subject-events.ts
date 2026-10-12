@@ -17,6 +17,8 @@ export interface SubjectEvent {
   readonly browser: string;
   readonly os: string;
   readonly country: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
   readonly properties: PropertyMap;
 }
 
