@@ -46,5 +46,7 @@ export interface TrackedEvent {
   readonly browser: BrowserFamily;
   readonly os: OsFamily;
   readonly country: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
   readonly properties: PropertyMap;
 }

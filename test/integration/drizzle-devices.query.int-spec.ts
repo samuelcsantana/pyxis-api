@@ -33,6 +33,8 @@ function event(
     path: '/',
     attribution: null,
     channel: null,
+    region: null,
+    regionName: null,
     properties: {},
     ...device,
     ...overrides,

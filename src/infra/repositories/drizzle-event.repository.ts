@@ -24,6 +24,8 @@ export function toEventRow(event: TrackedEvent): NewEventRow {
     browser: event.browser,
     os: event.os,
     country: event.country,
+    region: event.region,
+    regionName: event.regionName,
     channel: event.channel,
     properties: event.properties,
   };

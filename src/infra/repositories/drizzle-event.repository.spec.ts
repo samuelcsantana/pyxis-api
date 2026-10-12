@@ -16,6 +16,8 @@ const EVENT: TrackedEvent = {
   browser: 'firefox',
   os: 'linux',
   country: null,
+  region: null,
+  regionName: null,
   properties: {},
 };
 

@@ -9,6 +9,7 @@ const CONTEXT: ReceptionContext = {
   receivedAt: RECEIVED_AT,
   device: { deviceType: 'mobile', browser: 'safari', os: 'ios' },
   country: 'BR',
+  region: { region: 'BR-SP', regionName: 'São Paulo' },
 };
 
 const EVENT: AcceptedEvent = {
@@ -23,7 +24,7 @@ const EVENT: AcceptedEvent = {
 };
 
 describe('buildTrackedEvent', () => {
-  it('stamps the project, the reception, the device and the country, and corrects the clock', () => {
+  it('stamps the project, the reception, the device and the location, and corrects the clock', () => {
     expect(buildTrackedEvent(EVENT, CONTEXT)).toEqual({
       id: EVENT.id,
       projectId: CONTEXT.projectId,
@@ -39,6 +40,8 @@ describe('buildTrackedEvent', () => {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
+      region: 'BR-SP',
+      regionName: 'São Paulo',
       properties: { plan: 'pro' },
     });
   });

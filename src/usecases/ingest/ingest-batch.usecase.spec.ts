@@ -85,6 +85,8 @@ function setup() {
     userAgent: SAFARI_IPHONE,
     clientHints: {},
     viewerCountry: 'BR',
+    viewerRegion: 'SP',
+    viewerRegionName: 'S%C3%A3o%20Paulo',
     ...overrides,
   });
   return { useCase, events, rateLimiter, command };
@@ -108,7 +110,7 @@ describe('IngestBatchUseCase', () => {
     expect(events.stored).toHaveLength(2);
   });
 
-  it('stamps the project, the device, the country and the reception time on each event', async () => {
+  it('stamps the project, the device, the location and the reception time on each event', async () => {
     const { useCase, events, command } = setup();
 
     await useCase.execute(command());
@@ -120,6 +122,8 @@ describe('IngestBatchUseCase', () => {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
+      region: 'BR-SP',
+      regionName: 'São Paulo',
     });
   });
 
@@ -137,6 +141,14 @@ describe('IngestBatchUseCase', () => {
     await useCase.execute(command({ viewerCountry: 'XX1' }));
 
     expect(events.stored[0]?.country).toBeNull();
+  });
+
+  it('keeps no region when the country was dropped', async () => {
+    const { useCase, events, command } = setup();
+
+    await useCase.execute(command({ viewerCountry: undefined }));
+
+    expect(events.stored[0]).toMatchObject({ country: null, region: null, regionName: null });
   });
 
   it('counts a resent event as a duplicate', async () => {
