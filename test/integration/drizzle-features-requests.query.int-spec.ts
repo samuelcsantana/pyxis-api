@@ -38,6 +38,8 @@ function event(
     browser: 'safari',
     os: 'ios',
     country: 'BR',
+    region: null,
+    regionName: null,
     properties: {},
     ...overrides,
   };

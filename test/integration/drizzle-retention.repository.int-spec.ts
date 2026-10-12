@@ -36,6 +36,8 @@ function event(projectId: string, occurredAt: Date): TrackedEvent {
     browser: 'safari',
     os: 'ios',
     country: 'BR',
+    region: null,
+    regionName: null,
     properties: {},
   };
 }

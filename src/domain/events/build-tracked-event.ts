@@ -2,6 +2,7 @@ import type { TrackedEvent } from '../entities/tracked-event.entity';
 import { classifyChannel } from './channel';
 import { correctOccurredAt } from './occurred-at';
 import type { UserAgentClassification } from './user-agent';
+import type { ViewerRegion } from './region';
 import type { AcceptedEvent } from './validate-event';
 
 export interface ReceptionContext {
@@ -10,6 +11,7 @@ export interface ReceptionContext {
   readonly receivedAt: Date;
   readonly device: UserAgentClassification;
   readonly country: string | null;
+  readonly region: ViewerRegion;
 }
 
 export function buildTrackedEvent(event: AcceptedEvent, context: ReceptionContext): TrackedEvent {
@@ -28,6 +30,8 @@ export function buildTrackedEvent(event: AcceptedEvent, context: ReceptionContex
     browser: context.device.browser,
     os: context.device.os,
     country: context.country,
+    region: context.region.region,
+    regionName: context.region.regionName,
     properties: event.properties,
   };
 }

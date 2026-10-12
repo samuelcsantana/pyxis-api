@@ -91,6 +91,8 @@ export class IngestController {
         platform: singleHeader(request, 'sec-ch-ua-platform'),
       },
       viewerCountry: singleHeader(request, 'cloudfront-viewer-country'),
+      viewerRegion: singleHeader(request, 'cloudfront-viewer-country-region'),
+      viewerRegionName: singleHeader(request, 'cloudfront-viewer-country-region-name'),
     });
     allowOrigin(reply, result.allowedOrigin);
     this.logOutcome(request.requestId, result);

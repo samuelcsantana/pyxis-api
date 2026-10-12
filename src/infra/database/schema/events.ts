@@ -34,6 +34,8 @@ export const events = pgTable(
     browser: varchar('browser', { length: 32 }).notNull(),
     os: varchar('os', { length: 32 }).notNull(),
     country: char('country', { length: 2 }),
+    region: varchar('region', { length: 6 }),
+    regionName: varchar('region_name', { length: 64 }),
     channel: varchar('channel', { length: 16 }),
     properties: jsonb('properties').$type<PropertyMap>().notNull().default({}),
   },

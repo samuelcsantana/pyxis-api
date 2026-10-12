@@ -9,6 +9,7 @@ import {
 } from '../../domain/errors/ingest.errors';
 import { buildTrackedEvent, type ReceptionContext } from '../../domain/events/build-tracked-event';
 import { normalizeCountry } from '../../domain/events/country';
+import { normalizeRegion } from '../../domain/events/region';
 import { EVENT_NAME_PATTERN, MAX_EVENTS_PER_BATCH } from '../../domain/events/event-limits';
 import type { PiiReason } from '../../domain/events/pii-barrier';
 import {
@@ -39,6 +40,8 @@ export interface IngestBatchCommand {
   readonly userAgent: string | undefined;
   readonly clientHints: ClientHints;
   readonly viewerCountry: string | undefined;
+  readonly viewerRegion: string | undefined;
+  readonly viewerRegionName: string | undefined;
 }
 
 export interface EventRejection {
@@ -104,12 +107,14 @@ export class IngestBatchUseCase {
         dropped: [],
       };
     }
+    const country = normalizeCountry(command.viewerCountry);
     const context: ReceptionContext = {
       projectId: project.id,
       sentAt: command.sentAt,
       receivedAt,
       device: classifyUserAgent(command.userAgent, command.clientHints),
-      country: normalizeCountry(command.viewerCountry),
+      country,
+      region: normalizeRegion(country, command.viewerRegion, command.viewerRegionName),
     };
     return this.ingest(command.events, context, origin);
   }

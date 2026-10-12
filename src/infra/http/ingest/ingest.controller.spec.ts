@@ -47,6 +47,8 @@ function setup() {
       'sec-ch-ua-mobile': '?0',
       'sec-ch-ua-platform': '"macOS"',
       'cloudfront-viewer-country': 'BR',
+      'cloudfront-viewer-country-region': 'SP',
+      'cloudfront-viewer-country-region-name': 'S%C3%A3o%20Paulo',
     },
   } as unknown as FastifyRequest;
   return { controller: new IngestController(useCase), commands, headers, reply, request };
@@ -81,6 +83,8 @@ describe('IngestController', () => {
         userAgent: 'Mozilla/5.0 (Macintosh)',
         clientHints: { mobile: '?0', platform: '"macOS"' },
         viewerCountry: 'BR',
+        viewerRegion: 'SP',
+        viewerRegionName: 'S%C3%A3o%20Paulo',
       },
     ]);
   });

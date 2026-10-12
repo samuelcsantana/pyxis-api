@@ -37,6 +37,8 @@ function event(
     browser: 'chrome',
     os: 'macos',
     country: 'BR',
+    region: null,
+    regionName: null,
     ...overrides,
   };
 }

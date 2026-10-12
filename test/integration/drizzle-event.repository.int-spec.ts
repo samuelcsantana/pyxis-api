@@ -27,6 +27,8 @@ function trackedEvent(index: number, overrides: Partial<TrackedEvent> = {}): Tra
     browser: 'safari',
     os: 'ios',
     country: 'BR',
+    region: null,
+    regionName: null,
     properties: {},
     ...overrides,
   };
@@ -84,11 +86,13 @@ describe('DrizzleEventRepository against a real Postgres', () => {
     expect(await repository.insertMany([])).toEqual({ inserted: 0 });
   });
 
-  it('stores the attribution flat and the properties as JSON', async () => {
+  it('stores the attribution flat, the region and the properties as JSON', async () => {
     await repository.insertMany([
       trackedEvent(1, {
         channel: 'paid',
         userId: 'user_42',
+        region: 'BR-SP',
+        regionName: 'São Paulo',
         attribution: {
           referrerHost: 'google.com',
           utmSource: 'google',
@@ -102,7 +106,7 @@ describe('DrizzleEventRepository against a real Postgres', () => {
 
     const [row] = await owner<Record<string, unknown>[]>`
       SELECT user_id, referrer_host, utm_source, utm_medium, utm_campaign, from_ad_click, channel,
-             device_type, browser, os, country, properties
+             device_type, browser, os, country, region, region_name, properties
       FROM events
     `;
     expect(row).toEqual({
@@ -117,6 +121,8 @@ describe('DrizzleEventRepository against a real Postgres', () => {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
+      region: 'BR-SP',
+      region_name: 'São Paulo',
       properties: { plan: 'pro', seats: 3, trial: true },
     });
   });

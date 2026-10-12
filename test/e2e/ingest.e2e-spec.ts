@@ -42,6 +42,7 @@ interface SendOptions {
   readonly contentType?: string;
   readonly userAgent?: string;
   readonly clientIp?: string;
+  readonly location?: Readonly<Record<string, string>>;
 }
 
 describe('POST /v1/batch', () => {
@@ -58,6 +59,7 @@ describe('POST /v1/batch', () => {
         'user-agent': options.userAgent ?? SAFARI_IPHONE,
         [E2E_CLIENT_IP_HEADER]: options.clientIp ?? nextClientIp(),
         ...(options.origin === null ? {} : { origin: options.origin ?? ORIGIN }),
+        ...options.location,
       },
     });
 
@@ -132,6 +134,24 @@ describe('POST /v1/batch', () => {
     expect(row).toMatchObject({ device_type: 'mobile', browser: 'safari', os: 'ios' });
     expect(stored).not.toContain('Mozilla');
     expect(stored).not.toContain('203.0.113.99');
+  });
+
+  it('stores the country and the region from CloudFront, and never the city', async () => {
+    await send({
+      body: batch([event(52)]),
+      location: {
+        'cloudfront-viewer-country': 'BR',
+        'cloudfront-viewer-country-region': 'SP',
+        'cloudfront-viewer-country-region-name': 'S%C3%A3o%20Paulo',
+        'cloudfront-viewer-city': 'Campinas',
+      },
+    });
+
+    const [row] = await owner<Record<string, unknown>[]>`
+      SELECT * FROM events WHERE project_id = ${SHOP_ID} AND id = ${String(event(52).id)}
+    `;
+    expect(row).toMatchObject({ country: 'BR', region: 'BR-SP', region_name: 'São Paulo' });
+    expect(JSON.stringify(row)).not.toContain('Campinas');
   });
 
   it.each([
