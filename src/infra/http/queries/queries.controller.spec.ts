@@ -167,6 +167,8 @@ const TIMELINE: TimelineReport = {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
+      region: 'BR-SP',
+      regionName: 'São Paulo',
       channel: 'paid',
       userId: 'ana',
       events: [
@@ -466,6 +468,8 @@ describe('QueriesController', () => {
           browser: 'safari',
           os: 'ios',
           country: 'BR',
+          region: 'BR-SP',
+          region_name: 'São Paulo',
           channel: 'paid',
           user_id: 'ana',
           events: [

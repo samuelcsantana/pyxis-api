@@ -14,6 +14,8 @@ export interface VisitSummary {
   readonly browser: string;
   readonly os: string;
   readonly country: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
   readonly channel: Channel | null;
   readonly userId: string | null;
 }

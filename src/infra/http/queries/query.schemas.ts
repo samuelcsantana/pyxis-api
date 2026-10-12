@@ -231,6 +231,8 @@ export const timelineReportSchema = z
         browser: z.string(),
         os: z.string(),
         country: z.string().nullable(),
+        region: z.string().nullable(),
+        region_name: z.string().nullable(),
         channel: z.enum(CHANNELS).nullable(),
         user_id: z.string().nullable(),
         events: z.array(
