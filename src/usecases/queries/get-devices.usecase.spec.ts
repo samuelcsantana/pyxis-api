@@ -23,13 +23,17 @@ function setup(project: Project = PROJECT) {
 }
 
 describe('GetDevicesUseCase', () => {
-  it('asks each dimension for the range in the project zone and ranks the values', async () => {
+  it('asks each dimension and the regions for the range in the project zone and ranks them', async () => {
     const { query, run } = setup();
     query.counts.set('deviceType', [
       { value: 'desktop', visits: 2, conversions: 0, convertingVisits: 0 },
       { value: 'mobile', visits: 5, conversions: 1, convertingVisits: 1 },
     ]);
     query.counts.set('country', [{ value: null, visits: 1, conversions: 0, convertingVisits: 0 }]);
+    query.regionCounts = [
+      { region: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
+      { region: 'BR-SP', name: 'São Paulo', visits: 6, conversions: 1, convertingVisits: 1 },
+    ];
 
     const report = await run('2026-09-06', '2026-10-05');
 
@@ -47,7 +51,14 @@ describe('GetDevicesUseCase', () => {
       'os',
       'country',
     ]);
+    expect(report.regions).toEqual([
+      { value: 'BR-SP', name: 'São Paulo', visits: 6, conversions: 1, convertingVisits: 1 },
+      { value: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
+    ]);
     expect(query.asked[0]?.scope.range).toEqual({ from: '2026-09-06', to: '2026-10-05' });
+    expect(query.askedForRegions.map((scope) => scope.range)).toEqual([
+      { from: '2026-09-06', to: '2026-10-05' },
+    ]);
   });
 
   it('answers null conversions without a conversion event', async () => {

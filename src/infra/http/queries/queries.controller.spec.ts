@@ -87,6 +87,10 @@ const DEVICES: DevicesReport = {
   browser: [{ value: 'safari', visits: 4, conversions: 2, convertingVisits: 1 }],
   os: [{ value: 'ios', visits: 4, conversions: 2, convertingVisits: 1 }],
   country: [{ value: 'other', visits: 4, conversions: null, convertingVisits: null }],
+  regions: [
+    { value: 'BR-SP', name: 'São Paulo', visits: 3, conversions: 2, convertingVisits: 1 },
+    { value: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
+  ],
 };
 
 const ACQUISITION: AcquisitionReport = {
@@ -280,6 +284,10 @@ describe('QueriesController', () => {
       browsers: [{ value: 'safari', visits: 4, conversions: 2, converting_visits: 1 }],
       operating_systems: [{ value: 'ios', visits: 4, conversions: 2, converting_visits: 1 }],
       countries: [{ value: 'other', visits: 4, conversions: null, converting_visits: null }],
+      regions: [
+        { value: 'BR-SP', name: 'São Paulo', visits: 3, conversions: 2, converting_visits: 1 },
+        { value: null, name: null, visits: 1, conversions: 0, converting_visits: 0 },
+      ],
     });
   });
 

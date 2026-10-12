@@ -1,4 +1,10 @@
-import { OTHER_VALUE, TOP_DEVICE_VALUES, topValuesAndOther } from './devices';
+import {
+  OTHER_VALUE,
+  TOP_DEVICE_VALUES,
+  TOP_REGIONS,
+  topRegionsAndRest,
+  topValuesAndOther,
+} from './devices';
 
 const count = (value: string | null, visits: number, conversions = 0) => ({
   value,
@@ -44,6 +50,65 @@ describe('topValuesAndOther', () => {
   it('answers null conversions when the project counts none', () => {
     expect(topValuesAndOther([count('mobile', 4, 2)], false)).toEqual([
       { value: 'mobile', visits: 4, conversions: null, convertingVisits: null },
+    ]);
+  });
+});
+
+const regionCount = (region: string | null, visits: number, conversions = 0) => ({
+  region,
+  name: region === null ? null : `Name of ${region}`,
+  visits,
+  conversions,
+  convertingVisits: Math.min(conversions, 1),
+});
+
+describe('topRegionsAndRest', () => {
+  it('keeps every region with its name when there are few, sorted by visits then by code', () => {
+    expect(
+      topRegionsAndRest(
+        [regionCount('BR-SP', 2, 1), regionCount('BR-BA', 5), regionCount('BR-RJ', 2)],
+        true,
+      ),
+    ).toEqual([
+      { value: 'BR-BA', name: 'Name of BR-BA', visits: 5, conversions: 0, convertingVisits: 0 },
+      { value: 'BR-RJ', name: 'Name of BR-RJ', visits: 2, conversions: 0, convertingVisits: 0 },
+      { value: 'BR-SP', name: 'Name of BR-SP', visits: 2, conversions: 1, convertingVisits: 1 },
+    ]);
+  });
+
+  it(`keeps the top ${String(TOP_REGIONS)}, then the rest as other, then the unknown last`, () => {
+    const counts = Array.from({ length: TOP_REGIONS + 2 }, (_, index) =>
+      regionCount(`BR-${String(index).padStart(2, '0')}`, 20 - index, 1),
+    );
+
+    const shares = topRegionsAndRest([regionCount(null, 30, 2), ...counts], true);
+
+    expect(shares).toHaveLength(TOP_REGIONS + 2);
+    expect(shares.at(-2)).toEqual({
+      value: OTHER_VALUE,
+      name: null,
+      visits: 20 - TOP_REGIONS + (20 - TOP_REGIONS - 1),
+      conversions: 2,
+      convertingVisits: 2,
+    });
+    expect(shares.at(-1)).toEqual({
+      value: null,
+      name: null,
+      visits: 30,
+      conversions: 2,
+      convertingVisits: 1,
+    });
+  });
+
+  it('adds no other and no unknown row when nothing is left over', () => {
+    expect(topRegionsAndRest([regionCount('BR-SP', 1)], true).map((share) => share.value)).toEqual([
+      'BR-SP',
+    ]);
+  });
+
+  it('answers null conversions when the project counts none', () => {
+    expect(topRegionsAndRest([regionCount(null, 4, 2)], false)).toEqual([
+      { value: null, name: null, visits: 4, conversions: null, convertingVisits: null },
     ]);
   });
 });

@@ -115,6 +115,13 @@ function devicesBody(report: DevicesReport): DevicesReportBody {
     browsers: sharesBody(report.browser),
     operating_systems: sharesBody(report.os),
     countries: sharesBody(report.country),
+    regions: report.regions.map((share) => ({
+      value: share.value,
+      name: share.name,
+      visits: share.visits,
+      conversions: share.conversions,
+      converting_visits: share.convertingVisits,
+    })),
   };
 }
 
@@ -254,7 +261,9 @@ export class QueriesController {
 
   @Get('devices')
   @ApiRange()
-  @ApiOperation({ summary: 'Visits and conversions by device type, browser, system and country' })
+  @ApiOperation({
+    summary: 'Visits and conversions by device type, browser, system, country and region',
+  })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: devicesReportSchema })
   async devices(
     @Req() request: FastifyRequest,

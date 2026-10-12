@@ -18,7 +18,7 @@ let sequence = 0;
 function event(
   sessionNumber: number,
   name: string,
-  device: Pick<TrackedEvent, 'deviceType' | 'browser' | 'os' | 'country'>,
+  device: Pick<TrackedEvent, 'deviceType' | 'browser' | 'os' | 'country' | 'region' | 'regionName'>,
   overrides: Partial<TrackedEvent> = {},
 ): TrackedEvent {
   sequence += 1;
@@ -33,16 +33,28 @@ function event(
     path: '/',
     attribution: null,
     channel: null,
-    region: null,
-    regionName: null,
     properties: {},
     ...device,
     ...overrides,
   };
 }
 
-const IPHONE = { deviceType: 'mobile', browser: 'safari', os: 'ios', country: 'BR' } as const;
-const LAPTOP = { deviceType: 'desktop', browser: 'chrome', os: 'macos', country: null } as const;
+const IPHONE = {
+  deviceType: 'mobile',
+  browser: 'safari',
+  os: 'ios',
+  country: 'BR',
+  region: 'BR-SP',
+  regionName: 'São Paulo',
+} as const;
+const LAPTOP = {
+  deviceType: 'desktop',
+  browser: 'chrome',
+  os: 'macos',
+  country: null,
+  region: null,
+  regionName: null,
+} as const;
 
 const SEEDED: readonly TrackedEvent[] = [
   event(1, 'page_view', IPHONE),
@@ -116,6 +128,15 @@ describe('DrizzleDevicesQuery against a real Postgres', () => {
       conversions: 0,
       convertingVisits: 0,
     });
+  });
+
+  it('groups by region with its name, and keeps a missing region as null', async () => {
+    const rows = await query.regions(SCOPE);
+
+    expect([...rows].sort((left, right) => right.visits - left.visits)).toEqual([
+      { region: 'BR-SP', name: 'São Paulo', visits: 2, conversions: 2, convertingVisits: 1 },
+      { region: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
+    ]);
   });
 
   it('never counts another project', async () => {
