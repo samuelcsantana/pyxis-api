@@ -11,6 +11,8 @@ const HTML_LINE_LIMIT = 400;
 const GMAIL_CLIPPING_BYTES = 102 * 1024;
 const HOSTILE = `<i>&"'`;
 const RANGE_DASH = ' – ';
+const COMPACT_RANGE_DASH = '\u2013';
+const NO_BREAK_SPACE = '\u00a0';
 const ESCAPED_HOSTILE = '&lt;i&gt;&amp;&quot;&#39;';
 
 const BUSY_WEEK: WeeklyDigest = {
@@ -238,6 +240,61 @@ describe('the weekly digest in Brazilian Portuguese', () => {
   });
 });
 
+describe('the weekly digest in Spanish', () => {
+  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'es');
+
+  it('names the project, the week and the visits with their change in the subject', () => {
+    expect(email.subject).toBe(
+      `Acme Store · 5${COMPACT_RANGE_DASH}11 oct · 812 visitas (+12${NO_BREAK_SPACE}%)`,
+    );
+  });
+
+  it('uses the words of the dashboard and Spanish number formats', () => {
+    const text = textOf(email.html);
+
+    expect(text).toContain('Resumen semanal');
+    expect(text).toContain('Visitas 812 +12 % frente a la semana anterior (725)');
+    expect(text).toContain(
+      'Usuarios identificados 120 iniciaron sesión al menos una vez sin variación frente a la semana anterior (120)',
+    );
+    expect(text).toContain('Visitas con conversión 41 5,0 % de las visitas 0 la semana anterior');
+    expect(text).toContain('Escrituras fallidas 3 de 1204 escrituras, 0,2 %');
+    expect(text).toContain('Páginas más vistas /orders/:id 1500 vistas');
+    expect(text).toContain('Eventos principales signup_completed 50 veces');
+    expect(text).toContain('Rutas con fallos POST /orders 2 de 340 fallaron');
+    expect(text).toContain('Abrir la semana en el panel');
+    expect(text).toContain(
+      'Recibes este correo los lunes porque eres admin de Acme Store en Pyxis.',
+    );
+    expect(text).toContain(
+      'Para dejar de recibirlo, desactiva el resumen semanal en Configuración',
+    );
+  });
+
+  it('dates the week and names the time zone in Spanish', () => {
+    expect(textOf(email.html)).toContain(
+      `lunes, 5 de octubre${RANGE_DASH}domingo, 11 de octubre de 2026 · hora estándar de Brasilia`,
+    );
+    expect(email.text).toContain('  lun  130');
+  });
+
+  it('keeps the time zone id when only an offset names it', () => {
+    const utc = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone: 'UTC' }, 'es');
+
+    expect(utc.text).toContain('domingo, 11 de octubre de 2026 · UTC\n');
+  });
+
+  it('previews the week in Spanish in the inbox', () => {
+    expect(preheaderOf(email.html)).toBe(
+      '120 usuarios identificados · 41 visitas con conversión · 3 escrituras fallidas',
+    );
+  });
+
+  it('declares Spanish as its language', () => {
+    expect(email.html).toContain('<html lang="es" dir="ltr">');
+  });
+});
+
 describe('the inbox preview of the weekly digest', () => {
   const single: WeeklyDigest = {
     ...BUSY_WEEK,
@@ -252,6 +309,9 @@ describe('the inbox preview of the weekly digest', () => {
     );
     expect(preheaderOf(buildWeeklyDigestEmail(single, 'pt-BR').html)).toBe(
       '1 usuário identificado · 1 visita com conversão · 1 gravação com falha',
+    );
+    expect(preheaderOf(buildWeeklyDigestEmail(single, 'es').html)).toBe(
+      '1 usuario identificado · 1 visita con conversión · 1 escritura fallida',
     );
   });
 
@@ -271,6 +331,10 @@ describe('the inbox preview of the weekly digest', () => {
       'Nenhuma visita chegou na semana passada. ' +
         'O último evento foi recebido em 2 de outubro de 2026 às 11:31.',
     );
+    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'es').html)).toBe(
+      'No llegó ninguna visita la semana pasada. ' +
+        'El último evento se recibió el 2 de octubre de 2026 a las 11:31.',
+    );
   });
 });
 
@@ -282,6 +346,12 @@ describe('a week without visits', () => {
     expect(email.html).toContain('class="pyxis-notice"');
     expect(email.text).toContain(
       'No visits arrived last week.\nThe last event was received on October 2, 2026 at 11:31 AM.',
+    );
+  });
+
+  it('says when the last event arrived in Spanish too', () => {
+    expect(buildWeeklyDigestEmail(QUIET_WEEK, 'es').text).toContain(
+      'No llegó ninguna visita la semana pasada.\nEl último evento se recibió el 2 de octubre de 2026 a las 11:31.',
     );
   });
 
@@ -307,6 +377,9 @@ describe('a week without visits', () => {
     );
     expect(buildWeeklyDigestEmail(never, 'pt-BR').text).toContain(
       'Nenhuma visita chegou na semana passada.\nNenhum evento chegou ainda para este projeto.',
+    );
+    expect(buildWeeklyDigestEmail(never, 'es').text).toContain(
+      'No llegó ninguna visita la semana pasada.\nTodavía no llegó ningún evento para este proyecto.',
     );
   });
 
@@ -337,6 +410,9 @@ describe('a week with one visit and none the week before', () => {
     );
     expect(buildWeeklyDigestEmail(single, 'pt-BR').subject).toBe(
       `Acme Store · 5${RANGE_DASH}11 de out. · 1 visita`,
+    );
+    expect(buildWeeklyDigestEmail(single, 'es').subject).toBe(
+      `Acme Store · 5${COMPACT_RANGE_DASH}11 oct · 1 visita`,
     );
   });
 

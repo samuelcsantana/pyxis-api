@@ -54,9 +54,15 @@ describe('resolveEmailLanguage', () => {
     expect(resolveEmailLanguage('en-GB')).toBe('en');
   });
 
+  it('writes in Spanish for any Spanish, whatever the region', () => {
+    expect(resolveEmailLanguage('es')).toBe('es');
+    expect(resolveEmailLanguage('es-419')).toBe('es');
+    expect(resolveEmailLanguage('ES-mx')).toBe('es');
+  });
+
   it('falls back to English for a language it has no email for', () => {
-    expect(resolveEmailLanguage('es')).toBe('en');
-    expect(resolveEmailLanguage('es-419')).toBe('en');
+    expect(resolveEmailLanguage('fr')).toBe('en');
+    expect(resolveEmailLanguage('de-AT')).toBe('en');
   });
 });
 

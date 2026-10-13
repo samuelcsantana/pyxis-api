@@ -104,6 +104,43 @@ describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
   });
 });
 
+describe('buildSignInCodeEmail in Spanish', () => {
+  const email = buildSignInCodeEmail(CODE, 'es');
+
+  it('keeps the code first in the subject', () => {
+    expect(email.subject).toBe('123456 es tu código para iniciar sesión en Pyxis');
+  });
+
+  it('shows the code in the inbox list through a hidden preheader', () => {
+    expect(email.html).toMatch(/<div style="display:none;[^"]*">Tu código es 123456\. Expira/);
+  });
+
+  it('names the page where the code goes by the title the dashboard gives it', () => {
+    expect(email.html).toContain('Escribe este código en la página “Iniciar sesión en Pyxis”');
+    expect(email.text).toContain('Escribe este código en la página “Iniciar sesión en Pyxis”');
+  });
+
+  it('says how long the code lasts, that it works once, and how to treat it', () => {
+    for (const part of [email.html, email.text.replaceAll('\n', ' ')]) {
+      expect(part).toContain('Expira en 10 minutos y solo sirve una vez.');
+      expect(part).toContain('Nunca compartas este código. Nadie de Pyxis te lo va a pedir.');
+      expect(part).toContain('¿No pediste iniciar sesión? Puedes ignorar este correo:');
+    }
+  });
+
+  it('ends with what Pyxis is, why the email came and the dashboard address', () => {
+    for (const part of [email.html, email.text]) {
+      expect(part).toContain('Pyxis es analítica de producto que prioriza la privacidad');
+      expect(part).toContain('Recibiste este correo porque alguien pidió iniciar sesión');
+    }
+    expect(email.text).toContain(`Panel: ${DASHBOARD_URL}`);
+  });
+
+  it('declares Spanish as its language', () => {
+    expect(email.html).toContain('<html lang="es" dir="ltr">');
+  });
+});
+
 describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
   const email = buildSignInCodeEmail(CODE, language);
 

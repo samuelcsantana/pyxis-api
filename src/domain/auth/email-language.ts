@@ -1,4 +1,4 @@
-export const EMAIL_LANGUAGES = ['en', 'pt-BR'] as const;
+export const EMAIL_LANGUAGES = ['en', 'pt-BR', 'es'] as const;
 
 export type EmailLanguage = (typeof EMAIL_LANGUAGES)[number];
 

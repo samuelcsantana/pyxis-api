@@ -54,4 +54,25 @@ export const SIGN_IN_CODE_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, SignInC
       dashboard: 'Painel',
       logoAlt: 'Pyxis',
     },
+    es: {
+      language: 'es',
+      subject: (code) => `${code} es tu código para iniciar sesión en Pyxis`,
+      preheader: (code, minutes) =>
+        `Tu código es ${code}. Expira en ${String(minutes)} minutos y solo sirve una vez.`,
+      heading: 'Tu código para iniciar sesión',
+      instruction:
+        'Escribe este código en la página “Iniciar sesión en Pyxis” para abrir tu panel.',
+      expiry: (minutes) => `Expira en ${String(minutes)} minutos y solo sirve una vez.`,
+      neverShare: 'Nunca compartas este código. Nadie de Pyxis te lo va a pedir.',
+      notRequested:
+        '¿No pediste iniciar sesión? Puedes ignorar este correo: nadie puede entrar sin este código.',
+      about:
+        'Pyxis es analítica de producto que prioriza la privacidad: ' +
+        'sin cookies y sin datos personales en los eventos.',
+      reason:
+        'Recibiste este correo porque alguien pidió iniciar sesión en el panel de Pyxis ' +
+        'con esta dirección.',
+      dashboard: 'Panel',
+      logoAlt: 'Pyxis',
+    },
   };

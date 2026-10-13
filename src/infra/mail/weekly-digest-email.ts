@@ -24,7 +24,11 @@ import {
   type WeeklyDigestEmailMessages,
 } from './weekly-digest-email-messages';
 
-const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = { en: 'en-US', 'pt-BR': 'pt-BR' };
+const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
+  en: 'en-US',
+  'pt-BR': 'pt-BR',
+  es: 'es',
+};
 const PERCENT_SCALE = 100;
 const BAR_MAX_HEIGHT_PX = 64;
 const BAR_MIN_HEIGHT_PX = 3;
