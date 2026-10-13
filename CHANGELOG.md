@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.14.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.13.0...v0.14.0) (2026-10-13)
+
+
+### Features
+
+* **mail:** write the sign-in and weekly digest e-mails in Spanish ([6c4acc5](https://github.com/samuelcsantana/pyxis-api/commit/6c4acc5ea18c7f51972cec614af04228e0fac30f))
+
+
+### Documentation
+
+* **api:** name Spanish among the sign-in e-mail languages ([575358e](https://github.com/samuelcsantana/pyxis-api/commit/575358e4f010b3180779d8efad5e5cfec5cffcfb))
+* **readme:** link the introduction post ([ee69372](https://github.com/samuelcsantana/pyxis-api/commit/ee6937262bf26a4b4940fdb72178531be4846f84))
+
 ## [0.13.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.12.0...v0.13.0) (2026-10-12)
 
 
