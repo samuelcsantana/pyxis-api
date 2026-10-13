@@ -1709,7 +1709,7 @@
             "type": "string"
           },
           "locale": {
-            "description": "The language of the dashboard asking, as a BCP 47 tag (en, pt-BR). The email is written in it when the API has it (matched on the language, so pt-PT gets pt-BR), else in English.",
+            "description": "The language of the dashboard asking, as a BCP 47 tag (en, pt-BR, es). The email is written in it when the API has it (matched on the language, so pt-PT gets pt-BR and es-MX gets es), else in English.",
             "maxLength": 35,
             "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$",
             "type": "string"
