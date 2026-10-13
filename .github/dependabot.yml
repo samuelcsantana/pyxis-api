@@ -27,6 +27,10 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+    groups:
+      codeql-action:
+        patterns:
+          - 'github/codeql-action*'
 
   - package-ecosystem: docker
     directory: /
