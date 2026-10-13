@@ -214,9 +214,18 @@ describe('dashboard sign-in', () => {
     it('writes in English when the dashboard asks for a language it has no email for', async () => {
       const { requestCode, mail } = await setup();
 
-      await requestCode.execute(ADMIN_EMAIL, 'es');
+      await requestCode.execute(ADMIN_EMAIL, 'fr');
 
       expect(mail.sent.map(({ language }) => language)).toEqual(['en']);
+    });
+
+    it('writes in Spanish for a dashboard in any Spanish', async () => {
+      const { requestCode, mail, codes } = await setup();
+
+      await requestCode.execute(ADMIN_EMAIL, 'es-MX');
+
+      expect(mail.sent.map(({ language }) => language)).toEqual(['es']);
+      expect(codes.stored.map((code) => code.emailLanguage)).toEqual(['es']);
     });
 
     it('does nothing for an email that is not an admin', async () => {
