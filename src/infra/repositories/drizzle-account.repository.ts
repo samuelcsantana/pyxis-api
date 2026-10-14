@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { asc, countDistinct, eq } from 'drizzle-orm';
+import { and, asc, countDistinct, desc, eq, ne } from 'drizzle-orm';
 import type { Account } from '../../domain/entities/account.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import type {
+  AccountMembership,
   AccountOverview,
   AccountRepository,
   NewAccount,
@@ -21,6 +22,11 @@ export function toAccount(row: AccountRow): Account {
     ownerAdminId: row.ownerAdminId,
     status: row.status,
     ingestionPausedUntil: row.ingestionPausedUntil,
+    stripeCustomerId: row.stripeCustomerId,
+    billingInterval: row.billingInterval,
+    trialEndsAt: row.trialEndsAt,
+    currentPeriodEndsAt: row.currentPeriodEndsAt,
+    accessEndsAt: row.accessEndsAt,
     createdAt: row.createdAt,
   };
 }
@@ -56,6 +62,40 @@ export class DrizzleAccountRepository implements AccountRepository {
         .where(eq(projects.accountId, accountId)),
     );
     return people;
+  }
+
+  async liveAccountOwnedBy(adminUserId: string): Promise<Account | null> {
+    const [row] = await this.db
+      .select()
+      .from(accounts)
+      .where(and(eq(accounts.ownerAdminId, adminUserId), ne(accounts.status, 'ended')))
+      .orderBy(desc(accounts.createdAt))
+      .limit(1);
+    return row === undefined ? null : toAccount(row);
+  }
+
+  async membershipsOf(adminUserId: string): Promise<readonly AccountMembership[]> {
+    const owned = await this.db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.ownerAdminId, adminUserId))
+      .orderBy(asc(accounts.createdAt));
+    const joined = await this.db
+      .selectDistinct({ account: accounts })
+      .from(adminProjectAccess)
+      .innerJoin(projects, eq(projects.id, adminProjectAccess.projectId))
+      .innerJoin(accounts, eq(accounts.id, projects.accountId))
+      .where(
+        and(
+          eq(adminProjectAccess.adminUserId, adminUserId),
+          ne(accounts.ownerAdminId, adminUserId),
+        ),
+      )
+      .orderBy(asc(accounts.createdAt));
+    return [
+      ...owned.map((row) => ({ account: toAccount(row), role: 'owner' as const })),
+      ...joined.map((row) => ({ account: toAccount(row.account), role: 'member' as const })),
+    ];
   }
 
   async overviewOf(accountId: string): Promise<AccountOverview | null> {

@@ -53,6 +53,11 @@ describe('accounts against a real Postgres', () => {
       ownerAdminId: OWNER_ID,
       status: 'comped',
       ingestionPausedUntil: null,
+      stripeCustomerId: null,
+      billingInterval: null,
+      trialEndsAt: null,
+      currentPeriodEndsAt: null,
+      accessEndsAt: null,
       createdAt: expect.any(Date) as Date,
     });
     expect(await accounts.findById(created.id)).toEqual(created);
@@ -109,6 +114,42 @@ describe('accounts against a real Postgres', () => {
 
     expect(await accounts.projectsOf(account.id)).toEqual([]);
     expect(await accounts.peopleCount(account.id)).toBe(0);
+  });
+
+  it("finds an owner's newest account that has not ended, and none without one", async () => {
+    const ended = await accounts.create({ ownerAdminId: OWNER_ID, status: 'ended' });
+
+    expect(await accounts.liveAccountOwnedBy(OWNER_ID)).toBeNull();
+
+    await owner`UPDATE accounts SET created_at = '2026-10-01T00:00:00Z' WHERE id = ${ended.id}`;
+    const older = await accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
+    await owner`UPDATE accounts SET created_at = '2026-10-02T00:00:00Z' WHERE id = ${older.id}`;
+    const newest = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+
+    expect(await accounts.liveAccountOwnedBy(OWNER_ID)).toEqual(newest);
+    expect(await accounts.liveAccountOwnedBy(STRANGER_ID)).toBeNull();
+  });
+
+  it('lists the accounts an admin owns, then those whose projects they read, each once', async () => {
+    const owned = await accounts.create({ ownerAdminId: OWNER_ID, status: 'trialing' });
+    const guests = await accounts.create({ ownerAdminId: GUEST_ID, status: 'active' });
+    await owner`
+      INSERT INTO projects (id, name, account_id)
+      VALUES (${SHOP_ID}, 'Shop', ${owned.id}), (${BLOG_ID}, 'Blog', ${owned.id}),
+             (${OPERATOR_ID}, 'Operator', NULL)
+    `;
+    await owner`
+      INSERT INTO admin_project_access (admin_user_id, project_id)
+      VALUES (${OWNER_ID}, ${SHOP_ID}), (${GUEST_ID}, ${SHOP_ID}), (${GUEST_ID}, ${BLOG_ID}),
+             (${GUEST_ID}, ${OPERATOR_ID})
+    `;
+
+    expect(await accounts.membershipsOf(OWNER_ID)).toEqual([{ account: owned, role: 'owner' }]);
+    expect(await accounts.membershipsOf(GUEST_ID)).toEqual([
+      { account: guests, role: 'owner' },
+      { account: owned, role: 'member' },
+    ]);
+    expect(await accounts.membershipsOf(STRANGER_ID)).toEqual([]);
   });
 
   it('records each acceptance of the terms, as the application role, gone with its account', async () => {

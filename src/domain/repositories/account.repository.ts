@@ -14,12 +14,21 @@ export interface AccountOverview {
   readonly people: number;
 }
 
+export type AccountRole = 'owner' | 'member';
+
+export interface AccountMembership {
+  readonly account: Account;
+  readonly role: AccountRole;
+}
+
 export interface AccountRepository {
   create(account: NewAccount): Promise<Account>;
   findById(accountId: string): Promise<Account | null>;
   projectsOf(accountId: string): Promise<readonly Project[]>;
   peopleCount(accountId: string): Promise<number>;
   overviewOf(accountId: string): Promise<AccountOverview | null>;
+  liveAccountOwnedBy(adminUserId: string): Promise<Account | null>;
+  membershipsOf(adminUserId: string): Promise<readonly AccountMembership[]>;
 }
 
 export const ACCOUNT_REPOSITORY = Symbol('AccountRepository');
