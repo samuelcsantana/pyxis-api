@@ -102,6 +102,10 @@ export class InMemoryProjectRepository
     return Promise.resolve(this.projects.get(projectId) ?? null);
   }
 
+  accountIdOf(projectId: string): Promise<string | null> {
+    return Promise.resolve(this.accountOf(projectId));
+  }
+
   update(projectId: string, changes: ProjectChanges): Promise<Project | null> {
     const current = this.projects.get(projectId);
     if (current === undefined) {

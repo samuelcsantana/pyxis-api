@@ -283,6 +283,21 @@ describe('project settings and keys against a real Postgres', () => {
       expect((await lookups.findByPublicKey(publicKey('A')))?.name).toBe('Shop');
     });
 
+    it("tells the account a project is in, and none for the operator's or a missing one", async () => {
+      const result = await settings.createWithPublicKeyInAccount(SHOP, publicKey('A'), SLOT);
+      const operators = await settings.createWithPublicKey(
+        { ...SHOP, name: 'Operator' },
+        publicKey('O'),
+      );
+      if (result.outcome !== 'created') {
+        throw new Error(`expected a project, got ${result.outcome}`);
+      }
+
+      expect(await settings.accountIdOf(result.created.project.id)).toBe(ACCOUNT_ID);
+      expect(await settings.accountIdOf(operators.project.id)).toBeNull();
+      expect(await settings.accountIdOf(MISSING_ID)).toBeNull();
+    });
+
     it('answers that the account does not exist and stores nothing', async () => {
       const result = await settings.createWithPublicKeyInAccount(SHOP, publicKey('A'), {
         ...SLOT,

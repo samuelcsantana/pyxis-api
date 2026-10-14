@@ -43,6 +43,7 @@ export interface ProjectSettingsRepository {
     slot: AccountProjectSlot,
   ): Promise<ProjectInAccount>;
   findById(projectId: string): Promise<Project | null>;
+  accountIdOf(projectId: string): Promise<string | null>;
   update(projectId: string, changes: ProjectChanges): Promise<Project | null>;
   deleteWithEverything(projectId: string): Promise<DeletedProject | null>;
 }
