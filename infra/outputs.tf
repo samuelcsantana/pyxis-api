@@ -34,3 +34,18 @@ output "certificate_validation_record" {
     }
   }
 }
+
+output "ses_dns_records" {
+  description = "The records SES needs in DNS when ses_domain is set: three DKIM CNAMEs, and the MX and SPF of the bounce subdomain. Empty when SES is off."
+  value = local.ses_enabled ? {
+    dkim = [
+      for token in aws_sesv2_email_identity.mail[0].dkim_signing_attributes[0].tokens : {
+        type  = "CNAME"
+        name  = "${token}._domainkey.${var.ses_domain}"
+        value = "${token}.dkim.amazonses.com"
+      }
+    ]
+    mail_from_mx  = { type = "MX", name = local.ses_mail_from_domain, priority = 10, value = "feedback-smtp.${var.aws_region}.amazonses.com" }
+    mail_from_spf = { type = "TXT", name = local.ses_mail_from_domain, value = "v=spf1 include:amazonses.com ~all" }
+  } : null
+}
