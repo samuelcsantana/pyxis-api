@@ -1,3 +1,4 @@
+import { AccountNotFoundError, ProjectLimitReachedError } from '../../domain/errors/account.errors';
 import {
   InvalidProjectSettingsError,
   ProjectKeyNotFoundError,
@@ -21,6 +22,8 @@ import { UpdateProjectUseCase } from './update-project.usecase';
 
 const NOW = new Date('2026-10-06T14:00:00.000Z');
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
+const ACCOUNT_ID = 'acc00000-0000-4000-a000-000000000001';
+const OWNER_ID = 'ad000000-0000-4000-a000-000000000001';
 
 function setup() {
   const store = new InMemoryProjectRepository();
@@ -96,6 +99,71 @@ describe('CreateProjectUseCase', () => {
       InvalidProjectSettingsError,
     );
     expect(store.storedKeys).toEqual([]);
+  });
+});
+
+describe('CreateProjectUseCase in an account', () => {
+  function inAccount(name: string) {
+    return { name, allowedOrigins: [`https://${name}.example.com`], accountId: ACCOUNT_ID };
+  }
+
+  it('creates the project in the account and lets the owner read it', async () => {
+    const { store, createProject } = setup();
+    store.addAccount(ACCOUNT_ID, OWNER_ID);
+
+    const created = await createProject.execute(inAccount('shop'));
+
+    expect(store.accountOf(created.projectId)).toBe(ACCOUNT_ID);
+    expect(store.grantedToOwners).toEqual([
+      { adminUserId: OWNER_ID, projectId: created.projectId },
+    ]);
+    expect(await store.findByPublicKey(created.publicKey)).toMatchObject({ name: 'shop' });
+  });
+
+  it('refuses an account that does not exist and stores nothing', async () => {
+    const { store, createProject } = setup();
+
+    await expect(createProject.execute(inAccount('shop'))).rejects.toBeInstanceOf(
+      AccountNotFoundError,
+    );
+    expect(store.storedKeys).toEqual([]);
+  });
+
+  it('refuses a project past the plan limit, and takes one again once a project is deleted', async () => {
+    const { store, createProject, deleteProject } = setup();
+    store.addAccount(ACCOUNT_ID, OWNER_ID);
+    await createProject.execute(inAccount('one'));
+    await createProject.execute(inAccount('two'));
+    const third = await createProject.execute(inAccount('three'));
+
+    const refused = createProject.execute(inAccount('four'));
+
+    await expect(refused).rejects.toBeInstanceOf(ProjectLimitReachedError);
+    await expect(refused).rejects.toMatchObject({ limit: 3 });
+    await deleteProject.execute({ projectId: third.projectId, confirmName: 'three' });
+    await expect(createProject.execute(inAccount('four'))).resolves.toMatchObject({
+      publicKey: expect.any(String) as string,
+    });
+  });
+
+  it('leaves projects outside any account unlimited', async () => {
+    const { store, createProject } = setup();
+    store.addAccount(ACCOUNT_ID, OWNER_ID);
+
+    const created = [];
+    for (const name of ['one', 'two', 'three', 'four']) {
+      created.push(
+        await createProject.execute({ name, allowedOrigins: [`https://${name}.example.com`] }),
+      );
+    }
+
+    expect(store.grantedToOwners).toEqual([]);
+    expect(created.map(({ projectId }) => store.accountOf(projectId))).toEqual([
+      null,
+      null,
+      null,
+      null,
+    ]);
   });
 });
 

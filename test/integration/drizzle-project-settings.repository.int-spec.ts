@@ -254,4 +254,79 @@ describe('project settings and keys against a real Postgres', () => {
     const [row] = await owner<{ total: number }[]>`SELECT count(*)::int AS total FROM projects`;
     expect(row?.total).toBe(1);
   });
+
+  describe('in an account', () => {
+    const OWNER_ID = 'd1d2d3d4-0000-4000-8000-000000000001';
+    const ACCOUNT_ID = 'd1d2d3d4-0000-4000-8000-000000000002';
+    const SLOT = { accountId: ACCOUNT_ID, maxProjects: 2 };
+
+    beforeEach(async () => {
+      await owner`INSERT INTO admin_users (id, email) VALUES (${OWNER_ID}, 'owner@example.com')`;
+      await owner`
+        INSERT INTO accounts (id, owner_admin_id, status) VALUES (${ACCOUNT_ID}, ${OWNER_ID}, 'comped')
+      `;
+    });
+
+    it('creates the project in the account, with its key, readable by the owner', async () => {
+      const result = await settings.createWithPublicKeyInAccount(SHOP, publicKey('A'), SLOT);
+
+      expect(result.outcome).toBe('created');
+      const rows = await owner<{ account_id: string; admin_user_id: string }[]>`
+        SELECT p.account_id, a.admin_user_id
+        FROM projects p JOIN admin_project_access a ON a.project_id = p.id
+      `;
+      expect(rows).toEqual([{ account_id: ACCOUNT_ID, admin_user_id: OWNER_ID }]);
+      expect((await lookups.findByPublicKey(publicKey('A')))?.name).toBe('Shop');
+    });
+
+    it('answers that the account does not exist and stores nothing', async () => {
+      const result = await settings.createWithPublicKeyInAccount(SHOP, publicKey('A'), {
+        ...SLOT,
+        accountId: MISSING_ID,
+      });
+
+      expect(result).toEqual({ outcome: 'account_not_found' });
+      const [row] = await owner<{ total: number }[]>`SELECT count(*)::int AS total FROM projects`;
+      expect(row?.total).toBe(0);
+    });
+
+    it('stops at the limit, counting only the projects of that account', async () => {
+      await settings.createWithPublicKey({ ...SHOP, name: 'Operator' }, publicKey('O'));
+      await settings.createWithPublicKeyInAccount(SHOP, publicKey('A'), SLOT);
+      await settings.createWithPublicKeyInAccount({ ...SHOP, name: 'Blog' }, publicKey('B'), SLOT);
+
+      const refused = await settings.createWithPublicKeyInAccount(
+        { ...SHOP, name: 'Third' },
+        publicKey('C'),
+        SLOT,
+      );
+
+      expect(refused).toEqual({ outcome: 'project_limit_reached' });
+      expect(await lookups.findByPublicKey(publicKey('C'))).toBeNull();
+    });
+
+    it('lets only one of two simultaneous requests take the last place', async () => {
+      await settings.createWithPublicKeyInAccount(SHOP, publicKey('A'), SLOT);
+      const second = createPostgresClient(testAppUrl());
+      try {
+        const racing = new DrizzleProjectSettingsRepository(createDrizzleDatabase(second));
+
+        const outcomes = await Promise.all([
+          settings.createWithPublicKeyInAccount({ ...SHOP, name: 'B' }, publicKey('B'), SLOT),
+          racing.createWithPublicKeyInAccount({ ...SHOP, name: 'C' }, publicKey('C'), SLOT),
+        ]);
+
+        expect(outcomes.map(({ outcome }) => outcome).sort()).toEqual([
+          'created',
+          'project_limit_reached',
+        ]);
+        const [row] = await owner<{ total: number }[]>`
+          SELECT count(*)::int AS total FROM projects WHERE account_id = ${ACCOUNT_ID}
+        `;
+        expect(row?.total).toBe(2);
+      } finally {
+        await second.end();
+      }
+    });
+  });
 });
