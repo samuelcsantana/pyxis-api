@@ -4,7 +4,7 @@ locals {
   app_settings = {
     DASHBOARD_ORIGIN = {
       value       = var.dashboard_origin
-      description = "The only origin the dashboard sign-in routes accept and grant CORS to."
+      description = "The only origin the dashboard sign-in routes accept and grant CORS to, and the base of the e-mail links and logo."
     }
     MAIL_FROM = {
       value       = var.mail_from
@@ -85,4 +85,11 @@ resource "aws_ssm_parameter" "jobs_mail_from" {
   type        = "String"
   value       = var.mail_from
   description = "Sender of the weekly digest. Its domain must be verified in Resend."
+}
+
+resource "aws_ssm_parameter" "jobs_dashboard_origin" {
+  name        = "/${var.project}/jobs/DASHBOARD_ORIGIN"
+  type        = "String"
+  value       = var.dashboard_origin
+  description = "The dashboard the weekly digest links to and loads its logo from."
 }
