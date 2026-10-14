@@ -105,6 +105,8 @@ describe('projects managed by the owner of their account', () => {
     expect(settings.statusCode).toBe(200);
     expect(settings.json()).toMatchObject({
       name: 'Owned shop',
+      account_id: ACCOUNT_ID,
+      role: 'owner',
       timezone: 'America/Sao_Paulo',
       allowed_origins: ['https://owned-shop.example.com'],
       public_keys: [{ id: created.public_key.id, key: created.public_key.key }],

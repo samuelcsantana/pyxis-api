@@ -12,7 +12,9 @@ import { OVERVIEW_QUERY } from '../../../domain/queries/overview';
 import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
 import { VISITS_QUERY } from '../../../domain/queries/visits';
 import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
+import { ACCOUNT_REPOSITORY } from '../../../domain/repositories/account.repository';
 import { PROJECT_KEY_REPOSITORY } from '../../../domain/repositories/project-key.repository';
+import { PROJECT_SETTINGS_REPOSITORY } from '../../../domain/repositories/project-settings.repository';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetEngagementUseCase } from '../../../usecases/queries/get-engagement.usecase';
@@ -41,7 +43,9 @@ import { DrizzleOverviewQuery } from '../../queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
 import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
+import { DrizzleAccountRepository } from '../../repositories/drizzle-account.repository';
 import { DrizzleProjectKeyRepository } from '../../repositories/drizzle-project-key.repository';
+import { DrizzleProjectSettingsRepository } from '../../repositories/drizzle-project-settings.repository';
 import { AuthModule } from '../auth/auth.module';
 import { AccessTokenThrottlerGuard } from '../auth/access-token-throttler.guard';
 import { SessionGuard } from '../auth/auth.guards';
@@ -99,6 +103,8 @@ import { VisitsController } from './visits.controller';
     GetProjectIconUseCase,
     { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
     { provide: PROJECT_KEY_REPOSITORY, useClass: DrizzleProjectKeyRepository },
+    { provide: PROJECT_SETTINGS_REPOSITORY, useClass: DrizzleProjectSettingsRepository },
+    { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     SessionGuard,
     ReadAccessGuard,

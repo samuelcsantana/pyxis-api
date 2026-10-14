@@ -1,5 +1,7 @@
 import type { Project } from '../../domain/entities/project.entity';
 import type { ProjectKey } from '../../domain/entities/project-key.entity';
+import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
+import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.repository';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { GetProjectSettingsUseCase } from './get-project-settings.usecase';
@@ -15,6 +17,8 @@ const SHOP: Project = {
 const BLOG: Project = { ...SHOP, id: '11111111-0000-4000-8000-000000000002', name: 'Blog' };
 const CREATED_AT = new Date('2026-09-02T00:00:00.000Z');
 const SECRET_HASH = 'a'.repeat(64);
+const OWNER_ID = 'ad000000-0000-4000-a000-000000000001';
+const MEMBER_ID = 'ad000000-0000-4000-a000-000000000002';
 
 interface KeyFields {
   readonly projectId?: string;
@@ -41,7 +45,13 @@ function secretKey(id: string): ProjectKey {
 function setup() {
   const store = new InMemoryProjectRepository();
   const activity = new StubProjectActivityQuery();
-  return { store, activity, useCase: new GetProjectSettingsUseCase(store, activity) };
+  const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
+  return {
+    store,
+    activity,
+    accounts,
+    useCase: new GetProjectSettingsUseCase(store, activity, store, accounts),
+  };
 }
 
 describe('GetProjectSettingsUseCase', () => {
@@ -58,11 +68,13 @@ describe('GetProjectSettingsUseCase', () => {
     const lastEventAt = new Date('2026-10-05T09:30:00.000Z');
     activity.activity.set(SHOP.id, { firstEventAt, lastEventAt });
 
-    const settings = await useCase.execute(SHOP);
+    const settings = await useCase.execute(SHOP, MEMBER_ID);
 
     expect(activity.asked).toEqual([[SHOP.id]]);
     expect(settings).toEqual({
       ...SHOP,
+      accountId: null,
+      role: null,
       firstEventAt,
       lastEventAt,
       publicKeys: [{ id: 'public-1', publicKey: 'pyxis_pk_public-1', createdAt: CREATED_AT }],
@@ -76,13 +88,42 @@ describe('GetProjectSettingsUseCase', () => {
     const { store, useCase } = setup();
     store.add(BLOG);
 
-    const settings = await useCase.execute(BLOG);
+    const settings = await useCase.execute(BLOG, MEMBER_ID);
 
     expect(settings).toMatchObject({
       firstEventAt: null,
       lastEventAt: null,
       publicKeys: [],
       secretKeys: [],
+    });
+  });
+
+  it("tells the owner of the project's account apart from someone who only reads it", async () => {
+    const { store, accounts, useCase } = setup();
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
+    store.addAccount(account.id, OWNER_ID);
+    const created = await store.createWithPublicKeyInAccount(
+      {
+        name: 'Owned',
+        allowedOrigins: SHOP.allowedOrigins,
+        timezone: 'UTC',
+        conversionEvent: null,
+      },
+      'pyxis_pk_owned',
+      { accountId: account.id, maxProjects: 3 },
+    );
+    if (created.outcome !== 'created') {
+      throw new Error(`expected a project, got ${created.outcome}`);
+    }
+    const project = created.created.project;
+
+    expect(await useCase.execute(project, OWNER_ID)).toMatchObject({
+      accountId: account.id,
+      role: 'owner',
+    });
+    expect(await useCase.execute(project, MEMBER_ID)).toMatchObject({
+      accountId: account.id,
+      role: 'member',
     });
   });
 });
