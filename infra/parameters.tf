@@ -87,6 +87,14 @@ resource "aws_ssm_parameter" "jobs_mail_from" {
   description = "Sender of the weekly digest. Its domain must be verified in Resend."
 }
 
+resource "aws_ssm_parameter" "jobs_support_email" {
+  count       = var.support_email == null ? 0 : 1
+  name        = "/${var.project}/jobs/SUPPORT_EMAIL"
+  type        = "String"
+  value       = var.support_email
+  description = "The address the quota notices name and send replies to."
+}
+
 resource "aws_ssm_parameter" "jobs_dashboard_origin" {
   name        = "/${var.project}/jobs/DASHBOARD_ORIGIN"
   type        = "String"

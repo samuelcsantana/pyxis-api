@@ -6,3 +6,4 @@ api_domain_enabled    = false
 dashboard_origin      = "<the dashboard's origin, such as https://pyxis.example.com>"
 mail_from             = "<sender on a domain verified in Resend, such as Pyxis <noreply@example.com>>"
 alert_email           = "<address that receives the alarms>"
+support_email         = "<optional: address the account e-mails name, such as hello@example.com>"

@@ -5,7 +5,10 @@ import { LoggingMailSender } from './logging-mail-sender';
 import { ResendMailSender } from './resend-mail-sender';
 
 export function createMailSender(
-  env: Pick<EnvConfig, 'NODE_ENV' | 'RESEND_API_KEY' | 'MAIL_FROM' | 'DASHBOARD_ORIGIN'>,
+  env: Pick<
+    EnvConfig,
+    'NODE_ENV' | 'RESEND_API_KEY' | 'MAIL_FROM' | 'DASHBOARD_ORIGIN' | 'SUPPORT_EMAIL'
+  >,
 ): MailSender {
   if (env.RESEND_API_KEY !== undefined) {
     if (env.DASHBOARD_ORIGIN === undefined) {
@@ -17,6 +20,8 @@ export function createMailSender(
       env.RESEND_API_KEY,
       env.MAIL_FROM,
       emailLinksFor(env.DASHBOARD_ORIGIN),
+      fetch,
+      env.SUPPORT_EMAIL ?? null,
     );
   }
   if (env.NODE_ENV === 'production') {
