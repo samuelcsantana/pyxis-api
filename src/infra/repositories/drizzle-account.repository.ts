@@ -2,12 +2,16 @@ import { Inject, Injectable } from '@nestjs/common';
 import { asc, countDistinct, eq } from 'drizzle-orm';
 import type { Account } from '../../domain/entities/account.entity';
 import type { Project } from '../../domain/entities/project.entity';
-import type { AccountRepository, NewAccount } from '../../domain/repositories/account.repository';
+import type {
+  AccountOverview,
+  AccountRepository,
+  NewAccount,
+} from '../../domain/repositories/account.repository';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { aggregateRow, insertedRow } from '../database/inserted-row';
 import { type AccountRow, accounts } from '../database/schema/accounts';
-import { adminProjectAccess } from '../database/schema/admins';
+import { adminProjectAccess, adminUsers } from '../database/schema/admins';
 import { projects } from '../database/schema/projects';
 import { toProject } from './drizzle-project.repository';
 
@@ -51,5 +55,27 @@ export class DrizzleAccountRepository implements AccountRepository {
         .where(eq(projects.accountId, accountId)),
     );
     return people;
+  }
+
+  async overviewOf(accountId: string): Promise<AccountOverview | null> {
+    const [row] = await this.db
+      .select({ account: accounts, ownerEmail: adminUsers.email })
+      .from(accounts)
+      .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
+      .where(eq(accounts.id, accountId))
+      .limit(1);
+    if (row === undefined) {
+      return null;
+    }
+    const [projectsHeld, people] = await Promise.all([
+      this.projectsOf(accountId),
+      this.peopleCount(accountId),
+    ]);
+    return {
+      account: toAccount(row.account),
+      ownerEmail: row.ownerEmail,
+      projects: projectsHeld,
+      people,
+    };
   }
 }

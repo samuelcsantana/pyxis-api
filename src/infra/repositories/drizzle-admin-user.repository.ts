@@ -44,6 +44,15 @@ export class DrizzleAdminUserRepository implements AdminUserRepository {
     return row === undefined ? null : toAdminUser(row);
   }
 
+  async findOrCreateByEmail(email: string): Promise<AdminUser> {
+    await this.db.insert(adminUsers).values({ email }).onConflictDoNothing();
+    return toAdminUser(
+      insertedRow(
+        await this.db.select().from(adminUsers).where(eq(adminUsers.email, email)).limit(1),
+      ),
+    );
+  }
+
   async projectsOf(adminUserId: string): Promise<readonly Project[]> {
     const rows = await this.db
       .select({ project: projects })

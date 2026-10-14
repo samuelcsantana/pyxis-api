@@ -5,6 +5,7 @@ import type { Project } from '../entities/project.entity';
 export interface AdminUserRepository {
   findByEmail(email: string): Promise<AdminUser | null>;
   findById(adminUserId: string): Promise<AdminUser | null>;
+  findOrCreateByEmail(email: string): Promise<AdminUser>;
   projectsOf(adminUserId: string): Promise<readonly Project[]>;
   accessibleProject(adminUserId: string, projectId: string): Promise<Project | null>;
   grantAccess(email: string, projectId: string): Promise<AdminUser>;

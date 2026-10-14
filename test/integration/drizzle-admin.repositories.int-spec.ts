@@ -49,6 +49,15 @@ describe('admin repositories against a real Postgres', () => {
   });
 
   describe('DrizzleAdminUserRepository', () => {
+    it('finds an admin by e-mail, creating it the first time only', async () => {
+      const first = await admins.findOrCreateByEmail('owner@example.com');
+      const again = await admins.findOrCreateByEmail('owner@example.com');
+
+      expect(again).toEqual(first);
+      expect(first).toMatchObject({ email: 'owner@example.com', emailLanguage: 'en' });
+      expect(await admins.projectsOf(first.id)).toEqual([]);
+    });
+
     it('grants access idempotently, creating the admin once, and lists their projects by name', async () => {
       const admin = await admins.grantAccess('ana@example.com', SHOP_ID);
       await admins.grantAccess('ana@example.com', BLOG_ID);

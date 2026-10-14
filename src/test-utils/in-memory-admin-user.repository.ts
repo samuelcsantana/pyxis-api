@@ -22,6 +22,10 @@ export class InMemoryAdminUserRepository implements AdminUserRepository {
     return Promise.resolve(this.admins.find((admin) => admin.id === adminUserId) ?? null);
   }
 
+  async findOrCreateByEmail(email: string): Promise<AdminUser> {
+    return (await this.findByEmail(email)) ?? this.createAdmin(email);
+  }
+
   projectsOf(adminUserId: string): Promise<readonly Project[]> {
     return Promise.resolve(
       this.access

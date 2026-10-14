@@ -81,6 +81,24 @@ describe('accounts against a real Postgres', () => {
     expect(await accounts.peopleCount(account.id)).toBe(2);
   });
 
+  it('gives the overview of an account with its owner e-mail, and none for an unknown id', async () => {
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
+    await owner`INSERT INTO projects (id, name, account_id) VALUES (${SHOP_ID}, 'Shop', ${account.id})`;
+    await owner`
+      INSERT INTO admin_project_access (admin_user_id, project_id) VALUES (${OWNER_ID}, ${SHOP_ID})
+    `;
+
+    const overview = await accounts.overviewOf(account.id);
+
+    expect(overview).toEqual({
+      account,
+      ownerEmail: 'owner@example.com',
+      projects: [expect.objectContaining({ id: SHOP_ID, name: 'Shop' })],
+      people: 1,
+    });
+    expect(await accounts.overviewOf(MISSING_ID)).toBeNull();
+  });
+
   it('has no projects and no people for an account without projects', async () => {
     const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
 
