@@ -5,7 +5,7 @@ import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { MailSender } from '../../domain/services/mail-sender';
 import type { EmailContent, EmailLinks } from './email-layout';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
-import { buildSignInCodeEmail } from './sign-in-code-email';
+import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
 export type SesSend = (input: SendEmailCommandInput) => Promise<unknown>;
@@ -30,6 +30,10 @@ export class SesMailSender implements MailSender {
 
   sendSignInCode(email: string, code: string, language: EmailLanguage): Promise<void> {
     return this.deliver(email, buildSignInCodeEmail(code, language, this.links));
+  }
+
+  sendSignUpCode(email: string, code: string, language: EmailLanguage): Promise<void> {
+    return this.deliver(email, buildSignUpCodeEmail(code, language, this.links));
   }
 
   sendWeeklyDigest(email: string, digest: WeeklyDigest, language: EmailLanguage): Promise<void> {

@@ -17,6 +17,7 @@ import {
   wrapped,
 } from './email-layout';
 import { escapeHtml } from './escape-html';
+import { SIGN_UP_CODE_EMAIL_MESSAGES } from './sign-up-code-email-messages';
 import {
   SIGN_IN_CODE_EMAIL_MESSAGES,
   type SignInCodeEmailMessages,
@@ -126,6 +127,14 @@ export function renderSignInCodeEmail(
     html: buildHtml(code, messages, links),
     text: buildText(code, messages, links),
   };
+}
+
+export function buildSignUpCodeEmail(
+  code: string,
+  language: EmailLanguage,
+  links: EmailLinks,
+): EmailContent {
+  return renderSignInCodeEmail(code, SIGN_UP_CODE_EMAIL_MESSAGES[language], links);
 }
 
 export function buildSignInCodeEmail(

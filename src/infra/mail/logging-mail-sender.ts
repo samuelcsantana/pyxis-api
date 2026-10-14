@@ -13,6 +13,11 @@ export class LoggingMailSender implements MailSender {
     return Promise.resolve();
   }
 
+  sendSignUpCode(_email: string, code: string, language: EmailLanguage): Promise<void> {
+    this.logger.log({ message: 'mail.sign_up_code', code, language });
+    return Promise.resolve();
+  }
+
   sendWeeklyDigest(_email: string, digest: WeeklyDigest, language: EmailLanguage): Promise<void> {
     this.logger.log({
       message: 'mail.weekly_digest',
