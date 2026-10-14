@@ -2,6 +2,7 @@ import { PUBLIC_KEY_PATTERN, SECRET_KEY_PATTERN } from '../../domain/keys/projec
 import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-context';
 import { CliUsageError } from '../cli-args';
 import { accountCreateCommand } from './account-create.command';
+import { accountLinkCommand } from './account-link.command';
 import { accountShowCommand } from './account-show.command';
 import { adminGrantCommand } from './admin-grant.command';
 import { keyCreateCommand } from './key-create.command';
@@ -252,6 +253,54 @@ describe('account:show', () => {
       'measured_at=2026-10-06T03:00:00.000Z',
       'ingestion_paused_until=2026-11-01T00:00:00.000Z',
     ]);
+  });
+});
+
+describe('account:link', () => {
+  it('parses the account and a Stripe subscription id, refusing anything else', () => {
+    expect(
+      accountLinkCommand.parse(['--account', ACCOUNT_ID, '--subscription', 'sub_abc123']),
+    ).toEqual({ accountId: ACCOUNT_ID, subscriptionId: 'sub_abc123' });
+    expect(() =>
+      accountLinkCommand.parse(['--account', ACCOUNT_ID, '--subscription', 'cus_abc123']),
+    ).toThrow(CliUsageError);
+  });
+
+  it('prints the account state the subscription leaves', async () => {
+    const context = inMemoryCliContext();
+    context.accountBilling.add({
+      accountId: ACCOUNT_ID,
+      status: 'comped',
+      accessEndsAt: null,
+      stripeCustomerId: null,
+      stripeSubscriptionId: null,
+    });
+    context.billing.addSubscription({
+      subscriptionId: 'sub_abc123',
+      customerId: 'cus_abc123',
+      accountId: null,
+      status: 'trialing',
+      interval: null,
+      trialEndsAt: new Date('2026-10-28T00:00:00.000Z'),
+      currentPeriodEndsAt: null,
+      cancelAtPeriodEnd: false,
+    });
+    const output = captureOutput();
+
+    await accountLinkCommand.execute(
+      context,
+      { accountId: ACCOUNT_ID, subscriptionId: 'sub_abc123' },
+      output,
+    );
+
+    expect(output.out).toEqual([
+      'status=trialing',
+      'stripe_customer_id=cus_abc123',
+      'billing_interval=',
+      'trial_ends_at=2026-10-28T00:00:00.000Z',
+      'current_period_ends_at=',
+    ]);
+    expect(output.err).toEqual([expect.stringContaining('Linked')]);
   });
 });
 
