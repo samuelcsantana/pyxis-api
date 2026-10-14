@@ -55,4 +55,33 @@ describe('InMemoryOtpCodeRepository', () => {
     expect(await codes.consumeAttempt('missing', 5)).toBe(false);
     expect(await codes.claim('missing', new Date())).toBe(false);
   });
+
+  it('counts and finds codes by their purpose', async () => {
+    const codes = new InMemoryOtpCodeRepository();
+    const now = new Date('2026-11-02T13:00:00.000Z');
+    const later = new Date('2026-11-02T13:10:00.000Z');
+    const signUp = await codes.create({
+      email: 'ana@example.com',
+      codeHash: 'up',
+      emailLanguage: 'en',
+      purpose: 'sign_up',
+      createdAt: now,
+      expiresAt: later,
+    });
+    await codes.create({
+      email: 'bia@example.com',
+      codeHash: 'in',
+      emailLanguage: 'en',
+      purpose: 'sign_in',
+      createdAt: now,
+      expiresAt: later,
+    });
+
+    expect(await codes.countPurposeSince('sign_up', now)).toBe(1);
+    expect(await codes.countPurposeSince('sign_up', later)).toBe(0);
+    expect(await codes.findLatestValid('ana@example.com', now, 'sign_up')).toEqual(
+      expect.objectContaining({ id: signUp.id }),
+    );
+    expect(await codes.findLatestValid('ana@example.com', now, 'sign_in')).toBeNull();
+  });
 });

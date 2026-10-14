@@ -99,7 +99,7 @@ describe('dashboard sign-in', () => {
 
   beforeEach(async () => {
     mail.sent.length = 0;
-    await owner`DELETE FROM otp_codes`;
+    await owner`DELETE FROM otp_codes WHERE purpose = 'sign_in'`;
   });
 
   afterAll(async () => {
@@ -122,7 +122,7 @@ describe('dashboard sign-in', () => {
     expect(mail.sent).toEqual([
       { email: ADMIN_EMAIL, code: expect.stringMatching(/^\d{6}$/) as string, language: 'en' },
     ]);
-    const rows = await owner`SELECT email, code_hash FROM otp_codes`;
+    const rows = await owner`SELECT email, code_hash FROM otp_codes WHERE purpose = 'sign_in'`;
     expect(rows).toEqual([{ email: ADMIN_EMAIL, code_hash: sha256Hex(latestCode()) }]);
   });
 

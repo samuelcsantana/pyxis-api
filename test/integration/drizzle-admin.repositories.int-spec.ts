@@ -126,6 +126,7 @@ describe('admin repositories against a real Postgres', () => {
         email: 'ana@example.com',
         codeHash: sha256Hex('1'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: at(-90 * MINUTE),
         expiresAt: at(-80 * MINUTE),
       });
@@ -133,6 +134,7 @@ describe('admin repositories against a real Postgres', () => {
         email: 'ana@example.com',
         codeHash: sha256Hex('2'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: at(-10 * MINUTE),
         expiresAt: at(0),
       });
@@ -140,6 +142,7 @@ describe('admin repositories against a real Postgres', () => {
         email: 'bruno@example.com',
         codeHash: sha256Hex('3'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: at(-5 * MINUTE),
         expiresAt: at(5 * MINUTE),
       });
@@ -152,6 +155,7 @@ describe('admin repositories against a real Postgres', () => {
         email: 'ana@example.com',
         codeHash: sha256Hex('old'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: at(-8 * MINUTE),
         expiresAt: at(2 * MINUTE),
       });
@@ -159,17 +163,65 @@ describe('admin repositories against a real Postgres', () => {
         email: 'ana@example.com',
         codeHash: sha256Hex('new'),
         emailLanguage: 'pt-BR',
+        purpose: 'sign_in',
         createdAt: at(-1 * MINUTE),
         expiresAt: at(9 * MINUTE),
       });
 
-      expect(await codes.findLatestValid('ana@example.com', NOW)).toEqual(latest);
+      expect(await codes.findLatestValid('ana@example.com', NOW, 'sign_in')).toEqual(latest);
 
       expect(await codes.claim(latest.id, NOW)).toBe(true);
-      expect((await codes.findLatestValid('ana@example.com', NOW))?.codeHash).toBe(
+      expect((await codes.findLatestValid('ana@example.com', NOW, 'sign_in'))?.codeHash).toBe(
         sha256Hex('old'),
       );
-      expect(await codes.findLatestValid('ana@example.com', at(3 * MINUTE))).toBeNull();
+      expect(await codes.findLatestValid('ana@example.com', at(3 * MINUTE), 'sign_in')).toBeNull();
+    });
+
+    it('counts the codes of one purpose since a moment, whatever the address', async () => {
+      for (const [email, purpose, minutesAgo] of [
+        ['ana@example.com', 'sign_up', 30],
+        ['bruno@example.com', 'sign_up', 2000],
+        ['carla@example.com', 'sign_in', 30],
+        ['dora@example.com', 'sign_up', 10],
+      ] as const) {
+        await codes.create({
+          email,
+          codeHash: sha256Hex(email),
+          emailLanguage: 'en',
+          purpose,
+          createdAt: at(-minutesAgo * MINUTE),
+          expiresAt: at(10 * MINUTE),
+        });
+      }
+
+      expect(await codes.countPurposeSince('sign_up', at(-24 * 60 * MINUTE))).toBe(2);
+      expect(await codes.countPurposeSince('sign_in', at(-24 * 60 * MINUTE))).toBe(1);
+    });
+
+    it('refuses a purpose it does not know', async () => {
+      await expect(
+        owner`
+          INSERT INTO otp_codes (email, code_hash, purpose, created_at, expires_at)
+          VALUES ('ana@example.com', ${sha256Hex('1')}, 'reset', now(), now())
+        `,
+      ).rejects.toThrow(/otp_codes_purpose_check/);
+    });
+
+    it('stores a code with its purpose, and finds it only for that purpose', async () => {
+      const signUp = await codes.create({
+        email: 'ana@example.com',
+        codeHash: sha256Hex('up'),
+        emailLanguage: 'es',
+        purpose: 'sign_up',
+        createdAt: at(-1 * MINUTE),
+        expiresAt: at(9 * MINUTE),
+      });
+
+      expect(await codes.findLatestValid('ana@example.com', NOW, 'sign_up')).toEqual(signUp);
+      expect(await codes.findLatestValid('ana@example.com', NOW, 'sign_in')).toBeNull();
+      expect(await owner`SELECT purpose FROM otp_codes WHERE id = ${signUp.id}`).toEqual([
+        { purpose: 'sign_up' },
+      ]);
     });
 
     it('counts attempts atomically and refuses past the limit, even under parallel guesses', async () => {
@@ -177,6 +229,7 @@ describe('admin repositories against a real Postgres', () => {
         email: 'ana@example.com',
         codeHash: sha256Hex('1'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: NOW,
         expiresAt: at(10 * MINUTE),
       });
@@ -194,6 +247,7 @@ describe('admin repositories against a real Postgres', () => {
         email: 'ana@example.com',
         codeHash: sha256Hex('1'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: NOW,
         expiresAt: at(10 * MINUTE),
       });
@@ -201,7 +255,7 @@ describe('admin repositories against a real Postgres', () => {
       const claims = await Promise.all(Array.from({ length: 4 }, () => codes.claim(code.id, NOW)));
 
       expect(claims.filter(Boolean)).toHaveLength(1);
-      expect(await codes.findLatestValid('ana@example.com', NOW)).toBeNull();
+      expect(await codes.findLatestValid('ana@example.com', NOW, 'sign_in')).toBeNull();
     });
   });
 

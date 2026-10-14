@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, desc, eq, gt, gte, isNull, lt, sql } from 'drizzle-orm';
+import type { CodePurpose } from '../../domain/auth/code-purpose';
 import type { OtpCode } from '../../domain/entities/otp-code.entity';
 import type { NewOtpCode, OtpCodeRepository } from '../../domain/repositories/otp-code.repository';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
@@ -31,11 +32,25 @@ export class DrizzleOtpCodeRepository implements OtpCodeRepository {
     return this.db.$count(otpCodes, and(eq(otpCodes.email, email), gte(otpCodes.createdAt, since)));
   }
 
-  async findLatestValid(email: string, now: Date): Promise<OtpCode | null> {
+  countPurposeSince(purpose: CodePurpose, since: Date): Promise<number> {
+    return this.db.$count(
+      otpCodes,
+      and(eq(otpCodes.purpose, purpose), gte(otpCodes.createdAt, since)),
+    );
+  }
+
+  async findLatestValid(email: string, now: Date, purpose: CodePurpose): Promise<OtpCode | null> {
     const [row] = await this.db
       .select()
       .from(otpCodes)
-      .where(and(eq(otpCodes.email, email), isNull(otpCodes.usedAt), gt(otpCodes.expiresAt, now)))
+      .where(
+        and(
+          eq(otpCodes.email, email),
+          eq(otpCodes.purpose, purpose),
+          isNull(otpCodes.usedAt),
+          gt(otpCodes.expiresAt, now),
+        ),
+      )
       .orderBy(desc(otpCodes.createdAt))
       .limit(1);
     return row === undefined ? null : toOtpCode(row);

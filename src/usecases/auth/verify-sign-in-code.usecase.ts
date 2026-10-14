@@ -2,7 +2,6 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { normalizeEmail } from '../../domain/auth/email';
 import { sha256Hex } from '../../domain/auth/hashing';
 import { generateSessionToken } from '../../domain/auth/session-policy';
-import { MAX_SIGN_IN_CODE_ATTEMPTS } from '../../domain/auth/sign-in-code';
 import { InvalidSignInCodeError } from '../../domain/errors/auth.errors';
 import { type ClientHints, classifyUserAgent } from '../../domain/events/user-agent';
 import {
@@ -19,6 +18,7 @@ import {
 } from '../../domain/repositories/otp-code.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { RANDOM_SOURCE, type RandomSource } from '../../domain/services/random-source';
+import { consumeCode } from './consume-code';
 
 export interface SignInClient {
   readonly userAgent: string | undefined;
@@ -45,18 +45,11 @@ export class VerifySignInCodeUseCase {
   async execute(rawEmail: string, code: string, client: SignInClient): Promise<SignedIn> {
     const email = normalizeEmail(rawEmail);
     const now = this.clock.now();
-    const latest = await this.codes.findLatestValid(email, now);
-    if (latest === null) {
-      throw new InvalidSignInCodeError();
-    }
-    const withinLimit = await this.codes.consumeAttempt(latest.id, MAX_SIGN_IN_CODE_ATTEMPTS);
-    if (!withinLimit || latest.codeHash !== sha256Hex(code)) {
-      this.logger.warn({ message: 'auth.invalid_code_attempt' });
-      throw new InvalidSignInCodeError();
-    }
-    if (!(await this.codes.claim(latest.id, now))) {
-      throw new InvalidSignInCodeError();
-    }
+    const latest = await consumeCode(
+      this.codes,
+      { email, code, purpose: 'sign_in', now },
+      this.logger,
+    );
     const admin = await this.admins.findByEmail(email);
     if (admin === null) {
       throw new InvalidSignInCodeError();
