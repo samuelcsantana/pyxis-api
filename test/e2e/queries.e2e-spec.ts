@@ -489,6 +489,8 @@ describe('dashboard queries', () => {
       timezone: 'UTC',
       conversion_event: 'signup_completed',
       allowed_origins: ['https://shop.example.com'],
+      account_id: null,
+      role: null,
       first_event_at: '2026-09-20T10:00:00.000Z',
       last_event_at: '2026-10-05T10:02:00.000Z',
       event_retention_months: 13,

@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify';
+import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type { Project } from '../../../domain/entities/project.entity';
 import type {
   GetProjectSettingsUseCase,
@@ -18,12 +19,23 @@ const PROJECT: Project = {
 const PUBLIC_KEY_ID = '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e';
 const SECRET_KEY_ID = '1c8f2d3e-4a5b-4c6d-8e7f-8a9b0c1d2e3f';
 const KEY_CREATED_AT = new Date('2026-10-02T08:00:00.000Z');
+const ACCOUNT_ID = '2d9a3e4f-5b6c-4d7e-8f9a-0b1c2d3e4f5a';
+const ADMIN: AdminUser = {
+  id: '3e0b4f5a-6c7d-4e8f-9a0b-1c2d3e4f5a6b',
+  email: 'ana@example.com',
+  emailLanguage: 'en',
+  createdAt: new Date('2026-10-01T00:00:00.000Z'),
+};
+
+function requestFor(project: Project): FastifyRequest {
+  return { project, admin: ADMIN } as unknown as FastifyRequest;
+}
 
 function controllerAnswering(settings: ProjectSettings) {
-  const asked: Project[] = [];
+  const asked: (readonly [Project, string])[] = [];
   const useCase = {
-    execute: (project: Project) => {
-      asked.push(project);
+    execute: (project: Project, adminUserId: string) => {
+      asked.push([project, adminUserId]);
       return Promise.resolve(settings);
     },
   };
@@ -37,6 +49,8 @@ describe('ProjectSettingsController', () => {
   it('answers the settings of the project in the contract shape', async () => {
     const { controller, asked } = controllerAnswering({
       ...PROJECT,
+      accountId: ACCOUNT_ID,
+      role: 'owner',
       firstEventAt: new Date('2026-10-03T10:00:00.000Z'),
       lastEventAt: new Date('2026-10-05T09:30:00.000Z'),
       publicKeys: [
@@ -46,9 +60,9 @@ describe('ProjectSettingsController', () => {
       eventRetentionMonths: 13,
     });
 
-    const body = await controller.settings({ project: PROJECT } as FastifyRequest);
+    const body = await controller.settings(requestFor(PROJECT));
 
-    expect(asked).toEqual([PROJECT]);
+    expect(asked).toEqual([[PROJECT, ADMIN.id]]);
     expect(projectSettingsSchema.parse(body)).toEqual({
       id: PROJECT.id,
       name: 'Shop',
@@ -56,6 +70,8 @@ describe('ProjectSettingsController', () => {
       conversion_event: 'signup_completed',
       allowed_origins: ['https://shop.example.com'],
       created_at: '2026-10-01T00:00:00.000Z',
+      account_id: ACCOUNT_ID,
+      role: 'owner',
       first_event_at: '2026-10-03T10:00:00.000Z',
       last_event_at: '2026-10-05T09:30:00.000Z',
       event_retention_months: 13,
@@ -74,6 +90,8 @@ describe('ProjectSettingsController', () => {
     const { controller } = controllerAnswering({
       ...PROJECT,
       conversionEvent: null,
+      accountId: null,
+      role: null,
       firstEventAt: null,
       lastEventAt: null,
       publicKeys: [],
@@ -81,9 +99,11 @@ describe('ProjectSettingsController', () => {
       eventRetentionMonths: 13,
     });
 
-    const body = await controller.settings({ project: PROJECT } as FastifyRequest);
+    const body = await controller.settings(requestFor(PROJECT));
 
     expect(body).toMatchObject({
+      account_id: null,
+      role: null,
       conversion_event: null,
       first_event_at: null,
       last_event_at: null,

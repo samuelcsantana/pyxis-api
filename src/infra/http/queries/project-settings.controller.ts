@@ -5,6 +5,7 @@ import {
   GetProjectSettingsUseCase,
   type ProjectSettings,
 } from '../../../usecases/projects/get-project-settings.usecase';
+import { adminOf } from '../auth/auth.guards';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
@@ -23,6 +24,8 @@ export function projectSettingsBody(settings: ProjectSettings): ProjectSettingsB
     conversion_event: settings.conversionEvent,
     allowed_origins: [...settings.allowedOrigins],
     created_at: settings.createdAt.toISOString(),
+    account_id: settings.accountId,
+    role: settings.role,
     first_event_at: isoOrNull(settings.firstEventAt),
     last_event_at: isoOrNull(settings.lastEventAt),
     event_retention_months: settings.eventRetentionMonths,
@@ -56,6 +59,8 @@ export class ProjectSettingsController {
   @ApiOperation({ summary: 'The settings of the project, its live keys and its activity' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: projectSettingsSchema })
   async settings(@Req() request: FastifyRequest): Promise<ProjectSettingsBody> {
-    return projectSettingsBody(await this.getProjectSettings.execute(projectOf(request)));
+    return projectSettingsBody(
+      await this.getProjectSettings.execute(projectOf(request), adminOf(request).id),
+    );
   }
 }

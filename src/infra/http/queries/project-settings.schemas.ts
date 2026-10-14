@@ -15,6 +15,17 @@ export const projectSettingsSchema = z
       .array(z.string())
       .describe('The origins whose pages may send events with a public key'),
     created_at: z.iso.datetime(),
+    account_id: z
+      .uuid()
+      .nullable()
+      .describe("The account that pays for the project; null for the operator's own projects"),
+    role: z
+      .enum(['owner', 'member'])
+      .nullable()
+      .describe(
+        'Whether the admin owns that account and may change the project, or only reads it; ' +
+          "null for the operator's own projects, which change through the command line",
+      ),
     first_event_at: z.iso
       .datetime()
       .nullable()
@@ -38,7 +49,9 @@ export const projectSettingsSchema = z
   })
   .meta({
     id: 'ProjectSettings',
-    description: 'The settings of a project, read-only: they change through the command line.',
+    description:
+      'The settings of a project. The owner of its account changes them from the dashboard; ' +
+      "the operator's own projects change through the command line.",
   });
 
 export type ProjectSettingsBody = z.infer<typeof projectSettingsSchema>;
