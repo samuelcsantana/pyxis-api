@@ -1,5 +1,11 @@
 locals {
-  app_secrets = ["DATABASE_URL", "EDGE_SHARED_SECRET", "RESEND_API_KEY"]
+  app_secrets = [
+    "DATABASE_URL",
+    "EDGE_SHARED_SECRET",
+    "RESEND_API_KEY",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET",
+  ]
 
   app_settings = {
     DASHBOARD_ORIGIN = {
