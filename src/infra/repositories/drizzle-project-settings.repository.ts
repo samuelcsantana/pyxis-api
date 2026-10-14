@@ -1,20 +1,47 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq, getTableColumns, sql } from 'drizzle-orm';
+import { count, eq, getTableColumns, sql } from 'drizzle-orm';
 import type { Project } from '../../domain/entities/project.entity';
 import type {
+  AccountProjectSlot,
   CreatedProject,
   DeletedProject,
   NewProject,
   ProjectChanges,
+  ProjectInAccount,
   ProjectSettingsRepository,
 } from '../../domain/repositories/project-settings.repository';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
-import { insertedRow } from '../database/inserted-row';
+import { aggregateRow, insertedRow } from '../database/inserted-row';
+import { accounts } from '../database/schema/accounts';
+import { adminProjectAccess } from '../database/schema/admins';
 import { events } from '../database/schema/events';
 import { projectKeys } from '../database/schema/project-keys';
 import { projects } from '../database/schema/projects';
 import { toProject } from './drizzle-project.repository';
+
+type DrizzleTransaction = Parameters<Parameters<DrizzleDatabase['transaction']>[0]>[0];
+
+async function insertProjectWithKey(
+  transaction: DrizzleTransaction,
+  project: NewProject,
+  publicKey: string,
+  accountId: string | null,
+): Promise<CreatedProject> {
+  const created = insertedRow(
+    await transaction
+      .insert(projects)
+      .values({ ...project, allowedOrigins: [...project.allowedOrigins], accountId })
+      .returning(),
+  );
+  const key = insertedRow(
+    await transaction
+      .insert(projectKeys)
+      .values({ projectId: created.id, kind: 'public', publicKey })
+      .returning({ id: projectKeys.id }),
+  );
+  return { project: toProject(created), publicKeyId: key.id };
+}
 
 function columnChanges(changes: ProjectChanges): Partial<typeof projects.$inferInsert> {
   const { allowedOrigins, timezone, conversionEvent } = changes;
@@ -30,20 +57,39 @@ export class DrizzleProjectSettingsRepository implements ProjectSettingsReposito
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleDatabase) {}
 
   createWithPublicKey(project: NewProject, publicKey: string): Promise<CreatedProject> {
+    return this.db.transaction((transaction) =>
+      insertProjectWithKey(transaction, project, publicKey, null),
+    );
+  }
+
+  createWithPublicKeyInAccount(
+    project: NewProject,
+    publicKey: string,
+    slot: AccountProjectSlot,
+  ): Promise<ProjectInAccount> {
     return this.db.transaction(async (transaction) => {
-      const created = insertedRow(
+      const [account] = await transaction
+        .select({ ownerAdminId: accounts.ownerAdminId })
+        .from(accounts)
+        .where(eq(accounts.id, slot.accountId))
+        .for('update');
+      if (account === undefined) {
+        return { outcome: 'account_not_found' };
+      }
+      const held = aggregateRow(
         await transaction
-          .insert(projects)
-          .values({ ...project, allowedOrigins: [...project.allowedOrigins] })
-          .returning(),
+          .select({ total: count() })
+          .from(projects)
+          .where(eq(projects.accountId, slot.accountId)),
       );
-      const key = insertedRow(
-        await transaction
-          .insert(projectKeys)
-          .values({ projectId: created.id, kind: 'public', publicKey })
-          .returning({ id: projectKeys.id }),
-      );
-      return { project: toProject(created), publicKeyId: key.id };
+      if (held.total >= slot.maxProjects) {
+        return { outcome: 'project_limit_reached' };
+      }
+      const created = await insertProjectWithKey(transaction, project, publicKey, slot.accountId);
+      await transaction
+        .insert(adminProjectAccess)
+        .values({ adminUserId: account.ownerAdminId, projectId: created.project.id });
+      return { outcome: 'created', created };
     });
   }
 

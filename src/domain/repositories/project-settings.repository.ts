@@ -18,6 +18,16 @@ export interface CreatedProject {
   readonly publicKeyId: string;
 }
 
+export interface AccountProjectSlot {
+  readonly accountId: string;
+  readonly maxProjects: number;
+}
+
+export type ProjectInAccount =
+  | { readonly outcome: 'created'; readonly created: CreatedProject }
+  | { readonly outcome: 'account_not_found' }
+  | { readonly outcome: 'project_limit_reached' };
+
 export interface DeletedProject {
   readonly project: Project;
   readonly deletedEvents: number;
@@ -26,6 +36,11 @@ export interface DeletedProject {
 
 export interface ProjectSettingsRepository {
   createWithPublicKey(project: NewProject, publicKey: string): Promise<CreatedProject>;
+  createWithPublicKeyInAccount(
+    project: NewProject,
+    publicKey: string,
+    slot: AccountProjectSlot,
+  ): Promise<ProjectInAccount>;
   findById(projectId: string): Promise<Project | null>;
   update(projectId: string, changes: ProjectChanges): Promise<Project | null>;
   deleteWithEverything(projectId: string): Promise<DeletedProject | null>;

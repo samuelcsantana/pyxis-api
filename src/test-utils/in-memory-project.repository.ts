@@ -7,14 +7,21 @@ import type {
 } from '../domain/repositories/project-key.repository';
 import type { ProjectRepository } from '../domain/repositories/project.repository';
 import type {
+  AccountProjectSlot,
   CreatedProject,
   DeletedProject,
   NewProject,
   ProjectChanges,
+  ProjectInAccount,
   ProjectSettingsRepository,
 } from '../domain/repositories/project-settings.repository';
 
 const CREATED_AT = new Date('2026-10-06T00:00:00.000Z');
+
+export interface ProjectAccessGrant {
+  readonly adminUserId: string;
+  readonly projectId: string;
+}
 
 export class InMemoryProjectRepository
   implements ProjectRepository, ProjectSettingsRepository, ProjectKeyRepository
@@ -22,7 +29,22 @@ export class InMemoryProjectRepository
   private readonly projects = new Map<string, Project>();
   private readonly eventCounts = new Map<string, number>();
   private keys: ProjectKey[] = [];
+  private readonly accountOwners = new Map<string, string>();
+  private readonly projectAccounts = new Map<string, string>();
+  private readonly ownerGrants: ProjectAccessGrant[] = [];
   private sequence = 0;
+
+  get grantedToOwners(): readonly ProjectAccessGrant[] {
+    return this.ownerGrants;
+  }
+
+  addAccount(accountId: string, ownerAdminId: string): void {
+    this.accountOwners.set(accountId, ownerAdminId);
+  }
+
+  accountOf(projectId: string): string | null {
+    return this.projectAccounts.get(projectId) ?? null;
+  }
 
   get storedKeys(): readonly ProjectKey[] {
     return this.keys;
@@ -55,6 +77,27 @@ export class InMemoryProjectRepository
     return { project: created, publicKeyId: key.id };
   }
 
+  async createWithPublicKeyInAccount(
+    project: NewProject,
+    publicKey: string,
+    slot: AccountProjectSlot,
+  ): Promise<ProjectInAccount> {
+    const ownerAdminId = this.accountOwners.get(slot.accountId);
+    if (ownerAdminId === undefined) {
+      return { outcome: 'account_not_found' };
+    }
+    const held = [...this.projectAccounts.values()].filter(
+      (accountId) => accountId === slot.accountId,
+    ).length;
+    if (held >= slot.maxProjects) {
+      return { outcome: 'project_limit_reached' };
+    }
+    const created = await this.createWithPublicKey(project, publicKey);
+    this.projectAccounts.set(created.project.id, slot.accountId);
+    this.ownerGrants.push({ adminUserId: ownerAdminId, projectId: created.project.id });
+    return { outcome: 'created', created };
+  }
+
   findById(projectId: string): Promise<Project | null> {
     return Promise.resolve(this.projects.get(projectId) ?? null);
   }
@@ -77,6 +120,7 @@ export class InMemoryProjectRepository
     const deletedKeys = this.keys.filter((key) => key.projectId === projectId).length;
     const deletedEvents = this.eventCounts.get(projectId) ?? 0;
     this.projects.delete(projectId);
+    this.projectAccounts.delete(projectId);
     this.eventCounts.delete(projectId);
     this.keys = this.keys.filter((key) => key.projectId !== projectId);
     return Promise.resolve({ project, deletedEvents, deletedKeys });
