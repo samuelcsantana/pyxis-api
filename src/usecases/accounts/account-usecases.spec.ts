@@ -114,6 +114,11 @@ describe('ShowAccountUseCase', () => {
       ownerAdminId: MISSING_ID,
       status: 'comped',
       ingestionPausedUntil: null,
+      stripeCustomerId: null,
+      billingInterval: null,
+      trialEndsAt: null,
+      currentPeriodEndsAt: null,
+      accessEndsAt: null,
       createdAt: new Date('2026-10-14T00:00:00.000Z'),
     });
 
