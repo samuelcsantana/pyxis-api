@@ -4,7 +4,13 @@ const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = { events: 12, sessions: 1, signInCodes: 2 };
 const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
-const ACCOUNT_USAGE = { month: '2026-10', accounts: 3, paused: 1 };
+const ACCOUNT_USAGE = {
+  month: '2026-10',
+  accounts: 3,
+  paused: 1,
+  notified: 2,
+  notificationsFailed: 0,
+};
 
 function recordingDependencies(order: string[]): JobsHandlerDependencies {
   return {

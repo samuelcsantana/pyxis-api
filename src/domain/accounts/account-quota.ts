@@ -1,10 +1,18 @@
+import type { EmailLanguage } from '../auth/email-language';
 import type { AccountStatus } from './account-status';
 import { HOSTED_PLAN_LIMITS, INGESTION_PAUSE_RATIO } from './hosted-plan';
+
+export interface AccountOwnerContact {
+  readonly email: string;
+  readonly language: EmailLanguage;
+}
 
 export interface AccountMonthUsage {
   readonly accountId: string;
   readonly status: AccountStatus;
   readonly events: number;
+  readonly owner: AccountOwnerContact;
+  readonly notifiedLevel: number;
 }
 
 export const INGESTION_PAUSE_THRESHOLD = HOSTED_PLAN_LIMITS.eventsPerMonth * INGESTION_PAUSE_RATIO;

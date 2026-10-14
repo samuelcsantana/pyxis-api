@@ -3,6 +3,7 @@ import { validateEnv } from '../config/env.schema';
 import { SystemClock } from '../infra/clock/system-clock';
 import { createDrizzleDatabase, createPostgresClient } from '../infra/database/postgres-client';
 import { createMailSender } from '../infra/mail/create-mail-sender';
+import { LazyMailSender } from '../infra/mail/lazy-mail-sender';
 import { DrizzleDigestRecipientsQuery } from '../infra/queries/drizzle-digest-recipients.query';
 import { DrizzleOverviewQuery } from '../infra/queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../infra/queries/drizzle-project-activity.query';
@@ -52,6 +53,7 @@ export const handler = createJobsHandler({
     withDatabase((database) =>
       new MeasureAccountUsageUseCase(
         new DrizzleAccountUsageRepository(database),
+        new LazyMailSender(() => createMailSender(validateEnv(process.env))),
         new SystemClock(),
       ).execute(),
     ),

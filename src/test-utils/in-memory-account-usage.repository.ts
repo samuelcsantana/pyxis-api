@@ -7,6 +7,7 @@ import type {
 import type { IngestionPauseRepository } from '../domain/repositories/ingestion-pause.repository';
 
 export interface MeasuredWindow {
+  readonly month: string;
   readonly from: Date;
   readonly to: Date;
 }
@@ -16,6 +17,7 @@ export class InMemoryAccountUsageRepository
 {
   measured: readonly AccountMonthUsage[] = [];
   readonly windows: MeasuredWindow[] = [];
+  readonly notified = new Map<string, number>();
   private readonly recorded = new Map<string, RecordedUsage>();
   private readonly pauses = new Map<string, Date | null>();
   private readonly projectAccounts = new Map<string, string>();
@@ -28,9 +30,19 @@ export class InMemoryAccountUsageRepository
     return this.pauses.get(accountId) ?? null;
   }
 
-  measure(from: Date, to: Date): Promise<readonly AccountMonthUsage[]> {
-    this.windows.push({ from, to });
-    return Promise.resolve(this.measured);
+  measure(month: string, from: Date, to: Date): Promise<readonly AccountMonthUsage[]> {
+    this.windows.push({ month, from, to });
+    return Promise.resolve(
+      this.measured.map((usage) => ({
+        ...usage,
+        notifiedLevel: this.notified.get(`${usage.accountId}/${month}`) ?? usage.notifiedLevel,
+      })),
+    );
+  }
+
+  markNotified(accountId: string, month: string, level: number): Promise<void> {
+    this.notified.set(`${accountId}/${month}`, level);
+    return Promise.resolve();
   }
 
   record(month: string, entries: readonly AccountUsageEntry[], at: Date): Promise<void> {

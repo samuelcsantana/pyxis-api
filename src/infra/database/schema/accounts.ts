@@ -6,6 +6,7 @@ import {
   integer,
   pgTable,
   primaryKey,
+  smallint,
   timestamp,
   uuid,
   varchar,
@@ -45,6 +46,7 @@ export const accountUsageMonths = pgTable(
       .references(() => accounts.id, { onDelete: 'cascade' }),
     month: char('month', { length: MONTH_LABEL_LENGTH }).notNull(),
     events: integer('events').notNull(),
+    notifiedLevel: smallint('notified_level').notNull().default(0),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
   },
   (table) => [

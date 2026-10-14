@@ -1,0 +1,1 @@
+ALTER TABLE "account_usage_months" ADD COLUMN "notified_level" smallint DEFAULT 0 NOT NULL;
