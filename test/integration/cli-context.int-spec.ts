@@ -51,6 +51,27 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('deletes a project with the migration connection, once its name confirms it', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const project = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+      });
+
+      const deleted = await context.deleteProject.execute({
+        projectId: project.projectId,
+        confirmName: 'Shop',
+      });
+
+      expect(deleted).toMatchObject({ deletedEvents: 0, deletedKeys: 1 });
+      const rows = await owner`SELECT id FROM projects`;
+      expect(rows).toHaveLength(0);
+    } finally {
+      await context.close();
+    }
+  });
+
   it('grants a project to an admin, creating the admin once', async () => {
     const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
     try {

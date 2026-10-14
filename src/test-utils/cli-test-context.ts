@@ -5,6 +5,7 @@ import { SequenceRandomSource } from './sequence-random-source';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
+import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext, CommandOutput } from '../cli/cli-command';
@@ -39,6 +40,7 @@ export function inMemoryCliContext(): CliContext & {
       new FixedClock(new Date('2026-10-06T14:00:00.000Z')),
     ),
     updateProject: new UpdateProjectUseCase(store),
+    deleteProject: new DeleteProjectUseCase(store),
     grantAdminAccess: new GrantAdminAccessUseCase(store, admins),
     close: () => {
       context.closed = true;

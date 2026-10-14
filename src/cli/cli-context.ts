@@ -11,6 +11,7 @@ import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
+import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext } from './cli-command';
@@ -34,6 +35,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
     revokeProjectKey: new RevokeProjectKeyUseCase(keys, new SystemClock()),
     updateProject: new UpdateProjectUseCase(settings),
+    deleteProject: new DeleteProjectUseCase(settings),
     grantAdminAccess: new GrantAdminAccessUseCase(settings, new DrizzleAdminUserRepository(db)),
     close: () => client.end(),
   };
