@@ -5,8 +5,8 @@ import {
   brandHeader,
   cardRow,
   DARK,
-  DASHBOARD_URL,
   type EmailContent,
+  type EmailLinks,
   emailDocument,
   heading,
   inkLink,
@@ -219,13 +219,14 @@ function visitsSummary({ digest, messages, formats }: Wording): string {
   return change === null ? count : `${count} (${change})`;
 }
 
-function overviewUrl(digest: WeeklyDigest): string {
+function overviewUrl(digest: WeeklyDigest, links: EmailLinks): string {
   const query = new URLSearchParams({ from: digest.week.from, to: digest.week.to });
-  return `${DASHBOARD_URL}${encodeURIComponent(digest.projectId)}/overview?${query.toString()}`;
+  const project = encodeURIComponent(digest.projectId);
+  return `${links.dashboardUrl}${project}/overview?${query.toString()}`;
 }
 
-function settingsUrl(digest: WeeklyDigest): string {
-  return `${DASHBOARD_URL}${encodeURIComponent(digest.projectId)}/settings`;
+function settingsUrl(digest: WeeklyDigest, links: EmailLinks): string {
+  return `${links.dashboardUrl}${encodeURIComponent(digest.projectId)}/settings`;
 }
 
 function weekLine({ digest, messages, formats }: Wording): string {
@@ -446,7 +447,7 @@ function button(href: string, label: string): readonly string[] {
   ];
 }
 
-function card(wording: Wording): readonly string[] {
+function card(wording: Wording, links: EmailLinks): readonly string[] {
   const { digest, messages } = wording;
   return cardRow([
     paragraph({ ...SMALL_MUTED, margin: '0 0 4px 0' }, escapeHtml(messages.kicker)),
@@ -458,11 +459,11 @@ function card(wording: Wording): readonly string[] {
     ...listBlock(messages.topPages, pageRows(wording), messages.noPageViews),
     ...listBlock(messages.topEvents, eventRows(wording), messages.noNamedEvents),
     ...listBlock(messages.failingRoutes, routeRows(wording), messages.noFailedWrites),
-    ...button(overviewUrl(digest), messages.openWeek),
+    ...button(overviewUrl(digest, links), messages.openWeek),
   ]);
 }
 
-function footer({ digest, messages }: Wording): readonly string[] {
+function footer({ digest, messages }: Wording, links: EmailLinks): readonly string[] {
   const footnote: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
   return [
     '<tr>',
@@ -471,7 +472,7 @@ function footer({ digest, messages }: Wording): readonly string[] {
     paragraph(
       footnote,
       `${escapeHtml(messages.turnOff)}
-${inkLink(settingsUrl(digest), messages.settings)}.`,
+${inkLink(settingsUrl(digest, links), messages.settings)}.`,
     ),
     paragraph({ ...footnote, margin: '0' }, escapeHtml(messages.about)),
     '</td>',
@@ -479,12 +480,16 @@ ${inkLink(settingsUrl(digest), messages.settings)}.`,
   ];
 }
 
-function buildHtml(wording: Wording, subject: string): string {
+function buildHtml(wording: Wording, subject: string, links: EmailLinks): string {
   return emailDocument({
     language: wording.messages.language,
     title: subject,
     preheader: preheader(wording),
-    rows: [...brandHeader(wording.messages.logoAlt), ...card(wording), ...footer(wording)],
+    rows: [
+      ...brandHeader(wording.messages.logoAlt, links),
+      ...card(wording, links),
+      ...footer(wording, links),
+    ],
     darkRules: DIGEST_DARK_RULES,
     narrowRules: DIGEST_NARROW_RULES,
   });
@@ -498,7 +503,7 @@ function textTable(rows: readonly ListRow[], empty: string): readonly string[] {
   return rows.map((row) => `${TEXT_INDENT}${row.name.padEnd(width)}${row.count}`);
 }
 
-function buildText(wording: Wording): string {
+function buildText(wording: Wording, links: EmailLinks): string {
   const { digest, messages, formats } = wording;
   const tileLines = tiles(wording).map((tile) => {
     const note = tile.note === null ? '' : ` (${tile.note})`;
@@ -528,30 +533,44 @@ function buildText(wording: Wording): string {
     messages.failingRoutes,
     ...textTable(routeRows(wording), messages.noFailedWrites),
     '',
-    `${messages.openWeek}: ${overviewUrl(digest)}`,
+    `${messages.openWeek}: ${overviewUrl(digest, links)}`,
     '',
     ...wrapped(messages.reason(digest.projectName)),
-    `${messages.turnOff} ${messages.settings}: ${settingsUrl(digest)}`,
+    `${messages.turnOff} ${messages.settings}: ${settingsUrl(digest, links)}`,
     ...wrapped(messages.about),
   ].join('\n');
+}
+
+function wordingFor(digest: WeeklyDigest, messages: WeeklyDigestEmailMessages): Wording {
+  return { digest, messages, formats: formatsFor(messages.language) };
+}
+
+function subjectOf(wording: Wording): string {
+  return wording.messages.subject(
+    wording.digest.projectName,
+    wording.formats.shortWeek(wording.digest.week),
+    visitsSummary(wording),
+  );
 }
 
 export function renderWeeklyDigestEmail(
   digest: WeeklyDigest,
   messages: WeeklyDigestEmailMessages,
+  links: EmailLinks,
 ): EmailContent {
-  const wording: Wording = { digest, messages, formats: formatsFor(messages.language) };
-  const subject = messages.subject(
-    digest.projectName,
-    wording.formats.shortWeek(digest.week),
-    visitsSummary(wording),
-  );
-  return { subject, html: buildHtml(wording, subject), text: buildText(wording) };
+  const wording = wordingFor(digest, messages);
+  const subject = subjectOf(wording);
+  return { subject, html: buildHtml(wording, subject, links), text: buildText(wording, links) };
 }
 
 export function buildWeeklyDigestEmail(
   digest: WeeklyDigest,
   language: EmailLanguage,
+  links: EmailLinks,
 ): EmailContent {
-  return renderWeeklyDigestEmail(digest, WEEKLY_DIGEST_EMAIL_MESSAGES[language]);
+  return renderWeeklyDigestEmail(digest, WEEKLY_DIGEST_EMAIL_MESSAGES[language], links);
+}
+
+export function weeklyDigestSubject(digest: WeeklyDigest, language: EmailLanguage): string {
+  return subjectOf(wordingFor(digest, WEEKLY_DIGEST_EMAIL_MESSAGES[language]));
 }

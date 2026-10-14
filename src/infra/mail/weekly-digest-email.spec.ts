@@ -1,12 +1,14 @@
 import { EMAIL_LANGUAGES } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
-import { DASHBOARD_URL, EMAIL_LOGO_URL, TEXT_LINE_WIDTH } from './email-layout';
-import { buildWeeklyDigestEmail } from './weekly-digest-email';
+import { emailLinksFor, TEXT_LINE_WIDTH } from './email-layout';
+import { buildWeeklyDigestEmail, weeklyDigestSubject } from './weekly-digest-email';
+
+const LINKS = emailLinksFor('https://dashboard.example.com');
 
 const PROJECT_ID = 'd2e07854-0000-4000-8000-000000000001';
-const OVERVIEW_URL = `${DASHBOARD_URL}${PROJECT_ID}/overview?from=2026-10-05&to=2026-10-11`;
-const SETTINGS_URL = `${DASHBOARD_URL}${PROJECT_ID}/settings`;
-const OVERVIEW_HREF = `${DASHBOARD_URL}${PROJECT_ID}/overview?from=2026-10-05&amp;to=2026-10-11`;
+const OVERVIEW_URL = `${LINKS.dashboardUrl}${PROJECT_ID}/overview?from=2026-10-05&to=2026-10-11`;
+const SETTINGS_URL = `${LINKS.dashboardUrl}${PROJECT_ID}/settings`;
+const OVERVIEW_HREF = `${LINKS.dashboardUrl}${PROJECT_ID}/overview?from=2026-10-05&amp;to=2026-10-11`;
 const HTML_LINE_LIMIT = 400;
 const GMAIL_CLIPPING_BYTES = 102 * 1024;
 const HOSTILE = `<i>&"'`;
@@ -77,7 +79,7 @@ function textOf(html: string): string {
 }
 
 describe('the weekly digest in English', () => {
-  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'en');
+  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'en', LINKS);
 
   it('names the project, the week and the visits with their change in the subject', () => {
     expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11 · 812 visits (+12%)`);
@@ -97,7 +99,7 @@ describe('the weekly digest in English', () => {
 
   it('keeps the time zone id when the only name known for it is an offset', () => {
     for (const timeZone of ['UTC', 'Etc/GMT+12']) {
-      const email = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone }, 'en');
+      const email = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone }, 'en', LINKS);
 
       expect(email.text).toContain(`Sunday, October 11, 2026 · ${timeZone}\n`);
     }
@@ -192,7 +194,7 @@ describe('the weekly digest in English', () => {
 });
 
 describe('the weekly digest in Brazilian Portuguese', () => {
-  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'pt-BR');
+  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'pt-BR', LINKS);
 
   it('names the project, the week and the visits with their change in the subject', () => {
     expect(email.subject).toBe(`Acme Store · 5${RANGE_DASH}11 de out. · 812 visitas (+12%)`);
@@ -224,7 +226,7 @@ describe('the weekly digest in Brazilian Portuguese', () => {
   });
 
   it('keeps the time zone id in Portuguese too when only an offset names it', () => {
-    const utc = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone: 'UTC' }, 'pt-BR');
+    const utc = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone: 'UTC' }, 'pt-BR', LINKS);
 
     expect(utc.text).toContain('domingo, 11 de outubro de 2026 · UTC\n');
   });
@@ -241,7 +243,7 @@ describe('the weekly digest in Brazilian Portuguese', () => {
 });
 
 describe('the weekly digest in Spanish', () => {
-  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'es');
+  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'es', LINKS);
 
   it('names the project, the week and the visits with their change in the subject', () => {
     expect(email.subject).toBe(
@@ -279,7 +281,7 @@ describe('the weekly digest in Spanish', () => {
   });
 
   it('keeps the time zone id when only an offset names it', () => {
-    const utc = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone: 'UTC' }, 'es');
+    const utc = buildWeeklyDigestEmail({ ...BUSY_WEEK, timeZone: 'UTC' }, 'es', LINKS);
 
     expect(utc.text).toContain('domingo, 11 de octubre de 2026 · UTC\n');
   });
@@ -304,13 +306,13 @@ describe('the inbox preview of the weekly digest', () => {
   };
 
   it('counts one of each in the singular', () => {
-    expect(preheaderOf(buildWeeklyDigestEmail(single, 'en').html)).toBe(
+    expect(preheaderOf(buildWeeklyDigestEmail(single, 'en', LINKS).html)).toBe(
       '1 identified user · 1 converting visit · 1 failed write',
     );
-    expect(preheaderOf(buildWeeklyDigestEmail(single, 'pt-BR').html)).toBe(
+    expect(preheaderOf(buildWeeklyDigestEmail(single, 'pt-BR', LINKS).html)).toBe(
       '1 usuário identificado · 1 visita com conversão · 1 gravação com falha',
     );
-    expect(preheaderOf(buildWeeklyDigestEmail(single, 'es').html)).toBe(
+    expect(preheaderOf(buildWeeklyDigestEmail(single, 'es', LINKS).html)).toBe(
       '1 usuario identificado · 1 visita con conversión · 1 escritura fallida',
     );
   });
@@ -318,20 +320,20 @@ describe('the inbox preview of the weekly digest', () => {
   it('leaves converting visits out for a project without a conversion event', () => {
     const withoutConversion = { ...BUSY_WEEK, convertingVisits: null };
 
-    expect(preheaderOf(buildWeeklyDigestEmail(withoutConversion, 'en').html)).toBe(
+    expect(preheaderOf(buildWeeklyDigestEmail(withoutConversion, 'en', LINKS).html)).toBe(
       '120 identified users · 3 failed writes',
     );
   });
 
   it('says that no visit arrived, and when the last event did, in a week without visits', () => {
-    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'en').html)).toMatch(
+    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'en', LINKS).html)).toMatch(
       /^No visits arrived last week\. The last event was received on October 2, 2026 at 11:31/,
     );
-    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'pt-BR').html)).toBe(
+    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'pt-BR', LINKS).html)).toBe(
       'Nenhuma visita chegou na semana passada. ' +
         'O último evento foi recebido em 2 de outubro de 2026 às 11:31.',
     );
-    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'es').html)).toBe(
+    expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, 'es', LINKS).html)).toBe(
       'No llegó ninguna visita la semana pasada. ' +
         'El último evento se recibió el 2 de octubre de 2026 a las 11:31.',
     );
@@ -339,7 +341,7 @@ describe('the inbox preview of the weekly digest', () => {
 });
 
 describe('a week without visits', () => {
-  const email = buildWeeklyDigestEmail(QUIET_WEEK, 'en');
+  const email = buildWeeklyDigestEmail(QUIET_WEEK, 'en', LINKS);
 
   it('says so first, with when the last event arrived in the project time zone', () => {
     expect(email.subject).toBe(`Acme Store · Oct 5${RANGE_DASH}11 · 0 visits (-100%)`);
@@ -350,13 +352,13 @@ describe('a week without visits', () => {
   });
 
   it('says when the last event arrived in Spanish too', () => {
-    expect(buildWeeklyDigestEmail(QUIET_WEEK, 'es').text).toContain(
+    expect(buildWeeklyDigestEmail(QUIET_WEEK, 'es', LINKS).text).toContain(
       'No llegó ninguna visita la semana pasada.\nEl último evento se recibió el 2 de octubre de 2026 a las 11:31.',
     );
   });
 
   it('says when the last event arrived in Portuguese too', () => {
-    expect(buildWeeklyDigestEmail(QUIET_WEEK, 'pt-BR').text).toContain(
+    expect(buildWeeklyDigestEmail(QUIET_WEEK, 'pt-BR', LINKS).text).toContain(
       'Nenhuma visita chegou na semana passada.\nO último evento foi recebido em 2 de outubro de 2026 às 11:31.',
     );
   });
@@ -364,7 +366,7 @@ describe('a week without visits', () => {
   it('gives converting visits without a share when there was no visit', () => {
     const converting = { ...QUIET_WEEK, convertingVisits: { current: 0, previous: 3 } };
 
-    expect(buildWeeklyDigestEmail(converting, 'en').text).toContain(
+    expect(buildWeeklyDigestEmail(converting, 'en', LINKS).text).toContain(
       'Converting visits: 0 · -100% vs. the week before (3)',
     );
   });
@@ -372,13 +374,13 @@ describe('a week without visits', () => {
   it('says when no event ever arrived', () => {
     const never = { ...QUIET_WEEK, lastEventAt: null };
 
-    expect(buildWeeklyDigestEmail(never, 'en').text).toContain(
+    expect(buildWeeklyDigestEmail(never, 'en', LINKS).text).toContain(
       'No visits arrived last week.\nNo events have arrived for this project yet.',
     );
-    expect(buildWeeklyDigestEmail(never, 'pt-BR').text).toContain(
+    expect(buildWeeklyDigestEmail(never, 'pt-BR', LINKS).text).toContain(
       'Nenhuma visita chegou na semana passada.\nNenhum evento chegou ainda para este projeto.',
     );
-    expect(buildWeeklyDigestEmail(never, 'es').text).toContain(
+    expect(buildWeeklyDigestEmail(never, 'es', LINKS).text).toContain(
       'No llegó ninguna visita la semana pasada.\nTodavía no llegó ningún evento para este proyecto.',
     );
   });
@@ -405,13 +407,13 @@ describe('a week with one visit and none the week before', () => {
   it('counts the visit in the singular and gives no change', () => {
     const single = { ...QUIET_WEEK, visits: { current: 1, previous: 0 } };
 
-    expect(buildWeeklyDigestEmail(single, 'en').subject).toBe(
+    expect(buildWeeklyDigestEmail(single, 'en', LINKS).subject).toBe(
       `Acme Store · Oct 5${RANGE_DASH}11 · 1 visit`,
     );
-    expect(buildWeeklyDigestEmail(single, 'pt-BR').subject).toBe(
+    expect(buildWeeklyDigestEmail(single, 'pt-BR', LINKS).subject).toBe(
       `Acme Store · 5${RANGE_DASH}11 de out. · 1 visita`,
     );
-    expect(buildWeeklyDigestEmail(single, 'es').subject).toBe(
+    expect(buildWeeklyDigestEmail(single, 'es', LINKS).subject).toBe(
       `Acme Store · 5${COMPACT_RANGE_DASH}11 oct · 1 visita`,
     );
   });
@@ -419,18 +421,18 @@ describe('a week with one visit and none the week before', () => {
   it('calls a change that rounds to zero no change', () => {
     const steady = { ...BUSY_WEEK, visits: { current: 1001, previous: 1000 } };
 
-    expect(buildWeeklyDigestEmail(steady, 'en').subject).toBe(
+    expect(buildWeeklyDigestEmail(steady, 'en', LINKS).subject).toBe(
       `Acme Store · Oct 5${RANGE_DASH}11 · 1,001 visits`,
     );
   });
 });
 
 describe.each(EMAIL_LANGUAGES)('the %s weekly digest', (language) => {
-  const email = buildWeeklyDigestEmail(BUSY_WEEK, language);
+  const email = buildWeeklyDigestEmail(BUSY_WEEK, language, LINKS);
 
   it('loads no image but the logo', () => {
     expect(email.html.split('<img').length - 1).toBe(1);
-    expect(email.html).toContain(`<img src="${EMAIL_LOGO_URL}"`);
+    expect(email.html).toContain(`<img src="${LINKS.logoUrl}"`);
   });
 
   it('carries its styles inline and in its head, with a dark and a narrow-screen version', () => {
@@ -466,7 +468,7 @@ describe('customer data in the weekly digest', () => {
   };
 
   it('is escaped wherever it reaches the HTML', () => {
-    const { html } = buildWeeklyDigestEmail(hostile, 'en');
+    const { html } = buildWeeklyDigestEmail(hostile, 'en', LINKS);
 
     expect(html).not.toContain('<i>');
     expect(html).toContain(`<h1 class="pyxis-ink"`);
@@ -474,11 +476,36 @@ describe('customer data in the weekly digest', () => {
   });
 
   it('puts the project id in the links as a path segment only', () => {
-    const { html } = buildWeeklyDigestEmail({ ...BUSY_WEEK, projectId: '../x?y' }, 'en');
+    const { html } = buildWeeklyDigestEmail({ ...BUSY_WEEK, projectId: '../x?y' }, 'en', LINKS);
 
     expect(hrefs(html)).toEqual([
-      `${DASHBOARD_URL}..%2Fx%3Fy/overview?from=2026-10-05&amp;to=2026-10-11`,
-      `${DASHBOARD_URL}..%2Fx%3Fy/settings`,
+      `${LINKS.dashboardUrl}..%2Fx%3Fy/overview?from=2026-10-05&amp;to=2026-10-11`,
+      `${LINKS.dashboardUrl}..%2Fx%3Fy/settings`,
     ]);
+  });
+});
+
+describe('buildWeeklyDigestEmail for another dashboard', () => {
+  const elsewhere = 'https://pyxis.example.org:8443';
+  const email = buildWeeklyDigestEmail(BUSY_WEEK, 'en', emailLinksFor(elsewhere));
+
+  it('links to the dashboard it is given', () => {
+    expect(hrefs(email.html)).toEqual([
+      `${elsewhere}/${PROJECT_ID}/overview?from=2026-10-05&amp;to=2026-10-11`,
+      `${elsewhere}/${PROJECT_ID}/settings`,
+    ]);
+    expect(email.text).toContain(`${elsewhere}/${PROJECT_ID}/settings`);
+  });
+
+  it('loads its logo from that dashboard', () => {
+    expect(email.html).toContain(`<img src="${elsewhere}/email/pyxis-logo.png"`);
+  });
+});
+
+describe('weeklyDigestSubject', () => {
+  it.each(EMAIL_LANGUAGES)('is the subject of the whole e-mail in %s', (language) => {
+    expect(weeklyDigestSubject(BUSY_WEEK, language)).toBe(
+      buildWeeklyDigestEmail(BUSY_WEEK, language, LINKS).subject,
+    );
   });
 });

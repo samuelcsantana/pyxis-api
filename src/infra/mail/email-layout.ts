@@ -7,10 +7,24 @@ export interface EmailContent {
   readonly text: string;
 }
 
-export const DASHBOARD_URL = 'https://app.pyxis-analytics.dev/';
-export const DASHBOARD_HOST = new URL(DASHBOARD_URL).host;
-export const EMAIL_LOGO_URL = `${DASHBOARD_URL}email/pyxis-logo.png`;
-export const EMAIL_LOGO_2X_URL = `${DASHBOARD_URL}email/pyxis-logo@2x.png`;
+export interface EmailLinks {
+  readonly dashboardUrl: string;
+  readonly dashboardHost: string;
+  readonly logoUrl: string;
+  readonly logo2xUrl: string;
+}
+
+export function emailLinksFor(dashboardOrigin: string): EmailLinks {
+  const dashboard = new URL(dashboardOrigin);
+  const dashboardUrl = `${dashboard.origin}/`;
+  return {
+    dashboardUrl,
+    dashboardHost: dashboard.host,
+    logoUrl: `${dashboardUrl}email/pyxis-logo.png`,
+    logo2xUrl: `${dashboardUrl}email/pyxis-logo@2x.png`,
+  };
+}
+
 export const TEXT_LINE_WIDTH = 72;
 
 const CONTENT_WIDTH_PX = 560;
@@ -89,9 +103,9 @@ export function heading(content: string): string {
   return `<h1 class="pyxis-ink" style="${style}">${escapeHtml(content)}</h1>`;
 }
 
-export function brandHeader(logoAlt: string): readonly string[] {
+export function brandHeader(logoAlt: string, links: EmailLinks): readonly string[] {
   const logo =
-    `<img src="${escapeHtml(EMAIL_LOGO_URL)}" srcset="${escapeHtml(EMAIL_LOGO_2X_URL)} 2x" ` +
+    `<img src="${escapeHtml(links.logoUrl)}" srcset="${escapeHtml(links.logo2xUrl)} 2x" ` +
     `width="${String(LOGO_SIZE_PX)}" height="${String(LOGO_SIZE_PX)}" ` +
     `alt="${escapeHtml(logoAlt)}" style="display:block;border:0;outline:none;">`;
   const wordmarkStyle =

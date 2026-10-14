@@ -4,9 +4,8 @@ import {
   brandHeader,
   cardRow,
   DARK,
-  DASHBOARD_HOST,
-  DASHBOARD_URL,
   type EmailContent,
+  type EmailLinks,
   emailDocument,
   heading,
   inkLink,
@@ -68,7 +67,7 @@ function card(code: string, messages: SignInCodeEmailMessages): readonly string[
   ]);
 }
 
-function footer(messages: SignInCodeEmailMessages): readonly string[] {
+function footer(messages: SignInCodeEmailMessages, links: EmailLinks): readonly string[] {
   const footnote: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
   return [
     '<tr>',
@@ -77,24 +76,28 @@ function footer(messages: SignInCodeEmailMessages): readonly string[] {
     paragraph(footnote, escapeHtml(messages.reason)),
     paragraph(
       { ...footnote, margin: '0' },
-      `${escapeHtml(messages.dashboard)}: ${inkLink(DASHBOARD_URL, DASHBOARD_HOST)}`,
+      `${escapeHtml(messages.dashboard)}: ${inkLink(links.dashboardUrl, links.dashboardHost)}`,
     ),
     '</td>',
     '</tr>',
   ];
 }
 
-function buildHtml(code: string, messages: SignInCodeEmailMessages): string {
+function buildHtml(code: string, messages: SignInCodeEmailMessages, links: EmailLinks): string {
   return emailDocument({
     language: messages.language,
     title: messages.subject(code),
     preheader: messages.preheader(code, CODE_LIFETIME_MINUTES),
-    rows: [...brandHeader(messages.logoAlt), ...card(code, messages), ...footer(messages)],
+    rows: [
+      ...brandHeader(messages.logoAlt, links),
+      ...card(code, messages),
+      ...footer(messages, links),
+    ],
     darkRules: CODE_DARK_RULES,
   });
 }
 
-function buildText(code: string, messages: SignInCodeEmailMessages): string {
+function buildText(code: string, messages: SignInCodeEmailMessages, links: EmailLinks): string {
   return [
     messages.heading,
     '',
@@ -109,21 +112,26 @@ function buildText(code: string, messages: SignInCodeEmailMessages): string {
     '',
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
-    `${messages.dashboard}: ${DASHBOARD_URL}`,
+    `${messages.dashboard}: ${links.dashboardUrl}`,
   ].join('\n');
 }
 
 export function renderSignInCodeEmail(
   code: string,
   messages: SignInCodeEmailMessages,
+  links: EmailLinks,
 ): EmailContent {
   return {
     subject: messages.subject(code),
-    html: buildHtml(code, messages),
-    text: buildText(code, messages),
+    html: buildHtml(code, messages, links),
+    text: buildText(code, messages, links),
   };
 }
 
-export function buildSignInCodeEmail(code: string, language: EmailLanguage): EmailContent {
-  return renderSignInCodeEmail(code, SIGN_IN_CODE_EMAIL_MESSAGES[language]);
+export function buildSignInCodeEmail(
+  code: string,
+  language: EmailLanguage,
+  links: EmailLinks,
+): EmailContent {
+  return renderSignInCodeEmail(code, SIGN_IN_CODE_EMAIL_MESSAGES[language], links);
 }
