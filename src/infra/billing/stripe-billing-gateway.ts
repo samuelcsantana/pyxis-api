@@ -117,7 +117,7 @@ export class StripeBillingGateway implements BillingGateway {
           : { customer: request.customerId }),
         client_reference_id: request.accountId,
         subscription_data: {
-          trial_period_days: request.trialDays,
+          ...(request.trialDays === null ? {} : { trial_period_days: request.trialDays }),
           metadata: { [ACCOUNT_ID_METADATA]: request.accountId },
         },
         payment_method_collection: 'always',
