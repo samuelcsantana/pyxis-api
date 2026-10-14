@@ -395,6 +395,95 @@
         ],
         "type": "object"
       },
+      "CreatedProject": {
+        "additionalProperties": false,
+        "description": "The new project and the public key its site sends events with.",
+        "properties": {
+          "project_id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "public_key": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              "key": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "key"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "project_id",
+          "public_key"
+        ],
+        "type": "object"
+      },
+      "CreatedProjectKey": {
+        "additionalProperties": false,
+        "description": "The new key.",
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "key": {
+            "description": "The key itself; a secret key is shown only in this answer, never again",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "public",
+              "secret"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "key"
+        ],
+        "type": "object"
+      },
+      "DeletedProject": {
+        "additionalProperties": false,
+        "description": "What the deletion removed.",
+        "properties": {
+          "deleted_events": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "deleted_keys": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "project_id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "deleted_events",
+          "deleted_keys"
+        ],
+        "type": "object"
+      },
       "DevicesReport": {
         "additionalProperties": false,
         "description": "Visits, conversion events and converting visits (both null without a conversion event) per value, sorted by visits: the top five values and \"other\" for the rest, unknown countries included. regions lists the top 10 regions (the first subdivision of the country, as an ISO 3166-2 code such as BR-SP, with the name CloudFront gave it), then \"other\" for the rest, then a null value for visits without a region.",
@@ -1141,6 +1230,49 @@
         ],
         "type": "object"
       },
+      "ManagedProject": {
+        "additionalProperties": false,
+        "description": "The settings of the project after the change.",
+        "properties": {
+          "allowed_origins": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "conversion_event": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "allowed_origins",
+          "timezone",
+          "conversion_event",
+          "created_at"
+        ],
+        "type": "object"
+      },
       "Me": {
         "additionalProperties": false,
         "description": "The signed-in admin and the projects they may read.",
@@ -1396,6 +1528,58 @@
         },
         "required": [
           "accounts"
+        ],
+        "type": "object"
+      },
+      "NewProject": {
+        "additionalProperties": false,
+        "description": "A project to create in the account.",
+        "properties": {
+          "allowed_origins": {
+            "description": "Scheme, host and port of each site that sends events, as its Origin header says",
+            "items": {
+              "maxLength": 300,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          },
+          "conversion_event": {
+            "maxLength": 64,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "timezone": {
+            "description": "An IANA time zone, such as America/Sao_Paulo",
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "allowed_origins"
+        ],
+        "type": "object"
+      },
+      "NewProjectKey": {
+        "additionalProperties": false,
+        "description": "The kind of key to create.",
+        "properties": {
+          "kind": {
+            "enum": [
+              "public",
+              "secret"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
         ],
         "type": "object"
       },
@@ -1829,10 +2013,78 @@
         },
         "type": "object"
       },
+      "ProjectChanges": {
+        "additionalProperties": false,
+        "description": "The settings to change; the rest stay.",
+        "properties": {
+          "allowed_origins": {
+            "description": "Scheme, host and port of each site that sends events, as its Origin header says",
+            "items": {
+              "maxLength": 300,
+              "type": "string"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "type": "array"
+          },
+          "conversion_event": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The event counted as a conversion; null clears it"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "timezone": {
+            "description": "An IANA time zone, such as America/Sao_Paulo",
+            "maxLength": 64,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProjectDeletion": {
+        "additionalProperties": false,
+        "description": "The confirmation of a deletion.",
+        "properties": {
+          "confirm_name": {
+            "description": "The project's name, typed again",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "confirm_name"
+        ],
+        "type": "object"
+      },
       "ProjectSettings": {
         "additionalProperties": false,
-        "description": "The settings of a project, read-only: they change through the command line.",
+        "description": "The settings of a project. The owner of its account changes them from the dashboard; the operator's own projects change through the command line.",
         "properties": {
+          "account_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The account that pays for the project; null for the operator's own projects"
+          },
           "allowed_origins": {
             "description": "The origins whose pages may send events with a public key",
             "items": {
@@ -1921,6 +2173,21 @@
             },
             "type": "array"
           },
+          "role": {
+            "anyOf": [
+              {
+                "enum": [
+                  "owner",
+                  "member"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Whether the admin owns that account and may change the project, or only reads it; null for the operator's own projects, which change through the command line"
+          },
           "secret_keys": {
             "description": "The live secret keys, oldest first, by id and creation time only: a secret key is stored as a hash and never shown",
             "items": {
@@ -1958,6 +2225,8 @@
           "conversion_event",
           "allowed_origins",
           "created_at",
+          "account_id",
+          "role",
           "first_event_at",
           "last_event_at",
           "event_retention_months",
@@ -3250,6 +3519,104 @@
         ]
       }
     },
+    "/v1/accounts/{accountId}/projects": {
+      "post": {
+        "description": "Up to the plan’s three projects; the account needs a running subscription.",
+        "operationId": "ProjectsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewProject"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedProject"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Nothing with this id belongs to an account the admin owns; the answer is the same."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription, or the change breaks a limit."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Create a project in an account the admin owns",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
     "/v1/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
@@ -4079,6 +4446,103 @@
         ]
       }
     },
+    "/v1/projects/{projectId}": {
+      "patch": {
+        "operationId": "ProjectsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectChanges"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ManagedProject"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Nothing with this id belongs to an account the admin owns; the answer is the same."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription, or the change breaks a limit."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Change the settings of a project the admin owns",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
     "/v1/projects/{projectId}/acquisition": {
       "get": {
         "operationId": "QueriesController_acquisition",
@@ -4166,6 +4630,94 @@
         "summary": "Visits per day and channel, and the sources that brought them",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/delete": {
+      "post": {
+        "description": "The name typed again must match; allowed whatever the subscription.",
+        "operationId": "ProjectsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectDeletion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedProject"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Nothing with this id belongs to an account the admin owns; the answer is the same."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription, or the change breaks a limit."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Delete a project the admin owns, with its events and keys",
+        "tags": [
+          "projects"
         ]
       }
     },
@@ -5139,6 +5691,174 @@
         "summary": "The icon of the project's site",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/keys": {
+      "post": {
+        "description": "At most five live keys of each kind; a secret key is shown only here.",
+        "operationId": "ProjectsController_createKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewProjectKey"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedProjectKey"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Nothing with this id belongs to an account the admin owns; the answer is the same."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription, or the change breaks a limit."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Create a public or secret key for a project the admin owns",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/keys/{keyId}": {
+      "delete": {
+        "description": "The last live public key is kept (409), so the site keeps sending events.",
+        "operationId": "ProjectsController_revokeKey",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "keyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Revoked."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Nothing with this id belongs to an account the admin owns; the answer is the same."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription, or the change breaks a limit."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Revoke a key of a project the admin owns",
+        "tags": [
+          "projects"
         ]
       }
     },
