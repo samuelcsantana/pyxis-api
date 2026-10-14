@@ -1,6 +1,8 @@
 import { PUBLIC_KEY_PATTERN, SECRET_KEY_PATTERN } from '../../domain/keys/project-keys';
 import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-context';
 import { CliUsageError } from '../cli-args';
+import { accountCreateCommand } from './account-create.command';
+import { accountShowCommand } from './account-show.command';
 import { adminGrantCommand } from './admin-grant.command';
 import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
@@ -10,6 +12,8 @@ import { projectUpdateCommand } from './project-update.command';
 import { usageReportCommand } from './usage-report.command';
 
 const PROJECT_ID = '9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c';
+const ACCOUNT_ID = 'acc00000-0000-4000-a000-000000000001';
+const OWNER_ID = 'ad000000-0000-4000-a000-000000000001';
 
 describe('usage:report', () => {
   it('reads an optional month', () => {
@@ -106,6 +110,44 @@ describe('project:create', () => {
     expect(output.err).toEqual([expect.stringContaining('Sentry DSN')]);
   });
 
+  it('parses the account a project goes in, refusing an id that is not a UUID', () => {
+    expect(
+      projectCreateCommand.parse([
+        '--name',
+        'Shop',
+        '--origin',
+        'https://shop.example.com',
+        '--account',
+        ACCOUNT_ID.toUpperCase(),
+      ]),
+    ).toEqual({ name: 'Shop', origins: ['https://shop.example.com'], accountId: ACCOUNT_ID });
+    expect(() =>
+      projectCreateCommand.parse([
+        '--name',
+        'Shop',
+        '--origin',
+        'https://shop.example.com',
+        '--account',
+        'shop',
+      ]),
+    ).toThrow(CliUsageError);
+  });
+
+  it('creates the project in the account it names, for its owner to read', async () => {
+    const context = inMemoryCliContext();
+    context.store.addAccount(ACCOUNT_ID, OWNER_ID);
+
+    await projectCreateCommand.execute(
+      context,
+      { name: 'Shop', origins: ['https://shop.example.com'], accountId: ACCOUNT_ID },
+      captureOutput(),
+    );
+
+    expect(context.store.grantedToOwners).toEqual([
+      { adminUserId: OWNER_ID, projectId: expect.any(String) as string },
+    ]);
+  });
+
   it('creates a project with only the required settings', async () => {
     const context = inMemoryCliContext();
 
@@ -116,6 +158,68 @@ describe('project:create', () => {
     );
 
     expect(context.store.storedKeys).toHaveLength(1);
+  });
+});
+
+describe('account:create', () => {
+  it('parses the owner e-mail and refuses one that is not an address', () => {
+    expect(accountCreateCommand.parse(['--owner-email', 'friend@example.com'])).toEqual({
+      ownerEmail: 'friend@example.com',
+    });
+    expect(() => accountCreateCommand.parse(['--owner-email', 'friend'])).toThrow(CliUsageError);
+  });
+
+  it('prints the new free account and its owner as key=value lines', async () => {
+    const context = inMemoryCliContext();
+    const output = captureOutput();
+
+    await accountCreateCommand.execute(context, { ownerEmail: 'friend@example.com' }, output);
+
+    const owner = await context.admins.findByEmail('friend@example.com');
+    expect(output.out).toEqual([
+      `account_id=${context.accounts.stored[0]?.id ?? ''}`,
+      `owner_admin_id=${owner?.id ?? ''}`,
+      'status=comped',
+    ]);
+    expect(output.err).toEqual([expect.stringContaining('project:create --account')]);
+  });
+});
+
+describe('account:show', () => {
+  it('parses the account id', () => {
+    expect(accountShowCommand.parse(['--account', ACCOUNT_ID])).toEqual({ accountId: ACCOUNT_ID });
+  });
+
+  it('prints the account, its use of the plan and one line per project', async () => {
+    const context = inMemoryCliContext();
+    const owner = await context.admins.findOrCreateByEmail('owner@example.com');
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'comped' });
+    context.accounts.add(account, {
+      projects: [
+        {
+          id: PROJECT_ID,
+          name: 'My Shop',
+          allowedOrigins: ['https://shop.example.com'],
+          timezone: 'UTC',
+          conversionEvent: null,
+          createdAt: new Date('2026-10-14T10:00:00.000Z'),
+        },
+      ],
+      people: 2,
+    });
+    const output = captureOutput();
+
+    await accountShowCommand.execute(context, { accountId: account.id }, output);
+
+    expect(output.out).toEqual([
+      `account_id=${account.id}`,
+      'status=comped',
+      'owner_email=owner@example.com',
+      'projects=1/3',
+      'people=2/3',
+      'events_per_month_limit=100000',
+      `project=${PROJECT_ID}\tMy Shop`,
+    ]);
   });
 });
 

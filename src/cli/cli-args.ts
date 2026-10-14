@@ -59,6 +59,10 @@ export function requiredId(values: ParsedValues, name: string): string {
   return value.toLowerCase();
 }
 
+export function optionalId(values: ParsedValues, name: string): string | undefined {
+  return optionalText(values, name) === undefined ? undefined : requiredId(values, name);
+}
+
 const emailSchema = z.email().max(MAX_EMAIL_LENGTH);
 
 export function requiredEmail(values: ParsedValues, name: string): string {

@@ -1,8 +1,11 @@
 import { FixedClock } from './fixed-clock';
+import { InMemoryAccountRepository } from './in-memory-account.repository';
 import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
+import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
@@ -26,17 +29,20 @@ export function captureOutput(): CapturedOutput {
 export function inMemoryCliContext(): CliContext & {
   readonly store: InMemoryProjectRepository;
   readonly admins: InMemoryAdminUserRepository;
+  readonly accounts: InMemoryAccountRepository;
   readonly usage: StubProjectUsageQuery;
   closed: boolean;
 } {
   const store = new InMemoryProjectRepository();
   const admins = new InMemoryAdminUserRepository();
+  const accounts = new InMemoryAccountRepository(admins);
   const usage = new StubProjectUsageQuery();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   const context = {
     store,
     admins,
+    accounts,
     usage,
     closed: false,
     createProject: new CreateProjectUseCase(store, random),
@@ -46,6 +52,8 @@ export function inMemoryCliContext(): CliContext & {
     deleteProject: new DeleteProjectUseCase(store),
     reportUsage: new ReportProjectUsageUseCase(usage, clock),
     grantAdminAccess: new GrantAdminAccessUseCase(store, admins),
+    createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
+    showAccount: new ShowAccountUseCase(accounts),
     close: () => {
       context.closed = true;
       return Promise.resolve();

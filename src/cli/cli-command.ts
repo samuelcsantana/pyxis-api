@@ -1,3 +1,5 @@
+import type { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import type { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import type { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import type { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
@@ -14,6 +16,8 @@ export interface CliContext {
   readonly deleteProject: DeleteProjectUseCase;
   readonly reportUsage: ReportProjectUsageUseCase;
   readonly grantAdminAccess: GrantAdminAccessUseCase;
+  readonly createCompedAccount: CreateCompedAccountUseCase;
+  readonly showAccount: ShowAccountUseCase;
   close(): Promise<void>;
 }
 
