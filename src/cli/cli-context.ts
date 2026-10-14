@@ -6,6 +6,7 @@ import { createDrizzleDatabase } from '../infra/database/postgres-client';
 import { CONNECT_TIMEOUT_SECONDS } from '../infra/database/postgres-options';
 import { DrizzleProjectUsageQuery } from '../infra/queries/drizzle-project-usage.query';
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
+import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
@@ -47,7 +48,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     reportUsage: new ReportProjectUsageUseCase(new DrizzleProjectUsageQuery(db), clock),
     grantAdminAccess: new GrantAdminAccessUseCase(settings, admins),
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
-    showAccount: new ShowAccountUseCase(accounts),
+    showAccount: new ShowAccountUseCase(accounts, new DrizzleAccountUsageRepository(db), clock),
     close: () => client.end(),
   };
 }

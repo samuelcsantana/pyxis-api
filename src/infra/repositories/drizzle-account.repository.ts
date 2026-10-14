@@ -20,6 +20,7 @@ export function toAccount(row: AccountRow): Account {
     id: row.id,
     ownerAdminId: row.ownerAdminId,
     status: row.status,
+    ingestionPausedUntil: row.ingestionPausedUntil,
     createdAt: row.createdAt,
   };
 }

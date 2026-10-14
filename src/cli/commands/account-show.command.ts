@@ -20,7 +20,19 @@ export const accountShowCommand: CliCommand<AccountShowArgs> = {
     output.stdout(`owner_email=${summary.ownerEmail}`);
     output.stdout(`projects=${String(summary.projects.length)}/${String(summary.limits.projects)}`);
     output.stdout(`people=${String(summary.people)}/${String(summary.limits.people)}`);
-    output.stdout(`events_per_month_limit=${String(summary.limits.eventsPerMonth)}`);
+    const limit = String(summary.limits.eventsPerMonth);
+    output.stdout(
+      summary.usage === null
+        ? `events_${summary.month}=not measured yet/${limit}`
+        : `events_${summary.month}=${String(summary.usage.events)}/${limit}`,
+    );
+    if (summary.usage !== null) {
+      output.stdout(`measured_at=${summary.usage.updatedAt.toISOString()}`);
+    }
+    const pausedUntil = summary.account.ingestionPausedUntil;
+    output.stdout(
+      `ingestion_paused_until=${pausedUntil === null ? '' : pausedUntil.toISOString()}`,
+    );
     for (const project of summary.projects) {
       output.stdout(`project=${project.id}\t${project.name}`);
     }

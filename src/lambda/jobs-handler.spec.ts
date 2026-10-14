@@ -4,6 +4,7 @@ const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = { events: 12, sessions: 1, signInCodes: 2 };
 const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
+const ACCOUNT_USAGE = { month: '2026-10', accounts: 3, paused: 1 };
 
 function recordingDependencies(order: string[]): JobsHandlerDependencies {
   return {
@@ -18,6 +19,10 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
     runRetention: () => {
       order.push('retention');
       return Promise.resolve(RETENTION);
+    },
+    measureAccountUsage: () => {
+      order.push('usage');
+      return Promise.resolve(ACCOUNT_USAGE);
     },
     sendWeeklyDigests: () => {
       order.push('digest');
@@ -37,18 +42,22 @@ describe('createJobsHandler', () => {
     ['an unknown job', { job: 'monthly-report' }],
     ['an event that is not an object', 'weekly-digest'],
     ['null', null],
-  ])('runs the daily jobs for %s: parameters, size, retention, icons', async (_label, event) => {
-    const order: string[] = [];
+  ])(
+    'runs the daily jobs for %s: parameters, size, retention, usage, icons',
+    async (_label, event) => {
+      const order: string[] = [];
 
-    await expect(createJobsHandler(recordingDependencies(order))(event)).resolves.toEqual({
-      ok: true,
-      job: 'daily',
-      databaseSize: SIZE,
-      retention: RETENTION,
-      projectIcons: ICONS,
-    });
-    expect(order).toEqual(['parameters', 'size', 'retention', 'icons']);
-  });
+      await expect(createJobsHandler(recordingDependencies(order))(event)).resolves.toEqual({
+        ok: true,
+        job: 'daily',
+        databaseSize: SIZE,
+        retention: RETENTION,
+        accountUsage: ACCOUNT_USAGE,
+        projectIcons: ICONS,
+      });
+      expect(order).toEqual(['parameters', 'size', 'retention', 'usage', 'icons']);
+    },
+  );
 
   it('sends the weekly digests, and only them, when the weekly schedule asks', async () => {
     const order: string[] = [];
@@ -86,5 +95,16 @@ describe('createJobsHandler', () => {
     });
 
     await expect(handler()).rejects.toThrow('Retention failed at: events.');
+  });
+
+  it('fails when measuring the accounts fails, so the schedule runs it again', async () => {
+    const order: string[] = [];
+    const handler = createJobsHandler({
+      ...recordingDependencies(order),
+      measureAccountUsage: () => Promise.reject(new Error('connection lost')),
+    });
+
+    await expect(handler()).rejects.toThrow('connection lost');
+    expect(order).toEqual(['parameters', 'size', 'retention']);
   });
 });

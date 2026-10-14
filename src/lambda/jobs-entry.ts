@@ -7,12 +7,14 @@ import { DrizzleDigestRecipientsQuery } from '../infra/queries/drizzle-digest-re
 import { DrizzleOverviewQuery } from '../infra/queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../infra/queries/drizzle-project-activity.query';
 import { DrizzleRequestsQuery } from '../infra/queries/drizzle-requests.query';
+import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleDigestDeliveryRepository } from '../infra/repositories/drizzle-digest-delivery.repository';
 import { DrizzleRetentionRepository } from '../infra/repositories/drizzle-retention.repository';
 import { DrizzleProjectIconRepository } from '../infra/repositories/drizzle-project-icon.repository';
 import { PostgresDatabaseSizeProbe } from '../infra/repositories/postgres-database-size.probe';
 import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher';
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
+import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
 import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest.usecase';
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
 import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
@@ -43,6 +45,13 @@ export const handler = createJobsHandler({
     withDatabase((database) =>
       new RunRetentionUseCase(
         new DrizzleRetentionRepository(database),
+        new SystemClock(),
+      ).execute(),
+    ),
+  measureAccountUsage: () =>
+    withDatabase((database) =>
+      new MeasureAccountUsageUseCase(
+        new DrizzleAccountUsageRepository(database),
         new SystemClock(),
       ).execute(),
     ),

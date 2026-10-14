@@ -34,6 +34,7 @@ export class InMemoryAccountRepository implements AccountRepository {
   create(account: NewAccount): Promise<Account> {
     const created: Account = {
       ...account,
+      ingestionPausedUntil: null,
       id: `acc00000-0000-4000-a000-${String(this.accounts.size + 1).padStart(12, '0')}`,
       createdAt: CREATED_AT,
     };

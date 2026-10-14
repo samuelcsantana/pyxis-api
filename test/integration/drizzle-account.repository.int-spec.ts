@@ -48,6 +48,7 @@ describe('accounts against a real Postgres', () => {
       id: expect.any(String) as string,
       ownerAdminId: OWNER_ID,
       status: 'comped',
+      ingestionPausedUntil: null,
       createdAt: expect.any(Date) as Date,
     });
     expect(await accounts.findById(created.id)).toEqual(created);

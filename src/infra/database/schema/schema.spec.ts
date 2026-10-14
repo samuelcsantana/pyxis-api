@@ -1,5 +1,6 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
+  accountUsageMonths,
   accounts,
   adminAccessTokens,
   adminProjectAccess,
@@ -15,6 +16,7 @@ import {
 
 function foreignKeyTargets(
   table:
+    | typeof accountUsageMonths
     | typeof accounts
     | typeof projects
     | typeof events
@@ -118,6 +120,17 @@ describe('database schema', () => {
       'accounts_owner_admin_id_idx',
     ]);
     expect(config.checks.map((check) => check.name)).toEqual(['accounts_status_check']);
+  });
+
+  it('keeps one usage figure per account and month, gone with the account', () => {
+    const config = getTableConfig(accountUsageMonths);
+
+    expect(config.primaryKeys[0]?.columns.map((column) => column.name)).toEqual([
+      'account_id',
+      'month',
+    ]);
+    expect(foreignKeyTargets(accountUsageMonths)).toEqual(['accounts.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
   });
 
   it('keys project access by admin and project, both deleted with their owner', () => {

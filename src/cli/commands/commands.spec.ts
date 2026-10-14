@@ -190,10 +190,10 @@ describe('account:show', () => {
     expect(accountShowCommand.parse(['--account', ACCOUNT_ID])).toEqual({ accountId: ACCOUNT_ID });
   });
 
-  it('prints the account, its use of the plan and one line per project', async () => {
+  async function accountWithAProject() {
     const context = inMemoryCliContext();
     const owner = await context.admins.findOrCreateByEmail('owner@example.com');
-    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'comped' });
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'active' });
     context.accounts.add(account, {
       projects: [
         {
@@ -207,18 +207,50 @@ describe('account:show', () => {
       ],
       people: 2,
     });
+    return { context, account };
+  }
+
+  it('prints the account, its use of the plan and one line per project', async () => {
+    const { context, account } = await accountWithAProject();
     const output = captureOutput();
 
     await accountShowCommand.execute(context, { accountId: account.id }, output);
 
     expect(output.out).toEqual([
       `account_id=${account.id}`,
-      'status=comped',
+      'status=active',
       'owner_email=owner@example.com',
       'projects=1/3',
       'people=2/3',
-      'events_per_month_limit=100000',
+      'events_2026-10=not measured yet/100000',
+      'ingestion_paused_until=',
       `project=${PROJECT_ID}\tMy Shop`,
+    ]);
+  });
+
+  it('prints the events measured this month, when, and the pause they caused', async () => {
+    const { context, account } = await accountWithAProject();
+    const measuredAt = new Date('2026-10-06T03:00:00.000Z');
+    const pausedUntil = new Date('2026-11-01T00:00:00.000Z');
+    await context.accountUsage.record(
+      '2026-10',
+      [{ accountId: account.id, events: 151_000, ingestionPausedUntil: pausedUntil }],
+      measuredAt,
+    );
+    context.accounts.add({ ...account, ingestionPausedUntil: pausedUntil });
+    const output = captureOutput();
+
+    await accountShowCommand.execute(context, { accountId: account.id }, output);
+
+    expect(output.out).toEqual([
+      `account_id=${account.id}`,
+      'status=active',
+      'owner_email=owner@example.com',
+      'projects=0/3',
+      'people=0/3',
+      'events_2026-10=151000/100000',
+      'measured_at=2026-10-06T03:00:00.000Z',
+      'ingestion_paused_until=2026-11-01T00:00:00.000Z',
     ]);
   });
 });
