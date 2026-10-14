@@ -42,3 +42,22 @@ export class ProjectIconNotFoundError extends DomainError {
     super('The project has no icon: its site shows none, or it was not fetched yet.');
   }
 }
+
+export class LastPublicKeyError extends DomainError {
+  readonly code = 'last_public_key';
+
+  constructor() {
+    super(
+      "This is the project's only public key: create another and put it on the site before " +
+        'revoking this one, or the site stops sending events.',
+    );
+  }
+}
+
+export class KeyLimitReachedError extends DomainError {
+  readonly code = 'key_limit_reached';
+
+  constructor(limit: number) {
+    super(`The project already has ${String(limit)} live keys of this kind: revoke one first.`);
+  }
+}

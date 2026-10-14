@@ -47,3 +47,11 @@ export class NoBillingYetError extends DomainError {
     super('The account has not subscribed yet, so there is no billing to manage.');
   }
 }
+
+export class SubscriptionRequiredError extends DomainError {
+  readonly code = 'subscription_required';
+
+  constructor() {
+    super('The account has no running subscription: subscribe to change its projects.');
+  }
+}

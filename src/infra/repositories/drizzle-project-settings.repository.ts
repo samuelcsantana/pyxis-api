@@ -99,6 +99,15 @@ export class DrizzleProjectSettingsRepository implements ProjectSettingsReposito
     return row === undefined ? null : toProject(row);
   }
 
+  async accountIdOf(projectId: string): Promise<string | null> {
+    const [row] = await this.db
+      .select({ accountId: projects.accountId })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+    return row?.accountId ?? null;
+  }
+
   async update(projectId: string, changes: ProjectChanges): Promise<Project | null> {
     const values = columnChanges(changes);
     if (Object.keys(values).length === 0) {
