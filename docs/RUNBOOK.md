@@ -235,6 +235,31 @@ never sends the same week twice to an admin: to send a week again, delete its ro
 `digest_deliveries` first. Without `/pyxis-api/jobs/RESEND_API_KEY` the digest run fails at once
 and the daily run is not affected.
 
+## E-mail through Amazon SES
+
+The API sends e-mail through Resend by default. To send through Amazon SES in the same region:
+
+1. Give the Terraform role the SES statements of `docs/iam/pyxis-api-terraform-policy.json`
+   (a new version of its managed policy).
+2. Set `ses_domain` (the domain of `mail_from`) in `terraform.tfvars`, keep `mail_provider =
+"resend"`, and apply. Terraform creates the domain identity, a bounce subdomain
+   (`bounce.<domain>`) as its MAIL FROM, the account-level suppression of bounces and complaints,
+   and the permission to send for the HTTP and jobs functions.
+3. Add the records of `terraform output ses_dns_records` in DNS: three DKIM CNAMEs, and the MX and
+   SPF TXT of the bounce subdomain. Leave the domain's own SPF alone: two SPF records on one name
+   invalidate both, and the bounce subdomain needs none at the apex. Wait until
+   `aws sesv2 get-email-identity --email-identity <domain>` shows `VerifiedForSendingStatus: true`.
+4. New accounts start in the SES sandbox (200 e-mails a day, only to verified addresses). Ask for
+   production access (`aws sesv2 put-account-details --production-access-enabled
+--mail-type TRANSACTIONAL ...` or the console) and wait for the answer.
+5. Set `mail_provider = "ses"`, apply, and deploy so the functions read the new parameter at cold
+   start. Request a sign-in code for a test inbox and check the headers: `DKIM: PASS` for the
+   domain and the return path on `bounce.<domain>`.
+
+Bounces and complaints are suppressed for the whole account, so an address that bounced is not
+tried again. To go back, set `mail_provider = "resend"`, apply and deploy: the Resend key
+parameters stay in place.
+
 ## Rollback
 
 ECR keeps the last five tagged images. Point the HTTP function back at the previous tag:

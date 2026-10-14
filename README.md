@@ -211,14 +211,14 @@ flowchart LR
     Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · icons · weekly digest"]
   end
   DB[("Postgres<br>(Neon)")]
-  Resend["Resend"]
+  Mail["Resend or Amazon SES"]
   SDK -- "POST /v1/batch · public key" --> CF
   Dashboard -- "queries · session cookie" --> CF
   Backend -- "DELETE /v1/subjects/{id} · secret key" --> CF
   Lambda --> DB
   Jobs --> DB
-  Lambda -- "sign-in codes" --> Resend
-  Jobs -- "weekly digest" --> Resend
+  Lambda -- "sign-in codes" --> Mail
+  Jobs -- "weekly digest · quota notices" --> Mail
 ```
 
 Inside the service, dependencies point inward ([ADR 0002](docs/adr/0002-clean-architecture.md)):
@@ -307,18 +307,20 @@ DATABASE_URL=postgres://pyxis_app:pyxis_app@localhost:5446/pyxis npm start
 
 Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.schema.ts)):
 
-| Variable                 | Default                               | Meaning                                                                                                                                                                                          |
-| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `PORT`                   | `3040`                                | HTTP port                                                                                                                                                                                        |
-| `NODE_ENV`               | `development`                         | `development`, `production` or `test`                                                                                                                                                            |
-| `SWAGGER_ENABLED`        | unset                                 | `true`/`false`; unset means on everywhere except production                                                                                                                                      |
-| `DATABASE_URL`           | required                              | The API's connection, as the application role                                                                                                                                                    |
-| `MIGRATION_DATABASE_URL` | unset                                 | The owner's connection, used only by `npm run db:migrate`                                                                                                                                        |
-| `APP_DB_ROLE`            | unset                                 | The role granted row access after each migration (`pyxis_app`)                                                                                                                                   |
-| `CLIENT_IP_HEADER`       | unset                                 | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address                                  |
-| `DASHBOARD_ORIGIN`       | unset; required in production         | The only origin allowed to call the sign-in routes from a browser (unset refuses them all), and the base of every link and of the logo in the e-mails; required wherever `RESEND_API_KEY` is set |
-| `RESEND_API_KEY`         | unset; required in production         | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                                                                |
-| `MAIL_FROM`              | `Pyxis <noreply@pyxis-analytics.dev>` | Sender of the sign-in and weekly digest emails; its domain must be verified in Resend                                                                                                            |
+| Variable                 | Default                                                       | Meaning                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`                   | `3040`                                                        | HTTP port                                                                                                                                                                                        |
+| `NODE_ENV`               | `development`                                                 | `development`, `production` or `test`                                                                                                                                                            |
+| `SWAGGER_ENABLED`        | unset                                                         | `true`/`false`; unset means on everywhere except production                                                                                                                                      |
+| `DATABASE_URL`           | required                                                      | The API's connection, as the application role                                                                                                                                                    |
+| `MIGRATION_DATABASE_URL` | unset                                                         | The owner's connection, used only by `npm run db:migrate`                                                                                                                                        |
+| `APP_DB_ROLE`            | unset                                                         | The role granted row access after each migration (`pyxis_app`)                                                                                                                                   |
+| `CLIENT_IP_HEADER`       | unset                                                         | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address                                  |
+| `DASHBOARD_ORIGIN`       | unset; required in production                                 | The only origin allowed to call the sign-in routes from a browser (unset refuses them all), and the base of every link and of the logo in the e-mails; required wherever `RESEND_API_KEY` is set |
+| `MAIL_PROVIDER`          | `resend`                                                      | Which service sends the e-mails: `resend` or `ses` (Amazon SES in the function's region, through its role; see the runbook)                                                                      |
+| `RESEND_API_KEY`         | unset; required in production unless `MAIL_PROVIDER` is `ses` | Sends the e-mails through Resend; without it, outside production, codes are logged instead                                                                                                       |
+| `MAIL_FROM`              | `Pyxis <noreply@pyxis-analytics.dev>`                         | Sender of every e-mail; its domain must be verified in Resend or SES                                                                                                                             |
+| `SUPPORT_EMAIL`          | unset                                                         | Named in the account e-mails (quota notices), which send replies to it                                                                                                                           |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
@@ -385,8 +387,8 @@ src/
 ├── infra/repositories/ Drizzle adapters and the 60-second project key cache
 ├── infra/queries/     the dashboard queries in SQL and the definitions they share
 ├── infra/rate-limit/  the per-project limiter
-├── infra/mail/        the sign-in email (words per language, HTML, plain text) sent through Resend,
-│                      or the log outside production
+├── infra/mail/        the e-mails (words per language, HTML, plain text) sent through Resend or
+│                      Amazon SES, or the log outside production
 ├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion,
 │                      sign-in and sessions, rate limits, OpenAPI
 ├── shared/            pure utilities
