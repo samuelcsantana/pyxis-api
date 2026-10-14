@@ -93,3 +93,21 @@ variable "refused_sign_in_code_requests_alarm_threshold" {
   type        = number
   default     = 5
 }
+
+variable "unhandled_errors_alarm_threshold" {
+  description = "Requests that end in an unexpected error (500) within five minutes at which the alarm fires."
+  type        = number
+  default     = 5
+}
+
+variable "function_errors_alarm_threshold" {
+  description = "Failed or timed-out invocations of the HTTP function within five minutes at which the alarm fires."
+  type        = number
+  default     = 3
+}
+
+variable "function_throttles_alarm_threshold" {
+  description = "Throttled requests to the HTTP function within five minutes at which the alarm fires."
+  type        = number
+  default     = 1
+}
