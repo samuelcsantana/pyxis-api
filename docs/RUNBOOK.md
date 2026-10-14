@@ -260,6 +260,29 @@ Bounces and complaints are suppressed for the whole account, so an address that 
 tried again. To go back, set `mail_provider = "resend"`, apply and deploy: the Resend key
 parameters stay in place.
 
+## Billing and sign-up
+
+Billing stays off until the two Stripe parameters hold real values, and sign-up stays closed until
+two settings are set. In this order:
+
+1. In Stripe, create a restricted key with write access to Checkout Sessions, Customer portal,
+   Customers and Subscriptions, and read access to Prices, and a webhook endpoint for
+   `https://<api_domain>/v1/billing/stripe/webhook` with the events
+   `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
+   `customer.subscription.deleted`, `invoice.paid` and `invoice.payment_failed`. The prices are
+   found by their lookup keys, `pyxis_monthly_brl` and `pyxis_yearly_brl`.
+2. Paste the key into `/<project>/app/STRIPE_SECRET_KEY` and the endpoint's signing secret into
+   `/<project>/app/STRIPE_WEBHOOK_SECRET` (Parameter Store, SecureString; Terraform created both
+   with a placeholder and never reads them back). Deploy, or wait for new containers, so the
+   function reads them.
+3. Publish the terms, then set `terms_version` (the version the dashboard shows, such as
+   `2026-11-01`) and `signup_open = true` in `terraform.tfvars`, apply, and deploy so the function
+   reads them at cold start. `GET /v1/auth/sign-up` answers `{"open":true,"terms_version":"…"}` once they are read.
+
+To close sign-up again, set `signup_open = false`, apply and deploy; accounts
+already created keep working. A new version of the terms is the same change with a new
+`terms_version`: a page still showing the old one is refused with `409 terms_outdated`.
+
 ## Rollback
 
 ECR keeps the last five tagged images. Point the HTTP function back at the previous tag:
