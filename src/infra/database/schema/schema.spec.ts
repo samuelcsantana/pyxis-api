@@ -133,6 +133,12 @@ describe('database schema', () => {
     expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
   });
 
+  it('allows only the known purposes of an e-mailed code', () => {
+    expect(getTableConfig(otpCodes).checks.map((check) => check.name)).toEqual([
+      'otp_codes_purpose_check',
+    ]);
+  });
+
   it('keys project access by admin and project, both deleted with their owner', () => {
     const config = getTableConfig(adminProjectAccess);
 

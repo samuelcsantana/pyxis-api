@@ -1,0 +1,2 @@
+ALTER TABLE "otp_codes" ADD COLUMN "purpose" varchar(16) DEFAULT 'sign_in' NOT NULL;--> statement-breakpoint
+ALTER TABLE "otp_codes" ADD CONSTRAINT "otp_codes_purpose_check" CHECK ("otp_codes"."purpose" in ('sign_in', 'sign_up'));

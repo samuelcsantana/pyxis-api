@@ -1,8 +1,10 @@
+import type { CodePurpose } from '../domain/auth/code-purpose';
 import type { OtpCode } from '../domain/entities/otp-code.entity';
 import type { NewOtpCode, OtpCodeRepository } from '../domain/repositories/otp-code.repository';
 
 interface StoredCode extends OtpCode {
   readonly createdAt: Date;
+  readonly purpose: CodePurpose;
   attempts: number;
   usedAt: Date | null;
 }
@@ -27,9 +29,19 @@ export class InMemoryOtpCodeRepository implements OtpCodeRepository {
     );
   }
 
-  findLatestValid(email: string, now: Date): Promise<OtpCode | null> {
+  countPurposeSince(purpose: CodePurpose, since: Date): Promise<number> {
+    return Promise.resolve(
+      this.stored.filter((code) => code.purpose === purpose && code.createdAt >= since).length,
+    );
+  }
+
+  findLatestValid(email: string, now: Date, purpose: CodePurpose): Promise<OtpCode | null> {
     const valid = this.stored.filter(
-      (code) => code.email === email && code.usedAt === null && code.expiresAt > now,
+      (code) =>
+        code.email === email &&
+        code.purpose === purpose &&
+        code.usedAt === null &&
+        code.expiresAt > now,
     );
     return Promise.resolve(valid.at(-1) ?? null);
   }

@@ -52,6 +52,7 @@ export class RequestSignInCodeUseCase {
       email,
       codeHash: sha256Hex(code),
       emailLanguage: language,
+      purpose: 'sign_in',
       createdAt: now,
       expiresAt: new Date(now.getTime() + SIGN_IN_CODE_TTL_MS),
     });

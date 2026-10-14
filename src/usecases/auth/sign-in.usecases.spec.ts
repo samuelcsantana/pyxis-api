@@ -377,6 +377,7 @@ describe('dashboard sign-in', () => {
         email: 'former@example.com',
         codeHash: sha256Hex('123456'),
         emailLanguage: 'en',
+        purpose: 'sign_in',
         createdAt: clock.now(),
         expiresAt: new Date(clock.now().getTime() + SIGN_IN_CODE_TTL_MS),
       });

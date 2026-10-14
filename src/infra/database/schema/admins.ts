@@ -1,6 +1,8 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   char,
+  check,
   index,
   integer,
   pgTable,
@@ -10,6 +12,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { MAX_ACCESS_TOKEN_NAME_LENGTH } from '../../../domain/auth/access-token-policy';
+import { CODE_PURPOSES, type CodePurpose } from '../../../domain/auth/code-purpose';
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../../../domain/auth/email-language';
 import { WEEKLY_DIGEST_BY_DEFAULT } from '../../../domain/entities/email-preferences.entity';
 import type {
@@ -20,6 +23,8 @@ import type {
 import { projects } from './projects';
 
 export const MAX_EMAIL_LENGTH = 254;
+const PURPOSE_LENGTH = 16;
+const PURPOSE_VALUES = sql.raw(CODE_PURPOSES.map((purpose) => `'${purpose}'`).join(', '));
 const EMAIL_LANGUAGE_LENGTH = 8;
 
 function emailLanguage() {
@@ -98,10 +103,17 @@ export const otpCodes = pgTable(
     email: varchar('email', { length: MAX_EMAIL_LENGTH }).notNull(),
     codeHash: char('code_hash', { length: 64 }).notNull(),
     emailLanguage: emailLanguage(),
+    purpose: varchar('purpose', { length: PURPOSE_LENGTH })
+      .$type<CodePurpose>()
+      .notNull()
+      .default('sign_in'),
     attempts: integer('attempts').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     usedAt: timestamp('used_at', { withTimezone: true }),
   },
-  (table) => [index('otp_codes_email_created_at_idx').on(table.email, table.createdAt)],
+  (table) => [
+    index('otp_codes_email_created_at_idx').on(table.email, table.createdAt),
+    check('otp_codes_purpose_check', sql`${table.purpose} in (${PURPOSE_VALUES})`),
+  ],
 );
