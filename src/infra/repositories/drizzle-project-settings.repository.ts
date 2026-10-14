@@ -1,8 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { eq } from 'drizzle-orm';
+import { eq, getTableColumns, sql } from 'drizzle-orm';
 import type { Project } from '../../domain/entities/project.entity';
 import type {
   CreatedProject,
+  DeletedProject,
   NewProject,
   ProjectChanges,
   ProjectSettingsRepository,
@@ -10,6 +11,7 @@ import type {
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { insertedRow } from '../database/inserted-row';
+import { events } from '../database/schema/events';
 import { projectKeys } from '../database/schema/project-keys';
 import { projects } from '../database/schema/projects';
 import { toProject } from './drizzle-project.repository';
@@ -61,5 +63,25 @@ export class DrizzleProjectSettingsRepository implements ProjectSettingsReposito
       .where(eq(projects.id, projectId))
       .returning();
     return row === undefined ? null : toProject(row);
+  }
+
+  deleteWithEverything(projectId: string): Promise<DeletedProject | null> {
+    return this.db.transaction(async (transaction) => {
+      const [found] = await transaction
+        .select({
+          ...getTableColumns(projects),
+          eventCount: sql<number>`(SELECT count(*)::int FROM ${events} WHERE ${events.projectId} = ${projectId})`,
+          keyCount: sql<number>`(SELECT count(*)::int FROM ${projectKeys} WHERE ${projectKeys.projectId} = ${projectId})`,
+        })
+        .from(projects)
+        .where(eq(projects.id, projectId))
+        .for('update');
+      if (found === undefined) {
+        return null;
+      }
+      await transaction.delete(projects).where(eq(projects.id, projectId));
+      const { eventCount, keyCount, ...row } = found;
+      return { project: toProject(row), deletedEvents: eventCount, deletedKeys: keyCount };
+    });
   }
 }

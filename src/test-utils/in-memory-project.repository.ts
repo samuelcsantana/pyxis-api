@@ -8,6 +8,7 @@ import type {
 import type { ProjectRepository } from '../domain/repositories/project.repository';
 import type {
   CreatedProject,
+  DeletedProject,
   NewProject,
   ProjectChanges,
   ProjectSettingsRepository,
@@ -19,6 +20,7 @@ export class InMemoryProjectRepository
   implements ProjectRepository, ProjectSettingsRepository, ProjectKeyRepository
 {
   private readonly projects = new Map<string, Project>();
+  private readonly eventCounts = new Map<string, number>();
   private keys: ProjectKey[] = [];
   private sequence = 0;
 
@@ -29,6 +31,10 @@ export class InMemoryProjectRepository
   add(project: Project, ...keys: readonly ProjectKey[]): void {
     this.projects.set(project.id, project);
     this.keys.push(...keys);
+  }
+
+  recordEvents(projectId: string, total: number): void {
+    this.eventCounts.set(projectId, total);
   }
 
   findByPublicKey(publicKey: string): Promise<Project | null> {
@@ -61,6 +67,19 @@ export class InMemoryProjectRepository
     const updated: Project = { ...current, ...changes };
     this.projects.set(projectId, updated);
     return Promise.resolve(updated);
+  }
+
+  deleteWithEverything(projectId: string): Promise<DeletedProject | null> {
+    const project = this.projects.get(projectId);
+    if (project === undefined) {
+      return Promise.resolve(null);
+    }
+    const deletedKeys = this.keys.filter((key) => key.projectId === projectId).length;
+    const deletedEvents = this.eventCounts.get(projectId) ?? 0;
+    this.projects.delete(projectId);
+    this.eventCounts.delete(projectId);
+    this.keys = this.keys.filter((key) => key.projectId !== projectId);
+    return Promise.resolve({ project, deletedEvents, deletedKeys });
   }
 
   create(key: NewProjectKey): Promise<ProjectKey> {

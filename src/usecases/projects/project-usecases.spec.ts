@@ -1,8 +1,10 @@
 import {
   InvalidProjectSettingsError,
   ProjectKeyNotFoundError,
+  ProjectNameMismatchError,
   ProjectNotFoundError,
 } from '../../domain/errors/project.errors';
+import type { DeletedProject } from '../../domain/repositories/project-settings.repository';
 import {
   hashSecretKey,
   PUBLIC_KEY_PATTERN,
@@ -13,6 +15,7 @@ import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.re
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { CreateProjectKeyUseCase } from './create-project-key.usecase';
 import { CreateProjectUseCase } from './create-project.usecase';
+import { DeleteProjectUseCase } from './delete-project.usecase';
 import { RevokeProjectKeyUseCase } from './revoke-project-key.usecase';
 import { UpdateProjectUseCase } from './update-project.usecase';
 
@@ -28,6 +31,7 @@ function setup() {
     createKey: new CreateProjectKeyUseCase(store, store, random),
     revokeKey: new RevokeProjectKeyUseCase(store, new FixedClock(NOW)),
     updateProject: new UpdateProjectUseCase(store),
+    deleteProject: new DeleteProjectUseCase(store),
   };
 }
 
@@ -217,6 +221,80 @@ describe('UpdateProjectUseCase', () => {
 
     await expect(
       updateProject.execute({ projectId: MISSING_ID, timezone: 'UTC' }),
+    ).rejects.toBeInstanceOf(ProjectNotFoundError);
+  });
+});
+
+describe('DeleteProjectUseCase', () => {
+  async function withProject() {
+    const context = setup();
+    const { projectId } = await context.createProject.execute({
+      name: 'Shop',
+      allowedOrigins: ['https://shop.example.com'],
+    });
+    await context.createKey.execute({ projectId, kind: 'secret' });
+    return { ...context, projectId };
+  }
+
+  it('deletes the project with its keys and reports what went', async () => {
+    const { store, deleteProject, projectId } = await withProject();
+    store.recordEvents(projectId, 42);
+
+    const deleted = await deleteProject.execute({ projectId, confirmName: 'Shop' });
+
+    expect(deleted).toMatchObject({
+      project: { id: projectId, name: 'Shop' },
+      deletedEvents: 42,
+      deletedKeys: 2,
+    });
+    expect(await store.findById(projectId)).toBeNull();
+    expect(store.storedKeys).toEqual([]);
+  });
+
+  it('reports no events for a project that never received one', async () => {
+    const { deleteProject, projectId } = await withProject();
+
+    const deleted = await deleteProject.execute({ projectId, confirmName: 'Shop' });
+
+    expect(deleted.deletedEvents).toBe(0);
+  });
+
+  it('deletes nothing when the name given is not exactly the project name', async () => {
+    const { store, deleteProject, projectId } = await withProject();
+
+    await expect(deleteProject.execute({ projectId, confirmName: 'shop' })).rejects.toBeInstanceOf(
+      ProjectNameMismatchError,
+    );
+    expect(await store.findById(projectId)).not.toBeNull();
+    expect(store.storedKeys).toHaveLength(2);
+  });
+
+  it('refuses a project that does not exist', async () => {
+    const { deleteProject } = setup();
+
+    await expect(
+      deleteProject.execute({ projectId: MISSING_ID, confirmName: 'Shop' }),
+    ).rejects.toBeInstanceOf(ProjectNotFoundError);
+  });
+
+  it('refuses a project deleted by someone else between the check and the deletion', async () => {
+    class VanishingProjects extends InMemoryProjectRepository {
+      override deleteWithEverything(): Promise<DeletedProject | null> {
+        return Promise.resolve(null);
+      }
+    }
+    const store = new VanishingProjects();
+    store.add({
+      id: MISSING_ID,
+      name: 'Shop',
+      allowedOrigins: ['https://shop.example.com'],
+      timezone: 'UTC',
+      conversionEvent: null,
+      createdAt: NOW,
+    });
+
+    await expect(
+      new DeleteProjectUseCase(store).execute({ projectId: MISSING_ID, confirmName: 'Shop' }),
     ).rejects.toBeInstanceOf(ProjectNotFoundError);
   });
 });

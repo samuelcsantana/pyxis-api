@@ -19,6 +19,14 @@ export class ProjectNotFoundError extends DomainError {
   }
 }
 
+export class ProjectNameMismatchError extends DomainError {
+  readonly code = 'project_name_mismatch';
+
+  constructor() {
+    super("The name given does not match the project's name: nothing was deleted.");
+  }
+}
+
 export class ProjectKeyNotFoundError extends DomainError {
   readonly code = 'key_not_found';
 
