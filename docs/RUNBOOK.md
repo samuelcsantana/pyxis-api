@@ -237,6 +237,14 @@ MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s key:create -
 A secret key is printed once on stdout; put it straight into the consuming site's secret store.
 A revoked key may still be accepted for up to 60 seconds by running instances.
 
+To remove a project for good, revoke its keys first (so its site stops sending), then delete it.
+The name must be written exactly as the project's, which guards against a copied wrong id; the
+command prints the events and keys it removed, and there is no undo:
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s project:delete -- --project <id> --confirm-name '<name>'
+```
+
 ## Dashboard admins
 
 There is no sign-up. Grant an email a project, and it can ask the dashboard for a sign-in code:

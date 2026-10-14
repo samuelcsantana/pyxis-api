@@ -1,6 +1,7 @@
 import type { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import type { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import type { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
+import type { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import type { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import type { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 
@@ -9,6 +10,7 @@ export interface CliContext {
   readonly createProjectKey: CreateProjectKeyUseCase;
   readonly revokeProjectKey: RevokeProjectKeyUseCase;
   readonly updateProject: UpdateProjectUseCase;
+  readonly deleteProject: DeleteProjectUseCase;
   readonly grantAdminAccess: GrantAdminAccessUseCase;
   close(): Promise<void>;
 }

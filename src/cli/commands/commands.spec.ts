@@ -5,6 +5,7 @@ import { adminGrantCommand } from './admin-grant.command';
 import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
+import { projectDeleteCommand } from './project-delete.command';
 import { projectUpdateCommand } from './project-update.command';
 
 const PROJECT_ID = '9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c';
@@ -172,6 +173,38 @@ describe('project:update', () => {
     await projectUpdateCommand.execute(context, { projectId, conversionEvent: null }, output);
 
     expect(output.out).toContain('conversion_event=');
+  });
+});
+
+describe('project:delete', () => {
+  it('reads the project id and the name that confirms it', () => {
+    expect(
+      projectDeleteCommand.parse(['--project', PROJECT_ID, '--confirm-name', 'My Shop']),
+    ).toEqual({ projectId: PROJECT_ID, confirmName: 'My Shop' });
+  });
+
+  it.each([
+    [['--confirm-name', 'Shop']],
+    [['--project', PROJECT_ID]],
+    [['--project', PROJECT_ID, '--confirm-name', ' ']],
+  ])('refuses %j without both the project and its name', (argv) => {
+    expect(() => projectDeleteCommand.parse(argv)).toThrow(CliUsageError);
+  });
+
+  it('prints the project and how many events and keys went with it', async () => {
+    const { context, projectId } = await createdProject();
+    context.store.recordEvents(projectId, 7);
+    const output = captureOutput();
+
+    await projectDeleteCommand.execute(context, { projectId, confirmName: 'Shop' }, output);
+
+    expect(output.out).toEqual([
+      `project_id=${projectId}`,
+      'name=Shop',
+      'deleted_events=7',
+      'deleted_keys=1',
+    ]);
+    expect(await context.store.findById(projectId)).toBeNull();
   });
 });
 
