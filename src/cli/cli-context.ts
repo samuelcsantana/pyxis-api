@@ -4,6 +4,7 @@ import { SystemClock } from '../infra/clock/system-clock';
 import { migrationConnectionString } from '../infra/database/migrations';
 import { createDrizzleDatabase } from '../infra/database/postgres-client';
 import { CONNECT_TIMEOUT_SECONDS } from '../infra/database/postgres-options';
+import { DrizzleProjectUsageQuery } from '../infra/queries/drizzle-project-usage.query';
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
@@ -12,6 +13,7 @@ import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.use
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
+import { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext } from './cli-command';
@@ -30,12 +32,14 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const settings = new DrizzleProjectSettingsRepository(db);
   const keys = new DrizzleProjectKeyRepository(db);
   const random = new CryptoRandomSource();
+  const clock = new SystemClock();
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
-    revokeProjectKey: new RevokeProjectKeyUseCase(keys, new SystemClock()),
+    revokeProjectKey: new RevokeProjectKeyUseCase(keys, clock),
     updateProject: new UpdateProjectUseCase(settings),
     deleteProject: new DeleteProjectUseCase(settings),
+    reportUsage: new ReportProjectUsageUseCase(new DrizzleProjectUsageQuery(db), clock),
     grantAdminAccess: new GrantAdminAccessUseCase(settings, new DrizzleAdminUserRepository(db)),
     close: () => client.end(),
   };

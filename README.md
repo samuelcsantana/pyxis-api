@@ -253,6 +253,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash                                                                                |
 | `npm run -s key:revoke -- --key-id <id>`                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                    |
 | `npm run -s admin:grant -- --email <email> --project <id>`                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                               |
+| `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first               |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).

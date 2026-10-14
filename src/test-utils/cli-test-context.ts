@@ -2,10 +2,12 @@ import { FixedClock } from './fixed-clock';
 import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { SequenceRandomSource } from './sequence-random-source';
+import { StubProjectUsageQuery } from './stub-project-usage.query';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
+import { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext, CommandOutput } from '../cli/cli-command';
@@ -24,23 +26,25 @@ export function captureOutput(): CapturedOutput {
 export function inMemoryCliContext(): CliContext & {
   readonly store: InMemoryProjectRepository;
   readonly admins: InMemoryAdminUserRepository;
+  readonly usage: StubProjectUsageQuery;
   closed: boolean;
 } {
   const store = new InMemoryProjectRepository();
   const admins = new InMemoryAdminUserRepository();
+  const usage = new StubProjectUsageQuery();
+  const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   const context = {
     store,
     admins,
+    usage,
     closed: false,
     createProject: new CreateProjectUseCase(store, random),
     createProjectKey: new CreateProjectKeyUseCase(store, store, random),
-    revokeProjectKey: new RevokeProjectKeyUseCase(
-      store,
-      new FixedClock(new Date('2026-10-06T14:00:00.000Z')),
-    ),
+    revokeProjectKey: new RevokeProjectKeyUseCase(store, clock),
     updateProject: new UpdateProjectUseCase(store),
     deleteProject: new DeleteProjectUseCase(store),
+    reportUsage: new ReportProjectUsageUseCase(usage, clock),
     grantAdminAccess: new GrantAdminAccessUseCase(store, admins),
     close: () => {
       context.closed = true;

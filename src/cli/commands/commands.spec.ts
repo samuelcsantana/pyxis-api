@@ -7,8 +7,34 @@ import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
 import { projectDeleteCommand } from './project-delete.command';
 import { projectUpdateCommand } from './project-update.command';
+import { usageReportCommand } from './usage-report.command';
 
 const PROJECT_ID = '9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c';
+
+describe('usage:report', () => {
+  it('reads an optional month', () => {
+    expect(usageReportCommand.parse(['--month', '2026-09'])).toEqual({ month: '2026-09' });
+    expect(usageReportCommand.parse([])).toEqual({});
+  });
+
+  it('prints the month, a header and one tab-separated line per project', async () => {
+    const context = inMemoryCliContext();
+    context.usage.usage = [
+      { projectId: PROJECT_ID, name: 'My Shop', events: 1200, visits: 340 },
+      { projectId: '0e1f2a3b-4c5d-4e6f-8a7b-9c0d1e2f3a4b', name: 'Blog', events: 0, visits: 0 },
+    ];
+    const output = captureOutput();
+
+    await usageReportCommand.execute(context, {}, output);
+
+    expect(output.out).toEqual([
+      'month=2026-10',
+      'project_id\tevents\tvisits\tname',
+      `${PROJECT_ID}\t1200\t340\tMy Shop`,
+      '0e1f2a3b-4c5d-4e6f-8a7b-9c0d1e2f3a4b\t0\t0\tBlog',
+    ]);
+  });
+});
 
 async function createdProject() {
   const context = inMemoryCliContext();
