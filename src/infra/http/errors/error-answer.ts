@@ -37,6 +37,13 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['subscription_exists', HttpStatus.CONFLICT],
   ['no_billing_yet', HttpStatus.CONFLICT],
   ['billing_unavailable', HttpStatus.SERVICE_UNAVAILABLE],
+  ['invalid_project_settings', HttpStatus.BAD_REQUEST],
+  ['project_limit_reached', HttpStatus.CONFLICT],
+  ['subscription_required', HttpStatus.CONFLICT],
+  ['project_name_mismatch', HttpStatus.CONFLICT],
+  ['key_not_found', HttpStatus.NOT_FOUND],
+  ['last_public_key', HttpStatus.CONFLICT],
+  ['key_limit_reached', HttpStatus.CONFLICT],
 ]);
 
 const HTTP_ERRORS: ReadonlyMap<number, { readonly error: string; readonly message: string }> =

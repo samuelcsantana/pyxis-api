@@ -8,6 +8,7 @@ import { BillingModule } from './infra/http/billing/billing.module';
 import { HealthModule } from './infra/http/health/health.module';
 import { IngestModule } from './infra/http/ingest/ingest.module';
 import { PreferencesModule } from './infra/http/preferences/preferences.module';
+import { ProjectsModule } from './infra/http/projects/projects.module';
 import { QueriesModule } from './infra/http/queries/queries.module';
 import { RateLimitModule } from './infra/http/rate-limit/rate-limit.module';
 import { SubjectsModule } from './infra/http/subjects/subjects.module';
@@ -24,6 +25,7 @@ import { SubjectsModule } from './infra/http/subjects/subjects.module';
     PreferencesModule,
     BillingModule,
     AccountsModule,
+    ProjectsModule,
     SubjectsModule,
   ],
 })

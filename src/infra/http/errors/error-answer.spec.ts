@@ -13,7 +13,16 @@ import {
 } from '../../../domain/errors/ingest.errors';
 import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
 import {
+  ProjectLimitReachedError,
+  SubscriptionRequiredError,
+} from '../../../domain/errors/account.errors';
+import {
+  InvalidProjectSettingsError,
+  KeyLimitReachedError,
+  LastPublicKeyError,
   ProjectIconNotFoundError,
+  ProjectKeyNotFoundError,
+  ProjectNameMismatchError,
   ProjectNotFoundError,
 } from '../../../domain/errors/project.errors';
 import { InvalidRangeError } from '../../../domain/errors/query.errors';
@@ -57,6 +66,13 @@ describe('toErrorAnswer', () => {
     [new ProjectIconNotFoundError(), 404, 'project_icon_not_found'],
     [new InvalidBillingSignatureError(), 400, 'invalid_billing_signature'],
     [new BillingUnavailableError('subscriptions.retrieve failed'), 503, 'billing_unavailable'],
+    [new InvalidProjectSettingsError('origin', 'Bad origin.'), 400, 'invalid_project_settings'],
+    [new ProjectLimitReachedError(3), 409, 'project_limit_reached'],
+    [new SubscriptionRequiredError(), 409, 'subscription_required'],
+    [new ProjectNameMismatchError(), 409, 'project_name_mismatch'],
+    [new ProjectKeyNotFoundError(), 404, 'key_not_found'],
+    [new LastPublicKeyError(), 409, 'last_public_key'],
+    [new KeyLimitReachedError(5), 409, 'key_limit_reached'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },
