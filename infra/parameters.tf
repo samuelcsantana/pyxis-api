@@ -20,7 +20,19 @@ locals {
       value       = var.mail_provider
       description = "Which service sends the sign-in code e-mails: resend or ses."
     }
+    SIGNUP_OPEN = {
+      value       = tostring(var.signup_open)
+      description = "Whether anyone can create an account and subscribe; also needs TERMS_VERSION."
+    }
   }
+}
+
+resource "aws_ssm_parameter" "terms_version" {
+  count       = var.terms_version == null ? 0 : 1
+  name        = "/${var.project}/app/TERMS_VERSION"
+  type        = "String"
+  value       = var.terms_version
+  description = "The version of the published terms a new owner must accept to sign up."
 }
 
 resource "aws_ssm_parameter" "app_secret" {

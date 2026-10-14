@@ -88,6 +88,23 @@ variable "support_email" {
   default     = null
 }
 
+variable "signup_open" {
+  description = "Let anyone create an account and subscribe. Keep false until the terms are published and Stripe is live."
+  type        = bool
+  default     = false
+}
+
+variable "terms_version" {
+  description = "Version of the published terms a new owner accepts, such as 2026-11-01; the dashboard shows the same version. Sign-up stays closed without it."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.terms_version == null || length(coalesce(var.terms_version, "x")) <= 32
+    error_message = "terms_version has at most 32 characters."
+  }
+}
+
 variable "alert_email" {
   description = "Address that receives the operational alarms; AWS emails it a link to confirm the subscription."
   type        = string
