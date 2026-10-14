@@ -3,7 +3,9 @@ import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import { createMailSender } from './create-mail-sender';
 import { emailLinksFor } from './email-layout';
 import { LoggingMailSender } from './logging-mail-sender';
+import { SendEmailCommand, type SendEmailCommandInput } from '@aws-sdk/client-sesv2';
 import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
+import { SesMailSender, sesSend } from './ses-mail-sender';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail } from './sign-in-code-email';
@@ -140,6 +142,95 @@ describe('ResendMailSender', () => {
   });
 });
 
+describe('SesMailSender', () => {
+  function recordingSes() {
+    const sent: SendEmailCommandInput[] = [];
+    const send = (input: SendEmailCommandInput) => {
+      sent.push(input);
+      return Promise.resolve({ MessageId: 'ses-1' });
+    };
+    return { sent, send };
+  }
+
+  it('sends the sign-in code through SES as HTML and text, from the configured sender', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendSignInCode('ana@example.com', '123456', 'es');
+
+    const email = buildSignInCodeEmail('123456', 'es', LINKS);
+    expect(sent).toEqual([
+      {
+        FromEmailAddress: FROM,
+        Destination: { ToAddresses: ['ana@example.com'] },
+        Content: {
+          Simple: {
+            Subject: { Data: email.subject, Charset: 'UTF-8' },
+            Body: {
+              Html: { Data: email.html, Charset: 'UTF-8' },
+              Text: { Data: email.text, Charset: 'UTF-8' },
+            },
+          },
+        },
+      },
+    ]);
+  });
+
+  it('sends the weekly digest the same way', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendWeeklyDigest('ana@example.com', DIGEST, 'en');
+
+    expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe(
+      buildWeeklyDigestEmail(DIGEST, 'en', LINKS).subject,
+    );
+  });
+
+  it('sends a quota notice with replies going to the support address, and none without one', async () => {
+    const withSupport = recordingSes();
+    const withoutSupport = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, withSupport.send, SUPPORT).sendQuotaNotice(
+      'owner@example.com',
+      PAUSED,
+      'pt-BR',
+    );
+    await new SesMailSender(FROM, LINKS, withoutSupport.send).sendQuotaNotice(
+      'owner@example.com',
+      PAUSED,
+      'pt-BR',
+    );
+
+    expect(withSupport.sent[0]?.ReplyToAddresses).toEqual([SUPPORT]);
+    expect(withSupport.sent[0]?.Content?.Simple?.Subject?.Data).toBe(
+      buildQuotaNoticeEmail(PAUSED, 'pt-BR', LINKS, SUPPORT).subject,
+    );
+    expect(withoutSupport.sent[0]).not.toHaveProperty('ReplyToAddresses');
+  });
+
+  it('passes a failure of SES through, so the caller decides', async () => {
+    const send = () => Promise.reject(new Error('MessageRejected'));
+
+    await expect(
+      new SesMailSender(FROM, LINKS, send).sendSignInCode('ana@example.com', '123456', 'en'),
+    ).rejects.toThrow('MessageRejected');
+  });
+
+  it('sends through an SESv2 client', async () => {
+    const commands: unknown[] = [];
+    const client = {
+      send: (command: SendEmailCommand) => {
+        commands.push(command);
+        return Promise.resolve({});
+      },
+    };
+
+    await sesSend(client)({ FromEmailAddress: FROM, Content: {} });
+
+    expect(commands).toEqual([expect.any(SendEmailCommand)]);
+    expect(sesSend()).toBeInstanceOf(Function);
+  });
+});
+
 describe('LoggingMailSender', () => {
   afterEach(() => {
     jest.restoreAllMocks();
@@ -200,6 +291,7 @@ describe('createMailSender', () => {
   it('sends through Resend whenever a key is configured', () => {
     expect(
       createMailSender({
+        MAIL_PROVIDER: 'resend',
         NODE_ENV: 'production',
         RESEND_API_KEY: API_KEY,
         MAIL_FROM: FROM,
@@ -213,6 +305,7 @@ describe('createMailSender', () => {
       .spyOn(globalThis, 'fetch')
       .mockResolvedValue(new Response('{"id":"email-4"}', { status: 200 }));
     const sender = createMailSender({
+      MAIL_PROVIDER: 'resend',
       NODE_ENV: 'production',
       RESEND_API_KEY: API_KEY,
       MAIL_FROM: FROM,
@@ -227,9 +320,34 @@ describe('createMailSender', () => {
     fetchSpy.mockRestore();
   });
 
+  it('sends through SES when it is the provider, without a Resend key', () => {
+    expect(
+      createMailSender({
+        MAIL_PROVIDER: 'ses',
+        NODE_ENV: 'production',
+        RESEND_API_KEY: undefined,
+        MAIL_FROM: FROM,
+        DASHBOARD_ORIGIN,
+      }),
+    ).toBeInstanceOf(SesMailSender);
+  });
+
+  it('refuses SES without the dashboard the links point at', () => {
+    expect(() =>
+      createMailSender({
+        MAIL_PROVIDER: 'ses',
+        NODE_ENV: 'production',
+        RESEND_API_KEY: undefined,
+        MAIL_FROM: FROM,
+        DASHBOARD_ORIGIN: undefined,
+      }),
+    ).toThrow('DASHBOARD_ORIGIN is required to send e-mails');
+  });
+
   it('logs codes only outside production', () => {
     expect(
       createMailSender({
+        MAIL_PROVIDER: 'resend',
         NODE_ENV: 'development',
         RESEND_API_KEY: undefined,
         MAIL_FROM: FROM,
@@ -241,6 +359,7 @@ describe('createMailSender', () => {
   it('refuses to send e-mails without the dashboard their links and logo point at', () => {
     expect(() =>
       createMailSender({
+        MAIL_PROVIDER: 'resend',
         NODE_ENV: 'production',
         RESEND_API_KEY: API_KEY,
         MAIL_FROM: FROM,
@@ -252,6 +371,7 @@ describe('createMailSender', () => {
   it('refuses to start in production without a key', () => {
     expect(() =>
       createMailSender({
+        MAIL_PROVIDER: 'resend',
         NODE_ENV: 'production',
         RESEND_API_KEY: undefined,
         MAIL_FROM: FROM,

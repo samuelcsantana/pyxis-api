@@ -13,6 +13,8 @@ const postgresUrl = z.url({ protocol: /^postgres(ql)?$/ });
 const isBareOrigin = (value: string): boolean =>
   URL.canParse(value) && new URL(value).origin === value;
 
+export const MAIL_PROVIDERS = ['resend', 'ses'] as const;
+
 export const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(DEFAULT_PORT),
@@ -24,6 +26,7 @@ export const envSchema = z.object({
     emptyAsUnset,
     z.string().toLowerCase().regex(HTTP_HEADER_NAME).optional(),
   ),
+  MAIL_PROVIDER: z.preprocess(emptyAsUnset, z.enum(MAIL_PROVIDERS).default('resend')),
   RESEND_API_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   MAIL_FROM: z.preprocess(emptyAsUnset, z.string().default(DEFAULT_MAIL_FROM)),
   SUPPORT_EMAIL: z.preprocess(emptyAsUnset, z.email().optional()),
@@ -37,10 +40,18 @@ export const envSchema = z.object({
 });
 
 export const serverEnvSchema = envSchema
-  .refine((env) => env.NODE_ENV !== 'production' || env.RESEND_API_KEY !== undefined, {
-    path: ['RESEND_API_KEY'],
-    message: 'RESEND_API_KEY is required in production, where sign-in codes are never logged',
-  })
+  .refine(
+    (env) =>
+      env.NODE_ENV !== 'production' ||
+      env.MAIL_PROVIDER === 'ses' ||
+      env.RESEND_API_KEY !== undefined,
+    {
+      path: ['RESEND_API_KEY'],
+      message:
+        'RESEND_API_KEY is required in production unless MAIL_PROVIDER is ses: sign-in codes ' +
+        'are never logged there',
+    },
+  )
   .refine((env) => env.NODE_ENV !== 'production' || env.DASHBOARD_ORIGIN !== undefined, {
     path: ['DASHBOARD_ORIGIN'],
     message: 'DASHBOARD_ORIGIN is required in production, for the dashboard CORS and Origin checks',
