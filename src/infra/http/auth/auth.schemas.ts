@@ -6,9 +6,10 @@ const SIGN_IN_CODE_PATTERN = /^\d{6}$/;
 const LANGUAGE_TAG_PATTERN = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$/;
 export const MAX_LANGUAGE_TAG_LENGTH = 35;
 
-const emailSchema = z.email().max(MAX_EMAIL_LENGTH);
+export const emailSchema = z.email().max(MAX_EMAIL_LENGTH);
+export const signInCodeSchema = z.string().regex(SIGN_IN_CODE_PATTERN);
 
-const localeSchema = z
+export const localeSchema = z
   .string()
   .max(MAX_LANGUAGE_TAG_LENGTH)
   .regex(LANGUAGE_TAG_PATTERN)
@@ -26,7 +27,7 @@ export const requestCodeSchema = z
   });
 
 export const verifyCodeSchema = z
-  .strictObject({ email: emailSchema, code: z.string().regex(SIGN_IN_CODE_PATTERN) })
+  .strictObject({ email: emailSchema, code: signInCodeSchema })
   .meta({ id: 'VerifyCodeRequest', description: 'The email and the six-digit code it received.' });
 
 export const signedInSchema = z

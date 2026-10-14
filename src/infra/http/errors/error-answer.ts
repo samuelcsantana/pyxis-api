@@ -31,6 +31,11 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['project_not_found', HttpStatus.NOT_FOUND],
   ['project_icon_not_found', HttpStatus.NOT_FOUND],
   ['invalid_billing_signature', HttpStatus.BAD_REQUEST],
+  ['sign_up_closed', HttpStatus.NOT_FOUND],
+  ['terms_outdated', HttpStatus.CONFLICT],
+  ['account_not_found', HttpStatus.NOT_FOUND],
+  ['subscription_exists', HttpStatus.CONFLICT],
+  ['no_billing_yet', HttpStatus.CONFLICT],
   ['billing_unavailable', HttpStatus.SERVICE_UNAVAILABLE],
 ]);
 

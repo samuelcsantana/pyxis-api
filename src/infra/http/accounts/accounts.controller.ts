@@ -1,0 +1,149 @@
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
+import type { FastifyRequest } from 'fastify';
+import { resolveEmailLanguage } from '../../../domain/auth/email-language';
+import {
+  ListMyAccountsUseCase,
+  type MyAccount,
+} from '../../../usecases/accounts/list-my-accounts.usecase';
+import { OpenBillingPortalUseCase } from '../../../usecases/accounts/open-billing-portal.usecase';
+import { StartCheckoutUseCase } from '../../../usecases/accounts/start-checkout.usecase';
+import { adminOf, DashboardOriginGuard, SessionGuard } from '../auth/auth.guards';
+import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
+import { errorResponseSchema } from '../ingest/ingest.schemas';
+import {
+  ACCESS_TOKENS_THROTTLER,
+  INGEST_THROTTLER,
+  SUBJECTS_THROTTLER,
+} from '../rate-limit/rate-limits';
+import { SchemaPipe } from '../schema-pipe';
+import {
+  accountIdSchema,
+  type BillingRedirectBody,
+  billingRedirectSchema,
+  type CheckoutRequestBody,
+  checkoutRequestSchema,
+  type MyAccountsBody,
+  myAccountsSchema,
+  type PortalRequestBody,
+  portalRequestSchema,
+} from './accounts.schemas';
+
+type MyAccountBody = MyAccountsBody['accounts'][number];
+
+function isoOrNull(date: Date | null): string | null {
+  return date === null ? null : date.toISOString();
+}
+
+export function myAccountBody({ account, role, month, usage, limits }: MyAccount): MyAccountBody {
+  const owner = role === 'owner';
+  return {
+    id: account.id,
+    role,
+    status: account.status,
+    billing_interval: owner ? account.billingInterval : null,
+    trial_ends_at: owner ? isoOrNull(account.trialEndsAt) : null,
+    current_period_ends_at: owner ? isoOrNull(account.currentPeriodEndsAt) : null,
+    access_ends_at: isoOrNull(account.accessEndsAt),
+    ingestion_paused_until: isoOrNull(account.ingestionPausedUntil),
+    month,
+    events_this_month: usage === null ? null : usage.events,
+    measured_at: usage === null ? null : usage.updatedAt.toISOString(),
+    limits: {
+      events_per_month: limits.eventsPerMonth,
+      projects: limits.projects,
+      people: limits.people,
+    },
+  };
+}
+
+@ApiTags('accounts')
+@ApiCookieAuth(SESSION_COOKIE_NAME)
+@Controller('v1')
+@SkipThrottle({
+  [INGEST_THROTTLER]: true,
+  [SUBJECTS_THROTTLER]: true,
+  [ACCESS_TOKENS_THROTTLER]: true,
+})
+export class AccountsController {
+  constructor(
+    private readonly listMyAccounts: ListMyAccountsUseCase,
+    private readonly startCheckout: StartCheckoutUseCase,
+    private readonly openBillingPortal: OpenBillingPortalUseCase,
+  ) {}
+
+  @Get('me/accounts')
+  @UseGuards(SessionGuard)
+  @ApiOperation({ summary: 'The accounts the signed-in admin owns or reads a project of' })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: myAccountsSchema })
+  @ApiResponse({ status: HttpStatus.UNAUTHORIZED, standardSchema: errorResponseSchema })
+  async accounts(@Req() request: FastifyRequest): Promise<MyAccountsBody> {
+    const accounts = await this.listMyAccounts.execute(adminOf(request).id);
+    return { accounts: accounts.map(myAccountBody) };
+  }
+
+  @Post('accounts/:accountId/checkout')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Open a Stripe Checkout for the account',
+    description:
+      'Only the owner, while the account has no running subscription. The first one comes with ' +
+      'the free trial.',
+  })
+  @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: billingRedirectSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.CONFLICT, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.SERVICE_UNAVAILABLE, standardSchema: errorResponseSchema })
+  async checkout(
+    @Req() request: FastifyRequest,
+    @Param('accountId', new SchemaPipe(accountIdSchema)) accountId: string,
+    @Body({ schema: checkoutRequestSchema, pipes: [new SchemaPipe(checkoutRequestSchema)] })
+    body: CheckoutRequestBody,
+  ): Promise<BillingRedirectBody> {
+    const admin = adminOf(request);
+    return this.startCheckout.execute({
+      adminUserId: admin.id,
+      ownerEmail: admin.email,
+      accountId,
+      interval: body.interval,
+      language: resolveEmailLanguage(body.locale),
+    });
+  }
+
+  @Post('accounts/:accountId/portal')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Open Stripe's billing portal for the account's owner" })
+  @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: billingRedirectSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.CONFLICT, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.SERVICE_UNAVAILABLE, standardSchema: errorResponseSchema })
+  async portal(
+    @Req() request: FastifyRequest,
+    @Param('accountId', new SchemaPipe(accountIdSchema)) accountId: string,
+    @Body({ schema: portalRequestSchema, pipes: [new SchemaPipe(portalRequestSchema)] })
+    body: PortalRequestBody,
+  ): Promise<BillingRedirectBody> {
+    return this.openBillingPortal.execute({
+      adminUserId: adminOf(request).id,
+      accountId,
+      language: resolveEmailLanguage(body.locale),
+    });
+  }
+}
