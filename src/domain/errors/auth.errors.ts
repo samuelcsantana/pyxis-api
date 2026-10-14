@@ -23,3 +23,19 @@ export class SessionNotFoundError extends DomainError {
     super('The session does not exist, is not yours, or has already ended.');
   }
 }
+
+export class AccessTokenNotFoundError extends DomainError {
+  readonly code = 'access_token_not_found';
+
+  constructor() {
+    super('The access token does not exist, is not yours, or was already revoked.');
+  }
+}
+
+export class TooManyAccessTokensError extends DomainError {
+  readonly code = 'too_many_access_tokens';
+
+  constructor(limit: number) {
+    super(`An admin keeps at most ${String(limit)} live access tokens: revoke one first.`);
+  }
+}
