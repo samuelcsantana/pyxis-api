@@ -1,0 +1,144 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LambdaForThisService",
+      "Effect": "Allow",
+      "Action": "lambda:*",
+      "Resource": [
+        "arn:aws:lambda:sa-east-1:<account-id>:function:pyxis-api*",
+        "arn:aws:lambda:sa-east-1:<account-id>:function:pyxis-api*:*"
+      ]
+    },
+    {
+      "Sid": "LambdaAccountWideReads",
+      "Effect": "Allow",
+      "Action": ["lambda:GetAccountSettings", "lambda:ListFunctions"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EcrForThisServicesImages",
+      "Effect": "Allow",
+      "Action": "ecr:*",
+      "Resource": "arn:aws:ecr:sa-east-1:<account-id>:repository/pyxis-api*"
+    },
+    {
+      "Sid": "EcrLoginAndDiscovery",
+      "Effect": "Allow",
+      "Action": ["ecr:GetAuthorizationToken", "ecr:DescribeRegistry"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "EdgeServicesWithoutResourceScoping",
+      "Effect": "Allow",
+      "Action": ["cloudfront:*", "acm:*"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SchedulesForThisService",
+      "Effect": "Allow",
+      "Action": "scheduler:*",
+      "Resource": "arn:aws:scheduler:sa-east-1:<account-id>:schedule/default/pyxis-api*"
+    },
+    {
+      "Sid": "SchedulerDiscovery",
+      "Effect": "Allow",
+      "Action": [
+        "scheduler:ListSchedules",
+        "scheduler:ListScheduleGroups",
+        "scheduler:GetScheduleGroup"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "ParametersForThisService",
+      "Effect": "Allow",
+      "Action": "ssm:*",
+      "Resource": "arn:aws:ssm:sa-east-1:<account-id>:parameter/pyxis-api/*"
+    },
+    {
+      "Sid": "LogsForThisServicesFunctions",
+      "Effect": "Allow",
+      "Action": "logs:*",
+      "Resource": [
+        "arn:aws:logs:sa-east-1:<account-id>:log-group:/aws/lambda/pyxis-api*",
+        "arn:aws:logs:sa-east-1:<account-id>:log-group:/aws/lambda/pyxis-api*:*"
+      ]
+    },
+    {
+      "Sid": "AlarmsForThisService",
+      "Effect": "Allow",
+      "Action": [
+        "cloudwatch:PutMetricAlarm",
+        "cloudwatch:DeleteAlarms",
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:ListTagsForResource",
+        "cloudwatch:TagResource",
+        "cloudwatch:UntagResource"
+      ],
+      "Resource": "arn:aws:cloudwatch:sa-east-1:<account-id>:alarm:pyxis-api-*"
+    },
+    {
+      "Sid": "AlertTopicsForThisService",
+      "Effect": "Allow",
+      "Action": "sns:*",
+      "Resource": [
+        "arn:aws:sns:sa-east-1:<account-id>:pyxis-api-*",
+        "arn:aws:sns:sa-east-1:<account-id>:pyxis-api-*:*"
+      ]
+    },
+    {
+      "Sid": "TerraformState",
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": ["arn:aws:s3:::pyxis-api-tfstate*", "arn:aws:s3:::pyxis-api-tfstate*/*"]
+    },
+    {
+      "Sid": "IamForTheFunctionRolesOnly",
+      "Effect": "Allow",
+      "Action": [
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:GetRole",
+        "iam:UpdateRole",
+        "iam:TagRole",
+        "iam:UntagRole",
+        "iam:ListRoleTags",
+        "iam:PutRolePolicy",
+        "iam:DeleteRolePolicy",
+        "iam:GetRolePolicy",
+        "iam:ListRolePolicies",
+        "iam:ListAttachedRolePolicies",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:UpdateAssumeRolePolicy",
+        "iam:ListInstanceProfilesForRole",
+        "iam:PassRole"
+      ],
+      "Resource": [
+        "arn:aws:iam::<account-id>:role/pyxis-api-lambda",
+        "arn:aws:iam::<account-id>:role/pyxis-api-migrate",
+        "arn:aws:iam::<account-id>:role/pyxis-api-jobs",
+        "arn:aws:iam::<account-id>:role/pyxis-api-scheduler"
+      ]
+    },
+    {
+      "Sid": "IamReadsTerraformNeedsToPlan",
+      "Effect": "Allow",
+      "Action": ["iam:ListRoles", "iam:ListPolicies"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "LogsDiscoveryWhichCannotBeScoped",
+      "Effect": "Allow",
+      "Action": ["logs:DescribeLogGroups", "logs:DescribeQueryDefinitions"],
+      "Resource": "*"
+    },
+    {
+      "Sid": "SsmDiscoveryWhichCannotBeScoped",
+      "Effect": "Allow",
+      "Action": ["ssm:DescribeParameters"],
+      "Resource": "*"
+    }
+  ]
+}
