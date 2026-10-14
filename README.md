@@ -155,6 +155,13 @@ Shipping now:
   code and copied to the admin only when that code is verified, so knowing an admin's address
   is not enough to change it
 
+- Read-only access tokens for agents and scripts: the signed-in admin creates up to 10 named
+  tokens (`POST /v1/me/tokens`, `{"name":"Claude Code","expires_in_days":90}`, 30, 90 or 365
+  days), sees them with their last use (`GET /v1/me/tokens`) and revokes them
+  (`DELETE /v1/me/tokens/{tokenId}`). A token, sent as `Authorization: Bearer pyxis_at_…`, reads
+  `GET /v1/me` and every `GET /v1/projects/{projectId}/…` report of the projects its admin is
+  granted, and nothing else ([ADR 0015](docs/adr/0015-read-only-access-tokens-for-agents.md))
+
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
   site's backend with a secret project key
@@ -448,6 +455,12 @@ request never deploys.
   (no cache, so revoking one takes effect at once) and limited to 60 calls a minute each; the
   same 60 a minute applies per client address and is counted before the key is checked, so an
   unknown key cannot be tried without limit
+- An access token is answered once and stored only as a SHA-256 hash, looked up on every request
+  with no cache, so a revoked token stops at once. It reads only: the sessions and tokens routes,
+  signing out everywhere, the e-mail preferences and the icon refuse it with 401, signing out
+  ignores it, and a request that carries one is judged by it alone, even with a session cookie. Each token allows 60 requests a minute
+  and lasts at most a year; creating and revoking them needs a dashboard session and the
+  dashboard's `Origin`, and the logs name tokens and admins by id only
 - Fetching a site's icon is the API's only request to an address it does not choose: https only,
   the host resolved before every request (redirects too, at most three, followed by hand) and
   refused when any address is loopback, private, link-local, carrier-grade NAT, unique-local,
@@ -476,6 +489,7 @@ request never deploys.
 | [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)           | Let the dashboard keep the session in a cookie of its own host   |
 | [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)           | Fetch each project's icon from its site, and keep a copy         |
 | [0014](docs/adr/0014-store-the-region-never-the-city.md)               | Store the viewer's region, never the city                        |
+| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)            | Give agents read-only access tokens, scoped to their admin       |
 
 ## Roadmap
 
@@ -497,6 +511,7 @@ request never deploys.
 - [x] E-mail preferences: the weekly digest switch and the admin's language
 - [x] Weekly digest e-mail on Mondays
 - [x] Sign-in abuse alarms: rejected codes and refused code requests, read from the logs
+- [x] Read-only access tokens for agents (an MCP server that uses them comes next)
 
 ## Contributing and license
 
