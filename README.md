@@ -166,6 +166,12 @@ Shipping now:
   (3 at most, counted under a lock so two requests cannot both take the last place). A project
   without an account is the operator's own, as every project was before, with no plan and no
   quota ([ADR 0016](docs/adr/0016-accounts-own-projects.md))
+- A monthly quota for those accounts: the daily job counts each account's events in the current
+  calendar month (UTC) and keeps the figure; an account past 150% of its plan (100,000 events) is
+  paused until the month turns, and its batches are answered `403 quota_exceeded`, readable by
+  the site's origin so the tracker drops them instead of retrying. Free (`comped`) accounts and the
+  operator's projects are never paused
+  ([ADR 0017](docs/adr/0017-monthly-quota-measured-daily.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -173,7 +179,8 @@ Shipping now:
   ([ADR 0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md))
 
 - A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
-  codes; each step logs its count, and a failed step fails the run so the scheduler retries.
+  codes, then measures each account's month (the quota); each step logs its count, and a failed
+  step fails the run so the scheduler retries.
   Last, it refreshes the project icons, best effort: an icon found replaces the stored one, a
   site that answers without one loses it, and a site that cannot be reached keeps it
 
@@ -267,7 +274,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s admin:grant -- --email <email> --project <id>`                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                               |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first               |
 | `npm run -s account:create -- --owner-email <email>`                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                          |
-| `npm run -s account:show -- --account <id>`                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, and one line per project                                                        |
+| `npm run -s account:show -- --account <id>`                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project        |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
@@ -498,6 +505,7 @@ request never deploys.
 | [0014](docs/adr/0014-store-the-region-never-the-city.md)               | Store the viewer's region, never the city                        |
 | [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)            | Give agents read-only access tokens, scoped to their admin       |
 | [0016](docs/adr/0016-accounts-own-projects.md)                         | Accounts own projects; a project without one is the operator's   |
+| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                  | Measure each account's month daily; pause ingestion at 150%      |
 
 ## Roadmap
 
@@ -521,6 +529,7 @@ request never deploys.
 - [x] Sign-in abuse alarms: rejected codes and refused code requests, read from the logs
 - [x] Read-only access tokens for agents (an MCP server that uses them comes next)
 - [x] Accounts that own projects, with the hosted plan's project limit
+- [x] Monthly quota per account, measured daily, ingestion paused at 150%
 - [ ] Hosted plan: monthly quota, billing, sign-up and the account's settings in the dashboard
 
 ## Contributing and license
