@@ -3,3 +3,5 @@ export const HOSTED_PLAN_LIMITS = {
   projects: 3,
   people: 3,
 } as const;
+
+export const INGESTION_PAUSE_RATIO = 1.5;

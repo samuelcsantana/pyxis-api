@@ -1,5 +1,15 @@
 import { sql } from 'drizzle-orm';
-import { check, index, pgTable, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import {
+  char,
+  check,
+  index,
+  integer,
+  pgTable,
+  primaryKey,
+  timestamp,
+  uuid,
+  varchar,
+} from 'drizzle-orm/pg-core';
 import { ACCOUNT_STATUSES, type AccountStatus } from '../../../domain/accounts/account-status';
 import { adminUsers } from './admins';
 
@@ -14,6 +24,7 @@ export const accounts = pgTable(
       .notNull()
       .references(() => adminUsers.id, { onDelete: 'restrict' }),
     status: varchar('status', { length: STATUS_LENGTH }).$type<AccountStatus>().notNull(),
+    ingestionPausedUntil: timestamp('ingestion_paused_until', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -23,3 +34,20 @@ export const accounts = pgTable(
 );
 
 export type AccountRow = typeof accounts.$inferSelect;
+
+const MONTH_LABEL_LENGTH = 7;
+
+export const accountUsageMonths = pgTable(
+  'account_usage_months',
+  {
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    month: char('month', { length: MONTH_LABEL_LENGTH }).notNull(),
+    events: integer('events').notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    primaryKey({ name: 'account_usage_months_pkey', columns: [table.accountId, table.month] }),
+  ],
+);

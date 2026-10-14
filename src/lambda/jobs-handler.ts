@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import type { DatabaseSizeReport } from '../domain/monitoring/database-size';
+import type { AccountUsageReport } from '../usecases/accounts/measure-account-usage.usecase';
 import type { DigestReport } from '../usecases/digest/send-weekly-digests.usecase';
 import type { ProjectIconsReport } from '../usecases/projects/refresh-project-icons.usecase';
 import type { RetentionReport } from '../usecases/retention/run-retention.usecase';
@@ -10,6 +11,7 @@ export interface JobsHandlerDependencies {
   readonly loadParameters: () => Promise<unknown>;
   readonly reportDatabaseSize: () => Promise<DatabaseSizeReport>;
   readonly runRetention: () => Promise<RetentionReport>;
+  readonly measureAccountUsage: () => Promise<AccountUsageReport>;
   readonly sendWeeklyDigests: () => Promise<DigestReport>;
   readonly refreshProjectIcons: () => Promise<ProjectIconsReport>;
 }
@@ -20,6 +22,7 @@ export type JobsOutcome =
       readonly job: 'daily';
       readonly databaseSize: DatabaseSizeReport;
       readonly retention: RetentionReport;
+      readonly accountUsage: AccountUsageReport;
       readonly projectIcons: ProjectIconsReport | null;
     }
   | {
@@ -60,7 +63,8 @@ export function createJobsHandler(
     }
     const databaseSize = await dependencies.reportDatabaseSize();
     const retention = await dependencies.runRetention();
+    const accountUsage = await dependencies.measureAccountUsage();
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
-    return { ok: true, job: 'daily', databaseSize, retention, projectIcons };
+    return { ok: true, job: 'daily', databaseSize, retention, accountUsage, projectIcons };
   };
 }

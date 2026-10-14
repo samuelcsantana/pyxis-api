@@ -1,12 +1,15 @@
 import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
 import type { Project } from '../../domain/entities/project.entity';
 import { AccountNotFoundError } from '../../domain/errors/account.errors';
+import { FixedClock } from '../../test-utils/fixed-clock';
+import { InMemoryAccountUsageRepository } from '../../test-utils/in-memory-account-usage.repository';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { CreateCompedAccountUseCase } from './create-comped-account.usecase';
 import { ShowAccountUseCase } from './show-account.usecase';
 
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
+const NOW = new Date('2026-10-14T15:00:00.000Z');
 const SHOP: Project = {
   id: 'b0b0b0b0-0000-4000-8000-000000000001',
   name: 'Shop',
@@ -19,11 +22,13 @@ const SHOP: Project = {
 function setup() {
   const admins = new InMemoryAdminUserRepository();
   const accounts = new InMemoryAccountRepository(admins);
+  const usage = new InMemoryAccountUsageRepository();
   return {
     admins,
     accounts,
+    usage,
     createAccount: new CreateCompedAccountUseCase(admins, accounts),
-    showAccount: new ShowAccountUseCase(accounts),
+    showAccount: new ShowAccountUseCase(accounts, usage, new FixedClock(NOW)),
   };
 }
 
@@ -55,11 +60,16 @@ describe('CreateCompedAccountUseCase', () => {
 });
 
 describe('ShowAccountUseCase', () => {
-  it('shows the owner, the projects, the people and the plan limits', async () => {
-    const { admins, accounts, showAccount } = setup();
+  it('shows the owner, the projects, the people, the plan limits and the month measured', async () => {
+    const { admins, accounts, usage, showAccount } = setup();
     const owner = await admins.findOrCreateByEmail('owner@example.com');
     const account = await accounts.create({ ownerAdminId: owner.id, status: 'comped' });
     accounts.add(account, { projects: [SHOP], people: 2 });
+    await usage.record(
+      '2026-10',
+      [{ accountId: account.id, events: 1200, ingestionPausedUntil: null }],
+      NOW,
+    );
 
     const summary = await showAccount.execute({ accountId: account.id });
 
@@ -69,6 +79,8 @@ describe('ShowAccountUseCase', () => {
       projects: [SHOP],
       people: 2,
       limits: HOSTED_PLAN_LIMITS,
+      month: '2026-10',
+      usage: { month: '2026-10', events: 1200, updatedAt: NOW },
     });
   });
 
@@ -79,7 +91,7 @@ describe('ShowAccountUseCase', () => {
 
     const summary = await showAccount.execute({ accountId: account.id });
 
-    expect(summary).toMatchObject({ projects: [], people: 0 });
+    expect(summary).toMatchObject({ projects: [], people: 0, usage: null });
     expect(await accounts.projectsOf(account.id)).toEqual([]);
     expect(await accounts.peopleCount(account.id)).toBe(0);
   });
@@ -101,6 +113,7 @@ describe('ShowAccountUseCase', () => {
       id: 'acc00000-0000-4000-a000-000000000009',
       ownerAdminId: MISSING_ID,
       status: 'comped',
+      ingestionPausedUntil: null,
       createdAt: new Date('2026-10-14T00:00:00.000Z'),
     });
 
