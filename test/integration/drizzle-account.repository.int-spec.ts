@@ -1,0 +1,102 @@
+import type postgres from 'postgres';
+import {
+  createDrizzleDatabase,
+  createPostgresClient,
+} from '../../src/infra/database/postgres-client';
+import { DrizzleAccountRepository } from '../../src/infra/repositories/drizzle-account.repository';
+import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
+import { testAppUrl } from './test-database';
+
+const OWNER_ID = 'c1a2b3c4-0000-4000-8000-000000000001';
+const GUEST_ID = 'c1a2b3c4-0000-4000-8000-000000000002';
+const STRANGER_ID = 'c1a2b3c4-0000-4000-8000-000000000003';
+const SHOP_ID = 'c1a2b3c4-0000-4000-8000-000000000011';
+const BLOG_ID = 'c1a2b3c4-0000-4000-8000-000000000012';
+const OPERATOR_ID = 'c1a2b3c4-0000-4000-8000-000000000013';
+const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
+
+describe('accounts against a real Postgres', () => {
+  let owner: postgres.Sql;
+  let app: postgres.Sql;
+  let accounts: DrizzleAccountRepository;
+
+  beforeAll(async () => {
+    await migrateTestDatabase();
+    owner = connectAsOwner();
+    app = createPostgresClient(testAppUrl());
+    accounts = new DrizzleAccountRepository(createDrizzleDatabase(app));
+  });
+
+  beforeEach(async () => {
+    await emptyIngestionTables(owner);
+    await owner`
+      INSERT INTO admin_users (id, email)
+      VALUES (${OWNER_ID}, 'owner@example.com'), (${GUEST_ID}, 'guest@example.com'),
+             (${STRANGER_ID}, 'stranger@example.com')
+    `;
+  });
+
+  afterAll(async () => {
+    await app.end();
+    await owner.end();
+  });
+
+  it('creates an account for its owner, as the application role, and finds it by id', async () => {
+    const created = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
+
+    expect(created).toEqual({
+      id: expect.any(String) as string,
+      ownerAdminId: OWNER_ID,
+      status: 'comped',
+      createdAt: expect.any(Date) as Date,
+    });
+    expect(await accounts.findById(created.id)).toEqual(created);
+    expect(await accounts.findById(MISSING_ID)).toBeNull();
+  });
+
+  it('refuses a status outside the lifecycle', async () => {
+    await expect(
+      owner`INSERT INTO accounts (owner_admin_id, status) VALUES (${OWNER_ID}, 'free')`,
+    ).rejects.toThrow(/accounts_status_check/);
+  });
+
+  it('lists the projects of an account, oldest first, and counts the people who read them', async () => {
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
+    await owner`
+      INSERT INTO projects (id, name, account_id, created_at)
+      VALUES (${BLOG_ID}, 'Blog', ${account.id}, '2026-10-14T12:00:00Z'),
+             (${SHOP_ID}, 'Shop', ${account.id}, '2026-10-14T10:00:00Z'),
+             (${OPERATOR_ID}, 'Operator', NULL, '2026-10-14T09:00:00Z')
+    `;
+    await owner`
+      INSERT INTO admin_project_access (admin_user_id, project_id)
+      VALUES (${OWNER_ID}, ${SHOP_ID}), (${OWNER_ID}, ${BLOG_ID}), (${GUEST_ID}, ${BLOG_ID}),
+             (${STRANGER_ID}, ${OPERATOR_ID})
+    `;
+
+    expect((await accounts.projectsOf(account.id)).map(({ name }) => name)).toEqual([
+      'Shop',
+      'Blog',
+    ]);
+    expect(await accounts.peopleCount(account.id)).toBe(2);
+  });
+
+  it('has no projects and no people for an account without projects', async () => {
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
+
+    expect(await accounts.projectsOf(account.id)).toEqual([]);
+    expect(await accounts.peopleCount(account.id)).toBe(0);
+  });
+
+  it('keeps an account while it has projects, and its owner while it exists', async () => {
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
+    await owner`INSERT INTO projects (id, name, account_id) VALUES (${SHOP_ID}, 'Shop', ${account.id})`;
+
+    await expect(owner`DELETE FROM accounts WHERE id = ${account.id}`).rejects.toThrow(
+      /projects_account_id_accounts_id_fk/,
+    );
+    await expect(owner`DELETE FROM admin_users WHERE id = ${OWNER_ID}`).rejects.toThrow(
+      /accounts_owner_admin_id_admin_users_id_fk/,
+    );
+  });
+});

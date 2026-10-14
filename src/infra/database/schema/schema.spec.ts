@@ -1,5 +1,6 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
+  accounts,
   adminAccessTokens,
   adminProjectAccess,
   adminSessions,
@@ -14,6 +15,8 @@ import {
 
 function foreignKeyTargets(
   table:
+    | typeof accounts
+    | typeof projects
     | typeof events
     | typeof projectKeys
     | typeof adminProjectAccess
@@ -94,6 +97,27 @@ describe('database schema', () => {
 
     expect(columns.timezone?.default).toBe('UTC');
     expect(columns.conversion_event?.notNull).toBe(false);
+  });
+
+  it('gives a project an optional account, which cannot go while it still has projects', () => {
+    const config = getTableConfig(projects);
+    const accountId = config.columns.find((column) => column.name === 'account_id');
+
+    expect(accountId?.notNull).toBe(false);
+    expect(foreignKeyTargets(projects)).toEqual(['accounts.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('restrict');
+    expect(config.indexes.map((index) => index.config.name)).toEqual(['projects_account_id_idx']);
+  });
+
+  it('ties an account to the admin who owns it, kept while the account exists', () => {
+    const config = getTableConfig(accounts);
+
+    expect(foreignKeyTargets(accounts)).toEqual(['admin_users.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('restrict');
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'accounts_owner_admin_id_idx',
+    ]);
+    expect(config.checks.map((check) => check.name)).toEqual(['accounts_status_check']);
   });
 
   it('keys project access by admin and project, both deleted with their owner', () => {
