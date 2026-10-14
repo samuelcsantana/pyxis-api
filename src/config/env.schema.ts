@@ -30,6 +30,8 @@ export const envSchema = z.object({
   RESEND_API_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   MAIL_FROM: z.preprocess(emptyAsUnset, z.string().default(DEFAULT_MAIL_FROM)),
   SUPPORT_EMAIL: z.preprocess(emptyAsUnset, z.email().optional()),
+  STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
+  STRIPE_WEBHOOK_SECRET: z.preprocess(emptyAsUnset, z.string().optional()),
   DASHBOARD_ORIGIN: z.preprocess(
     emptyAsUnset,
     z
