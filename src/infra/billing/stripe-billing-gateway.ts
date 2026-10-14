@@ -1,0 +1,208 @@
+import { Logger } from '@nestjs/common';
+import Stripe from 'stripe';
+import { PRICE_LOOKUP_KEYS } from '../../domain/accounts/hosted-plan';
+import type { EmailLanguage } from '../../domain/auth/email-language';
+import {
+  BILLING_INTERVALS,
+  type BillingEvent,
+  type BillingGateway,
+  type BillingInterval,
+  type BillingSubscription,
+  type CheckoutRequest,
+} from '../../domain/billing/billing-gateway';
+import {
+  BillingUnavailableError,
+  InvalidBillingSignatureError,
+} from '../../domain/errors/billing.errors';
+
+const MILLISECONDS_PER_SECOND = 1000;
+const ACCOUNT_ID_METADATA = 'account_id';
+
+const STRIPE_LOCALES: Readonly<Record<EmailLanguage, Stripe.Checkout.SessionCreateParams.Locale>> =
+  {
+    en: 'en',
+    'pt-BR': 'pt-BR',
+    es: 'es',
+  };
+
+type ExpandableId = string | { readonly id: string } | null;
+
+function idOf(value: ExpandableId): string | null {
+  if (value === null) {
+    return null;
+  }
+  return typeof value === 'string' ? value : value.id;
+}
+
+function fromUnixSeconds(value: number | null | undefined): Date | null {
+  return value === null || value === undefined ? null : new Date(value * MILLISECONDS_PER_SECOND);
+}
+
+function intervalOf(subscription: Stripe.Subscription): BillingInterval | null {
+  const interval = subscription.items.data[0]?.price.recurring?.interval;
+  return BILLING_INTERVALS.find((known) => known === interval) ?? null;
+}
+
+export function toBillingSubscription(subscription: Stripe.Subscription): BillingSubscription {
+  const endsAt = fromUnixSeconds(subscription.cancel_at);
+  const clampedToEnd = (date: Date | null): Date | null =>
+    date !== null && endsAt !== null && endsAt < date ? endsAt : date;
+  return {
+    subscriptionId: subscription.id,
+    customerId: idOf(subscription.customer) ?? '',
+    accountId: subscription.metadata[ACCOUNT_ID_METADATA] ?? null,
+    status: subscription.status,
+    interval: intervalOf(subscription),
+    trialEndsAt: clampedToEnd(fromUnixSeconds(subscription.trial_end)),
+    currentPeriodEndsAt: clampedToEnd(
+      fromUnixSeconds(subscription.items.data[0]?.current_period_end),
+    ),
+    cancelAtPeriodEnd: subscription.cancel_at_period_end || endsAt !== null,
+  };
+}
+
+export function toBillingEvent(event: Stripe.Event): BillingEvent {
+  const base = { id: event.id, type: event.type };
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    return {
+      ...base,
+      subscriptionId: idOf(session.subscription),
+      customerId: idOf(session.customer),
+      accountId: session.client_reference_id,
+    };
+  }
+  if (event.type.startsWith('customer.subscription.')) {
+    const subscription = event.data.object as Stripe.Subscription;
+    return {
+      ...base,
+      subscriptionId: subscription.id,
+      customerId: idOf(subscription.customer),
+      accountId: subscription.metadata[ACCOUNT_ID_METADATA] ?? null,
+    };
+  }
+  if (event.type.startsWith('invoice.')) {
+    const invoice = event.data.object as Stripe.Invoice;
+    return {
+      ...base,
+      subscriptionId: idOf(invoice.parent?.subscription_details?.subscription ?? null),
+      customerId: idOf(invoice.customer),
+      accountId: null,
+    };
+  }
+  return { ...base, subscriptionId: null, customerId: null, accountId: null };
+}
+
+function firstLine(error: unknown): string {
+  return String(error).split('\n', 1).join('');
+}
+
+export class StripeBillingGateway implements BillingGateway {
+  private readonly logger = new Logger(StripeBillingGateway.name);
+  private readonly prices = new Map<BillingInterval, string>();
+
+  constructor(
+    private readonly stripe: Stripe,
+    private readonly webhookSecret: string | null,
+  ) {}
+
+  async createCheckout(request: CheckoutRequest): Promise<{ readonly url: string }> {
+    const price = await this.priceFor(request.interval);
+    const session = await this.call('checkout.sessions.create', () =>
+      this.stripe.checkout.sessions.create({
+        mode: 'subscription',
+        line_items: [{ price, quantity: 1 }],
+        ...(request.customerId === null
+          ? { customer_email: request.customerEmail }
+          : { customer: request.customerId }),
+        client_reference_id: request.accountId,
+        subscription_data: {
+          trial_period_days: request.trialDays,
+          metadata: { [ACCOUNT_ID_METADATA]: request.accountId },
+        },
+        payment_method_collection: 'always',
+        billing_address_collection: 'required',
+        tax_id_collection: { enabled: true },
+        consent_collection: { terms_of_service: 'required' },
+        locale: STRIPE_LOCALES[request.language],
+        success_url: request.successUrl,
+        cancel_url: request.cancelUrl,
+      }),
+    );
+    if (session.url === null) {
+      throw new BillingUnavailableError('checkout.sessions.create answered without a URL');
+    }
+    return { url: session.url };
+  }
+
+  async createPortal(
+    customerId: string,
+    returnUrl: string,
+    language: EmailLanguage,
+  ): Promise<{ readonly url: string }> {
+    const session = await this.call('billingPortal.sessions.create', () =>
+      this.stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl,
+        locale: STRIPE_LOCALES[language],
+      }),
+    );
+    return { url: session.url };
+  }
+
+  async subscription(subscriptionId: string): Promise<BillingSubscription> {
+    const subscription = await this.call('subscriptions.retrieve', () =>
+      this.stripe.subscriptions.retrieve(subscriptionId),
+    );
+    return toBillingSubscription(subscription);
+  }
+
+  parseEvent(rawBody: Buffer, signature: string | null): BillingEvent {
+    if (this.webhookSecret === null) {
+      throw new BillingUnavailableError('STRIPE_WEBHOOK_SECRET is not set');
+    }
+    if (signature === null) {
+      throw new InvalidBillingSignatureError();
+    }
+    try {
+      return toBillingEvent(
+        this.stripe.webhooks.constructEvent(rawBody, signature, this.webhookSecret),
+      );
+    } catch (error) {
+      this.logger.warn({ message: 'billing.signature_refused', reason: firstLine(error) });
+      throw new InvalidBillingSignatureError();
+    }
+  }
+
+  private async priceFor(interval: BillingInterval): Promise<string> {
+    const known = this.prices.get(interval);
+    if (known !== undefined) {
+      return known;
+    }
+    const lookupKey = PRICE_LOOKUP_KEYS[interval];
+    const page = await this.call('prices.list', () =>
+      this.stripe.prices.list({ lookup_keys: [lookupKey], active: true, limit: 1 }),
+    );
+    const price = page.data[0]?.id;
+    if (price === undefined) {
+      throw new BillingUnavailableError(`no active price has the lookup key ${lookupKey}`);
+    }
+    this.prices.set(interval, price);
+    return price;
+  }
+
+  private async call<Result>(operation: string, request: () => Promise<Result>): Promise<Result> {
+    try {
+      return await request();
+    } catch (error) {
+      const code = error instanceof Stripe.errors.StripeError ? error.code : undefined;
+      this.logger.warn({
+        message: 'billing.request_failed',
+        operation,
+        code: code ?? 'unknown',
+        reason: firstLine(error),
+      });
+      throw new BillingUnavailableError(`${operation} failed`);
+    }
+  }
+}
