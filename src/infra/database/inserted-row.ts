@@ -5,3 +5,11 @@ export function insertedRow<T>(rows: readonly T[]): T {
   }
   return row;
 }
+
+export function aggregateRow<T>(rows: readonly T[]): T {
+  const [row] = rows;
+  if (row === undefined) {
+    throw new Error('The database returned no row for an aggregate, which always returns one.');
+  }
+  return row;
+}
