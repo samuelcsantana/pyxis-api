@@ -168,6 +168,28 @@ an allowed origin must store a row whose `country`, `region` and `region_name` a
 proves `CloudFront-Viewer-Country` and `CloudFront-Viewer-Country-Region(-Name)` arrive. Send it
 from a browser outside AWS: CloudFront sets no region for requests from AWS's own network.
 
+## Alarms
+
+Every alarm e-mails `alert_email` through the SNS topic `pyxis-api-alerts`, once when it fires
+and once when it clears.
+
+| Alarm                                     | Fires when                                                           |
+| ----------------------------------------- | -------------------------------------------------------------------- |
+| `pyxis-api-unhandled-errors`              | 5 or more requests end in an unexpected 500 within five minutes      |
+| `pyxis-api-function-errors`               | 3 or more HTTP function invocations fail or time out in five minutes |
+| `pyxis-api-function-throttles`            | Any request is throttled in five minutes (reserved concurrency full) |
+| `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch            |
+| `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                             |
+| `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                               |
+
+The thresholds are Terraform variables. All of them watch sa-east-1, so an outage before the
+function (DNS, the certificate, CloudFront itself) raises none; an external uptime check of
+`/health` would cover it. To see an alert e-mail arrive without breaking anything:
+
+```bash
+aws cloudwatch set-alarm-state --alarm-name pyxis-api-unhandled-errors --state-value ALARM --state-reason "Checking the alert email" --region sa-east-1 --profile pyxis-api
+```
+
 ## The daily jobs
 
 Run them once by hand, for example after the first deploy:

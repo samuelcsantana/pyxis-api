@@ -394,8 +394,11 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 The API runs on AWS Lambda in sa-east-1 behind CloudFront ([ADR 0006](docs/adr/0006-lambda-behind-cloudfront.md)),
 provisioned by the Terraform in `infra/` and shipped by `scripts/deploy-lambda.sh`, which runs the
 migrations before updating the HTTP function. Every request must carry the secret header
-CloudFront adds; the function's own URL answers 403 without it. Provisioning, deploys, checks and
-rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull request never deploys.
+CloudFront adds; the function's own URL answers 403 without it. CloudWatch alarms e-mail the
+operator when requests end in unexpected errors, when the function fails, times out or is
+throttled, when the database grows, and when sign-in codes are being guessed. Provisioning,
+deploys, checks, alarms and rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull
+request never deploys.
 
 ## Privacy and security
 
