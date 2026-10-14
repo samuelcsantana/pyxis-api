@@ -176,6 +176,13 @@ Shipping now:
   starts; a failed e-mail is tried again the next day, and the optional `SUPPORT_EMAIL` is named in
   it and receives the replies
 
+- Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
+  up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
+  changing the account (trialing, active, past due, ending with the date access ends, ended), and
+  answers 503 when Stripe cannot be read so Stripe sends the event again. `account:link` ties a
+  subscription paid through a payment link to an account
+  ([ADR 0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md))
+
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
   site's backend with a secret project key
@@ -278,6 +285,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first               |
 | `npm run -s account:create -- --owner-email <email>`                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                          |
 | `npm run -s account:show -- --account <id>`                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project        |
+| `npm run -s account:link -- --account <id> --subscription <sub_…>`                                                                              | Ties a subscription paid outside sign-up (a payment link) to the account and copies its state; needs `STRIPE_SECRET_KEY`                                                |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
@@ -494,25 +502,26 @@ request never deploys.
 
 ## Architecture decisions
 
-| ADR                                                                    | Decision                                                         |
-| ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| [0001](docs/adr/0001-record-architecture-decisions.md)                 | Record architecture decisions                                    |
-| [0002](docs/adr/0002-clean-architecture.md)                            | Clean Architecture with ports and adapters                       |
-| [0003](docs/adr/0003-openapi-from-zod.md)                              | Generate the OpenAPI 3.1 contract from Zod                       |
-| [0004](docs/adr/0004-least-privilege-database-roles.md)                | Least-privilege database roles                                   |
-| [0005](docs/adr/0005-per-event-validation.md)                          | Validate each event of a batch on its own                        |
-| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                      | Run on Lambda behind CloudFront, with an edge secret             |
-| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)       | Sign admins in with an emailed code and an opaque session cookie |
-| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)               | Answer dashboard queries from the raw events, without rollups    |
-| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)       | Erase a person together with the visits they identified in       |
-| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md) | Compare an unfinished day up to the same time of day             |
-| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)          | Send a weekly digest by e-mail from the jobs function            |
-| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)           | Let the dashboard keep the session in a cookie of its own host   |
-| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)           | Fetch each project's icon from its site, and keep a copy         |
-| [0014](docs/adr/0014-store-the-region-never-the-city.md)               | Store the viewer's region, never the city                        |
-| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)            | Give agents read-only access tokens, scoped to their admin       |
-| [0016](docs/adr/0016-accounts-own-projects.md)                         | Accounts own projects; a project without one is the operator's   |
-| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                  | Measure each account's month daily; pause ingestion at 150%      |
+| ADR                                                                    | Decision                                                                |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| [0001](docs/adr/0001-record-architecture-decisions.md)                 | Record architecture decisions                                           |
+| [0002](docs/adr/0002-clean-architecture.md)                            | Clean Architecture with ports and adapters                              |
+| [0003](docs/adr/0003-openapi-from-zod.md)                              | Generate the OpenAPI 3.1 contract from Zod                              |
+| [0004](docs/adr/0004-least-privilege-database-roles.md)                | Least-privilege database roles                                          |
+| [0005](docs/adr/0005-per-event-validation.md)                          | Validate each event of a batch on its own                               |
+| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                      | Run on Lambda behind CloudFront, with an edge secret                    |
+| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)       | Sign admins in with an emailed code and an opaque session cookie        |
+| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)               | Answer dashboard queries from the raw events, without rollups           |
+| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)       | Erase a person together with the visits they identified in              |
+| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md) | Compare an unfinished day up to the same time of day                    |
+| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)          | Send a weekly digest by e-mail from the jobs function                   |
+| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)           | Let the dashboard keep the session in a cookie of its own host          |
+| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)           | Fetch each project's icon from its site, and keep a copy                |
+| [0014](docs/adr/0014-store-the-region-never-the-city.md)               | Store the viewer's region, never the city                               |
+| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)            | Give agents read-only access tokens, scoped to their admin              |
+| [0016](docs/adr/0016-accounts-own-projects.md)                         | Accounts own projects; a project without one is the operator's          |
+| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                  | Measure each account's month daily; pause ingestion at 150%             |
+| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)    | Billing follows Stripe through its webhook, re-reading the subscription |
 
 ## Roadmap
 
@@ -537,6 +546,7 @@ request never deploys.
 - [x] Read-only access tokens for agents (an MCP server that uses them comes next)
 - [x] Accounts that own projects, with the hosted plan's project limit
 - [x] Monthly quota per account, measured daily, ingestion paused at 150%
+- [x] Billing through Stripe: Checkout, portal and the webhook that keeps each account's status
 - [ ] Hosted plan: monthly quota, billing, sign-up and the account's settings in the dashboard
 
 ## Contributing and license
