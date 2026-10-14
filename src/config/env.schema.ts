@@ -1,3 +1,4 @@
+import { MAX_TERMS_VERSION_LENGTH } from '../domain/accounts/sign-up-policy';
 import { z } from 'zod';
 
 export const DEFAULT_PORT = 3040;
@@ -30,6 +31,8 @@ export const envSchema = z.object({
   RESEND_API_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   MAIL_FROM: z.preprocess(emptyAsUnset, z.string().default(DEFAULT_MAIL_FROM)),
   SUPPORT_EMAIL: z.preprocess(emptyAsUnset, z.email().optional()),
+  SIGNUP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
+  TERMS_VERSION: z.preprocess(emptyAsUnset, z.string().max(MAX_TERMS_VERSION_LENGTH).optional()),
   STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   STRIPE_WEBHOOK_SECRET: z.preprocess(emptyAsUnset, z.string().optional()),
   DASHBOARD_ORIGIN: z.preprocess(

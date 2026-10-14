@@ -50,7 +50,7 @@ import {
 } from './auth.schemas';
 import { readSessionToken, SESSION_COOKIE_NAME } from './session-cookie';
 
-function clientOf(request: FastifyRequest): SignInClient {
+export function clientOf(request: FastifyRequest): SignInClient {
   return {
     userAgent: singleHeader(request, 'user-agent'),
     clientHints: {

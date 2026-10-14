@@ -14,7 +14,22 @@ describe('validateEnv', () => {
       APP_DB_ROLE: undefined,
       MAIL_PROVIDER: 'resend',
       MAIL_FROM: DEFAULT_MAIL_FROM,
+      SIGNUP_OPEN: 'false',
     });
+  });
+
+  it('reads the sign-up switch and the published terms version', () => {
+    expect(validateEnv({ SIGNUP_OPEN: 'true', TERMS_VERSION: '2026-11-01' })).toMatchObject({
+      SIGNUP_OPEN: 'true',
+      TERMS_VERSION: '2026-11-01',
+    });
+  });
+
+  it('rejects a sign-up switch that is not true or false, and an overlong terms version', () => {
+    expect(() => validateEnv({ SIGNUP_OPEN: 'yes' })).toThrow('Invalid environment configuration');
+    expect(() => validateEnv({ TERMS_VERSION: 'v'.repeat(33) })).toThrow(
+      'Invalid environment configuration',
+    );
   });
 
   it('coerces the port from the string the environment provides', () => {
