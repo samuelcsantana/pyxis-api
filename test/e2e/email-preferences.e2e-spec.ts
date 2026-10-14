@@ -6,6 +6,7 @@ import { SESSION_COOKIE_NAME } from '../../src/infra/http/auth/session-cookie';
 import { FixedClock } from '../../src/test-utils/fixed-clock';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
+import { E2E_DASHBOARD_ORIGIN } from './env-setup';
 
 const NOW = new Date('2026-10-09T15:00:00.000Z');
 const SHOP_ID = '2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e01';
@@ -22,8 +23,18 @@ describe('e-mail preferences', () => {
   const preferencesOf = (projectId: string) => `/v1/projects/${projectId}/email-preferences`;
   const get = (url: string, cookie: string | null = SESSION_COOKIE) =>
     app.inject({ method: 'GET', url, headers: cookie === null ? {} : { cookie } });
-  const put = (url: string, payload: object, cookie: string | null = SESSION_COOKIE) =>
-    app.inject({ method: 'PUT', url, payload, headers: cookie === null ? {} : { cookie } });
+  const put = (
+    url: string,
+    payload: object,
+    cookie: string | null = SESSION_COOKIE,
+    origin = E2E_DASHBOARD_ORIGIN,
+  ) =>
+    app.inject({
+      method: 'PUT',
+      url,
+      payload,
+      headers: cookie === null ? { origin } : { cookie, origin },
+    });
 
   beforeAll(async () => {
     owner = postgres(e2eOwnerUrl(), { max: 1, onnotice: () => undefined });
@@ -95,6 +106,17 @@ describe('e-mail preferences', () => {
       'to change without a session',
       () => put(preferencesOf(SHOP_ID), { weekly_digest: false }, null),
       401,
+    ],
+    [
+      'to change from another origin',
+      () =>
+        put(
+          preferencesOf(SHOP_ID),
+          { weekly_digest: false },
+          SESSION_COOKIE,
+          'https://evil.example.com',
+        ),
+      403,
     ],
     ['to read a project of another admin', () => get(preferencesOf(FOREIGN_ID)), 404],
     [
