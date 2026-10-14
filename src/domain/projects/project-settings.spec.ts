@@ -1,5 +1,6 @@
 import { InvalidProjectSettingsError } from '../errors/project.errors';
 import {
+  MAX_ALLOWED_ORIGINS,
   MAX_PROJECT_NAME_LENGTH,
   requireConversionEvent,
   requireOrigins,
@@ -48,6 +49,18 @@ describe('requireOrigins', () => {
 
   it('refuses an empty list', () => {
     expect(failureOf(() => requireOrigins([])).field).toBe('origin');
+  });
+
+  it('accepts up to five different origins, counting a repeated one once', () => {
+    const five = Array.from(
+      { length: MAX_ALLOWED_ORIGINS },
+      (_, index) => `https://site-${String(index)}.example.com`,
+    );
+
+    expect(requireOrigins([...five, 'https://site-0.example.com'])).toEqual(five);
+    expect(failureOf(() => requireOrigins([...five, 'https://six.example.com'])).message).toBe(
+      'Give at most 5 allowed origins.',
+    );
   });
 
   it.each([

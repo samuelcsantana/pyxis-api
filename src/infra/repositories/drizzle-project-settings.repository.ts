@@ -44,8 +44,9 @@ async function insertProjectWithKey(
 }
 
 function columnChanges(changes: ProjectChanges): Partial<typeof projects.$inferInsert> {
-  const { allowedOrigins, timezone, conversionEvent } = changes;
+  const { name, allowedOrigins, timezone, conversionEvent } = changes;
   return {
+    ...(name === undefined ? {} : { name }),
     ...(allowedOrigins === undefined ? {} : { allowedOrigins: [...allowedOrigins] }),
     ...(timezone === undefined ? {} : { timezone }),
     ...(conversionEvent === undefined ? {} : { conversionEvent }),

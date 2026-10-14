@@ -310,6 +310,8 @@ describe('project:update', () => {
       projectUpdateCommand.parse([
         '--project',
         PROJECT_ID,
+        '--name',
+        'Store',
         '--origin',
         'https://shop.example.com',
         '--timezone',
@@ -319,6 +321,7 @@ describe('project:update', () => {
       ]),
     ).toEqual({
       projectId: PROJECT_ID,
+      name: 'Store',
       origins: ['https://shop.example.com'],
       timezone: 'UTC',
       conversionEvent: 'plan_selected',
@@ -353,6 +356,7 @@ describe('project:update', () => {
       context,
       {
         projectId,
+        name: 'Store',
         origins: ['https://shop.example.com', 'http://localhost:5173'],
         timezone: 'Europe/Lisbon',
         conversionEvent: 'plan_selected',
@@ -362,6 +366,7 @@ describe('project:update', () => {
 
     expect(output.out).toEqual([
       `project_id=${projectId}`,
+      'name=Store',
       'allowed_origins=https://shop.example.com,http://localhost:5173',
       'timezone=Europe/Lisbon',
       'conversion_event=plan_selected',

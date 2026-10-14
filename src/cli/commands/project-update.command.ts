@@ -10,6 +10,7 @@ import type { CliCommand } from '../cli-command';
 
 export interface ProjectUpdateArgs {
   readonly projectId: string;
+  readonly name?: string;
   readonly origins?: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string | null;
@@ -28,22 +29,25 @@ function conversionEventChange(values: Parameters<typeof flag>[0]): string | nul
 
 export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
   usage:
-    'npm run -s project:update -- --project <id> [--origin <origin>…] [--timezone <IANA zone>] ' +
-    '[--conversion-event <event name> | --clear-conversion-event]',
+    'npm run -s project:update -- --project <id> [--name <name>] [--origin <origin>…] ' +
+    '[--timezone <IANA zone>] [--conversion-event <event name> | --clear-conversion-event]',
 
   parse(argv) {
     const values = parseCommandArgs(argv, {
       project: { type: 'string' },
+      name: { type: 'string' },
       origin: { type: 'string', multiple: true },
       timezone: { type: 'string' },
       'conversion-event': { type: 'string' },
       'clear-conversion-event': { type: 'boolean' },
     });
+    const name = optionalText(values, 'name');
     const origins = textList(values, 'origin');
     const timezone = optionalText(values, 'timezone');
     const conversionEvent = conversionEventChange(values);
     const args: ProjectUpdateArgs = {
       projectId: requiredId(values, 'project'),
+      ...(name === undefined ? {} : { name }),
       ...(origins.length === 0 ? {} : { origins }),
       ...(timezone === undefined ? {} : { timezone }),
       ...(conversionEvent === undefined ? {} : { conversionEvent }),
@@ -57,11 +61,13 @@ export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
   async execute(context, args, output) {
     const project = await context.updateProject.execute({
       projectId: args.projectId,
+      ...(args.name === undefined ? {} : { name: args.name }),
       ...(args.origins === undefined ? {} : { allowedOrigins: args.origins }),
       ...(args.timezone === undefined ? {} : { timezone: args.timezone }),
       ...(args.conversionEvent === undefined ? {} : { conversionEvent: args.conversionEvent }),
     });
     output.stdout(`project_id=${project.id}`);
+    output.stdout(`name=${project.name}`);
     output.stdout(`allowed_origins=${project.allowedOrigins.join(',')}`);
     output.stdout(`timezone=${project.timezone}`);
     output.stdout(`conversion_event=${project.conversionEvent ?? ''}`);

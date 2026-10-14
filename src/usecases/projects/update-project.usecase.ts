@@ -4,6 +4,7 @@ import { ProjectNotFoundError } from '../../domain/errors/project.errors';
 import {
   requireConversionEvent,
   requireOrigins,
+  requireProjectName,
   requireTimeZone,
 } from '../../domain/projects/project-settings';
 import {
@@ -14,14 +15,16 @@ import {
 
 export interface UpdateProjectCommand {
   readonly projectId: string;
+  readonly name?: string;
   readonly allowedOrigins?: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string | null;
 }
 
 function validatedChanges(command: UpdateProjectCommand): ProjectChanges {
-  const { allowedOrigins, timezone, conversionEvent } = command;
+  const { name, allowedOrigins, timezone, conversionEvent } = command;
   return {
+    ...(name === undefined ? {} : { name: requireProjectName(name) }),
     ...(allowedOrigins === undefined ? {} : { allowedOrigins: requireOrigins(allowedOrigins) }),
     ...(timezone === undefined ? {} : { timezone: requireTimeZone(timezone) }),
     ...(conversionEvent === undefined

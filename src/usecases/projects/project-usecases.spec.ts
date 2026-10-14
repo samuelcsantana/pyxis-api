@@ -263,6 +263,12 @@ describe('UpdateProjectUseCase', () => {
     });
   });
 
+  it('renames the project, trimming the name', async () => {
+    const { updateProject, projectId } = await withProject();
+
+    expect((await updateProject.execute({ projectId, name: '  Store  ' })).name).toBe('Store');
+  });
+
   it('sets and clears the conversion event', async () => {
     const { updateProject, projectId } = await withProject();
 
