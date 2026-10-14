@@ -10,7 +10,7 @@ export const SECRET_KEY_PATTERN = /^pyxis_sk_[A-Za-z0-9]{32}$/;
 const KEY_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 const UNBIASED_BYTE_LIMIT = Math.floor(256 / KEY_ALPHABET.length) * KEY_ALPHABET.length;
 
-function randomKeyBody(random: RandomSource): string {
+export function randomKeyBody(random: RandomSource): string {
   let body = '';
   while (body.length < KEY_BODY_LENGTH) {
     const usable = Array.from(random.bytes(KEY_BODY_LENGTH)).filter(
@@ -31,12 +31,16 @@ export function generateSecretKey(random: RandomSource): string {
 
 const BEARER_PREFIX = 'Bearer ';
 
-export function secretKeyFromAuthorization(header: string | undefined): string | null {
+export function bearerCredential(header: string | undefined): string | null {
   if (header?.startsWith(BEARER_PREFIX) !== true) {
     return null;
   }
-  const candidate = header.slice(BEARER_PREFIX.length).trim();
-  return SECRET_KEY_PATTERN.test(candidate) ? candidate : null;
+  return header.slice(BEARER_PREFIX.length).trim();
+}
+
+export function secretKeyFromAuthorization(header: string | undefined): string | null {
+  const candidate = bearerCredential(header);
+  return candidate !== null && SECRET_KEY_PATTERN.test(candidate) ? candidate : null;
 }
 
 export function hashSecretKey(secretKey: string): string {
