@@ -4,7 +4,7 @@ import type { FastifyRequest } from 'fastify';
 import type { EmailPreferences } from '../../../domain/entities/email-preferences.entity';
 import { GetEmailPreferencesUseCase } from '../../../usecases/preferences/get-email-preferences.usecase';
 import { SetEmailPreferencesUseCase } from '../../../usecases/preferences/set-email-preferences.usecase';
-import { adminOf, SessionGuard } from '../auth/auth.guards';
+import { adminOf, DashboardOriginGuard, SessionGuard } from '../auth/auth.guards';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ProjectAccessGuard, projectOf } from '../queries/project-access.guard';
@@ -25,7 +25,6 @@ function emailPreferencesBody(preferences: EmailPreferences): EmailPreferencesBo
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
 @Controller('v1/projects/:projectId/email-preferences')
-@UseGuards(SessionGuard, ProjectAccessGuard)
 export class EmailPreferencesController {
   constructor(
     private readonly getEmailPreferences: GetEmailPreferencesUseCase,
@@ -33,6 +32,7 @@ export class EmailPreferencesController {
   ) {}
 
   @Get()
+  @UseGuards(SessionGuard, ProjectAccessGuard)
   @ApiOperation({ summary: 'The e-mails the signed-in admin receives about the project' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: emailPreferencesSchema })
   async preferences(@Req() request: FastifyRequest): Promise<EmailPreferencesBody> {
@@ -42,12 +42,14 @@ export class EmailPreferencesController {
   }
 
   @Put()
+  @UseGuards(DashboardOriginGuard, SessionGuard, ProjectAccessGuard)
   @ApiOperation({
     summary: 'Choose the e-mails the signed-in admin receives about the project',
     description: 'Changes only the signed-in admin, for this project only.',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: emailPreferencesSchema })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
   async choose(
     @Req() request: FastifyRequest,
     @Body({ schema: emailPreferencesSchema, pipes: [new SchemaPipe(emailPreferencesSchema)] })
