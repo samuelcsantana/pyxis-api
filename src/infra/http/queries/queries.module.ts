@@ -43,7 +43,9 @@ import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
 import { DrizzleProjectKeyRepository } from '../../repositories/drizzle-project-key.repository';
 import { AuthModule } from '../auth/auth.module';
+import { AccessTokenThrottlerGuard } from '../auth/access-token-throttler.guard';
 import { SessionGuard } from '../auth/auth.guards';
+import { ReadAccessGuard } from '../auth/read-access.guard';
 import { EngagementController } from './engagement.controller';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
 import { FunnelSegmentsController } from './funnel-segments.controller';
@@ -99,6 +101,8 @@ import { VisitsController } from './visits.controller';
     { provide: PROJECT_KEY_REPOSITORY, useClass: DrizzleProjectKeyRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     SessionGuard,
+    ReadAccessGuard,
+    AccessTokenThrottlerGuard,
     ProjectAccessGuard,
   ],
 })

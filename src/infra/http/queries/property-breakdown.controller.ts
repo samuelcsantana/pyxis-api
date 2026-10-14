@@ -1,9 +1,9 @@
-import { Controller, Get, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import type { PropertyBreakdownReport } from '../../../domain/queries/property-breakdown';
 import { GetPropertyBreakdownUseCase } from '../../../usecases/queries/get-property-breakdown.usecase';
-import { SessionGuard } from '../auth/auth.guards';
+import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
@@ -40,7 +40,7 @@ function propertyBreakdownBody(report: PropertyBreakdownReport): PropertyBreakdo
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
 @Controller('v1/projects/:projectId')
-@UseGuards(SessionGuard, ProjectAccessGuard)
+@ReadAccess(ProjectAccessGuard)
 export class PropertyBreakdownController {
   constructor(private readonly getPropertyBreakdown: GetPropertyBreakdownUseCase) {}
 

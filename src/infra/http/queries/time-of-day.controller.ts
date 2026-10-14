@@ -1,8 +1,8 @@
-import { Controller, Get, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
 import { GetTimeOfDayUseCase } from '../../../usecases/queries/get-time-of-day.usecase';
-import { SessionGuard } from '../auth/auth.guards';
+import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
@@ -22,7 +22,7 @@ import { type TimeOfDayReportBody, timeOfDayReportSchema } from './time-of-day.s
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
 @Controller('v1/projects/:projectId')
-@UseGuards(SessionGuard, ProjectAccessGuard)
+@ReadAccess(ProjectAccessGuard)
 export class TimeOfDayController {
   constructor(private readonly getTimeOfDay: GetTimeOfDayUseCase) {}
 

@@ -1,6 +1,63 @@
 {
   "components": {
     "schemas": {
+      "AccessTokens": {
+        "additionalProperties": false,
+        "description": "The live access tokens of the signed-in admin, the newest first: neither revoked nor expired. The tokens themselves are never answered again.",
+        "properties": {
+          "tokens": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "created_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "expires_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "last_used_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Recorded at most every five minutes; null before the first use"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "created_at",
+                "expires_at",
+                "last_used_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "tokens"
+        ],
+        "type": "object"
+      },
       "AcquisitionReport": {
         "additionalProperties": false,
         "description": "Visits per day and channel, every channel named, the top sources and the top campaigns: the source is the campaign source, else the referring host, else \"(direct)\", and the campaign is utm_campaign, both taken from the first page view of the visit that carries a channel. Visits without a campaign are left out of campaigns.",
@@ -236,6 +293,68 @@
           "key",
           "sent_at",
           "events"
+        ],
+        "type": "object"
+      },
+      "CreateAccessToken": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_in_days": {
+            "default": 90,
+            "description": "How long the token lives: 30, 90 (the default) or 365 days",
+            "enum": [
+              30,
+              90,
+              365
+            ],
+            "type": "number"
+          },
+          "name": {
+            "description": "What the token is for, as the admin will recognize it in the list",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "CreatedAccessToken": {
+        "additionalProperties": false,
+        "description": "A read-only token for the dashboard queries and GET /v1/me, sent as Authorization: Bearer pyxis_at_…; it never writes, never signs in and never manages tokens.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "token": {
+            "description": "Answered this once: only its hash is kept",
+            "pattern": "^pyxis_at_[A-Za-z0-9]{32}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "expires_at",
+          "token"
         ],
         "type": "object"
       },
@@ -2570,6 +2689,12 @@
       }
     },
     "securitySchemes": {
+      "access_token": {
+        "bearerFormat": "opaque",
+        "description": "A read-only access token for the dashboard queries: pyxis_at_ followed by 32 letters and digits",
+        "scheme": "bearer",
+        "type": "http"
+      },
       "pyxis_session": {
         "in": "cookie",
         "name": "pyxis_session",
@@ -2949,6 +3074,9 @@
         "security": [
           {
             "pyxis_session": []
+          },
+          {
+            "access_token": []
           }
         ],
         "summary": "The signed-in admin and their projects",
@@ -3064,6 +3192,189 @@
         ]
       }
     },
+    "/v1/me/tokens": {
+      "get": {
+        "operationId": "AccessTokensController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokens"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The live read-only access tokens of the signed-in admin",
+        "tags": [
+          "dashboard sign-in"
+        ]
+      },
+      "post": {
+        "description": "Only a dashboard session creates tokens, never a token. The token is answered this once; an admin keeps at most ten live tokens.",
+        "operationId": "AccessTokensController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccessToken"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedAccessToken"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The admin already has ten live tokens."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Create a read-only access token for an agent or a script",
+        "tags": [
+          "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/me/tokens/{tokenId}": {
+      "delete": {
+        "operationId": "AccessTokensController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "tokenId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The token no longer works."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No live token of this admin has this id; the answer never says more."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Revoke one access token of the signed-in admin, at once",
+        "tags": [
+          "dashboard sign-in"
+        ]
+      }
+    },
     "/v1/projects/{projectId}/acquisition": {
       "get": {
         "operationId": "QueriesController_acquisition",
@@ -3141,6 +3452,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -3228,6 +3542,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -3449,6 +3766,9 @@
         },
         "security": [
           {
+            "access_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -3548,6 +3868,9 @@
         },
         "security": [
           {
+            "access_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -3645,6 +3968,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -3754,6 +4080,9 @@
         },
         "security": [
           {
+            "access_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -3861,6 +4190,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -4000,6 +4332,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -4171,6 +4506,9 @@
         },
         "security": [
           {
+            "access_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -4289,6 +4627,9 @@
         },
         "security": [
           {
+            "access_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -4345,6 +4686,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -4432,6 +4776,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -4526,6 +4873,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
@@ -4758,6 +5108,9 @@
           }
         },
         "security": [
+          {
+            "access_token": []
+          },
           {
             "pyxis_session": []
           }
