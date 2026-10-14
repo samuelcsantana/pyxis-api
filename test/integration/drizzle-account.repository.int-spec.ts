@@ -4,6 +4,7 @@ import {
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleAccountRepository } from '../../src/infra/repositories/drizzle-account.repository';
+import { DrizzleTermsAcceptanceRepository } from '../../src/infra/repositories/drizzle-terms-acceptance.repository';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -19,12 +20,15 @@ describe('accounts against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
   let accounts: DrizzleAccountRepository;
+  let terms: DrizzleTermsAcceptanceRepository;
 
   beforeAll(async () => {
     await migrateTestDatabase();
     owner = connectAsOwner();
     app = createPostgresClient(testAppUrl());
-    accounts = new DrizzleAccountRepository(createDrizzleDatabase(app));
+    const db = createDrizzleDatabase(app);
+    accounts = new DrizzleAccountRepository(db);
+    terms = new DrizzleTermsAcceptanceRepository(db);
   });
 
   beforeEach(async () => {
@@ -105,6 +109,34 @@ describe('accounts against a real Postgres', () => {
 
     expect(await accounts.projectsOf(account.id)).toEqual([]);
     expect(await accounts.peopleCount(account.id)).toBe(0);
+  });
+
+  it('records each acceptance of the terms, as the application role, gone with its account', async () => {
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+    const acceptedAt = new Date('2026-11-02T13:00:00.000Z');
+
+    await terms.record({
+      adminUserId: OWNER_ID,
+      accountId: account.id,
+      version: '2026-11-01',
+      acceptedAt,
+    });
+    await terms.record({
+      adminUserId: OWNER_ID,
+      accountId: account.id,
+      version: '2026-11-01',
+      acceptedAt,
+    });
+
+    const rows = await owner<{ version: string; accepted_at: Date }[]>`
+      SELECT version, accepted_at FROM terms_acceptances WHERE account_id = ${account.id}
+    `;
+    expect(rows).toEqual([
+      { version: '2026-11-01', accepted_at: acceptedAt },
+      { version: '2026-11-01', accepted_at: acceptedAt },
+    ]);
+    await owner`DELETE FROM accounts WHERE id = ${account.id}`;
+    expect(await owner`SELECT 1 FROM terms_acceptances`).toHaveLength(0);
   });
 
   it('keeps an account while it has projects, and its owner while it exists', async () => {

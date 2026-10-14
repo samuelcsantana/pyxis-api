@@ -12,6 +12,7 @@ import {
   projectIcons,
   projectKeys,
   projects,
+  termsAcceptances,
 } from '.';
 
 function foreignKeyTargets(
@@ -25,7 +26,8 @@ function foreignKeyTargets(
     | typeof adminSessions
     | typeof adminAccessTokens
     | typeof digestDeliveries
-    | typeof projectIcons,
+    | typeof projectIcons
+    | typeof termsAcceptances,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -131,6 +133,19 @@ describe('database schema', () => {
     ]);
     expect(foreignKeyTargets(accountUsageMonths)).toEqual(['accounts.id']);
     expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+  });
+
+  it('keeps each acceptance of the terms, deleted with its admin or its account', () => {
+    const config = getTableConfig(termsAcceptances);
+
+    expect(foreignKeyTargets(termsAcceptances)).toEqual(['admin_users.id', 'accounts.id']);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual([
+      'cascade',
+      'cascade',
+    ]);
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'terms_acceptances_account_id_idx',
+    ]);
   });
 
   it('allows only the known purposes of an e-mailed code', () => {
