@@ -8,6 +8,8 @@ import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
+import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
+import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
 import { DrizzleProjectKeyRepository } from '../../src/infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectRepository } from '../../src/infra/repositories/drizzle-project.repository';
 import { DrizzleProjectSettingsRepository } from '../../src/infra/repositories/drizzle-project-settings.repository';
@@ -26,12 +28,39 @@ function publicKey(letter: string): string {
   return `${PUBLIC_KEY_PREFIX}${letter.repeat(32)}`;
 }
 
+let eventSequence = 0;
+
+function pageView(projectId: string): TrackedEvent {
+  eventSequence += 1;
+  const at = new Date('2026-10-06T14:00:00.000Z');
+  return {
+    id: `e1e1e1e1-0000-4000-8000-${String(eventSequence).padStart(12, '0')}`,
+    projectId,
+    name: 'page_view',
+    occurredAt: at,
+    receivedAt: at,
+    sessionId: 'e2e2e2e2-0000-4000-8000-000000000001',
+    userId: null,
+    path: '/',
+    attribution: null,
+    channel: null,
+    deviceType: 'desktop',
+    browser: 'chrome',
+    os: 'windows',
+    country: 'BR',
+    region: null,
+    regionName: null,
+    properties: {},
+  };
+}
+
 describe('project settings and keys against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
   let settings: DrizzleProjectSettingsRepository;
   let keys: DrizzleProjectKeyRepository;
   let lookups: DrizzleProjectRepository;
+  let events: DrizzleEventRepository;
 
   beforeAll(async () => {
     await migrateTestDatabase();
@@ -41,6 +70,7 @@ describe('project settings and keys against a real Postgres', () => {
     settings = new DrizzleProjectSettingsRepository(db);
     keys = new DrizzleProjectKeyRepository(db);
     lookups = new DrizzleProjectRepository(db);
+    events = new DrizzleEventRepository(db);
   });
 
   beforeEach(async () => {
@@ -177,5 +207,51 @@ describe('project settings and keys against a real Postgres', () => {
     expect(await lookups.findByPublicKey(publicKey('A'))).toBeNull();
     const [row] = await owner<{ revoked_at: Date }[]>`SELECT revoked_at FROM project_keys`;
     expect(row?.revoked_at).toEqual(revokedAt);
+  });
+
+  it('deletes a project with its events, keys and grants, leaving the other projects alone', async () => {
+    const shop = await settings.createWithPublicKey(SHOP, publicKey('A'));
+    const blog = await settings.createWithPublicKey({ ...SHOP, name: 'Blog' }, publicKey('B'));
+    await keys.create({
+      projectId: shop.project.id,
+      kind: 'secret',
+      secretHash: hashSecretKey(`${SECRET_KEY_PREFIX}${'C'.repeat(32)}`),
+    });
+    await events.insertMany([
+      pageView(shop.project.id),
+      pageView(shop.project.id),
+      pageView(blog.project.id),
+    ]);
+    const [admin] = await owner<{ id: string }[]>`
+      INSERT INTO admin_users (email) VALUES ('ana@example.com') RETURNING id
+    `;
+    const adminId = admin?.id ?? '';
+    await owner`
+      INSERT INTO admin_project_access (admin_user_id, project_id)
+      VALUES (${adminId}, ${shop.project.id}), (${adminId}, ${blog.project.id})
+    `;
+
+    const deleted = await settings.deleteWithEverything(shop.project.id);
+
+    expect(deleted).toEqual({ project: shop.project, deletedEvents: 2, deletedKeys: 2 });
+    const remaining = await owner<
+      { projects: number; events: number; keys: number; grants: number }[]
+    >`
+      SELECT
+        (SELECT count(*)::int FROM projects) AS projects,
+        (SELECT count(*)::int FROM events) AS events,
+        (SELECT count(*)::int FROM project_keys) AS keys,
+        (SELECT count(*)::int FROM admin_project_access) AS grants
+    `;
+    expect(remaining).toEqual([{ projects: 1, events: 1, keys: 1, grants: 1 }]);
+    expect(await settings.findById(blog.project.id)).toEqual(blog.project);
+  });
+
+  it('deletes nothing and answers null for a project that does not exist', async () => {
+    await settings.createWithPublicKey(SHOP, publicKey('A'));
+
+    expect(await settings.deleteWithEverything(MISSING_ID)).toBeNull();
+    const [row] = await owner<{ total: number }[]>`SELECT count(*)::int AS total FROM projects`;
+    expect(row?.total).toBe(1);
   });
 });
