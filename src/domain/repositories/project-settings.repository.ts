@@ -8,6 +8,7 @@ export interface NewProject {
 }
 
 export interface ProjectChanges {
+  readonly name?: string;
   readonly allowedOrigins?: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string | null;

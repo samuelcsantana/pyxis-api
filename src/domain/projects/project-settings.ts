@@ -2,6 +2,7 @@ import { InvalidProjectSettingsError } from '../errors/project.errors';
 import { EVENT_NAME_PATTERN } from '../events/event-limits';
 
 export const MAX_PROJECT_NAME_LENGTH = 100;
+export const MAX_ALLOWED_ORIGINS = 5;
 export const DEFAULT_TIMEZONE = 'UTC';
 
 const WEB_PROTOCOLS = new Set(['http:', 'https:']);
@@ -39,7 +40,14 @@ export function requireOrigins(origins: readonly string[]): readonly string[] {
       );
     }
   }
-  return [...new Set(origins)];
+  const unique = [...new Set(origins)];
+  if (unique.length > MAX_ALLOWED_ORIGINS) {
+    throw new InvalidProjectSettingsError(
+      'origin',
+      `Give at most ${String(MAX_ALLOWED_ORIGINS)} allowed origins.`,
+    );
+  }
+  return unique;
 }
 
 export function requireTimeZone(timezone: string): string {

@@ -129,6 +129,10 @@ describe('project settings and keys against a real Postgres', () => {
     expect(await settings.update(project.id, { timezone: 'UTC' })).toMatchObject({
       timezone: 'UTC',
     });
+    expect(await settings.update(project.id, { name: 'Store' })).toMatchObject({
+      name: 'Store',
+      timezone: 'UTC',
+    });
   });
 
   it('returns the project unchanged when there is nothing to update', async () => {
