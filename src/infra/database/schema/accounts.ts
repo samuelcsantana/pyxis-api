@@ -12,9 +12,12 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { ACCOUNT_STATUSES, type AccountStatus } from '../../../domain/accounts/account-status';
+import type { BillingInterval } from '../../../domain/billing/billing-gateway';
 import { adminUsers } from './admins';
 
 const STATUS_LENGTH = 16;
+const STRIPE_ID_LENGTH = 255;
+const INTERVAL_LENGTH = 8;
 const STATUS_VALUES = sql.raw(ACCOUNT_STATUSES.map((status) => `'${status}'`).join(', '));
 
 export const accounts = pgTable(
@@ -26,6 +29,14 @@ export const accounts = pgTable(
       .references(() => adminUsers.id, { onDelete: 'restrict' }),
     status: varchar('status', { length: STATUS_LENGTH }).$type<AccountStatus>().notNull(),
     ingestionPausedUntil: timestamp('ingestion_paused_until', { withTimezone: true }),
+    stripeCustomerId: varchar('stripe_customer_id', { length: STRIPE_ID_LENGTH }).unique(),
+    stripeSubscriptionId: varchar('stripe_subscription_id', { length: STRIPE_ID_LENGTH }).unique(),
+    billingInterval: varchar('billing_interval', {
+      length: INTERVAL_LENGTH,
+    }).$type<BillingInterval>(),
+    trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+    currentPeriodEndsAt: timestamp('current_period_ends_at', { withTimezone: true }),
+    accessEndsAt: timestamp('access_ends_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -53,3 +64,12 @@ export const accountUsageMonths = pgTable(
     primaryKey({ name: 'account_usage_months_pkey', columns: [table.accountId, table.month] }),
   ],
 );
+
+const EVENT_TYPE_LENGTH = 100;
+
+export const billingEvents = pgTable('billing_events', {
+  id: varchar('id', { length: STRIPE_ID_LENGTH }).primaryKey(),
+  type: varchar('type', { length: EVENT_TYPE_LENGTH }).notNull(),
+  receivedAt: timestamp('received_at', { withTimezone: true }).notNull(),
+  processedAt: timestamp('processed_at', { withTimezone: true }),
+});
