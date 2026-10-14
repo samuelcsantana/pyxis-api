@@ -65,6 +65,12 @@ variable "mail_from" {
   type        = string
 }
 
+variable "support_email" {
+  description = "Address the account e-mails (quota notices) name and send replies to, such as hello@example.com. Leave unset to name none."
+  type        = string
+  default     = null
+}
+
 variable "alert_email" {
   description = "Address that receives the operational alarms; AWS emails it a link to confirm the subscription."
   type        = string

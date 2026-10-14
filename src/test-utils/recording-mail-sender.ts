@@ -1,3 +1,4 @@
+import type { QuotaNotice } from '../domain/accounts/quota-notice';
 import type { EmailLanguage } from '../domain/auth/email-language';
 import type { WeeklyDigest } from '../domain/digest/weekly-digest';
 import type { MailSender } from '../domain/services/mail-sender';
@@ -14,8 +15,15 @@ export interface SentWeeklyDigest {
   readonly language: EmailLanguage;
 }
 
+export interface SentQuotaNotice {
+  readonly email: string;
+  readonly notice: QuotaNotice;
+  readonly language: EmailLanguage;
+}
+
 export class RecordingMailSender implements MailSender {
   readonly sent: SentSignInCode[] = [];
+  readonly quotaNotices: SentQuotaNotice[] = [];
   readonly digests: SentWeeklyDigest[] = [];
   private failure: Error | null = null;
   private readonly failingAddresses = new Map<string, Error>();
@@ -42,6 +50,15 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(failure);
     }
     this.digests.push({ email, digest, language });
+    return Promise.resolve();
+  }
+
+  sendQuotaNotice(email: string, notice: QuotaNotice, language: EmailLanguage): Promise<void> {
+    const failure = this.failingAddresses.get(email);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
+    }
+    this.quotaNotices.push({ email, notice, language });
     return Promise.resolve();
   }
 }

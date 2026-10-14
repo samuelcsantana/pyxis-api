@@ -4,6 +4,8 @@ import { createMailSender } from './create-mail-sender';
 import { emailLinksFor } from './email-layout';
 import { LoggingMailSender } from './logging-mail-sender';
 import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
+import type { QuotaNotice } from '../../domain/accounts/quota-notice';
+import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
@@ -26,6 +28,22 @@ const DIGEST: WeeklyDigest = {
   failingRoutes: [],
   lastEventAt: null,
 };
+
+const SUPPORT = 'hello@example.com';
+const PAUSED: QuotaNotice = {
+  kind: 'quota_paused',
+  events: 150_412,
+  limit: 100_000,
+  month: '2026-10',
+  measuredAt: new Date('2026-10-14T03:00:00.000Z'),
+  resumesAt: new Date('2026-11-01T00:00:00.000Z'),
+};
+
+function okResend() {
+  return jest.fn<Promise<Response>, [string, RequestInit]>(() =>
+    Promise.resolve(new Response('{"id":"email-3"}', { status: 200 })),
+  );
+}
 
 describe('ResendMailSender', () => {
   it("posts the email to Resend's API with the key as a bearer token", async () => {
@@ -86,6 +104,37 @@ describe('ResendMailSender', () => {
     ).rejects.toThrow(/^Resend answered 422$/);
   });
 
+  it('sends a quota notice with replies going to the support address', async () => {
+    const send = okResend();
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendQuotaNotice(
+      'owner@example.com',
+      PAUSED,
+      'es',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildQuotaNoticeEmail(PAUSED, 'es', LINKS, SUPPORT),
+    });
+  });
+
+  it('sends a quota notice without a reply address when no support address is set', async () => {
+    const send = okResend();
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send).sendQuotaNotice(
+      'owner@example.com',
+      PAUSED,
+      'en',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).not.toHaveProperty('reply_to');
+  });
+
   it('uses the global fetch by default', () => {
     expect(new ResendMailSender(API_KEY, FROM, LINKS)).toBeInstanceOf(ResendMailSender);
   });
@@ -126,6 +175,25 @@ describe('LoggingMailSender', () => {
     ]);
     expect(JSON.stringify(logs)).not.toContain('ana@example.com');
   });
+
+  it('logs the kind, month and count of a quota notice, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendQuotaNotice('owner@example.com', PAUSED, 'pt-BR');
+
+    expect(logs).toEqual([
+      {
+        message: 'mail.quota_notice',
+        kind: 'quota_paused',
+        month: '2026-10',
+        events: 150_412,
+        language: 'pt-BR',
+      },
+    ]);
+  });
 });
 
 describe('createMailSender', () => {
@@ -138,6 +206,25 @@ describe('createMailSender', () => {
         DASHBOARD_ORIGIN,
       }),
     ).toBeInstanceOf(ResendMailSender);
+  });
+
+  it('gives Resend the support address when one is configured', async () => {
+    const fetchSpy = jest
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response('{"id":"email-4"}', { status: 200 }));
+    const sender = createMailSender({
+      NODE_ENV: 'production',
+      RESEND_API_KEY: API_KEY,
+      MAIL_FROM: FROM,
+      DASHBOARD_ORIGIN,
+      SUPPORT_EMAIL: SUPPORT,
+    });
+
+    await sender.sendQuotaNotice('owner@example.com', PAUSED, 'en');
+
+    const [, init] = fetchSpy.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toMatchObject({ reply_to: SUPPORT });
+    fetchSpy.mockRestore();
   });
 
   it('logs codes only outside production', () => {

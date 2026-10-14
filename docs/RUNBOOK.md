@@ -64,7 +64,8 @@ pyxis-api-deployer`; never paste it anywhere else. Terraform runs with that prof
    `terraform.tfvars` takes the role, the API's domain (`api_domain`), the dashboard's origin
    (`dashboard_origin`), the sender of the e-mails (`mail_from`) and the address that receives the
    alarms (`alert_email`). None of them has a default: the first apply requests the certificate
-   for `api_domain`, and the API accepts sign-ins from `dashboard_origin` only.
+   for `api_domain`, and the API accepts sign-ins from `dashboard_origin` only. `support_email` is
+   optional: the address the account e-mails (quota notices) name and send replies to.
 
 4. **Application role.** As the database owner (Neon's SQL editor or `psql`), create the role the
    API connects as. Create it in SQL rather than in Neon's roles page, which would make it a member

@@ -135,6 +135,14 @@ describe('validateServerEnv', () => {
     });
   });
 
+  it('takes an optional support address for the account e-mails, and refuses one that is not', () => {
+    expect(validateEnv({ SUPPORT_EMAIL: 'hello@example.com' }).SUPPORT_EMAIL).toBe(
+      'hello@example.com',
+    );
+    expect(validateEnv({ SUPPORT_EMAIL: '' }).SUPPORT_EMAIL).toBeUndefined();
+    expect(() => validateEnv({ SUPPORT_EMAIL: 'hello' })).toThrow(/SUPPORT_EMAIL/);
+  });
+
   it('runs without either outside production', () => {
     const env = validateServerEnv({ NODE_ENV: 'development' });
 
