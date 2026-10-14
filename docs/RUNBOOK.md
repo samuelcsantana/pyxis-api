@@ -267,6 +267,13 @@ command prints the events and keys it removed, and there is no undo:
 MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s project:delete -- --project <id> --confirm-name '<name>'
 ```
 
+To see how much each project used in a month (events and visits received, by calendar month in
+UTC; the current month when `--month` is left out), for example to compare with a plan's limit:
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s usage:report -- --month 2026-11
+```
+
 ## Dashboard admins
 
 There is no sign-up. Grant an email a project, and it can ask the dashboard for a sign-in code:
