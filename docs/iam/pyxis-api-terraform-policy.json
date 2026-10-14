@@ -139,6 +139,18 @@
       "Effect": "Allow",
       "Action": ["ssm:DescribeParameters"],
       "Resource": "*"
+    },
+    {
+      "Sid": "SesIdentitiesOfThisAccount",
+      "Effect": "Allow",
+      "Action": "ses:*",
+      "Resource": "arn:aws:ses:sa-east-1:<account-id>:identity/*"
+    },
+    {
+      "Sid": "SesAccountSuppression",
+      "Effect": "Allow",
+      "Action": ["ses:GetAccount", "ses:PutAccountSuppressionAttributes"],
+      "Resource": "*"
     }
   ]
 }

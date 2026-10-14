@@ -65,6 +65,23 @@ variable "mail_from" {
   type        = string
 }
 
+variable "ses_domain" {
+  description = "Domain to send e-mail from through Amazon SES in this region, such as example.com. Leave unset to keep SES off; set mail_provider to ses only once the identity is verified and the account has production access."
+  type        = string
+  default     = null
+}
+
+variable "mail_provider" {
+  description = "Which service sends the e-mails: resend (needs the Resend key parameters) or ses (needs ses_domain)."
+  type        = string
+  default     = "resend"
+
+  validation {
+    condition     = contains(["resend", "ses"], var.mail_provider)
+    error_message = "mail_provider is resend or ses."
+  }
+}
+
 variable "support_email" {
   description = "Address the account e-mails (quota notices) name and send replies to, such as hello@example.com. Leave unset to name none."
   type        = string

@@ -8,7 +8,11 @@ locals {
     }
     MAIL_FROM = {
       value       = var.mail_from
-      description = "Sender of the sign-in code emails. Its domain must be verified in Resend."
+      description = "Sender of the sign-in code emails. Its domain must be verified in Resend or SES."
+    }
+    MAIL_PROVIDER = {
+      value       = var.mail_provider
+      description = "Which service sends the sign-in code e-mails: resend or ses."
     }
   }
 }
@@ -85,6 +89,13 @@ resource "aws_ssm_parameter" "jobs_mail_from" {
   type        = "String"
   value       = var.mail_from
   description = "Sender of the weekly digest. Its domain must be verified in Resend."
+}
+
+resource "aws_ssm_parameter" "jobs_mail_provider" {
+  name        = "/${var.project}/jobs/MAIL_PROVIDER"
+  type        = "String"
+  value       = var.mail_provider
+  description = "Which service sends the weekly digest and the account e-mails: resend or ses."
 }
 
 resource "aws_ssm_parameter" "jobs_support_email" {
