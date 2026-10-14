@@ -23,9 +23,35 @@ others, but fails the run, and the scheduler retries it twice within the hour.
 ## First-time setup
 
 1. **Provisioning identity.** A role `pyxis-api-terraform` holding the permissions, scoped to the
-   `pyxis-api` prefix, and a user `pyxis-api-deployer` that may only assume it, used through the AWS
-   profile `pyxis-api`. Create the access key in the console and store it with
-   `aws configure --profile pyxis-api`; never paste it anywhere else.
+   `pyxis-api` prefix and to sa-east-1, and a user `pyxis-api-deployer` that may only assume it.
+   The three documents are in [`docs/iam/`](iam/): replace `<account-id>` in each, then create
+   them as an administrator (AWS CloudShell keeps the administrator's keys off your machine):
+
+   ```bash
+   aws iam create-user --user-name pyxis-api-deployer
+   aws iam create-role --role-name pyxis-api-terraform \
+     --assume-role-policy-document file://docs/iam/pyxis-api-terraform-trust.json
+   aws iam create-policy --policy-name pyxis-api-terraform \
+     --policy-document file://docs/iam/pyxis-api-terraform-policy.json
+   aws iam attach-role-policy --role-name pyxis-api-terraform \
+     --policy-arn arn:aws:iam::<account-id>:policy/pyxis-api-terraform
+   aws iam put-user-policy --user-name pyxis-api-deployer --policy-name assume-pyxis-api-terraform \
+     --policy-document file://docs/iam/pyxis-api-deployer-assume.json
+   ```
+
+   The role trusts the user, so the user comes first; IAM can take a few seconds to see it. Create
+   the user's access key in the console and store it with `aws configure --profile
+pyxis-api-deployer`; never paste it anywhere else. Terraform runs with that profile and assumes
+   the role itself; the scripts and the CLI commands below use a profile that assumes it, in
+   `~/.aws/config`:
+
+   ```ini
+   [profile pyxis-api]
+   role_arn = arn:aws:iam::<account-id>:role/pyxis-api-terraform
+   source_profile = pyxis-api-deployer
+   region = sa-east-1
+   ```
+
 2. **State bucket** `pyxis-api-tfstate-<account-id>` in sa-east-1, versioned, encrypted, public
    access blocked, created outside Terraform.
 3. **Local Terraform files**, both ignored by git:
@@ -35,26 +61,41 @@ others, but fails the run, and the scheduler retries it twice within the hour.
    cp infra/terraform.tfvars.example infra/terraform.tfvars
    ```
 
-   `terraform.tfvars` takes the address that receives the alarms (`alert_email`).
+   `terraform.tfvars` takes the role, the API's domain (`api_domain`), the dashboard's origin
+   (`dashboard_origin`), the sender of the e-mails (`mail_from`) and the address that receives the
+   alarms (`alert_email`). None of them has a default: the first apply requests the certificate
+   for `api_domain`, and the API accepts sign-ins from `dashboard_origin` only.
 
-4. **First image.** The functions need an image to point at:
+4. **Application role.** As the database owner (Neon's SQL editor or `psql`), create the role the
+   API connects as. Create it in SQL rather than in Neon's roles page, which would make it a member
+   of `neon_superuser`:
+
+   ```sql
+   CREATE ROLE pyxis_app WITH LOGIN PASSWORD '<a long random password>';
+   ```
+
+   The migrations refuse to run without it, and grant it row access to every table.
+
+5. **First image.** The functions need an image to point at:
 
    ```bash
    aws ecr create-repository --repository-name pyxis-api --region sa-east-1 --profile pyxis-api
    scripts/deploy-lambda.sh --image-only     # prints the tag; put it in terraform.tfvars
    ```
 
-   Then let Terraform own the repository: `terraform import aws_ecr_repository.api pyxis-api`.
-
-5. **Apply:**
+6. **Apply**, letting Terraform own the repository first:
 
    ```bash
    cd infra
+   export AWS_PROFILE=pyxis-api-deployer
    terraform init -backend-config=backend.hcl
-   terraform plan -out plan.tfplan && terraform apply plan.tfplan
+   terraform import aws_ecr_repository.api pyxis-api
+   terraform plan -out plan.tfplan && terraform apply plan.tfplan && rm plan.tfplan
+   terraform output -raw cloudfront_domain
+   unset AWS_PROFILE
    ```
 
-6. **Parameter values**, in the Parameter Store console (Terraform created placeholders and never
+7. **Parameter values**, in the Parameter Store console (Terraform created placeholders and never
    reads the values back): `/pyxis-api/app/DATABASE_URL` (pooler host, `pyxis_app`,
    `sslmode=verify-full`), `/pyxis-api/app/EDGE_SHARED_SECRET` (a long random value),
    `/pyxis-api/app/RESEND_API_KEY` (a Resend key allowed to send only),
@@ -64,16 +105,24 @@ others, but fails the run, and the scheduler retries it twice within the hour.
    `DASHBOARD_ORIGIN` and `MAIL_FROM` are plain parameters Terraform sets from its variables, for
    the HTTP and the jobs functions; the e-mails link to `DASHBOARD_ORIGIN` and load their logo
    from it, and the domain of `MAIL_FROM` must be verified in Resend before the first sign-in.
-7. **Edge secret in CloudFront.** In the distribution's origin, set the `x-origin-verify` custom
+8. **Edge secret in CloudFront.** In the distribution's origin, set the `x-origin-verify` custom
    header to the same value as `EDGE_SHARED_SECRET`. Terraform ignores the origin from then on.
    Until both hold the same value, every request through CloudFront answers 403 by design.
-8. **Migrate and deploy:** `scripts/deploy-lambda.sh`.
-   Then confirm the alarm subscription: AWS emails `alert_email` a link, and the SNS topic
-   `pyxis-api-alerts` delivers nothing until it is clicked.
-9. **Domain.** Add the certificate's validation CNAMEs (`terraform output
+9. **Migrate and deploy.** `api_domain` does not answer yet, so point the script's closing health
+   check at the distribution:
+
+   ```bash
+   API_HOST=<cloudfront_domain output> scripts/deploy-lambda.sh
+   ```
+
+   From the next deploy on, `API_HOST=<api_domain>`. Then confirm the alarm subscription: AWS
+   emails `alert_email` a link, and the SNS topic `pyxis-api-alerts` delivers nothing until it is
+   clicked.
+
+10. **Domain.** Add the certificate's validation CNAMEs (`terraform output
 certificate_validation_record`, one per domain) and keep a CAA record allowing `amazon.com` on
-   each apex that has CAA records. Once the certificate is issued, set `api_domain_enabled = true`,
-   apply, and add a CNAME from `api_domain` and from each of `api_domain_aliases` to `terraform
+    each apex that has CAA records. Once the certificate is issued, set `api_domain_enabled = true`,
+    apply, and add a CNAME from `api_domain` and from each of `api_domain_aliases` to `terraform
 output cloudfront_domain`.
 
 ### Moving the API to another domain
