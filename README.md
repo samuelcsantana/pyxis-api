@@ -162,6 +162,11 @@ Shipping now:
   `GET /v1/me` and every `GET /v1/projects/{projectId}/…` report of the projects its admin is
   granted, and nothing else ([ADR 0015](docs/adr/0015-read-only-access-tokens-for-agents.md))
 
+- Accounts for the hosted plan: an account is who pays, with one owner and the projects it holds
+  (3 at most, counted under a lock so two requests cannot both take the last place). A project
+  without an account is the operator's own, as every project was before, with no plan and no
+  quota ([ADR 0016](docs/adr/0016-accounts-own-projects.md))
+
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
   site's backend with a secret project key
@@ -254,13 +259,15 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 
 | Command                                                                                                                                         | What it does                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>]`                           | Creates a project and its first public key, printed for the site to embed                                                                                               |
+| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>] [--account <id>]`          | Creates a project and its first public key, printed for the site to embed; with `--account`, inside that account (readable by its owner, 3 at most)                     |
 | `npm run -s project:update -- --project <id> [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                                                                                                   |
 | `npm run -s project:delete -- --project <id> --confirm-name <name>`                                                                             | Deletes the project with its events, keys, grants, icon and digest records in one transaction, only when the name matches exactly; prints how many events and keys went |
 | `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash                                                                                |
 | `npm run -s key:revoke -- --key-id <id>`                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                    |
 | `npm run -s admin:grant -- --email <email> --project <id>`                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                               |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first               |
+| `npm run -s account:create -- --owner-email <email>`                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                          |
+| `npm run -s account:show -- --account <id>`                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, and one line per project                                                        |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
@@ -490,6 +497,7 @@ request never deploys.
 | [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)           | Fetch each project's icon from its site, and keep a copy         |
 | [0014](docs/adr/0014-store-the-region-never-the-city.md)               | Store the viewer's region, never the city                        |
 | [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)            | Give agents read-only access tokens, scoped to their admin       |
+| [0016](docs/adr/0016-accounts-own-projects.md)                         | Accounts own projects; a project without one is the operator's   |
 
 ## Roadmap
 
@@ -512,6 +520,8 @@ request never deploys.
 - [x] Weekly digest e-mail on Mondays
 - [x] Sign-in abuse alarms: rejected codes and refused code requests, read from the logs
 - [x] Read-only access tokens for agents (an MCP server that uses them comes next)
+- [x] Accounts that own projects, with the hosted plan's project limit
+- [ ] Hosted plan: monthly quota, billing, sign-up and the account's settings in the dashboard
 
 ## Contributing and license
 
