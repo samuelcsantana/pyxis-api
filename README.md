@@ -171,7 +171,10 @@ Shipping now:
   paused until the month turns, and its batches are answered `403 quota_exceeded`, readable by
   the site's origin so the tracker drops them instead of retrying. Free (`comped`) accounts and the
   operator's projects are never paused
-  ([ADR 0017](docs/adr/0017-monthly-quota-measured-daily.md))
+  ([ADR 0017](docs/adr/0017-monthly-quota-measured-daily.md)). The owner is told by e-mail once
+  per level and month, in their language: at 80%, at 100% (nothing is cut off) and when the pause
+  starts; a failed e-mail is tried again the next day, and the optional `SUPPORT_EMAIL` is named in
+  it and receives the replies
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
