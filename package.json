@@ -38,6 +38,7 @@
     "usage:report": "node dist/cli/usage-report.main.js",
     "account:create": "node dist/cli/account-create.main.js",
     "account:show": "node dist/cli/account-show.main.js",
+    "account:link": "node dist/cli/account-link.main.js",
     "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand",
     "docs:build": "redocly build-docs openapi/openapi.json --output api-reference/index.html --title \"Pyxis API reference\""
   },

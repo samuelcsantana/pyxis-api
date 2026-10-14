@@ -14,6 +14,9 @@ import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
+import { createBillingGateway } from '../infra/billing/create-billing-gateway';
+import { DrizzleAccountBillingRepository } from '../infra/repositories/drizzle-account-billing.repository';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
@@ -27,7 +30,8 @@ export function writeNoticeToStderr(notice: { readonly message?: string }): void
 }
 
 export function openCliContext(env: Record<string, string | undefined>): CliContext {
-  const client = postgres(migrationConnectionString(validateEnv(env)), {
+  const config = validateEnv(env);
+  const client = postgres(migrationConnectionString(config), {
     max: 1,
     connect_timeout: CONNECT_TIMEOUT_SECONDS,
     onnotice: writeNoticeToStderr,
@@ -49,6 +53,11 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     grantAdminAccess: new GrantAdminAccessUseCase(settings, admins),
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, new DrizzleAccountUsageRepository(db), clock),
+    linkSubscription: new LinkSubscriptionUseCase(
+      createBillingGateway(config),
+      new DrizzleAccountBillingRepository(db),
+      clock,
+    ),
     close: () => client.end(),
   };
 }

@@ -1,6 +1,7 @@
 import type { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import type { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import type { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import type { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import type { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import type { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
@@ -18,6 +19,7 @@ export interface CliContext {
   readonly grantAdminAccess: GrantAdminAccessUseCase;
   readonly createCompedAccount: CreateCompedAccountUseCase;
   readonly showAccount: ShowAccountUseCase;
+  readonly linkSubscription: LinkSubscriptionUseCase;
   close(): Promise<void>;
 }
 
