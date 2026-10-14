@@ -14,6 +14,6 @@ export function connectAsOwner(): postgres.Sql {
 
 export async function emptyIngestionTables(owner: postgres.Sql): Promise<void> {
   await owner.unsafe(
-    'TRUNCATE digest_deliveries, events, project_icons, project_keys, admin_project_access, admin_sessions, otp_codes, admin_users, projects',
+    'TRUNCATE digest_deliveries, events, project_icons, project_keys, admin_project_access, admin_sessions, admin_access_tokens, otp_codes, admin_users, projects',
   );
 }

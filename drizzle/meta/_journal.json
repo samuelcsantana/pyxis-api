@@ -57,6 +57,13 @@
       "when": 1791820263310,
       "tag": "0007_event-region",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791997828913,
+      "tag": "0008_access-tokens",
+      "breakpoints": true
     }
   ]
 }

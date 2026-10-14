@@ -9,6 +9,7 @@ import {
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
+import { MAX_ACCESS_TOKEN_NAME_LENGTH } from '../../../domain/auth/access-token-policy';
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../../../domain/auth/email-language';
 import { WEEKLY_DIGEST_BY_DEFAULT } from '../../../domain/entities/email-preferences.entity';
 import type {
@@ -71,6 +72,23 @@ export const adminSessions = pgTable(
     os: varchar('os', { length: 32 }).$type<OsFamily>(),
   },
   (table) => [index('admin_sessions_admin_user_id_idx').on(table.adminUserId)],
+);
+
+export const adminAccessTokens = pgTable(
+  'admin_access_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    adminUserId: uuid('admin_user_id')
+      .notNull()
+      .references(() => adminUsers.id, { onDelete: 'cascade' }),
+    name: varchar('name', { length: MAX_ACCESS_TOKEN_NAME_LENGTH }).notNull(),
+    tokenHash: char('token_hash', { length: 64 }).notNull().unique(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  },
+  (table) => [index('admin_access_tokens_admin_user_id_idx').on(table.adminUserId)],
 );
 
 export const otpCodes = pgTable(

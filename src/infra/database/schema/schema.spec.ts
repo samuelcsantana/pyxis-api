@@ -1,5 +1,6 @@
 import { getTableConfig } from 'drizzle-orm/pg-core';
 import {
+  adminAccessTokens,
   adminProjectAccess,
   adminSessions,
   adminUsers,
@@ -17,6 +18,7 @@ function foreignKeyTargets(
     | typeof projectKeys
     | typeof adminProjectAccess
     | typeof adminSessions
+    | typeof adminAccessTokens
     | typeof digestDeliveries
     | typeof projectIcons,
 ): string[] {
@@ -121,6 +123,16 @@ describe('database schema', () => {
     expect(getTableConfig(adminSessions).indexes.map((index) => index.config.name)).toEqual([
       'admin_sessions_admin_user_id_idx',
     ]);
+  });
+
+  it('ties access tokens to their admin, keeps each hash once and indexes them by admin', () => {
+    const config = getTableConfig(adminAccessTokens);
+
+    expect(foreignKeyTargets(adminAccessTokens)).toEqual(['admin_users.id']);
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'admin_access_tokens_admin_user_id_idx',
+    ]);
+    expect(config.columns.find((column) => column.name === 'token_hash')?.isUnique).toBe(true);
   });
 
   it('finds the codes of an email by creation time', () => {
