@@ -296,6 +296,43 @@
         ],
         "type": "object"
       },
+      "BillingRedirect": {
+        "additionalProperties": false,
+        "description": "Where to send the browser next, on Stripe.",
+        "properties": {
+          "url": {
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "CheckoutRequest": {
+        "additionalProperties": false,
+        "description": "The billing period and the page language.",
+        "properties": {
+          "interval": {
+            "enum": [
+              "month",
+              "year"
+            ],
+            "type": "string"
+          },
+          "locale": {
+            "description": "The language of the dashboard asking, as a BCP 47 tag (en, pt-BR, es). The email is written in it when the API has it (matched on the language, so pt-PT gets pt-BR and es-MX gets es), else in English.",
+            "maxLength": 35,
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "interval"
+        ],
+        "type": "object"
+      },
       "CreateAccessToken": {
         "additionalProperties": false,
         "properties": {
@@ -1188,6 +1225,180 @@
         ],
         "type": "object"
       },
+      "MyAccounts": {
+        "additionalProperties": false,
+        "description": "The accounts the signed-in admin owns or reads a project of, with their billing state for owners and the month measured so far.",
+        "properties": {
+          "accounts": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "access_ends_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "billing_interval": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "month",
+                        "year"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "current_period_ends_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "events_this_month": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Events counted by the last daily measurement; null before the first."
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "ingestion_paused_until": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "limits": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "events_per_month": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "people": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "projects": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "events_per_month",
+                    "projects",
+                    "people"
+                  ],
+                  "type": "object"
+                },
+                "measured_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "month": {
+                  "description": "The calendar month in UTC the usage is counted in, YYYY-MM.",
+                  "type": "string"
+                },
+                "role": {
+                  "enum": [
+                    "owner",
+                    "member"
+                  ],
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "incomplete",
+                    "trialing",
+                    "active",
+                    "past_due",
+                    "ending",
+                    "ended",
+                    "comped"
+                  ],
+                  "type": "string"
+                },
+                "trial_ends_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "role",
+                "status",
+                "billing_interval",
+                "trial_ends_at",
+                "current_period_ends_at",
+                "access_ends_at",
+                "ingestion_paused_until",
+                "month",
+                "events_this_month",
+                "measured_at",
+                "limits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "accounts"
+        ],
+        "type": "object"
+      },
       "OverviewReport": {
         "additionalProperties": false,
         "description": "Visits, identified users, conversions (null without a conversion event) and failed writes of the range against the previous one (the same number of days right before it), with one daily entry per day of each period.",
@@ -1603,6 +1814,19 @@
           "comparison_cutoff",
           "previous_days"
         ],
+        "type": "object"
+      },
+      "PortalRequest": {
+        "additionalProperties": false,
+        "description": "The language of the billing portal.",
+        "properties": {
+          "locale": {
+            "description": "The language of the dashboard asking, as a BCP 47 tag (en, pt-BR, es). The email is written in it when the API has it (matched on the language, so pt-PT gets pt-BR and es-MX gets es), else in English.",
+            "maxLength": 35,
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$",
+            "type": "string"
+          }
+        },
         "type": "object"
       },
       "ProjectSettings": {
@@ -2171,6 +2395,103 @@
         "required": [
           "email",
           "session_token"
+        ],
+        "type": "object"
+      },
+      "SignedUp": {
+        "additionalProperties": false,
+        "description": "The new (or returning) owner, their session token, kept by the dashboard like a sign-in, and the account waiting for its subscription.",
+        "properties": {
+          "account_id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+            "type": "string"
+          },
+          "session_token": {
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "session_token",
+          "account_id"
+        ],
+        "type": "object"
+      },
+      "SignUpCodeRequest": {
+        "additionalProperties": false,
+        "description": "The email to send a sign-up code to, and the language to write it in.",
+        "properties": {
+          "email": {
+            "format": "email",
+            "maxLength": 254,
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+            "type": "string"
+          },
+          "locale": {
+            "description": "The language of the dashboard asking, as a BCP 47 tag (en, pt-BR, es). The email is written in it when the API has it (matched on the language, so pt-PT gets pt-BR and es-MX gets es), else in English.",
+            "maxLength": 35,
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "SignUpRequest": {
+        "additionalProperties": false,
+        "description": "The email, the six-digit code it received and the version of the terms accepted.",
+        "properties": {
+          "code": {
+            "pattern": "^\\d{6}$",
+            "type": "string"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 254,
+            "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+            "type": "string"
+          },
+          "terms_version": {
+            "description": "The version of the terms the person read and accepted on the sign-up page.",
+            "maxLength": 32,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code",
+          "terms_version"
+        ],
+        "type": "object"
+      },
+      "SignUpStatus": {
+        "additionalProperties": false,
+        "description": "Whether anyone can create an account now.",
+        "properties": {
+          "open": {
+            "type": "boolean"
+          },
+          "terms_version": {
+            "description": "The version of the terms the sign-up page must show; null while closed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "open",
+          "terms_version"
         ],
         "type": "object"
       },
@@ -2754,6 +3075,181 @@
         ]
       }
     },
+    "/v1/accounts/{accountId}/checkout": {
+      "post": {
+        "description": "Only the owner, while the account has no running subscription. The first one comes with the free trial.",
+        "operationId": "AccountsController_checkout",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingRedirect"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Open a Stripe Checkout for the account",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
+    "/v1/accounts/{accountId}/portal": {
+      "post": {
+        "operationId": "AccountsController_portal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "accountId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BillingRedirect"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Open Stripe's billing portal for the account's owner",
+        "tags": [
+          "accounts"
+        ]
+      }
+    },
     "/v1/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",
@@ -2878,6 +3374,177 @@
         "summary": "Email a sign-in code",
         "tags": [
           "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/auth/sign-up": {
+      "get": {
+        "operationId": "SignUpController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignUpStatus"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Whether sign-up is open, and the version of the terms a new owner accepts",
+        "tags": [
+          "sign-up"
+        ]
+      }
+    },
+    "/v1/auth/sign-up/code": {
+      "post": {
+        "description": "Answers 202 whoever the email is. A code is created and emailed within the limits per email and per day; 404 while sign-up is closed.",
+        "operationId": "SignUpController_code",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpCodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Email a code to create an account",
+        "tags": [
+          "sign-up"
+        ]
+      }
+    },
+    "/v1/auth/sign-up/verify": {
+      "post": {
+        "description": "Records the acceptance of the terms version given, which must be the current one (409 otherwise). An owner who already has a live account gets that account back.",
+        "operationId": "SignUpController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignedUp"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Exchange a sign-up code for a session and an account waiting for its subscription",
+        "tags": [
+          "sign-up"
         ]
       }
     },
@@ -3082,6 +3749,43 @@
         "summary": "The signed-in admin and their projects",
         "tags": [
           "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/me/accounts": {
+      "get": {
+        "operationId": "AccountsController_accounts",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyAccounts"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The accounts the signed-in admin owns or reads a project of",
+        "tags": [
+          "accounts"
         ]
       }
     },

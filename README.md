@@ -182,6 +182,15 @@ Shipping now:
   answers 503 when Stripe cannot be read so Stripe sends the event again. `account:link` ties a
   subscription paid through a payment link to an account
   ([ADR 0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md))
+- Sign-up, closed until `SIGNUP_OPEN=true` and a `TERMS_VERSION` are both set (otherwise `404`):
+  `GET /v1/auth/sign-up` says whether it is open and which terms to show;
+  `POST /v1/auth/sign-up/code` e-mails a code (202 for any address, the sign-in limits plus 50
+  sign-up codes a day in all); `POST /v1/auth/sign-up/verify` takes the code and the terms version
+  accepted (`409 terms_outdated` if it is not the current one), records the acceptance and answers
+  a session and an `incomplete` account. `GET /v1/me/accounts` lists the admin's accounts with
+  their billing state and the month measured; `POST /v1/accounts/{accountId}/checkout` opens
+  Stripe Checkout (with the 14-day trial the first time) and `.../portal` the billing portal, for
+  the owner only ([ADR 0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -331,6 +340,8 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `SUPPORT_EMAIL`          | unset                                                         | Named in the account e-mails (quota notices), which send replies to it                                                                                                                                                                         |
 | `STRIPE_SECRET_KEY`      | unset                                                         | Stripe secret or restricted key of the hosted plan's billing (Checkout with the prices whose lookup keys are `pyxis_monthly_brl` and `pyxis_yearly_brl`, the customer portal); unset, or anything that is not a Stripe key, leaves billing off |
 | `STRIPE_WEBHOOK_SECRET`  | unset                                                         | Signing secret of the Stripe webhook endpoint; without it no billing event is accepted                                                                                                                                                         |
+| `SIGNUP_OPEN`            | `false`                                                       | `true` lets anyone create an account and subscribe, once `TERMS_VERSION` is set too                                                                                                                                                            |
+| `TERMS_VERSION`          | unset                                                         | The version of the published terms a new owner accepts (at most 32 characters); sign-up stays closed without it                                                                                                                                |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
@@ -522,6 +533,7 @@ request never deploys.
 | [0016](docs/adr/0016-accounts-own-projects.md)                         | Accounts own projects; a project without one is the operator's          |
 | [0017](docs/adr/0017-monthly-quota-measured-daily.md)                  | Measure each account's month daily; pause ingestion at 150%             |
 | [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)    | Billing follows Stripe through its webhook, re-reading the subscription |
+| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md) | Sign-up behind a switch, tied to the version of the terms accepted      |
 
 ## Roadmap
 
@@ -547,7 +559,8 @@ request never deploys.
 - [x] Accounts that own projects, with the hosted plan's project limit
 - [x] Monthly quota per account, measured daily, ingestion paused at 150%
 - [x] Billing through Stripe: Checkout, portal and the webhook that keeps each account's status
-- [ ] Hosted plan: monthly quota, billing, sign-up and the account's settings in the dashboard
+- [x] Sign-up behind a switch, with the terms version accepted and Checkout for the owner
+- [ ] Hosted plan: projects, keys and people managed by the owner; the account's lifecycle
 
 ## Contributing and license
 
