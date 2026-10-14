@@ -36,6 +36,8 @@
     "key:revoke": "node dist/cli/key-revoke.main.js",
     "admin:grant": "node dist/cli/admin-grant.main.js",
     "usage:report": "node dist/cli/usage-report.main.js",
+    "account:create": "node dist/cli/account-create.main.js",
+    "account:show": "node dist/cli/account-show.main.js",
     "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand",
     "docs:build": "redocly build-docs openapi/openapi.json --output api-reference/index.html --title \"Pyxis API reference\""
   },

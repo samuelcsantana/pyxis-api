@@ -72,6 +72,39 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('opens a free account, creates its projects up to the plan limit and shows it', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const account = await context.createCompedAccount.execute({
+        ownerEmail: 'friend@example.com',
+      });
+      for (const name of ['one', 'two', 'three']) {
+        await context.createProject.execute({
+          name,
+          allowedOrigins: [`https://${name}.example.com`],
+          accountId: account.accountId,
+        });
+      }
+
+      await expect(
+        context.createProject.execute({
+          name: 'four',
+          allowedOrigins: ['https://four.example.com'],
+          accountId: account.accountId,
+        }),
+      ).rejects.toMatchObject({ code: 'project_limit_reached' });
+      const summary = await context.showAccount.execute({ accountId: account.accountId });
+      expect(summary).toMatchObject({
+        account: { status: 'comped' },
+        ownerEmail: 'friend@example.com',
+        people: 1,
+      });
+      expect(summary.projects.map(({ name }) => name)).toEqual(['one', 'two', 'three']);
+    } finally {
+      await context.close();
+    }
+  });
+
   it('grants a project to an admin, creating the admin once', async () => {
     const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
     try {

@@ -6,9 +6,12 @@ import { createDrizzleDatabase } from '../infra/database/postgres-client';
 import { CONNECT_TIMEOUT_SECONDS } from '../infra/database/postgres-options';
 import { DrizzleProjectUsageQuery } from '../infra/queries/drizzle-project-usage.query';
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
+import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
+import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
@@ -31,6 +34,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const db = createDrizzleDatabase(client);
   const settings = new DrizzleProjectSettingsRepository(db);
   const keys = new DrizzleProjectKeyRepository(db);
+  const admins = new DrizzleAdminUserRepository(db);
+  const accounts = new DrizzleAccountRepository(db);
   const random = new CryptoRandomSource();
   const clock = new SystemClock();
   return {
@@ -40,7 +45,9 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     updateProject: new UpdateProjectUseCase(settings),
     deleteProject: new DeleteProjectUseCase(settings),
     reportUsage: new ReportProjectUsageUseCase(new DrizzleProjectUsageQuery(db), clock),
-    grantAdminAccess: new GrantAdminAccessUseCase(settings, new DrizzleAdminUserRepository(db)),
+    grantAdminAccess: new GrantAdminAccessUseCase(settings, admins),
+    createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
+    showAccount: new ShowAccountUseCase(accounts),
     close: () => client.end(),
   };
 }

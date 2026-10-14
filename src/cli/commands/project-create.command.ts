@@ -1,4 +1,4 @@
-import { optionalText, parseCommandArgs, requiredText, textList } from '../cli-args';
+import { optionalId, optionalText, parseCommandArgs, requiredText, textList } from '../cli-args';
 import type { CliCommand } from '../cli-command';
 
 export interface ProjectCreateArgs {
@@ -6,12 +6,13 @@ export interface ProjectCreateArgs {
   readonly origins: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string;
+  readonly accountId?: string;
 }
 
 export const projectCreateCommand: CliCommand<ProjectCreateArgs> = {
   usage:
     'npm run -s project:create -- --name <name> --origin <origin> [--origin <origin>…] ' +
-    '[--timezone <IANA zone>] [--conversion-event <event name>]',
+    '[--timezone <IANA zone>] [--conversion-event <event name>] [--account <id>]',
 
   parse(argv) {
     const values = parseCommandArgs(argv, {
@@ -19,14 +20,17 @@ export const projectCreateCommand: CliCommand<ProjectCreateArgs> = {
       origin: { type: 'string', multiple: true },
       timezone: { type: 'string' },
       'conversion-event': { type: 'string' },
+      account: { type: 'string' },
     });
     const timezone = optionalText(values, 'timezone');
     const conversionEvent = optionalText(values, 'conversion-event');
+    const accountId = optionalId(values, 'account');
     return {
       name: requiredText(values, 'name'),
       origins: textList(values, 'origin'),
       ...(timezone === undefined ? {} : { timezone }),
       ...(conversionEvent === undefined ? {} : { conversionEvent }),
+      ...(accountId === undefined ? {} : { accountId }),
     };
   },
 
@@ -36,6 +40,7 @@ export const projectCreateCommand: CliCommand<ProjectCreateArgs> = {
       allowedOrigins: args.origins,
       ...(args.timezone === undefined ? {} : { timezone: args.timezone }),
       ...(args.conversionEvent === undefined ? {} : { conversionEvent: args.conversionEvent }),
+      ...(args.accountId === undefined ? {} : { accountId: args.accountId }),
     });
     output.stdout(`project_id=${created.projectId}`);
     output.stdout(`public_key_id=${created.publicKeyId}`);

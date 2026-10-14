@@ -3,6 +3,7 @@ import {
   flag,
   optionalText,
   parseCommandArgs,
+  optionalId,
   requiredEmail,
   requiredId,
   requiredText,
@@ -69,6 +70,12 @@ describe('option readers', () => {
   it('require a UUID and lower-case it', () => {
     expect(requiredId(values, 'id')).toBe('9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c');
     expect(() => requiredId(values, 'name')).toThrow('--name must be a UUID.');
+  });
+
+  it('take an optional UUID, lower-cased when given', () => {
+    expect(optionalId(values, 'id')).toBe('9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c');
+    expect(optionalId(values, 'missing')).toBeUndefined();
+    expect(() => optionalId(values, 'name')).toThrow('--name must be a UUID.');
   });
 
   it('require an email address that fits the column, trimmed', () => {
