@@ -1,0 +1,1 @@
+export const MAX_TERMS_VERSION_LENGTH = 32;

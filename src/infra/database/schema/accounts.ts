@@ -12,6 +12,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { ACCOUNT_STATUSES, type AccountStatus } from '../../../domain/accounts/account-status';
+import { MAX_TERMS_VERSION_LENGTH } from '../../../domain/accounts/sign-up-policy';
 import type { BillingInterval } from '../../../domain/billing/billing-gateway';
 import { adminUsers } from './admins';
 
@@ -73,3 +74,19 @@ export const billingEvents = pgTable('billing_events', {
   receivedAt: timestamp('received_at', { withTimezone: true }).notNull(),
   processedAt: timestamp('processed_at', { withTimezone: true }),
 });
+
+export const termsAcceptances = pgTable(
+  'terms_acceptances',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    adminUserId: uuid('admin_user_id')
+      .notNull()
+      .references(() => adminUsers.id, { onDelete: 'cascade' }),
+    accountId: uuid('account_id')
+      .notNull()
+      .references(() => accounts.id, { onDelete: 'cascade' }),
+    version: varchar('version', { length: MAX_TERMS_VERSION_LENGTH }).notNull(),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [index('terms_acceptances_account_id_idx').on(table.accountId)],
+);

@@ -99,6 +99,13 @@
       "when": 1792020478594,
       "tag": "0013_code-purpose",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1792020479499,
+      "tag": "0014_terms-acceptances",
+      "breakpoints": true
     }
   ]
 }
