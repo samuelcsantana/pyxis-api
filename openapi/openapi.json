@@ -3016,7 +3016,7 @@
                 }
               }
             },
-            "description": "The Origin header is missing or not one of the project's origins."
+            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account used 150% of its monthly events and is paused until the next month (quota_exceeded, with a CORS grant so the tracker drops the batch)."
           },
           "413": {
             "content": {

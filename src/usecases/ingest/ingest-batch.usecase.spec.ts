@@ -3,16 +3,19 @@ import {
   BatchTooLargeError,
   OriginNotAllowedError,
   ProjectRateLimitedError,
+  QuotaExceededError,
   UnknownProjectKeyError,
 } from '../../domain/errors/ingest.errors';
 import { MAX_EVENTS_PER_BATCH } from '../../domain/events/event-limits';
 import { PUBLIC_KEY_PREFIX } from '../../domain/keys/project-keys';
 import { FixedClock } from '../../test-utils/fixed-clock';
+import { InMemoryAccountUsageRepository } from '../../test-utils/in-memory-account-usage.repository';
 import { InMemoryEventRepository } from '../../test-utils/in-memory-event.repository';
 import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.repository';
 import { StubProjectRateLimiter } from '../../test-utils/stub-project-rate-limiter';
 import { type IngestBatchCommand, IngestBatchUseCase } from './ingest-batch.usecase';
 
+const ACCOUNT_ID = 'acc00000-0000-4000-a000-000000000001';
 const ORIGIN = 'https://shop.example.com';
 const PUBLIC_KEY = `${PUBLIC_KEY_PREFIX}${'A'.repeat(32)}`;
 const REVOKED_KEY = `${PUBLIC_KEY_PREFIX}${'R'.repeat(32)}`;
@@ -71,11 +74,13 @@ function setup() {
   );
   const events = new InMemoryEventRepository();
   const rateLimiter = new StubProjectRateLimiter();
+  const usage = new InMemoryAccountUsageRepository();
   const useCase = new IngestBatchUseCase(
     projects,
     events,
     rateLimiter,
     new FixedClock(RECEIVED_AT),
+    usage,
   );
   const command = (overrides: Partial<IngestBatchCommand> = {}): IngestBatchCommand => ({
     key: PUBLIC_KEY,
@@ -89,7 +94,7 @@ function setup() {
     viewerRegionName: 'S%C3%A3o%20Paulo',
     ...overrides,
   });
-  return { useCase, events, rateLimiter, command };
+  return { useCase, events, rateLimiter, usage, command };
 }
 
 describe('IngestBatchUseCase', () => {
@@ -267,5 +272,39 @@ describe('IngestBatchUseCase', () => {
     await expect(failure).rejects.toMatchObject({ retryAfterSeconds: 17, allowedOrigin: ORIGIN });
     expect(rateLimiter.calls).toEqual([{ projectId: PROJECT.id, now: RECEIVED_AT }]);
     expect(events.insertCalls).toBe(0);
+  });
+
+  it('refuses a project whose account is paused for the month, naming the date it resumes', async () => {
+    const { useCase, usage, events, command } = setup();
+    const resumesAt = new Date(RECEIVED_AT.getTime() + 60_000);
+    usage.placeProject(PROJECT.id, ACCOUNT_ID);
+    await usage.record(
+      '2026-10',
+      [{ accountId: ACCOUNT_ID, events: 150_000, ingestionPausedUntil: resumesAt }],
+      RECEIVED_AT,
+    );
+
+    const failure = useCase.execute(command());
+
+    await expect(failure).rejects.toBeInstanceOf(QuotaExceededError);
+    await expect(failure).rejects.toMatchObject({
+      pausedUntil: resumesAt,
+      allowedOrigin: ORIGIN,
+      code: 'quota_exceeded',
+    });
+    expect(events.insertCalls).toBe(0);
+  });
+
+  it('takes events again once the pause has passed', async () => {
+    const { useCase, usage, events, command } = setup();
+    usage.placeProject(PROJECT.id, ACCOUNT_ID);
+    await usage.record(
+      '2026-10',
+      [{ accountId: ACCOUNT_ID, events: 150_000, ingestionPausedUntil: RECEIVED_AT }],
+      RECEIVED_AT,
+    );
+
+    await expect(useCase.execute(command())).resolves.toMatchObject({ accepted: 1 });
+    expect(events.insertCalls).toBe(1);
   });
 });

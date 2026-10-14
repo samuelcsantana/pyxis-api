@@ -285,3 +285,72 @@ describe('POST /v1/batch over the project limit', () => {
     expect(limited.headers.vary).toBe('Origin');
   });
 });
+
+describe('POST /v1/batch for a project of a paused account', () => {
+  const OWNER_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f80901';
+  const PAUSED_ACCOUNT_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f80902';
+  const ACTIVE_ACCOUNT_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f80903';
+  const PAUSED_PROJECT_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f80911';
+  const ACTIVE_PROJECT_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f80912';
+  const PAUSED_KEY = `${PUBLIC_KEY_PREFIX}${'W'.repeat(32)}`;
+  const ACTIVE_KEY = `${PUBLIC_KEY_PREFIX}${'X'.repeat(32)}`;
+  let app: NestFastifyApplication;
+  let owner: postgres.Sql;
+
+  const send = (key: string, index: number) =>
+    app.inject({
+      method: 'POST',
+      url: '/v1/batch',
+      payload: batch([event(index)], { key }),
+      headers: {
+        'content-type': 'text/plain',
+        'user-agent': SAFARI_IPHONE,
+        origin: ORIGIN,
+        [E2E_CLIENT_IP_HEADER]: nextClientIp(),
+      },
+    });
+
+  beforeAll(async () => {
+    owner = postgres(e2eOwnerUrl(), { max: 1, onnotice: () => undefined });
+    await owner`INSERT INTO admin_users (id, email) VALUES (${OWNER_ID}, 'quota-owner@example.com')`;
+    await owner`
+      INSERT INTO accounts (id, owner_admin_id, status, ingestion_paused_until)
+      VALUES (${PAUSED_ACCOUNT_ID}, ${OWNER_ID}, 'active', now() + interval '1 day'),
+             (${ACTIVE_ACCOUNT_ID}, ${OWNER_ID}, 'active', NULL)
+    `;
+    await owner`
+      INSERT INTO projects (id, name, allowed_origins, account_id)
+      VALUES (${PAUSED_PROJECT_ID}, 'Paused', ${[ORIGIN]}, ${PAUSED_ACCOUNT_ID}),
+             (${ACTIVE_PROJECT_ID}, 'Active', ${[ORIGIN]}, ${ACTIVE_ACCOUNT_ID})
+    `;
+    await owner`
+      INSERT INTO project_keys (project_id, kind, public_key)
+      VALUES (${PAUSED_PROJECT_ID}, 'public', ${PAUSED_KEY}),
+             (${ACTIVE_PROJECT_ID}, 'public', ${ACTIVE_KEY})
+    `;
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+    await owner`DELETE FROM projects WHERE id IN (${PAUSED_PROJECT_ID}, ${ACTIVE_PROJECT_ID})`;
+    await owner`DELETE FROM accounts WHERE owner_admin_id = ${OWNER_ID}`;
+    await owner`DELETE FROM admin_users WHERE id = ${OWNER_ID}`;
+    await owner.end();
+  });
+
+  it('answers 403 quota_exceeded, readable by the allowed origin, and stores nothing', async () => {
+    const refused = await send(PAUSED_KEY, 301);
+
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toMatchObject({ status_code: 403, error: 'quota_exceeded' });
+    expect(refused.headers['access-control-allow-origin']).toBe(ORIGIN);
+    expect(refused.headers.vary).toBe('Origin');
+    const stored = await owner`SELECT id FROM events WHERE project_id = ${PAUSED_PROJECT_ID}`;
+    expect(stored).toHaveLength(0);
+  });
+
+  it('keeps taking the batches of an account that is not paused', async () => {
+    expect((await send(ACTIVE_KEY, 302)).statusCode).toBe(202);
+  });
+});

@@ -1,6 +1,6 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { DomainError } from '../../../domain/errors/domain.error';
-import { ProjectRateLimitedError } from '../../../domain/errors/ingest.errors';
+import { ProjectRateLimitedError, QuotaExceededError } from '../../../domain/errors/ingest.errors';
 import type { ErrorResponse } from '../ingest/ingest.schemas';
 import {
   ClientRateLimitedError,
@@ -20,6 +20,7 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['unknown_key', HttpStatus.UNAUTHORIZED],
   ['origin_not_allowed', HttpStatus.FORBIDDEN],
   ['rate_limited', HttpStatus.TOO_MANY_REQUESTS],
+  ['quota_exceeded', HttpStatus.FORBIDDEN],
   ['invalid_code', HttpStatus.BAD_REQUEST],
   ['unauthenticated', HttpStatus.UNAUTHORIZED],
   ['session_not_found', HttpStatus.NOT_FOUND],
@@ -85,6 +86,12 @@ function domainAnswer(exception: DomainError): ErrorAnswer {
   if (exception instanceof ProjectRateLimitedError) {
     return answer(status, exception.code, exception.message, {
       [RETRY_AFTER_HEADER]: String(exception.retryAfterSeconds),
+      'access-control-allow-origin': exception.allowedOrigin,
+      vary: 'Origin',
+    });
+  }
+  if (exception instanceof QuotaExceededError) {
+    return answer(status, exception.code, exception.message, {
       'access-control-allow-origin': exception.allowedOrigin,
       vary: 'Origin',
     });
