@@ -1,4 +1,8 @@
 provisioning_role_arn = "arn:aws:iam::<account-id>:role/pyxis-api-terraform"
 image_tag             = "<short git sha of the first image pushed to ECR>"
+api_domain            = "<the API's domain, such as pyxis-api.example.com>"
+api_domain_aliases    = []
 api_domain_enabled    = false
+dashboard_origin      = "<the dashboard's origin, such as https://pyxis.example.com>"
+mail_from             = "<sender on a domain verified in Resend, such as Pyxis <noreply@example.com>>"
 alert_email           = "<address that receives the alarms>"

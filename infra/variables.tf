@@ -16,15 +16,14 @@ variable "provisioning_role_arn" {
 }
 
 variable "api_domain" {
-  description = "The API's own domain. A Lambda Function URL cannot carry a custom domain, which is why CloudFront sits in front of it."
+  description = "The API's own domain, such as pyxis-api.example.com. A Lambda Function URL cannot carry a custom domain, which is why CloudFront sits in front of it. No default: the certificate is requested for it on the first apply."
   type        = string
-  default     = "api.pyxis-analytics.dev"
 }
 
 variable "api_domain_aliases" {
   description = "Earlier domains the API keeps answering on, from the same certificate and distribution, while the sites that send to them move to api_domain."
   type        = list(string)
-  default     = ["api.pyxis.samuelsantana.dev"]
+  default     = []
 }
 
 variable "api_domain_enabled" {
@@ -57,15 +56,13 @@ variable "http_reserved_concurrency" {
 }
 
 variable "dashboard_origin" {
-  description = "Origin of the dashboard: scheme and host, no path. The API refuses to start in production without it."
+  description = "Origin of the dashboard: scheme and host, no path, such as https://pyxis.example.com. The API refuses to start in production without it."
   type        = string
-  default     = "https://app.pyxis-analytics.dev"
 }
 
 variable "mail_from" {
-  description = "From header of the sign-in code and weekly digest emails; its domain must be verified in Resend."
+  description = "From header of the sign-in code and weekly digest emails, such as Pyxis <noreply@example.com>; its domain must be verified in Resend."
   type        = string
-  default     = "Pyxis <noreply@pyxis-analytics.dev>"
 }
 
 variable "alert_email" {
