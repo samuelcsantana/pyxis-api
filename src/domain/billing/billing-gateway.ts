@@ -9,7 +9,7 @@ export interface CheckoutRequest {
   readonly customerEmail: string;
   readonly interval: BillingInterval;
   readonly language: EmailLanguage;
-  readonly trialDays: number;
+  readonly trialDays: number | null;
   readonly successUrl: string;
   readonly cancelUrl: string;
 }

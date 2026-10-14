@@ -100,7 +100,12 @@ describe('StripeBillingGateway.createCheckout', () => {
       body: { id: 'cs_2', object: 'checkout.session', url: 'https://checkout.stripe.com/c/2' },
     });
 
-    await gateway.createCheckout({ ...CHECKOUT, customerId: 'cus_9', language: 'es' });
+    await gateway.createCheckout({
+      ...CHECKOUT,
+      customerId: 'cus_9',
+      language: 'es',
+      trialDays: null,
+    });
     await gateway.createCheckout({ ...CHECKOUT, customerId: 'cus_9', language: 'en' });
 
     expect(requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
@@ -111,6 +116,7 @@ describe('StripeBillingGateway.createCheckout', () => {
     expect(requests[1]?.form.get('customer')).toBe('cus_9');
     expect(requests[1]?.form.has('customer_email')).toBe(false);
     expect(requests[1]?.form.get('locale')).toBe('es');
+    expect(requests[1]?.form.has('subscription_data[trial_period_days]')).toBe(false);
     expect(requests[2]?.form.get('locale')).toBe('en');
   });
 
