@@ -1,4 +1,8 @@
 import { HttpException, NotFoundException } from '@nestjs/common';
+import {
+  BillingUnavailableError,
+  InvalidBillingSignatureError,
+} from '../../../domain/errors/billing.errors';
 import { DomainError } from '../../../domain/errors/domain.error';
 import {
   BatchTooLargeError,
@@ -51,6 +55,8 @@ describe('toErrorAnswer', () => {
     [new UnknownCursorError(), 400, 'invalid_cursor'],
     [new ProjectNotFoundError(), 404, 'project_not_found'],
     [new ProjectIconNotFoundError(), 404, 'project_icon_not_found'],
+    [new InvalidBillingSignatureError(), 400, 'invalid_billing_signature'],
+    [new BillingUnavailableError('subscriptions.retrieve failed'), 503, 'billing_unavailable'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },

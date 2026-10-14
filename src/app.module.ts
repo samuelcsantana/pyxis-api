@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validateServerEnv } from './config/env.schema';
 import { DatabaseModule } from './infra/database/database.module';
 import { AuthModule } from './infra/http/auth/auth.module';
+import { BillingModule } from './infra/http/billing/billing.module';
 import { HealthModule } from './infra/http/health/health.module';
 import { IngestModule } from './infra/http/ingest/ingest.module';
 import { PreferencesModule } from './infra/http/preferences/preferences.module';
@@ -20,6 +21,7 @@ import { SubjectsModule } from './infra/http/subjects/subjects.module';
     IngestModule,
     QueriesModule,
     PreferencesModule,
+    BillingModule,
     SubjectsModule,
   ],
 })
