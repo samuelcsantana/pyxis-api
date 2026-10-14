@@ -20,11 +20,15 @@ describe('LazyMailSender', () => {
 
     expect(create).not.toHaveBeenCalled();
     await sender.sendSignInCode('ana@example.com', '123456', 'en');
+    await sender.sendSignUpCode('bia@example.com', '654321', 'es');
     await sender.sendQuotaNotice('ana@example.com', NOTICE, 'pt-BR');
     await sender.sendWeeklyDigest('ana@example.com', { projectId: 'p' } as WeeklyDigest, 'es');
 
     expect(create).toHaveBeenCalledTimes(1);
     expect(recording.sent).toHaveLength(1);
+    expect(recording.signUpCodes).toEqual([
+      { email: 'bia@example.com', code: '654321', language: 'es' },
+    ]);
     expect(recording.quotaNotices).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
   });

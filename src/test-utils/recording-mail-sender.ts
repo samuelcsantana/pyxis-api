@@ -23,6 +23,7 @@ export interface SentQuotaNotice {
 
 export class RecordingMailSender implements MailSender {
   readonly sent: SentSignInCode[] = [];
+  readonly signUpCodes: SentSignInCode[] = [];
   readonly quotaNotices: SentQuotaNotice[] = [];
   readonly digests: SentWeeklyDigest[] = [];
   private failure: Error | null = null;
@@ -41,6 +42,14 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(this.failure);
     }
     this.sent.push({ email, code, language });
+    return Promise.resolve();
+  }
+
+  sendSignUpCode(email: string, code: string, language: EmailLanguage): Promise<void> {
+    if (this.failure !== null) {
+      return Promise.reject(this.failure);
+    }
+    this.signUpCodes.push({ email, code, language });
     return Promise.resolve();
   }
 

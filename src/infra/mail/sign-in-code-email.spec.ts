@@ -1,6 +1,10 @@
 import { EMAIL_LANGUAGES } from '../../domain/auth/email-language';
 import { emailLinksFor, TEXT_LINE_WIDTH } from './email-layout';
-import { buildSignInCodeEmail, renderSignInCodeEmail } from './sign-in-code-email';
+import {
+  buildSignInCodeEmail,
+  buildSignUpCodeEmail,
+  renderSignInCodeEmail,
+} from './sign-in-code-email';
 import type { SignInCodeEmailMessages } from './sign-in-code-email-messages';
 
 const LINKS = emailLinksFor('https://dashboard.example.com');
@@ -224,5 +228,49 @@ describe('buildSignInCodeEmail for another dashboard', () => {
 
   it('loads its logo from that dashboard', () => {
     expect(email.html).toContain(`<img src="${elsewhere}/email/pyxis-logo.png"`);
+  });
+});
+
+describe('buildSignUpCodeEmail', () => {
+  it('says the code creates an account, in each language, keeping the code first', () => {
+    expect(buildSignUpCodeEmail(CODE, 'en', LINKS).subject).toBe(
+      '123456 is your code to create a Pyxis account',
+    );
+    expect(buildSignUpCodeEmail(CODE, 'pt-BR', LINKS).subject).toBe(
+      '123456 é o seu código para criar a conta no Pyxis',
+    );
+    expect(buildSignUpCodeEmail(CODE, 'es', LINKS).subject).toBe(
+      '123456 es tu código para crear una cuenta de Pyxis',
+    );
+  });
+
+  it('tells someone who did not ask that nothing is created without the code', () => {
+    const email = buildSignUpCodeEmail(CODE, 'en', LINKS);
+
+    expect(email.html).toContain('Your code to create an account');
+    expect(email.html).toContain('nothing is created without this code.');
+    expect(email.html).toContain('someone asked to create a Pyxis account with this address.');
+    expect(email.text).toContain(
+      'Enter this code on the Pyxis sign-up page to create your account.',
+    );
+    for (const part of [email.html, email.text]) {
+      expect(part).not.toContain('sign in');
+    }
+  });
+
+  it('keeps the expiry and the warning of the sign-in code, in the language asked', () => {
+    const email = buildSignUpCodeEmail(CODE, 'pt-BR', LINKS);
+
+    expect(email.text).toContain('Ele expira em 10 minutos e só vale uma vez.');
+    expect(email.text).toContain('Nunca compartilhe este código.');
+    expect(email.html).toContain('<html lang="pt-BR" dir="ltr">');
+  });
+
+  it('keeps every plain-text line within the width of the sign-in code e-mail', () => {
+    for (const language of EMAIL_LANGUAGES) {
+      expect(longestLine(buildSignUpCodeEmail(CODE, language, LINKS).text)).toBeLessThanOrEqual(
+        TEXT_LINE_WIDTH,
+      );
+    }
   });
 });

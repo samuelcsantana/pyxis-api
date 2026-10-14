@@ -8,7 +8,7 @@ import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
 import { SesMailSender, sesSend } from './ses-mail-sender';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
-import { buildSignInCodeEmail } from './sign-in-code-email';
+import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
 const FROM = 'Pyxis <noreply@pyxis-analytics.dev>';
@@ -70,6 +70,25 @@ describe('ResendMailSender', () => {
       from: FROM,
       to: 'ana@example.com',
       ...buildSignInCodeEmail('123456', 'pt-BR', LINKS),
+    });
+  });
+
+  it('posts the sign-up code the same way, with the sign-up wording', async () => {
+    const send = jest.fn<Promise<Response>, [string, RequestInit]>(() =>
+      Promise.resolve(new Response('{"id":"email-2"}', { status: 200 })),
+    );
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send).sendSignUpCode(
+      'bia@example.com',
+      '654321',
+      'es',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'bia@example.com',
+      ...buildSignUpCodeEmail('654321', 'es', LINKS),
     });
   });
 
@@ -175,6 +194,17 @@ describe('SesMailSender', () => {
     ]);
   });
 
+  it('sends the sign-up code the same way', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendSignUpCode('bia@example.com', '654321', 'en');
+
+    expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe(
+      buildSignUpCodeEmail('654321', 'en', LINKS).subject,
+    );
+    expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
+  });
+
   it('sends the weekly digest the same way', async () => {
     const { sent, send } = recordingSes();
 
@@ -245,6 +275,17 @@ describe('LoggingMailSender', () => {
     await new LoggingMailSender().sendSignInCode('ana@example.com', '123456', 'pt-BR');
 
     expect(logs).toEqual([{ message: 'mail.sign_in_code', code: '123456', language: 'pt-BR' }]);
+  });
+
+  it('logs a sign-up code and its language the same way, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendSignUpCode('bia@example.com', '654321', 'es');
+
+    expect(logs).toEqual([{ message: 'mail.sign_up_code', code: '654321', language: 'es' }]);
   });
 
   it('logs the project, week and subject of a weekly digest, never the address', async () => {

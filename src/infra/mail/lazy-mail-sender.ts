@@ -12,6 +12,10 @@ export class LazyMailSender implements MailSender {
     await this.resolved().sendSignInCode(email, code, language);
   }
 
+  async sendSignUpCode(email: string, code: string, language: EmailLanguage): Promise<void> {
+    await this.resolved().sendSignUpCode(email, code, language);
+  }
+
   async sendWeeklyDigest(
     email: string,
     digest: WeeklyDigest,

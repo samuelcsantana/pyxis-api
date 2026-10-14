@@ -4,6 +4,7 @@ import type { WeeklyDigest } from '../digest/weekly-digest';
 
 export interface MailSender {
   sendSignInCode(email: string, code: string, language: EmailLanguage): Promise<void>;
+  sendSignUpCode(email: string, code: string, language: EmailLanguage): Promise<void>;
   sendWeeklyDigest(email: string, digest: WeeklyDigest, language: EmailLanguage): Promise<void>;
   sendQuotaNotice(email: string, notice: QuotaNotice, language: EmailLanguage): Promise<void>;
 }
