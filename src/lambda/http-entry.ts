@@ -13,6 +13,7 @@ async function buildProxy(): Promise<PromiseHandler> {
   const { configureApp } = await import('../infra/http/configure-app');
   const { createLambdaProxy } = await import('./create-lambda-proxy');
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, createFastifyAdapter(), {
+    rawBody: true,
     logger: new ConsoleLogger({ json: true }),
   });
   configureApp(app, { dashboardOrigin: app.get(ConfigService).get<string>('DASHBOARD_ORIGIN') });

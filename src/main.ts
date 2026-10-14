@@ -9,7 +9,9 @@ import { createFastifyAdapter } from './infra/http/fastify-adapter.options';
 import { registerSwaggerUi } from './infra/http/openapi/swagger-ui';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create<NestFastifyApplication>(AppModule, createFastifyAdapter());
+  const app = await NestFactory.create<NestFastifyApplication>(AppModule, createFastifyAdapter(), {
+    rawBody: true,
+  });
   const config = app.get<ConfigService<EnvConfig, true>>(ConfigService);
   configureApp(app, { dashboardOrigin: config.get('DASHBOARD_ORIGIN', { infer: true }) });
   registerSwaggerUi(app, {
