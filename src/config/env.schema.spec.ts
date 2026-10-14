@@ -12,6 +12,7 @@ describe('validateEnv', () => {
       DATABASE_URL: undefined,
       MIGRATION_DATABASE_URL: undefined,
       APP_DB_ROLE: undefined,
+      MAIL_PROVIDER: 'resend',
       MAIL_FROM: DEFAULT_MAIL_FROM,
     });
   });
@@ -133,6 +134,13 @@ describe('validateServerEnv', () => {
       DASHBOARD_ORIGIN,
       MAIL_FROM: 'Ops <ops@example.com>',
     });
+  });
+
+  it('accepts production without a Resend key when SES sends the e-mails', () => {
+    expect(
+      validateServerEnv({ NODE_ENV: 'production', MAIL_PROVIDER: 'ses', DASHBOARD_ORIGIN }),
+    ).toMatchObject({ MAIL_PROVIDER: 'ses' });
+    expect(() => validateEnv({ MAIL_PROVIDER: 'smtp' })).toThrow(/MAIL_PROVIDER/);
   });
 
   it('takes an optional support address for the account e-mails, and refuses one that is not', () => {

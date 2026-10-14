@@ -70,6 +70,7 @@ import { ReadAccessGuard } from './read-access.guard';
       useFactory: (config: ConfigService<EnvConfig, true>) =>
         createMailSender({
           NODE_ENV: config.get('NODE_ENV', { infer: true }),
+          MAIL_PROVIDER: config.get('MAIL_PROVIDER', { infer: true }),
           RESEND_API_KEY: config.get('RESEND_API_KEY', { infer: true }),
           MAIL_FROM: config.get('MAIL_FROM', { infer: true }),
           DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
