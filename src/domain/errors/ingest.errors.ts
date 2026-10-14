@@ -25,6 +25,19 @@ export class OriginNotAllowedError extends DomainError {
   }
 }
 
+export class QuotaExceededError extends DomainError {
+  readonly code = 'quota_exceeded';
+
+  constructor(
+    readonly pausedUntil: Date,
+    readonly allowedOrigin: string,
+  ) {
+    super(
+      `The account used its events for the month; events are taken again from ${pausedUntil.toISOString()}.`,
+    );
+  }
+}
+
 export class ProjectRateLimitedError extends DomainError {
   readonly code = 'rate_limited';
 

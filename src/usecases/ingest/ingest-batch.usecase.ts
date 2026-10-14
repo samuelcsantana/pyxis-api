@@ -1,10 +1,12 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { isPausedAt } from '../../domain/accounts/account-quota';
 import type { Project } from '../../domain/entities/project.entity';
 import type { TrackedEvent } from '../../domain/entities/tracked-event.entity';
 import {
   BatchTooLargeError,
   OriginNotAllowedError,
   ProjectRateLimitedError,
+  QuotaExceededError,
   UnknownProjectKeyError,
 } from '../../domain/errors/ingest.errors';
 import { buildTrackedEvent, type ReceptionContext } from '../../domain/events/build-tracked-event';
@@ -22,6 +24,10 @@ import {
   validateIncomingEvent,
 } from '../../domain/events/validate-event';
 import { EVENT_REPOSITORY, type EventRepository } from '../../domain/repositories/event.repository';
+import {
+  INGESTION_PAUSE_REPOSITORY,
+  type IngestionPauseRepository,
+} from '../../domain/repositories/ingestion-pause.repository';
 import {
   PROJECT_REPOSITORY,
   type ProjectRepository,
@@ -80,6 +86,7 @@ export class IngestBatchUseCase {
     @Inject(EVENT_REPOSITORY) private readonly events: EventRepository,
     @Inject(PROJECT_RATE_LIMITER) private readonly rateLimiter: ProjectRateLimiter,
     @Inject(CLOCK) private readonly clock: Clock,
+    @Inject(INGESTION_PAUSE_REPOSITORY) private readonly pauses: IngestionPauseRepository,
   ) {}
 
   async execute(command: IngestBatchCommand): Promise<IngestBatchResult> {
@@ -95,6 +102,10 @@ export class IngestBatchUseCase {
     const decision = this.rateLimiter.tryConsume(project.id, receivedAt);
     if (!decision.allowed) {
       throw new ProjectRateLimitedError(decision.retryAfterSeconds, origin);
+    }
+    const pausedUntil = await this.pauses.pausedUntil(project.id);
+    if (isPausedAt(pausedUntil, receivedAt)) {
+      throw new QuotaExceededError(pausedUntil, origin);
     }
     if (isBotUserAgent(command.userAgent)) {
       return {

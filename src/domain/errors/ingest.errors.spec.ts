@@ -3,8 +3,11 @@ import {
   BatchTooLargeError,
   OriginNotAllowedError,
   ProjectRateLimitedError,
+  QuotaExceededError,
   UnknownProjectKeyError,
 } from './ingest.errors';
+
+const RESUMES_AT = new Date('2026-11-01T00:00:00.000Z');
 
 describe('ingestion errors', () => {
   it.each([
@@ -15,6 +18,11 @@ describe('ingestion errors', () => {
       new ProjectRateLimitedError(12, 'https://shop.example.com'),
       'rate_limited',
       'ProjectRateLimitedError',
+    ],
+    [
+      new QuotaExceededError(RESUMES_AT, 'https://shop.example.com'),
+      'quota_exceeded',
+      'QuotaExceededError',
     ],
   ])('%s carries a stable machine code and its class name', (error, code, name) => {
     expect(error).toBeInstanceOf(DomainError);
@@ -28,6 +36,14 @@ describe('ingestion errors', () => {
 
     expect(error.retryAfterSeconds).toBe(12);
     expect(error.allowedOrigin).toBe('https://shop.example.com');
+  });
+
+  it('tells a paused account when events are taken again, and which origin was allowed', () => {
+    const error = new QuotaExceededError(RESUMES_AT, 'https://shop.example.com');
+
+    expect(error.pausedUntil).toBe(RESUMES_AT);
+    expect(error.allowedOrigin).toBe('https://shop.example.com');
+    expect(error.message).toContain('2026-11-01T00:00:00.000Z');
   });
 
   it('states the batch limit in the message', () => {

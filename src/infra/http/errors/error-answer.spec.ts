@@ -4,6 +4,7 @@ import {
   BatchTooLargeError,
   OriginNotAllowedError,
   ProjectRateLimitedError,
+  QuotaExceededError,
   UnknownProjectKeyError,
 } from '../../../domain/errors/ingest.errors';
 import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
@@ -66,6 +67,18 @@ describe('toErrorAnswer', () => {
         'access-control-allow-origin': 'https://shop.example.com',
         vary: 'Origin',
       },
+      unexpected: false,
+    });
+  });
+
+  it('answers a paused account with 403 and a CORS grant, so the tracker reads it and drops the batch', () => {
+    expect(
+      toErrorAnswer(
+        new QuotaExceededError(new Date('2026-11-01T00:00:00.000Z'), 'https://shop.example.com'),
+      ),
+    ).toEqual({
+      body: { status_code: 403, error: 'quota_exceeded', message: expect.any(String) as string },
+      headers: { 'access-control-allow-origin': 'https://shop.example.com', vary: 'Origin' },
       unexpected: false,
     });
   });
