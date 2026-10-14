@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiOperation,
@@ -21,7 +21,7 @@ import {
   type VisitsReport,
 } from '../../../domain/queries/visits';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
-import { SessionGuard } from '../auth/auth.guards';
+import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
@@ -88,7 +88,7 @@ function visitsBody(report: VisitsReport): VisitsReportBody {
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
 @Controller('v1/projects/:projectId')
-@UseGuards(SessionGuard, ProjectAccessGuard)
+@ReadAccess(ProjectAccessGuard)
 export class VisitsController {
   constructor(private readonly getVisits: GetVisitsUseCase) {}
 

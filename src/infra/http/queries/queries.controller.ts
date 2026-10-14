@@ -1,12 +1,4 @@
-import {
-  applyDecorators,
-  Controller,
-  Get,
-  HttpStatus,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { applyDecorators, Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiOperation,
@@ -29,7 +21,7 @@ import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.usecase';
 import { GetOverviewUseCase } from '../../../usecases/queries/get-overview.usecase';
-import { SessionGuard } from '../auth/auth.guards';
+import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
@@ -237,7 +229,7 @@ function timelineBody(report: TimelineReport): TimelineReportBody {
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
 @Controller('v1/projects/:projectId')
-@UseGuards(SessionGuard, ProjectAccessGuard)
+@ReadAccess(ProjectAccessGuard)
 export class QueriesController {
   constructor(
     private readonly getOverview: GetOverviewUseCase,

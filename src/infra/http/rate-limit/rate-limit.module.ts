@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import {
+  ACCESS_TOKEN_RATE_WINDOW_MS,
+  ACCESS_TOKEN_REQUESTS_PER_WINDOW,
+  ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
   CLIENT_BATCHES_PER_WINDOW,
   CLIENT_RATE_WINDOW_MS,
@@ -22,6 +25,11 @@ import {
           name: SUBJECTS_THROTTLER,
           ttl: SUBJECT_RATE_WINDOW_MS,
           limit: SUBJECT_REQUESTS_PER_WINDOW,
+        },
+        {
+          name: ACCESS_TOKENS_THROTTLER,
+          ttl: ACCESS_TOKEN_RATE_WINDOW_MS,
+          limit: ACCESS_TOKEN_REQUESTS_PER_WINDOW,
         },
       ],
       setHeaders: false,

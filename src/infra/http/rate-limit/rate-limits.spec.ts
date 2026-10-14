@@ -1,4 +1,7 @@
 import {
+  ACCESS_TOKEN_RATE_WINDOW_MS,
+  ACCESS_TOKEN_REQUESTS_PER_WINDOW,
+  ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
   CLIENT_BATCHES_PER_WINDOW,
   CLIENT_RATE_WINDOW_MS,
@@ -32,6 +35,18 @@ describe('rate limits', () => {
       SUBJECTS_THROTTLER: 'subjects',
       SUBJECT_REQUESTS_PER_WINDOW: 60,
       SUBJECT_RATE_WINDOW_MS: 60_000,
+    });
+  });
+
+  it('lets one access token read the dashboard routes sixty times a minute', () => {
+    expect({
+      ACCESS_TOKENS_THROTTLER,
+      ACCESS_TOKEN_REQUESTS_PER_WINDOW,
+      ACCESS_TOKEN_RATE_WINDOW_MS,
+    }).toEqual({
+      ACCESS_TOKENS_THROTTLER: 'access-tokens',
+      ACCESS_TOKEN_REQUESTS_PER_WINDOW: 60,
+      ACCESS_TOKEN_RATE_WINDOW_MS: 60_000,
     });
   });
 });

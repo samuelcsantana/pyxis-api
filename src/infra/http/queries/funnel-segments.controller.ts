@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import {
   ApiCookieAuth,
   ApiOperation,
@@ -10,7 +10,7 @@ import {
 import type { FastifyRequest } from 'fastify';
 import { FUNNEL_SEGMENT_DIMENSIONS } from '../../../domain/queries/funnel';
 import { GetFunnelSegmentsUseCase } from '../../../usecases/queries/get-funnel-segments.usecase';
-import { SessionGuard } from '../auth/auth.guards';
+import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
@@ -34,7 +34,7 @@ import { ApiRange } from './queries.controller';
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
 @Controller('v1/projects/:projectId')
-@UseGuards(SessionGuard, ProjectAccessGuard)
+@ReadAccess(ProjectAccessGuard)
 export class FunnelSegmentsController {
   constructor(private readonly getFunnelSegments: GetFunnelSegmentsUseCase) {}
 

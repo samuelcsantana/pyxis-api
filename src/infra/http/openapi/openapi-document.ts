@@ -1,5 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
+import { ACCESS_TOKEN_SECURITY } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { jsonSchemaConverter } from './json-schema-converter';
 
@@ -11,6 +12,14 @@ const SECRET_KEY_BEARER = {
   scheme: 'bearer',
   bearerFormat: 'opaque',
   description: 'A secret project key: pyxis_sk_ followed by 32 letters and digits',
+} as const;
+
+const ACCESS_TOKEN_BEARER = {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'opaque',
+  description:
+    'A read-only access token for the dashboard queries: pyxis_at_ followed by 32 letters and digits',
 } as const;
 
 const SESSION_COOKIE_SCHEME = {
@@ -32,6 +41,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setLicense('MIT', 'https://github.com/samuelcsantana/pyxis-api/blob/main/LICENSE')
     .addCookieAuth(SESSION_COOKIE_NAME, SESSION_COOKIE_SCHEME, SESSION_COOKIE_NAME)
     .addBearerAuth(SECRET_KEY_BEARER, 'secret_key')
+    .addBearerAuth(ACCESS_TOKEN_BEARER, ACCESS_TOKEN_SECURITY)
     .build();
   return SwaggerModule.createDocument(app, config, { standardSchemaConverter: jsonSchemaConverter });
 }

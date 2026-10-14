@@ -23,6 +23,8 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['invalid_code', HttpStatus.BAD_REQUEST],
   ['unauthenticated', HttpStatus.UNAUTHORIZED],
   ['session_not_found', HttpStatus.NOT_FOUND],
+  ['access_token_not_found', HttpStatus.NOT_FOUND],
+  ['too_many_access_tokens', HttpStatus.CONFLICT],
   ['invalid_range', HttpStatus.BAD_REQUEST],
   ['invalid_cursor', HttpStatus.BAD_REQUEST],
   ['project_not_found', HttpStatus.NOT_FOUND],

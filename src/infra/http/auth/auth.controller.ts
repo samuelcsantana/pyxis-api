@@ -26,10 +26,15 @@ import {
 } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import { INGEST_THROTTLER, SUBJECTS_THROTTLER } from '../rate-limit/rate-limits';
+import {
+  ACCESS_TOKENS_THROTTLER,
+  INGEST_THROTTLER,
+  SUBJECTS_THROTTLER,
+} from '../rate-limit/rate-limits';
 import { singleHeader } from '../request-headers';
 import { SchemaPipe } from '../schema-pipe';
 import { adminOf, DashboardOriginGuard, SessionGuard, sessionOf } from './auth.guards';
+import { ReadAccess } from './read-access.decorator';
 import {
   type MeBody,
   meSchema,
@@ -57,7 +62,11 @@ function clientOf(request: FastifyRequest): SignInClient {
 
 @ApiTags('dashboard sign-in')
 @Controller('v1/auth')
-@SkipThrottle({ [INGEST_THROTTLER]: true, [SUBJECTS_THROTTLER]: true })
+@SkipThrottle({
+  [INGEST_THROTTLER]: true,
+  [SUBJECTS_THROTTLER]: true,
+  [ACCESS_TOKENS_THROTTLER]: true,
+})
 export class AuthController {
   constructor(
     private readonly requestSignInCode: RequestSignInCodeUseCase,
@@ -166,7 +175,7 @@ export class MeController {
   ) {}
 
   @Get()
-  @UseGuards(SessionGuard)
+  @ReadAccess()
   @ApiOperation({ summary: 'The signed-in admin and their projects' })
   @ApiCookieAuth(SESSION_COOKIE_NAME)
   @ApiResponse({ status: HttpStatus.OK, standardSchema: meSchema })

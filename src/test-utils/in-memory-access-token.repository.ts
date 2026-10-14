@@ -16,7 +16,7 @@ export class InMemoryAccessTokenRepository implements AccessTokenRepository {
 
   create(input: NewAccessToken): Promise<AccessToken> {
     const token: AccessToken = {
-      id: `00000000-0000-4000-d000-${String(this.stored.length + 1).padStart(12, '0')}`,
+      id: `00000000-0000-4000-9000-${String(this.stored.length + 1).padStart(12, '0')}`,
       adminUserId: input.adminUserId,
       name: input.name,
       createdAt: input.createdAt,
