@@ -84,7 +84,8 @@ Shipping now:
   Table layout with inline styles for every client, light and dark through `color-scheme` and
   `prefers-color-scheme`, `lang` and presentation-only tables for screen readers; every value
   HTML-escaped, no tracking pixel and no tracked links. Its only image is the dashboard's PNG
-  logo (`https://app.pyxis-analytics.dev/email/pyxis-logo.png`), and its words live in a typed
+  logo (`/email/pyxis-logo.png` on `DASHBOARD_ORIGIN`, which every link in the e-mails points
+  at too), and its words live in a typed
   message table in English, Brazilian Portuguese and Spanish. The dashboard sends its own
   language as an optional `locale` in `POST /v1/auth/request-code`
   (`{"email":…,"locale":"pt-BR"}`), matched on the language (`pt-PT` gets pt-BR, `es-MX` gets
@@ -280,18 +281,18 @@ DATABASE_URL=postgres://pyxis_app:pyxis_app@localhost:5446/pyxis npm start
 
 Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.schema.ts)):
 
-| Variable                 | Default                               | Meaning                                                                                                                                                         |
-| ------------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                   | `3040`                                | HTTP port                                                                                                                                                       |
-| `NODE_ENV`               | `development`                         | `development`, `production` or `test`                                                                                                                           |
-| `SWAGGER_ENABLED`        | unset                                 | `true`/`false`; unset means on everywhere except production                                                                                                     |
-| `DATABASE_URL`           | required                              | The API's connection, as the application role                                                                                                                   |
-| `MIGRATION_DATABASE_URL` | unset                                 | The owner's connection, used only by `npm run db:migrate`                                                                                                       |
-| `APP_DB_ROLE`            | unset                                 | The role granted row access after each migration (`pyxis_app`)                                                                                                  |
-| `CLIENT_IP_HEADER`       | unset                                 | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address |
-| `DASHBOARD_ORIGIN`       | unset; required in production         | The only origin allowed to call the sign-in routes from a browser; unset refuses them all                                                                       |
-| `RESEND_API_KEY`         | unset; required in production         | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                               |
-| `MAIL_FROM`              | `Pyxis <noreply@pyxis-analytics.dev>` | Sender of the sign-in and weekly digest emails; its domain must be verified in Resend                                                                           |
+| Variable                 | Default                               | Meaning                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`                   | `3040`                                | HTTP port                                                                                                                                                                                        |
+| `NODE_ENV`               | `development`                         | `development`, `production` or `test`                                                                                                                                                            |
+| `SWAGGER_ENABLED`        | unset                                 | `true`/`false`; unset means on everywhere except production                                                                                                                                      |
+| `DATABASE_URL`           | required                              | The API's connection, as the application role                                                                                                                                                    |
+| `MIGRATION_DATABASE_URL` | unset                                 | The owner's connection, used only by `npm run db:migrate`                                                                                                                                        |
+| `APP_DB_ROLE`            | unset                                 | The role granted row access after each migration (`pyxis_app`)                                                                                                                                   |
+| `CLIENT_IP_HEADER`       | unset                                 | A header the edge overwrites with the client address, for the per-address limit (`cloudfront-viewer-address` behind CloudFront); unset means the socket address                                  |
+| `DASHBOARD_ORIGIN`       | unset; required in production         | The only origin allowed to call the sign-in routes from a browser (unset refuses them all), and the base of every link and of the logo in the e-mails; required wherever `RESEND_API_KEY` is set |
+| `RESEND_API_KEY`         | unset; required in production         | Sends the sign-in codes; without it, outside production, codes are logged instead                                                                                                                |
+| `MAIL_FROM`              | `Pyxis <noreply@pyxis-analytics.dev>` | Sender of the sign-in and weekly digest emails; its domain must be verified in Resend                                                                                                            |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.

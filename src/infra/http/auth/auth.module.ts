@@ -56,6 +56,7 @@ import { DashboardOriginGuard, SessionGuard } from './auth.guards';
           NODE_ENV: config.get('NODE_ENV', { infer: true }),
           RESEND_API_KEY: config.get('RESEND_API_KEY', { infer: true }),
           MAIL_FROM: config.get('MAIL_FROM', { infer: true }),
+          DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
         }),
     },
   ],

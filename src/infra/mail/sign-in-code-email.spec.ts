@@ -1,7 +1,9 @@
 import { EMAIL_LANGUAGES } from '../../domain/auth/email-language';
-import { DASHBOARD_URL, EMAIL_LOGO_2X_URL, EMAIL_LOGO_URL, TEXT_LINE_WIDTH } from './email-layout';
+import { emailLinksFor, TEXT_LINE_WIDTH } from './email-layout';
 import { buildSignInCodeEmail, renderSignInCodeEmail } from './sign-in-code-email';
 import type { SignInCodeEmailMessages } from './sign-in-code-email-messages';
+
+const LINKS = emailLinksFor('https://dashboard.example.com');
 
 const CODE = '123456';
 const HTML_LINE_LIMIT = 400;
@@ -34,7 +36,7 @@ function occurrences(content: string, fragment: string): number {
 }
 
 describe('buildSignInCodeEmail in English', () => {
-  const email = buildSignInCodeEmail(CODE, 'en');
+  const email = buildSignInCodeEmail(CODE, 'en', LINKS);
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 is your Pyxis sign-in code');
@@ -57,7 +59,7 @@ describe('buildSignInCodeEmail in English', () => {
       expect(part).toContain('Pyxis is privacy-first product analytics');
       expect(part).toContain('You received this email because a sign-in');
     }
-    expect(email.text).toContain(`Dashboard: ${DASHBOARD_URL}`);
+    expect(email.text).toContain(`Dashboard: ${LINKS.dashboardUrl}`);
   });
 
   it('declares English as its language', () => {
@@ -66,7 +68,7 @@ describe('buildSignInCodeEmail in English', () => {
 });
 
 describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
-  const email = buildSignInCodeEmail(CODE, 'pt-BR');
+  const email = buildSignInCodeEmail(CODE, 'pt-BR', LINKS);
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 é o seu código para entrar no Pyxis');
@@ -96,7 +98,7 @@ describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
       expect(part).toContain('O Pyxis é uma ferramenta de análise de produto');
       expect(part).toContain('Você recebeu este e-mail porque alguém pediu para entrar');
     }
-    expect(email.text).toContain(`Painel: ${DASHBOARD_URL}`);
+    expect(email.text).toContain(`Painel: ${LINKS.dashboardUrl}`);
   });
 
   it('declares Brazilian Portuguese as its language', () => {
@@ -105,7 +107,7 @@ describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
 });
 
 describe('buildSignInCodeEmail in Spanish', () => {
-  const email = buildSignInCodeEmail(CODE, 'es');
+  const email = buildSignInCodeEmail(CODE, 'es', LINKS);
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 es tu código para iniciar sesión en Pyxis');
@@ -133,7 +135,7 @@ describe('buildSignInCodeEmail in Spanish', () => {
       expect(part).toContain('Pyxis es analítica de producto que prioriza la privacidad');
       expect(part).toContain('Recibiste este correo porque alguien pidió iniciar sesión');
     }
-    expect(email.text).toContain(`Panel: ${DASHBOARD_URL}`);
+    expect(email.text).toContain(`Panel: ${LINKS.dashboardUrl}`);
   });
 
   it('declares Spanish as its language', () => {
@@ -142,7 +144,7 @@ describe('buildSignInCodeEmail in Spanish', () => {
 });
 
 describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
-  const email = buildSignInCodeEmail(CODE, language);
+  const email = buildSignInCodeEmail(CODE, language, LINKS);
 
   it('puts the code in the HTML and on a line of its own in the plain text', () => {
     expect(email.html).toContain('>123456</td>');
@@ -156,15 +158,15 @@ describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
   it('loads no image but the logo, sized and described for clients that block it', () => {
     expect(occurrences(email.html, '<img')).toBe(1);
     expect(email.html).toContain(
-      `<img src="${EMAIL_LOGO_URL}" srcset="${EMAIL_LOGO_2X_URL} 2x" width="40" height="40" alt="Pyxis"`,
+      `<img src="${LINKS.logoUrl}" srcset="${LINKS.logo2xUrl} 2x" width="40" height="40" alt="Pyxis"`,
     );
   });
 
   it('links only to the dashboard, with no tracking parameters', () => {
     const links = [...email.html.matchAll(/href="([^"]*)"/g)].map(([, href]) => href);
 
-    expect(links).toEqual([DASHBOARD_URL]);
-    expect(DASHBOARD_URL).not.toContain('?');
+    expect(links).toEqual([LINKS.dashboardUrl]);
+    expect(LINKS.dashboardUrl).not.toContain('?');
   });
 
   it('carries its styles inline and in its head, never from another file', () => {
@@ -196,16 +198,31 @@ describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
 
 describe('renderSignInCodeEmail', () => {
   it('escapes the code and every message before they reach the HTML', () => {
-    const { html } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES);
+    const { html } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES, LINKS);
 
     expect(html).not.toContain('<i>');
     expect(occurrences(html, ESCAPED_HOSTILE)).toBe(HTML_SLOTS_IN_HOSTILE_MESSAGES);
   });
 
   it('leaves the plain text as written, since no client reads it as markup', () => {
-    const { subject, text } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES);
+    const { subject, text } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES, LINKS);
 
     expect(subject).toBe(HOSTILE);
     expect(text).toContain(`    ${HOSTILE}`);
+  });
+});
+
+describe('buildSignInCodeEmail for another dashboard', () => {
+  const elsewhere = 'https://pyxis.example.org:8443';
+  const email = buildSignInCodeEmail(CODE, 'en', emailLinksFor(elsewhere));
+
+  it('links to the dashboard it is given, named by its host', () => {
+    expect(email.html).toContain(`href="${elsewhere}/"`);
+    expect(email.html).toContain('>pyxis.example.org:8443</a>');
+    expect(email.text).toContain(`Dashboard: ${elsewhere}/`);
+  });
+
+  it('loads its logo from that dashboard', () => {
+    expect(email.html).toContain(`<img src="${elsewhere}/email/pyxis-logo.png"`);
   });
 });

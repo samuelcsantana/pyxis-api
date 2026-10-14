@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import { createMailSender } from './create-mail-sender';
+import { emailLinksFor } from './email-layout';
 import { LoggingMailSender } from './logging-mail-sender';
 import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
 import { buildSignInCodeEmail } from './sign-in-code-email';
@@ -8,6 +9,8 @@ import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
 const FROM = 'Pyxis <noreply@pyxis-analytics.dev>';
 const API_KEY = 'test-api-key';
+const DASHBOARD_ORIGIN = 'https://dashboard.example.com';
+const LINKS = emailLinksFor(DASHBOARD_ORIGIN);
 const DIGEST: WeeklyDigest = {
   projectId: 'd2e07854-0000-4000-8000-000000000001',
   projectName: 'Acme Store',
@@ -30,7 +33,7 @@ describe('ResendMailSender', () => {
       Promise.resolve(new Response('{"id":"email-1"}', { status: 200 })),
     );
 
-    await new ResendMailSender(API_KEY, FROM, send).sendSignInCode(
+    await new ResendMailSender(API_KEY, FROM, LINKS, send).sendSignInCode(
       'ana@example.com',
       '123456',
       'pt-BR',
@@ -46,7 +49,7 @@ describe('ResendMailSender', () => {
     expect(JSON.parse(init?.body as string)).toEqual({
       from: FROM,
       to: 'ana@example.com',
-      ...buildSignInCodeEmail('123456', 'pt-BR'),
+      ...buildSignInCodeEmail('123456', 'pt-BR', LINKS),
     });
   });
 
@@ -55,7 +58,7 @@ describe('ResendMailSender', () => {
       Promise.resolve(new Response('{"id":"email-2"}', { status: 200 })),
     );
 
-    await new ResendMailSender(API_KEY, FROM, send).sendWeeklyDigest(
+    await new ResendMailSender(API_KEY, FROM, LINKS, send).sendWeeklyDigest(
       'ana@example.com',
       DIGEST,
       'pt-BR',
@@ -66,7 +69,7 @@ describe('ResendMailSender', () => {
     expect(JSON.parse(init?.body as string)).toEqual({
       from: FROM,
       to: 'ana@example.com',
-      ...buildWeeklyDigestEmail(DIGEST, 'pt-BR'),
+      ...buildWeeklyDigestEmail(DIGEST, 'pt-BR', LINKS),
     });
   });
 
@@ -75,12 +78,16 @@ describe('ResendMailSender', () => {
       Promise.resolve(new Response('{"message":"ana@example.com is invalid"}', { status: 422 }));
 
     await expect(
-      new ResendMailSender(API_KEY, FROM, send).sendSignInCode('ana@example.com', '123456', 'en'),
+      new ResendMailSender(API_KEY, FROM, LINKS, send).sendSignInCode(
+        'ana@example.com',
+        '123456',
+        'en',
+      ),
     ).rejects.toThrow(/^Resend answered 422$/);
   });
 
   it('uses the global fetch by default', () => {
-    expect(new ResendMailSender(API_KEY, FROM)).toBeInstanceOf(ResendMailSender);
+    expect(new ResendMailSender(API_KEY, FROM, LINKS)).toBeInstanceOf(ResendMailSender);
   });
 });
 
@@ -114,7 +121,7 @@ describe('LoggingMailSender', () => {
         projectId: DIGEST.projectId,
         week: DIGEST.week,
         language: 'en',
-        subject: buildWeeklyDigestEmail(DIGEST, 'en').subject,
+        subject: buildWeeklyDigestEmail(DIGEST, 'en', LINKS).subject,
       },
     ]);
     expect(JSON.stringify(logs)).not.toContain('ana@example.com');
@@ -124,19 +131,45 @@ describe('LoggingMailSender', () => {
 describe('createMailSender', () => {
   it('sends through Resend whenever a key is configured', () => {
     expect(
-      createMailSender({ NODE_ENV: 'production', RESEND_API_KEY: API_KEY, MAIL_FROM: FROM }),
+      createMailSender({
+        NODE_ENV: 'production',
+        RESEND_API_KEY: API_KEY,
+        MAIL_FROM: FROM,
+        DASHBOARD_ORIGIN,
+      }),
     ).toBeInstanceOf(ResendMailSender);
   });
 
   it('logs codes only outside production', () => {
     expect(
-      createMailSender({ NODE_ENV: 'development', RESEND_API_KEY: undefined, MAIL_FROM: FROM }),
+      createMailSender({
+        NODE_ENV: 'development',
+        RESEND_API_KEY: undefined,
+        MAIL_FROM: FROM,
+        DASHBOARD_ORIGIN,
+      }),
     ).toBeInstanceOf(LoggingMailSender);
+  });
+
+  it('refuses to send e-mails without the dashboard their links and logo point at', () => {
+    expect(() =>
+      createMailSender({
+        NODE_ENV: 'production',
+        RESEND_API_KEY: API_KEY,
+        MAIL_FROM: FROM,
+        DASHBOARD_ORIGIN: undefined,
+      }),
+    ).toThrow('DASHBOARD_ORIGIN is required to send e-mails');
   });
 
   it('refuses to start in production without a key', () => {
     expect(() =>
-      createMailSender({ NODE_ENV: 'production', RESEND_API_KEY: undefined, MAIL_FROM: FROM }),
+      createMailSender({
+        NODE_ENV: 'production',
+        RESEND_API_KEY: undefined,
+        MAIL_FROM: FROM,
+        DASHBOARD_ORIGIN,
+      }),
     ).toThrow('RESEND_API_KEY is required in production');
   });
 });

@@ -2,7 +2,7 @@ import { Logger } from '@nestjs/common';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { MailSender } from '../../domain/services/mail-sender';
-import { buildWeeklyDigestEmail } from './weekly-digest-email';
+import { weeklyDigestSubject } from './weekly-digest-email';
 
 export class LoggingMailSender implements MailSender {
   private readonly logger = new Logger('LocalMail');
@@ -18,7 +18,7 @@ export class LoggingMailSender implements MailSender {
       projectId: digest.projectId,
       week: digest.week,
       language,
-      subject: buildWeeklyDigestEmail(digest, language).subject,
+      subject: weeklyDigestSubject(digest, language),
     });
     return Promise.resolve();
   }

@@ -1,7 +1,7 @@
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { MailSender } from '../../domain/services/mail-sender';
-import type { EmailContent } from './email-layout';
+import type { EmailContent, EmailLinks } from './email-layout';
 import { buildSignInCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
@@ -14,15 +14,16 @@ export class ResendMailSender implements MailSender {
   constructor(
     private readonly apiKey: string,
     private readonly from: string,
+    private readonly links: EmailLinks,
     private readonly send: FetchLike = fetch,
   ) {}
 
   sendSignInCode(email: string, code: string, language: EmailLanguage): Promise<void> {
-    return this.deliver(email, buildSignInCodeEmail(code, language));
+    return this.deliver(email, buildSignInCodeEmail(code, language, this.links));
   }
 
   sendWeeklyDigest(email: string, digest: WeeklyDigest, language: EmailLanguage): Promise<void> {
-    return this.deliver(email, buildWeeklyDigestEmail(digest, language));
+    return this.deliver(email, buildWeeklyDigestEmail(digest, language, this.links));
   }
 
   private async deliver(email: string, content: EmailContent): Promise<void> {
