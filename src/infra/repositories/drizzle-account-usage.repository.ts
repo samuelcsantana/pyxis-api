@@ -9,6 +9,7 @@ import type {
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { accountUsageMonths, accounts } from '../database/schema/accounts';
+import { adminUsers } from '../database/schema/admins';
 import { events } from '../database/schema/events';
 import { projects } from '../database/schema/projects';
 
@@ -16,10 +17,22 @@ import { projects } from '../database/schema/projects';
 export class DrizzleAccountUsageRepository implements AccountUsageRepository {
   constructor(@Inject(DRIZZLE_CLIENT) private readonly db: DrizzleDatabase) {}
 
-  async measure(from: Date, to: Date): Promise<readonly AccountMonthUsage[]> {
+  async measure(month: string, from: Date, to: Date): Promise<readonly AccountMonthUsage[]> {
     const rows = await this.db
-      .select({ accountId: accounts.id, status: accounts.status, events: count(events.id) })
+      .select({
+        accountId: accounts.id,
+        status: accounts.status,
+        events: count(events.id),
+        ownerEmail: adminUsers.email,
+        ownerLanguage: adminUsers.emailLanguage,
+        notifiedLevel: sql<number>`coalesce(${accountUsageMonths.notifiedLevel}, 0)`,
+      })
       .from(accounts)
+      .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
+      .leftJoin(
+        accountUsageMonths,
+        and(eq(accountUsageMonths.accountId, accounts.id), eq(accountUsageMonths.month, month)),
+      )
       .leftJoin(projects, eq(projects.accountId, accounts.id))
       .leftJoin(
         events,
@@ -29,9 +42,19 @@ export class DrizzleAccountUsageRepository implements AccountUsageRepository {
           lt(events.occurredAt, to),
         ),
       )
-      .groupBy(accounts.id)
+      .groupBy(accounts.id, adminUsers.id, accountUsageMonths.accountId, accountUsageMonths.month)
       .orderBy(asc(accounts.createdAt), asc(accounts.id));
-    return rows;
+    return rows.map(({ ownerEmail, ownerLanguage, ...usage }) => ({
+      ...usage,
+      owner: { email: ownerEmail, language: ownerLanguage },
+    }));
+  }
+
+  async markNotified(accountId: string, month: string, level: number): Promise<void> {
+    await this.db
+      .update(accountUsageMonths)
+      .set({ notifiedLevel: level })
+      .where(and(eq(accountUsageMonths.accountId, accountId), eq(accountUsageMonths.month, month)));
   }
 
   async record(month: string, entries: readonly AccountUsageEntry[], at: Date): Promise<void> {

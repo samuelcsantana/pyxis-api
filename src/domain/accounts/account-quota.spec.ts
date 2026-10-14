@@ -8,7 +8,13 @@ import {
 const MONTH_END = new Date('2026-11-01T00:00:00.000Z');
 
 function usage(events: number, status: AccountMonthUsage['status'] = 'active'): AccountMonthUsage {
-  return { accountId: 'acc00000-0000-4000-a000-000000000001', status, events };
+  return {
+    accountId: 'acc00000-0000-4000-a000-000000000001',
+    status,
+    events,
+    owner: { email: 'owner@example.com', language: 'en' },
+    notifiedLevel: 0,
+  };
 }
 
 describe('ingestionPauseFor', () => {

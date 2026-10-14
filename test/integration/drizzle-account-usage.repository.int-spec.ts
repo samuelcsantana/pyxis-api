@@ -64,7 +64,10 @@ describe('account usage and ingestion pauses against a real Postgres', () => {
 
   beforeEach(async () => {
     await emptyIngestionTables(owner);
-    await owner`INSERT INTO admin_users (id, email) VALUES (${OWNER_ID}, 'owner@example.com')`;
+    await owner`
+      INSERT INTO admin_users (id, email, email_language)
+      VALUES (${OWNER_ID}, 'owner@example.com', 'pt-BR')
+    `;
     await owner`
       INSERT INTO accounts (id, owner_admin_id, status, created_at)
       VALUES (${BUSY_ID}, ${OWNER_ID}, 'active', '2026-10-01T00:00:00Z'),
@@ -91,9 +94,48 @@ describe('account usage and ingestion pauses against a real Postgres', () => {
   });
 
   it("counts each account's events in the month across its projects, oldest account first", async () => {
-    expect(await usage.measure(OCTOBER.from, OCTOBER.to)).toEqual([
-      { accountId: BUSY_ID, status: 'active', events: 3 },
-      { accountId: QUIET_ID, status: 'comped', events: 0 },
+    expect(await usage.measure('2026-10', OCTOBER.from, OCTOBER.to)).toEqual([
+      {
+        accountId: BUSY_ID,
+        status: 'active',
+        events: 3,
+        owner: { email: 'owner@example.com', language: 'pt-BR' },
+        notifiedLevel: 0,
+      },
+      {
+        accountId: QUIET_ID,
+        status: 'comped',
+        events: 0,
+        owner: { email: 'owner@example.com', language: 'pt-BR' },
+        notifiedLevel: 0,
+      },
+    ]);
+  });
+
+  it('remembers the level already told for the month, and only for that month', async () => {
+    await usage.record(
+      '2026-10',
+      [{ accountId: BUSY_ID, events: 3, ingestionPausedUntil: null }],
+      MEASURED_AT,
+    );
+    await usage.markNotified(BUSY_ID, '2026-10', 80);
+    await usage.record(
+      '2026-10',
+      [{ accountId: BUSY_ID, events: 4, ingestionPausedUntil: null }],
+      MEASURED_AT,
+    );
+
+    const october = await usage.measure('2026-10', OCTOBER.from, OCTOBER.to);
+    const november = await usage.measure(
+      '2026-11',
+      NOVEMBER_FIRST,
+      new Date('2026-12-01T00:00:00.000Z'),
+    );
+
+    expect(october.map(({ notifiedLevel }) => notifiedLevel)).toEqual([80, 0]);
+    expect(november.map(({ notifiedLevel, events }) => [notifiedLevel, events])).toEqual([
+      [0, 1],
+      [0, 0],
     ]);
   });
 

@@ -13,8 +13,9 @@ export interface RecordedUsage {
 }
 
 export interface AccountUsageRepository {
-  measure(from: Date, to: Date): Promise<readonly AccountMonthUsage[]>;
+  measure(month: string, from: Date, to: Date): Promise<readonly AccountMonthUsage[]>;
   record(month: string, entries: readonly AccountUsageEntry[], at: Date): Promise<void>;
+  markNotified(accountId: string, month: string, level: number): Promise<void>;
   recordedFor(accountId: string, month: string): Promise<RecordedUsage | null>;
 }
 
