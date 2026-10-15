@@ -23,6 +23,8 @@ import {
   PersonNotFoundError,
 } from '../../../domain/errors/people.errors';
 import {
+  AccountEndedError,
+  ConfirmationMismatchError,
   ProjectLimitReachedError,
   SubscriptionRequiredError,
 } from '../../../domain/errors/account.errors';
@@ -88,6 +90,8 @@ describe('toErrorAnswer', () => {
     [new PersonNotFoundError(), 404, 'person_not_found'],
     [new ExportLimitReachedError(3), 429, 'export_limit_reached'],
     [new ExportNotFoundError(), 404, 'export_not_found'],
+    [new AccountEndedError(), 409, 'account_ended'],
+    [new ConfirmationMismatchError(), 409, 'confirmation_mismatch'],
     [new ExportsUnavailableError('EXPORT_BUCKET is not set'), 503, 'exports_unavailable'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
