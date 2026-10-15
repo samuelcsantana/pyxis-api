@@ -42,3 +42,13 @@ export async function changeableProject(
   requireAccess(owned.account);
   return owned;
 }
+
+export async function ownerOfProject(
+  projects: ProjectSettingsRepository,
+  accounts: AccountRepository,
+  projectId: string,
+): Promise<string | null> {
+  const accountId = await projects.accountIdOf(projectId);
+  const account = accountId === null ? null : await accounts.findById(accountId);
+  return account?.ownerAdminId ?? null;
+}
