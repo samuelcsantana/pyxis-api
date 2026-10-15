@@ -216,6 +216,9 @@ Shipping now:
   revoked when access ends, the owner told and reminded by e-mail, everything deleted thirty days
   later (events in batches), and sign-ups that never subscribed removed after seven days; each step
   once, recorded on the account ([ADR 0022](docs/adr/0022-an-account-ends-in-steps.md))
+- People left without any project and without an account of their own, deleted by the daily job
+  thirty days after it first finds them alone, with their sessions and tokens; getting a project
+  back clears the count ([ADR 0031](docs/adr/0031-people-without-a-project-are-deleted.md))
 - The welcome e-mail, sent by the webhook as soon as an account gains access (the trial end, the
   first step, the version and address of the terms accepted), with the daily job sending it to any
   signed-up account the webhook could not welcome
@@ -616,6 +619,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md) | The operator closes an account with a chosen refund                        |
 | [0029](docs/adr/0029-a-deletion-can-be-held.md)                              | A deletion can be held for a dispute or a legal order                      |
 | [0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md)          | The operator can stop a person and a token                                 |
+| [0031](docs/adr/0031-people-without-a-project-are-deleted.md)                | People left without a project are deleted after thirty days                |
 
 ## Roadmap
 
