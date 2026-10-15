@@ -108,6 +108,8 @@ function accountOf(overrides: Partial<Account> & Pick<Account, 'ownerAdminId'>):
     trialEndsAt: null,
     currentPeriodEndsAt: null,
     accessEndsAt: null,
+    suspendedAt: null,
+    suspensionReason: null,
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
     ...overrides,
   };
