@@ -74,9 +74,16 @@ function copyOf(
     ...shared,
     percent: format.percent(notice.percent),
     measuredOn: format.day(notice.measuredAt),
-    pauseAtEvents: format.count(notice.pauseAtEvents),
-    pauseUntil: format.day(notice.pauseUntil),
   };
+  const pause =
+    notice.pause === null
+      ? []
+      : [
+          messages.warningPause({
+            pauseAtEvents: format.count(notice.pause.atEvents),
+            pauseUntil: format.day(notice.pause.until),
+          }),
+        ];
   return {
     subject: messages.warningSubject(words),
     preheader: messages.warningPreheader(words),
@@ -84,7 +91,7 @@ function copyOf(
     paragraphs: [
       messages.warningCount(words),
       messages.warningCarriesOn[notice.percent],
-      messages.warningPause(words),
+      ...pause,
       ...support,
     ],
   };

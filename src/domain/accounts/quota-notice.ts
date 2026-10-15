@@ -1,4 +1,8 @@
-import { type AccountMonthUsage, INGESTION_PAUSE_THRESHOLD } from './account-quota';
+import {
+  type AccountMonthUsage,
+  INGESTION_PAUSE_THRESHOLD,
+  isPauseExemptAt,
+} from './account-quota';
 import { HOSTED_PLAN_LIMITS } from './hosted-plan';
 
 export const QUOTA_WARNING_PERCENTS = [80, 100] as const;
@@ -16,12 +20,16 @@ export interface QuotaFigures {
   readonly measuredAt: Date;
 }
 
+export interface QuotaPause {
+  readonly atEvents: number;
+  readonly until: Date;
+}
+
 export type QuotaNotice =
   | (QuotaFigures & {
       readonly kind: 'quota_warning';
       readonly percent: QuotaWarningPercent;
-      readonly pauseAtEvents: number;
-      readonly pauseUntil: Date;
+      readonly pause: QuotaPause | null;
     })
   | (QuotaFigures & { readonly kind: 'quota_paused'; readonly resumesAt: Date });
 
@@ -61,7 +69,9 @@ export function quotaNoticeDue(
   if (usage.status === 'comped') {
     return null;
   }
-  const level = quotaLevelOf(usage.events);
+  const exempt = isPauseExemptAt(usage.pauseExemptUntil, context.measuredAt);
+  const reached = quotaLevelOf(usage.events);
+  const level = exempt && reached === QUOTA_PAUSED_LEVEL ? QUOTA_WARNING_PERCENTS[1] : reached;
   if (level === NOT_NOTIFIED || level <= context.notifiedLevel) {
     return null;
   }
@@ -80,8 +90,7 @@ export function quotaNoticeDue(
       ...figures,
       kind: 'quota_warning',
       percent: level,
-      pauseAtEvents: INGESTION_PAUSE_THRESHOLD,
-      pauseUntil: context.monthEnd,
+      pause: exempt ? null : { atEvents: INGESTION_PAUSE_THRESHOLD, until: context.monthEnd },
     },
   };
 }

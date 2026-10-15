@@ -13,12 +13,21 @@ export interface AccountMonthUsage {
   readonly events: number;
   readonly owner: AccountOwnerContact;
   readonly notifiedLevel: number;
+  readonly pauseExemptUntil: Date | null;
 }
 
 export const INGESTION_PAUSE_THRESHOLD = HOSTED_PLAN_LIMITS.eventsPerMonth * INGESTION_PAUSE_RATIO;
 
-export function ingestionPauseFor(usage: AccountMonthUsage, monthEnd: Date): Date | null {
-  if (usage.status === 'comped') {
+export function isPauseExemptAt(exemptUntil: Date | null, moment: Date): boolean {
+  return exemptUntil !== null && exemptUntil.getTime() > moment.getTime();
+}
+
+export function ingestionPauseFor(
+  usage: AccountMonthUsage,
+  monthEnd: Date,
+  measuredAt: Date,
+): Date | null {
+  if (usage.status === 'comped' || isPauseExemptAt(usage.pauseExemptUntil, measuredAt)) {
     return null;
   }
   return usage.events >= INGESTION_PAUSE_THRESHOLD ? monthEnd : null;

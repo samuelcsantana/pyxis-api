@@ -31,7 +31,7 @@ export class MeasureAccountUsageUseCase {
     const entries = measured.map((usage) => ({
       accountId: usage.accountId,
       events: usage.events,
-      ingestionPausedUntil: ingestionPauseFor(usage, to),
+      ingestionPausedUntil: ingestionPauseFor(usage, to, now),
     }));
     await this.usage.record(month, entries, now);
     let notified = 0;

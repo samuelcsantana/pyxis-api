@@ -1,6 +1,7 @@
 import type { Account } from '../domain/entities/account.entity';
 import type { Project } from '../domain/entities/project.entity';
 import type { AccountDeletionHoldRepository } from '../domain/repositories/account-deletion-hold.repository';
+import type { AccountQuotaExemptionRepository } from '../domain/repositories/account-quota-exemption.repository';
 import type { AccountSuspensionRepository } from '../domain/repositories/account-suspension.repository';
 import type {
   AccountMembership,
@@ -20,7 +21,11 @@ export interface AccountMembers {
 const NO_MEMBERS: AccountMembers = { projects: [], people: 0 };
 
 export class InMemoryAccountRepository
-  implements AccountRepository, AccountSuspensionRepository, AccountDeletionHoldRepository
+  implements
+    AccountRepository,
+    AccountSuspensionRepository,
+    AccountDeletionHoldRepository,
+    AccountQuotaExemptionRepository
 {
   private readonly accounts = new Map<string, Account>();
   private readonly memberships = new Map<string, AccountMembers>();
@@ -54,6 +59,7 @@ export class InMemoryAccountRepository
       suspensionReason: null,
       deletionHeldAt: null,
       deletionHoldReason: null,
+      quotaPauseExemptUntil: null,
       id: `acc00000-0000-4000-a000-${String(this.accounts.size + 1).padStart(12, '0')}`,
       createdAt: CREATED_AT,
     };
@@ -79,6 +85,16 @@ export class InMemoryAccountRepository
     return Promise.resolve(
       this.change(accountId, { deletionHeldAt: null, deletionHoldReason: null }),
     );
+  }
+
+  exemptFromPause(accountId: string, until: Date): Promise<Account | null> {
+    return Promise.resolve(
+      this.change(accountId, { quotaPauseExemptUntil: until, ingestionPausedUntil: null }),
+    );
+  }
+
+  endPauseExemption(accountId: string): Promise<Account | null> {
+    return Promise.resolve(this.change(accountId, { quotaPauseExemptUntil: null }));
   }
 
   private change(accountId: string, changes: Partial<Account>): Account | null {

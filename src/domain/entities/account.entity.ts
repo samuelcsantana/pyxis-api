@@ -15,5 +15,6 @@ export interface Account {
   readonly suspensionReason: string | null;
   readonly deletionHeldAt: Date | null;
   readonly deletionHoldReason: string | null;
+  readonly quotaPauseExemptUntil: Date | null;
   readonly createdAt: Date;
 }

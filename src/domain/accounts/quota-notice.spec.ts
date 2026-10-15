@@ -15,6 +15,7 @@ function usage(events: number, status: AccountMonthUsage['status'] = 'active'): 
     events,
     owner: { email: 'owner@example.com', language: 'en' },
     notifiedLevel: 0,
+    pauseExemptUntil: null,
   };
 }
 
@@ -53,7 +54,25 @@ describe('quotaNoticeDue', () => {
     });
     expect(quotaNoticeDue(usage(120_000), { ...CONTEXT, notifiedLevel: 80 })).toMatchObject({
       level: 100,
-      notice: { kind: 'quota_warning', percent: 100, pauseAtEvents: 150_000 },
+      notice: {
+        kind: 'quota_warning',
+        percent: 100,
+        pause: { atEvents: 150_000, until: CONTEXT.monthEnd },
+      },
+    });
+  });
+
+  it('warns an exempt account at 100% with no word of a pause, even past 150%', () => {
+    const exempt = { ...usage(160_000), pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z') };
+
+    expect(quotaNoticeDue(exempt, CONTEXT)).toMatchObject({
+      level: 100,
+      notice: { kind: 'quota_warning', percent: 100, pause: null },
+    });
+    expect(quotaNoticeDue(exempt, { ...CONTEXT, notifiedLevel: 100 })).toBeNull();
+    expect(quotaNoticeDue({ ...exempt, events: 85_000 }, CONTEXT)).toMatchObject({
+      level: 80,
+      notice: { pause: null },
     });
   });
 });

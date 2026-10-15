@@ -3,6 +3,7 @@ import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-con
 import { CliUsageError } from '../cli-args';
 import { accountCloseCommand } from './account-close.command';
 import { accountCreateCommand } from './account-create.command';
+import { accountExemptQuotaCommand } from './account-exempt-quota.command';
 import { accountHoldCommand } from './account-hold.command';
 import { accountReleaseCommand } from './account-release.command';
 import { accountLinkCommand } from './account-link.command';
@@ -238,6 +239,7 @@ describe('account:show', () => {
       'people=2/3',
       'events_2026-10=not measured yet/100000',
       'ingestion_paused_until=',
+      'quota_pause_exempt_until=',
       'suspended_at=',
       'suspension_reason=',
       'deletion_held_at=',
@@ -269,11 +271,70 @@ describe('account:show', () => {
       'events_2026-10=151000/100000',
       'measured_at=2026-10-06T03:00:00.000Z',
       'ingestion_paused_until=2026-11-01T00:00:00.000Z',
+      'quota_pause_exempt_until=',
       'suspended_at=',
       'suspension_reason=',
       'deletion_held_at=',
       'deletion_hold_reason=',
     ]);
+  });
+});
+
+describe('account:exempt-quota', () => {
+  it('parses an account and either a day or --clear, refusing both, neither or a bad day', () => {
+    expect(
+      accountExemptQuotaCommand.parse(['--account', ACCOUNT_ID, '--until', '2027-01-15']),
+    ).toEqual({ accountId: ACCOUNT_ID, until: new Date('2027-01-15T00:00:00.000Z') });
+    expect(accountExemptQuotaCommand.parse(['--account', ACCOUNT_ID, '--clear'])).toEqual({
+      accountId: ACCOUNT_ID,
+      until: null,
+    });
+    for (const argv of [
+      ['--account', ACCOUNT_ID],
+      ['--account', ACCOUNT_ID, '--until', '2027-01-15', '--clear'],
+      ['--account', ACCOUNT_ID, '--until', '15/01/2027'],
+      ['--account', ACCOUNT_ID, '--until', '2027-02-30'],
+      ['--account', ACCOUNT_ID, '--until', '2027-13-01'],
+    ]) {
+      expect(() => accountExemptQuotaCommand.parse(argv)).toThrow(CliUsageError);
+    }
+  });
+
+  it('exempts the account until that day, lifting a pause, and ends the exemption', async () => {
+    const context = inMemoryCliContext();
+    const owner = await context.admins.findOrCreateByEmail('owner@example.com');
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'active' });
+    context.accounts.add({
+      ...account,
+      ingestionPausedUntil: new Date('2026-11-01T00:00:00.000Z'),
+    });
+    const exempted = captureOutput();
+
+    await accountExemptQuotaCommand.execute(
+      context,
+      { accountId: account.id, until: new Date('2027-01-15T00:00:00.000Z') },
+      exempted,
+    );
+
+    expect(exempted.out).toEqual([
+      `account_id=${account.id}`,
+      'quota_pause_exempt_until=2027-01-15T00:00:00.000Z',
+    ]);
+    expect((await context.accounts.findById(account.id))?.ingestionPausedUntil).toBeNull();
+    expect(exempted.err).toEqual([expect.stringContaining('Within a minute')]);
+    const shown = captureOutput();
+    await accountShowCommand.execute(context, { accountId: account.id }, shown);
+    expect(shown.out).toContain('quota_pause_exempt_until=2027-01-15T00:00:00.000Z');
+
+    const cleared = captureOutput();
+    await accountExemptQuotaCommand.execute(
+      context,
+      { accountId: account.id, until: null },
+      cleared,
+    );
+
+    expect(cleared.out).toEqual([`account_id=${account.id}`, 'quota_pause_exempt_until=']);
+    expect(cleared.err).toEqual([expect.stringContaining('next daily measurement')]);
   });
 });
 

@@ -80,6 +80,10 @@ export const myAccountsSchema = z
         current_period_ends_at: isoDate,
         access_ends_at: isoDate,
         ingestion_paused_until: isoDate,
+        quota_pause_exempt_until: isoDate.describe(
+          'Until when the operator exempts the account from the pause at 150% of the plan (a ' +
+            'customer of an earlier version of the terms, until its renewal); null when it is not.',
+        ),
         suspended_at: isoDate.describe(
           'Set while the operator suspended the account for abuse: its projects take no events ' +
             'and answer account_suspended in the dashboard until it is lifted.',

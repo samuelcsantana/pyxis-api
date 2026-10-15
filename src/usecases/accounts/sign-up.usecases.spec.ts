@@ -112,6 +112,7 @@ function accountOf(overrides: Partial<Account> & Pick<Account, 'ownerAdminId'>):
     suspensionReason: null,
     deletionHeldAt: null,
     deletionHoldReason: null,
+    quotaPauseExemptUntil: null,
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
     ...overrides,
   };

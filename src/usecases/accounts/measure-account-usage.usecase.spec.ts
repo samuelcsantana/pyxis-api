@@ -22,6 +22,7 @@ function usage(
     events,
     owner: { email: `${accountId.slice(-1)}@example.com`, language: 'pt-BR' },
     notifiedLevel: 0,
+    pauseExemptUntil: null,
     ...overrides,
   };
 }
@@ -95,13 +96,26 @@ describe('MeasureAccountUsageUseCase', () => {
           limit: 100_000,
           month: '2026-10',
           measuredAt: NOW,
-          pauseAtEvents: 150_000,
-          pauseUntil: NOVEMBER_FIRST,
+          pause: { atEvents: 150_000, until: NOVEMBER_FIRST },
         },
       },
     ]);
     expect(repository.notified.get(`${OVER}/2026-10`)).toBe(150);
     expect(repository.notified.get(`${NEAR}/2026-10`)).toBe(80);
+  });
+
+  it('neither pauses nor tells a pause to an account exempt from it past 150%', async () => {
+    const { repository, mail, useCase } = setup([
+      usage(OVER, 160_000, { pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z') }),
+    ]);
+
+    const report = await useCase.execute();
+
+    expect(report).toMatchObject({ paused: 0, notified: 1 });
+    expect(repository.pauseOf(OVER)).toBeNull();
+    expect(mail.quotaNotices.map(({ notice }) => notice)).toEqual([
+      expect.objectContaining({ kind: 'quota_warning', percent: 100, pause: null }),
+    ]);
   });
 
   it('tells the next level once the account climbs past it', async () => {

@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ADD COLUMN "quota_pause_exempt_until" timestamp with time zone;
