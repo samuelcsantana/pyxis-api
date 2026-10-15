@@ -4,6 +4,7 @@ import type {
   RetentionRepository,
 } from '../../domain/retention/retention.repository';
 import type { DrizzleDatabase } from '../database/drizzle.types';
+import { trialCards } from '../database/schema/accounts';
 import { adminSessions, otpCodes } from '../database/schema/admins';
 import { events } from '../database/schema/events';
 import { projects } from '../database/schema/projects';
@@ -43,6 +44,14 @@ export class DrizzleRetentionRepository implements RetentionRepository {
       DELETE FROM ${otpCodes}
       WHERE ${otpCodes.expiresAt} < ${now.toISOString()}::timestamptz
       RETURNING ${otpCodes.id}`);
+    return deleted.length;
+  }
+
+  async deleteTrialCardsStartedBefore(cutoff: Date): Promise<number> {
+    const deleted = await this.db.execute<{ fingerprint: string }>(sql`
+      DELETE FROM ${trialCards}
+      WHERE ${trialCards.trialStartedAt} < ${cutoff.toISOString()}::timestamptz
+      RETURNING ${trialCards.fingerprint}`);
     return deleted.length;
   }
 }

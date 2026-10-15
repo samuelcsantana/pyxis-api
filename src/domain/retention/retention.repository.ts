@@ -8,4 +8,5 @@ export interface RetentionRepository {
   deleteEventsBefore(projectId: string, cutoff: Date, limit: number): Promise<number>;
   deleteExpiredSessions(cutoffs: ExpiredSessionCutoffs): Promise<number>;
   deleteExpiredSignInCodes(now: Date): Promise<number>;
+  deleteTrialCardsStartedBefore(cutoff: Date): Promise<number>;
 }

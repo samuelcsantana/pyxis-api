@@ -84,6 +84,12 @@ describe('retention against a real Postgres', () => {
         ('ana@example.com', ${sha256Hex('1')}, ${NOW}, '2026-10-06T06:10:00Z'),
         ('ana@example.com', ${sha256Hex('2')}, '2026-10-05T00:00:00Z', '2026-10-05T00:10:00Z')
     `;
+    await owner`
+      INSERT INTO trial_cards (fingerprint, account_id, trial_started_at)
+      VALUES
+        ('fp_recent', 'f9f9f9f9-0000-4000-8000-000000000001', '2025-10-06T06:00:00Z'),
+        ('fp_old', 'f9f9f9f9-0000-4000-8000-000000000002', '2025-10-06T05:59:59.999Z')
+    `;
   });
 
   afterAll(async () => {
@@ -94,7 +100,7 @@ describe('retention against a real Postgres', () => {
   it('deletes, as the application role, exactly what is past its time', async () => {
     const report = await new RunRetentionUseCase(retention, new FixedClock(NOW)).execute();
 
-    expect(report).toEqual({ events: 3, sessions: 3, signInCodes: 1 });
+    expect(report).toEqual({ events: 3, sessions: 3, signInCodes: 1, trialCards: 1 });
     const events = await owner<{ occurred_at: Date }[]>`
       SELECT occurred_at FROM events ORDER BY occurred_at
     `;
@@ -106,6 +112,8 @@ describe('retention against a real Postgres', () => {
     expect(sessions).toEqual([{ token_hash: sha256Hex('fresh') }]);
     const [codes] = await owner<{ count: number }[]>`SELECT count(*)::int AS count FROM otp_codes`;
     expect(codes?.count).toBe(1);
+    const cards = await owner<{ fingerprint: string }[]>`SELECT fingerprint FROM trial_cards`;
+    expect(cards).toEqual([{ fingerprint: 'fp_recent' }]);
   });
 
   it('deletes events in batches of the size it is given', async () => {
@@ -118,6 +126,11 @@ describe('retention against a real Postgres', () => {
     const run = new RunRetentionUseCase(retention, new FixedClock(NOW));
     await run.execute();
 
-    expect(await run.execute()).toEqual({ events: 0, sessions: 0, signInCodes: 0 });
+    expect(await run.execute()).toEqual({
+      events: 0,
+      sessions: 0,
+      signInCodes: 0,
+      trialCards: 0,
+    });
   });
 });

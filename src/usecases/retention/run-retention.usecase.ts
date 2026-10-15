@@ -3,11 +3,12 @@ import { SESSION_ABSOLUTE_TTL_MS, SESSION_IDLE_TTL_MS } from '../../domain/auth/
 import {
   eventRetentionCutoff,
   RETENTION_BATCH_SIZE,
+  trialCardRetentionCutoff,
 } from '../../domain/retention/retention-policy';
 import type { RetentionRepository } from '../../domain/retention/retention.repository';
 import type { Clock } from '../../domain/services/clock';
 
-export const RETENTION_STEPS = ['events', 'sessions', 'signInCodes'] as const;
+export const RETENTION_STEPS = ['events', 'sessions', 'signInCodes', 'trialCards'] as const;
 export type RetentionStep = (typeof RETENTION_STEPS)[number];
 
 export type RetentionReport = Readonly<Record<RetentionStep, number>>;
@@ -37,8 +38,14 @@ export class RunRetentionUseCase {
           lastUsedBefore: new Date(now.getTime() - SESSION_IDLE_TTL_MS),
         }),
       signInCodes: () => this.retention.deleteExpiredSignInCodes(now),
+      trialCards: () => this.retention.deleteTrialCardsStartedBefore(trialCardRetentionCutoff(now)),
     };
-    const report: Record<RetentionStep, number> = { events: 0, sessions: 0, signInCodes: 0 };
+    const report: Record<RetentionStep, number> = {
+      events: 0,
+      sessions: 0,
+      signInCodes: 0,
+      trialCards: 0,
+    };
     const failed: RetentionStep[] = [];
     for (const step of RETENTION_STEPS) {
       try {
