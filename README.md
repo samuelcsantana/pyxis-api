@@ -174,6 +174,19 @@ Shipping now:
   see and end their connections with `GET` and `DELETE /v1/me/connections`
   ([ADR 0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md))
 
+- The remote MCP server at `POST /mcp`, behind the same switch: the fifteen read-only tools of
+  [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp), over stateless Streamable HTTP with
+  JSON answers. It takes the access token of a connection (`pyxis_oat_`) or a read-only token
+  (`pyxis_at_`, for applications that send a header instead of signing in) and nothing else.
+  Without a token, or with a refused one, it answers 401 with `WWW-Authenticate` naming the
+  protected resource metadata (RFC 9728) at `/.well-known/oauth-protected-resource/mcp`, also
+  served at `/.well-known/oauth-protected-resource`, which names the API as the authorization
+  server. Each tool runs inside the API as a `GET` of the route it reads, with the caller's token,
+  through the same guards, limits and project scope as the dashboard; the token never leaves the
+  API. A token sends 120 messages a minute to `/mcp`, and its tool reads count against the read
+  routes like any other request with it
+  ([ADR 0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md))
+
 - Accounts for the hosted plan: an account is who pays, with one owner and the projects it holds
   (3 at most, counted under a lock so two requests cannot both take the last place). A project
   without an account is the operator's own, as every project was before, with no plan and no
@@ -323,6 +336,7 @@ flowchart LR
     Backend["Site backend"]
   end
   Dashboard["pyxis-web<br>(dashboard)"]
+  Claude["Claude · Claude Code<br>(MCP client)"]
   subgraph AWS["AWS · sa-east-1"]
     CF["CloudFront"] --> Lambda["Lambda<br>NestJS + Fastify"]
     Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · icons · weekly digest"]
@@ -331,6 +345,7 @@ flowchart LR
   Mail["Resend or Amazon SES"]
   SDK -- "POST /v1/batch · public key" --> CF
   Dashboard -- "queries · session cookie" --> CF
+  Claude -- "POST /mcp · OAuth token" --> CF
   Backend -- "DELETE /v1/subjects/{id} · secret key" --> CF
   Lambda --> DB
   Jobs --> DB
@@ -348,8 +363,9 @@ flowchart LR
 ## Tech stack
 
 TypeScript 6 (strict) · NestJS 12 on Fastify 5 · Zod 4 · Drizzle ORM with postgres-js on
-PostgreSQL 18 · AWS Lambda behind CloudFront, provisioned with Terraform · Jest · Docker · GitHub
-Actions with CodeQL, Dependabot, Codecov and release-please.
+PostgreSQL 18 · the MCP TypeScript SDK through `pyxis-mcp` · AWS Lambda behind CloudFront,
+provisioned with Terraform · Jest · Docker · GitHub Actions with CodeQL, Dependabot, Codecov and
+release-please.
 
 ## Getting started
 
@@ -464,7 +480,7 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `EXPORT_BUCKET`          | unset                                                         | The bucket project exports are written to; without it exports answer 503                                                                                                                                                                                                                                  |
 | `JOBS_FUNCTION_NAME`     | unset                                                         | The jobs function an export is handed to; without it exports wait for the daily job                                                                                                                                                                                                                       |
 | `API_ORIGIN`             | unset; required when `REMOTE_MCP_OPEN` is `true`              | The API's own origin, such as `https://api.example.com`: the OAuth issuer, and `${API_ORIGIN}/mcp` the only resource a connection reads                                                                                                                                                                   |
-| `REMOTE_MCP_OPEN`        | `false`                                                       | `true` lets Claude and Claude Code connect through OAuth, once `API_ORIGIN` and `DASHBOARD_ORIGIN` are set; otherwise the OAuth addresses and the consent routes answer 404                                                                                                                               |
+| `REMOTE_MCP_OPEN`        | `false`                                                       | `true` opens `/mcp` and lets Claude and Claude Code connect through OAuth, once `API_ORIGIN` and `DASHBOARD_ORIGIN` are set; otherwise `/mcp`, its metadata, the OAuth addresses and the consent routes answer 404                                                                                        |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
@@ -534,7 +550,7 @@ src/
 ├── infra/mail/        the e-mails (words per language, HTML, plain text) sent through Resend or
 │                      Amazon SES, or the log outside production
 ├── infra/http/        Fastify setup, security headers, request id, errors, health, ingestion,
-│                      sign-in and sessions, rate limits, OpenAPI
+│                      sign-in and sessions, OAuth, the MCP endpoint, rate limits, OpenAPI
 ├── shared/            pure utilities
 ├── test-utils/        fakes for the domain ports
 ├── main.ts            HTTP entry point
@@ -565,7 +581,10 @@ fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-op
 The API runs on AWS Lambda in sa-east-1 behind CloudFront ([ADR 0006](docs/adr/0006-lambda-behind-cloudfront.md)),
 provisioned by the Terraform in `infra/` and shipped by `scripts/deploy-lambda.sh`, which runs the
 migrations before updating the HTTP function. Every request must carry the secret header
-CloudFront adds; the function's own URL answers 403 without it. CloudWatch alarms e-mail the
+CloudFront adds; the function's own URL answers 403 without it. The connector's paths (`/mcp`,
+`/oauth/*`, `/.well-known/oauth-*`) reach the function only on `api_domain`: on any older name the
+distribution still serves, a CloudFront Function answers 404, because a token names one resource
+address. CloudWatch alarms e-mail the
 operator when requests end in unexpected errors, when the function fails, times out or is
 throttled, when the database grows, when sign-in codes are being guessed, when a card
 starts a second free trial, and when a refund or an account e-mail fails. Provisioning, deploys, checks, alarms and rollbacks are in the
@@ -632,6 +651,11 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
   registered without one), and an unknown client or return address is never redirected to. The
   token endpoint has no limit an address shares with every user of the same client, only a
   circuit breaker; its errors follow RFC 6749
+- The MCP endpoint reads only with a bearer token, never with the dashboard's session cookie, and
+  refuses a request that carries an `Origin` header, so a web page cannot drive it, DNS rebinding
+  included. Its tools can only send `GET` requests, in process, to the API's own origin, and
+  every answer marks the visitors' texts (event names, property values, paths) as untrusted for
+  the model that reads them. A message is at most 32 KiB
 - Fetching a site's icon is the API's only request to an address it does not choose: https only,
   the host resolved before every request (redirects too, at most three, followed by hand) and
   refused when any address is loopback, private, link-local, carrier-grade NAT, unique-local,
@@ -683,6 +707,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0035](docs/adr/0035-notices-to-every-owner-go-through-the-jobs-function.md) | Notices to every owner are stored, then sent by the jobs function          |
 | [0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md)              | A larger plan is limits on the account, set by the operator                |
 | [0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md)          | The API is its own OAuth server for Claude                                 |
+| [0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md)      | The MCP endpoint runs the tools of pyxis-mcp inside the API                |
 
 ## Roadmap
 
@@ -719,7 +744,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 - [x] Abuse tools for the operator: suspend an account or a person, close with a chosen refund,
       hold a deletion, revoke a token; alarms on failed refunds and account e-mails
 - [x] OAuth server for the Claude connector, behind a switch
-- [ ] The remote MCP endpoint, `/mcp`, with the tools of `pyxis-mcp`
+- [x] The remote MCP endpoint, `/mcp`, with the tools of `pyxis-mcp`
 
 ## Contributing and license
 
