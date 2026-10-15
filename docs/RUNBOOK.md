@@ -357,6 +357,19 @@ end of access and the date. If Stripe cannot cancel, nothing is closed; if only 
 the account is closed, the output says so, and the refund is made by hand in Stripe. The reason is
 printed, not stored: write to the owner with it.
 
+### Holding a deletion
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:hold -- --account <id> --reason '<the dispute or the order>'
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:release -- --account <id>
+```
+
+While held, the daily job neither reminds nor deletes the account (nor removes it as an abandoned
+sign-up), and its owner cannot delete its projects (`409 deletion_on_hold`); the dashboard shows
+the hold, not the reason. Retention of events older than thirteen months and the erasure of a
+person's events go on. Releasing the hold of an account ended more than thirty days ago lets the
+next daily run delete it.
+
 ## Exports
 
 Owners export a project's events to a compressed CSV. Terraform creates the private bucket
