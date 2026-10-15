@@ -168,3 +168,9 @@ variable "function_throttles_alarm_threshold" {
   type        = number
   default     = 1
 }
+
+variable "repeated_trials_alarm_threshold" {
+  description = "Free trials started within an hour with a card that already started a trial in another account, at which the alarm fires."
+  type        = number
+  default     = 1
+}
