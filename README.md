@@ -235,6 +235,11 @@ Shipping now:
   read-only tokens alike; sign-in, the account and its reason, billing, closing, exports and the
   secret-key erasure stay open, and the subscription is never touched
   ([ADR 0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md))
+- Closing an account as the operator (`account:close --refund full|prorata|none`): cancels the
+  subscription, refunds the latest paid invoice in full, by the whole days left (from the start of
+  a suspension when there was one) or not at all, and ends access with the same closure as the
+  owner's; a failed refund never keeps the account open
+  ([ADR 0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -328,21 +333,22 @@ sed "s/pyxis_pk_LocalDemoKey00000000000000000000/$KEY/" test/fixtures/batch-vali
 They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=value` lines; run
 `npm run build` first. `-s` keeps npm's banner out of the output.
 
-| Command                                                                                                                                                         | What it does                                                                                                                                                                 |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>] [--account <id>]`                          | Creates a project and its first public key, printed for the site to embed; with `--account`, inside that account (readable by its owner, 3 at most)                          |
-| `npm run -s project:update -- --project <id> [--name <name>] [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                                                                                                        |
-| `npm run -s project:delete -- --project <id> --confirm-name <name>`                                                                                             | Deletes the project with its events, keys, grants, icon and digest records in one transaction, only when the name matches exactly; prints how many events and keys went      |
-| `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash                                                                                     |
-| `npm run -s key:revoke -- --key-id <id>`                                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                         |
-| `npm run -s admin:grant -- --email <email> --project <id>`                                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                                    |
-| `npm run -s admin:revoke -- --email <email> --project <id>`                                                                                                     | Takes the person off that project; the owner of the project's account always stays                                                                                           |
-| `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first                    |
-| `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                               |
-| `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project             |
-| `npm run -s account:link -- --account <id> --subscription <sub_…>`                                                                                              | Ties a subscription paid outside sign-up (a payment link) to the account and copies its state; needs `STRIPE_SECRET_KEY`                                                     |
-| `npm run -s account:suspend -- --account <id> --reason "<why>"`                                                                                                 | Suspends the account for abuse, keeping the reason the owner was told (500 characters at most); its projects stop taking events and opening in the dashboard within a minute |
-| `npm run -s account:resume -- --account <id>`                                                                                                                   | Lifts the suspension; keys and tokens revoked meanwhile stay revoked                                                                                                         |
+| Command                                                                                                                                                         | What it does                                                                                                                                                                                    |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>] [--account <id>]`                          | Creates a project and its first public key, printed for the site to embed; with `--account`, inside that account (readable by its owner, 3 at most)                                             |
+| `npm run -s project:update -- --project <id> [--name <name>] [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                                                                                                                           |
+| `npm run -s project:delete -- --project <id> --confirm-name <name>`                                                                                             | Deletes the project with its events, keys, grants, icon and digest records in one transaction, only when the name matches exactly; prints how many events and keys went                         |
+| `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash                                                                                                        |
+| `npm run -s key:revoke -- --key-id <id>`                                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                                            |
+| `npm run -s admin:grant -- --email <email> --project <id>`                                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                                                       |
+| `npm run -s admin:revoke -- --email <email> --project <id>`                                                                                                     | Takes the person off that project; the owner of the project's account always stays                                                                                                              |
+| `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first                                       |
+| `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                                                  |
+| `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project                                |
+| `npm run -s account:link -- --account <id> --subscription <sub_…>`                                                                                              | Ties a subscription paid outside sign-up (a payment link) to the account and copies its state; needs `STRIPE_SECRET_KEY`                                                                        |
+| `npm run -s account:suspend -- --account <id> --reason "<why>"`                                                                                                 | Suspends the account for abuse, keeping the reason the owner was told (500 characters at most); its projects stop taking events and opening in the dashboard within a minute                    |
+| `npm run -s account:resume -- --account <id>`                                                                                                                   | Lifts the suspension; keys and tokens revoked meanwhile stay revoked                                                                                                                            |
+| `npm run -s account:close -- --account <id> --reason "<why>" --refund <full\|prorata\|none>`                                                                    | Ends the account at once as the operator: cancels the subscription, refunds as asked, revokes the keys; the daily job e-mails the owner; needs `STRIPE_SECRET_KEY` when there is a subscription |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
@@ -564,35 +570,36 @@ starts a second free trial. Provisioning, deploys, checks, alarms and rollbacks 
 
 ## Architecture decisions
 
-| ADR                                                                      | Decision                                                                   |
-| ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| [0001](docs/adr/0001-record-architecture-decisions.md)                   | Record architecture decisions                                              |
-| [0002](docs/adr/0002-clean-architecture.md)                              | Clean Architecture with ports and adapters                                 |
-| [0003](docs/adr/0003-openapi-from-zod.md)                                | Generate the OpenAPI 3.1 contract from Zod                                 |
-| [0004](docs/adr/0004-least-privilege-database-roles.md)                  | Least-privilege database roles                                             |
-| [0005](docs/adr/0005-per-event-validation.md)                            | Validate each event of a batch on its own                                  |
-| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                        | Run on Lambda behind CloudFront, with an edge secret                       |
-| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)         | Sign admins in with an emailed code and an opaque session cookie           |
-| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)                 | Answer dashboard queries from the raw events, without rollups              |
-| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)         | Erase a person together with the visits they identified in                 |
-| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)   | Compare an unfinished day up to the same time of day                       |
-| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)            | Send a weekly digest by e-mail from the jobs function                      |
-| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)             | Let the dashboard keep the session in a cookie of its own host             |
-| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)             | Fetch each project's icon from its site, and keep a copy                   |
-| [0014](docs/adr/0014-store-the-region-never-the-city.md)                 | Store the viewer's region, never the city                                  |
-| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)              | Give agents read-only access tokens, scoped to their admin                 |
-| [0016](docs/adr/0016-accounts-own-projects.md)                           | Accounts own projects; a project without one is the operator's             |
-| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                    | Measure each account's month daily; pause ingestion at 150%                |
-| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)      | Billing follows Stripe through its webhook, re-reading the subscription    |
-| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)   | Sign-up behind a switch, tied to the version of the terms accepted         |
-| [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md) | Owners manage their projects; the operator's stay in the command line      |
-| [0021](docs/adr/0021-people-are-counted-across-the-account.md)           | People are added per project and counted across the account                |
-| [0022](docs/adr/0022-an-account-ends-in-steps.md)                        | An account ends in steps, each done once by the daily job                  |
-| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)            | The welcome follows the subscription, with the daily job as a fallback     |
-| [0024](docs/adr/0024-exports-are-files-with-short-links.md)              | Exports are files that live a week, reached through links signed on demand |
-| [0025](docs/adr/0025-the-owner-closes-the-account-at-once.md)            | The owner closes the account at once, with a refund inside seven days      |
-| [0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md)        | Repeated free trials are detected and reported, never blocked              |
-| [0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md)             | A suspension is a mark on the account, not a status                        |
+| ADR                                                                          | Decision                                                                   |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [0001](docs/adr/0001-record-architecture-decisions.md)                       | Record architecture decisions                                              |
+| [0002](docs/adr/0002-clean-architecture.md)                                  | Clean Architecture with ports and adapters                                 |
+| [0003](docs/adr/0003-openapi-from-zod.md)                                    | Generate the OpenAPI 3.1 contract from Zod                                 |
+| [0004](docs/adr/0004-least-privilege-database-roles.md)                      | Least-privilege database roles                                             |
+| [0005](docs/adr/0005-per-event-validation.md)                                | Validate each event of a batch on its own                                  |
+| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                            | Run on Lambda behind CloudFront, with an edge secret                       |
+| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)             | Sign admins in with an emailed code and an opaque session cookie           |
+| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)                     | Answer dashboard queries from the raw events, without rollups              |
+| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)             | Erase a person together with the visits they identified in                 |
+| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)       | Compare an unfinished day up to the same time of day                       |
+| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)                | Send a weekly digest by e-mail from the jobs function                      |
+| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)                 | Let the dashboard keep the session in a cookie of its own host             |
+| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)                 | Fetch each project's icon from its site, and keep a copy                   |
+| [0014](docs/adr/0014-store-the-region-never-the-city.md)                     | Store the viewer's region, never the city                                  |
+| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)                  | Give agents read-only access tokens, scoped to their admin                 |
+| [0016](docs/adr/0016-accounts-own-projects.md)                               | Accounts own projects; a project without one is the operator's             |
+| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                        | Measure each account's month daily; pause ingestion at 150%                |
+| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)          | Billing follows Stripe through its webhook, re-reading the subscription    |
+| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)       | Sign-up behind a switch, tied to the version of the terms accepted         |
+| [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md)     | Owners manage their projects; the operator's stay in the command line      |
+| [0021](docs/adr/0021-people-are-counted-across-the-account.md)               | People are added per project and counted across the account                |
+| [0022](docs/adr/0022-an-account-ends-in-steps.md)                            | An account ends in steps, each done once by the daily job                  |
+| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)                | The welcome follows the subscription, with the daily job as a fallback     |
+| [0024](docs/adr/0024-exports-are-files-with-short-links.md)                  | Exports are files that live a week, reached through links signed on demand |
+| [0025](docs/adr/0025-the-owner-closes-the-account-at-once.md)                | The owner closes the account at once, with a refund inside seven days      |
+| [0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md)            | Repeated free trials are detected and reported, never blocked              |
+| [0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md)                 | A suspension is a mark on the account, not a status                        |
+| [0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md) | The operator closes an account with a chosen refund                        |
 
 ## Roadmap
 
