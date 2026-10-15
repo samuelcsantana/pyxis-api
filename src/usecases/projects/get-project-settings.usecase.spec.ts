@@ -3,6 +3,7 @@ import type { ProjectKey } from '../../domain/entities/project-key.entity';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.repository';
+import { InMemoryProjectSuspensionRepository } from '../../test-utils/in-memory-project-suspension.repository';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { GetProjectSettingsUseCase } from './get-project-settings.usecase';
 
@@ -46,11 +47,13 @@ function setup() {
   const store = new InMemoryProjectRepository();
   const activity = new StubProjectActivityQuery();
   const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
+  const restrictions = new InMemoryProjectSuspensionRepository();
   return {
     store,
     activity,
     accounts,
-    useCase: new GetProjectSettingsUseCase(store, activity, store, accounts),
+    restrictions,
+    useCase: new GetProjectSettingsUseCase(store, activity, store, accounts, restrictions),
   };
 }
 
@@ -80,8 +83,27 @@ describe('GetProjectSettingsUseCase', () => {
       publicKeys: [{ id: 'public-1', publicKey: 'pyxis_pk_public-1', createdAt: CREATED_AT }],
       secretKeys: [{ id: 'secret-1', createdAt: CREATED_AT }],
       eventRetentionMonths: 13,
+      ingestionSuspendedAt: null,
+      ingestionSuspensionReason: null,
     });
     expect(JSON.stringify(settings)).not.toContain(SECRET_HASH);
+  });
+
+  it("shows a suspended reception, with the reason only for the account's owner", async () => {
+    const { store, restrictions, useCase } = setup();
+    store.add(SHOP);
+    const suspendedAt = new Date('2026-10-06T12:00:00.000Z');
+    restrictions.add(SHOP.id, SHOP.name, OWNER_ID);
+    await restrictions.suspend(SHOP.id, 'Forged traffic.', suspendedAt);
+
+    expect(await useCase.execute(SHOP, OWNER_ID)).toMatchObject({
+      ingestionSuspendedAt: suspendedAt,
+      ingestionSuspensionReason: 'Forged traffic.',
+    });
+    expect(await useCase.execute(SHOP, MEMBER_ID)).toMatchObject({
+      ingestionSuspendedAt: suspendedAt,
+      ingestionSuspensionReason: null,
+    });
   });
 
   it('tells a project that never received an event apart, with no key left', async () => {

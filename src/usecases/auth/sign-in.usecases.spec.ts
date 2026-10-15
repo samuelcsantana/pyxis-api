@@ -20,6 +20,7 @@ import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { AuthenticateSessionUseCase } from './authenticate-session.usecase';
 import { InMemoryProjectIconRepository } from '../../test-utils/in-memory-project-icon.repository';
+import { InMemoryProjectSuspensionRepository } from '../../test-utils/in-memory-project-suspension.repository';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 import { RequestSignInCodeUseCase } from './request-sign-in-code.usecase';
@@ -71,6 +72,7 @@ async function setup() {
       admins,
       new StubProjectActivityQuery(),
       new InMemoryProjectIconRepository(),
+      new InMemoryProjectSuspensionRepository(),
     ),
   };
 }
@@ -431,7 +433,16 @@ describe('dashboard sign-in', () => {
       });
       expect(await describeAdmin.execute(authenticated.admin)).toEqual({
         email: ADMIN_EMAIL,
-        projects: [{ ...PROJECT, firstEventAt: null, lastEventAt: null, iconVersion: null }],
+        projects: [
+          {
+            ...PROJECT,
+            firstEventAt: null,
+            lastEventAt: null,
+            iconVersion: null,
+            ingestionSuspendedAt: null,
+            ingestionSuspensionReason: null,
+          },
+        ],
       });
     });
 

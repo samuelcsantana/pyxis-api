@@ -2,6 +2,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { ProjectRateLimitedError, QuotaExceededError } from '../../../domain/errors/ingest.errors';
+import { ProjectSuspendedError } from '../../../domain/errors/project.errors';
 import type { ErrorResponse } from '../ingest/ingest.schemas';
 import {
   ClientRateLimitedError,
@@ -23,6 +24,7 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['rate_limited', HttpStatus.TOO_MANY_REQUESTS],
   ['quota_exceeded', HttpStatus.FORBIDDEN],
   ['account_suspended', HttpStatus.FORBIDDEN],
+  ['project_suspended', HttpStatus.FORBIDDEN],
   ['deletion_on_hold', HttpStatus.CONFLICT],
   ['invalid_code', HttpStatus.BAD_REQUEST],
   ['unauthenticated', HttpStatus.UNAUTHORIZED],
@@ -104,7 +106,11 @@ function statusOf(exception: unknown): number | undefined {
 }
 
 function refusedBatchOrigin(exception: DomainError): string | null {
-  if (exception instanceof QuotaExceededError || exception instanceof AccountSuspendedError) {
+  if (
+    exception instanceof QuotaExceededError ||
+    exception instanceof AccountSuspendedError ||
+    exception instanceof ProjectSuspendedError
+  ) {
     return exception.allowedOrigin;
   }
   return null;

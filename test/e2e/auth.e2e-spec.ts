@@ -321,6 +321,8 @@ describe('dashboard sign-in', () => {
           first_event_at: null,
           last_event_at: null,
           icon_version: null,
+          ingestion_suspended_at: null,
+          ingestion_suspension_reason: null,
         },
       ],
     });

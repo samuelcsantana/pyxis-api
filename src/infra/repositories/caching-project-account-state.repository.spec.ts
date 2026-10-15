@@ -13,6 +13,7 @@ const PROJECT_ID = 'a3f1c2d4-5b6e-4f70-8192-a3b4c5d6e7f8';
 const PAUSED: ProjectAccountState = {
   ingestionPausedUntil: new Date('2026-11-01T00:00:00.000Z'),
   suspended: false,
+  ingestionSuspended: false,
 };
 
 function setup(answer: ProjectAccountState) {

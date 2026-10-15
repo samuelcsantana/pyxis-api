@@ -49,6 +49,7 @@ import {
   verifyCodeSchema,
 } from './auth.schemas';
 import { readSessionToken, SESSION_COOKIE_NAME } from './session-cookie';
+import { projectRestrictionsBody } from '../queries/project-restrictions.schemas';
 
 export function clientOf(request: FastifyRequest): SignInClient {
   return {
@@ -192,6 +193,7 @@ export class MeController {
         first_event_at: isoOrNull(project.firstEventAt),
         last_event_at: isoOrNull(project.lastEventAt),
         icon_version: project.iconVersion,
+        ...projectRestrictionsBody(project),
       })),
     };
   }

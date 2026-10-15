@@ -22,14 +22,19 @@ export class DrizzleProjectAccountStateRepository implements ProjectAccountState
       .select({
         ingestionPausedUntil: accounts.ingestionPausedUntil,
         suspendedAt: accounts.suspendedAt,
+        ingestionSuspendedAt: projects.ingestionSuspendedAt,
       })
       .from(projects)
-      .innerJoin(accounts, eq(accounts.id, projects.accountId))
+      .leftJoin(accounts, eq(accounts.id, projects.accountId))
       .where(eq(projects.id, projectId))
       .limit(1);
     return row === undefined
       ? UNRESTRICTED_PROJECT
-      : { ingestionPausedUntil: row.ingestionPausedUntil, suspended: row.suspendedAt !== null };
+      : {
+          ingestionPausedUntil: row.ingestionPausedUntil,
+          suspended: row.suspendedAt !== null,
+          ingestionSuspended: row.ingestionSuspendedAt !== null,
+        };
   }
 }
 

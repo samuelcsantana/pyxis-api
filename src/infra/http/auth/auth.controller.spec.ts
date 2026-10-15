@@ -201,12 +201,16 @@ describe('MeController', () => {
       firstEventAt: null,
       lastEventAt: null,
       iconVersion: null,
+      ingestionSuspendedAt: null,
+      ingestionSuspensionReason: null,
     };
     const active = {
       ...PROJECT,
       firstEventAt: new Date('2026-10-01T12:00:00.000Z'),
       lastEventAt: new Date('2026-10-05T09:30:00.000Z'),
       iconVersion: '0123456789abcdef',
+      ingestionSuspendedAt: new Date('2026-10-06T08:00:00.000Z'),
+      ingestionSuspensionReason: 'Forged traffic.',
     };
     const describeAdmin = {
       execute: (admin: AdminUser) =>
@@ -231,6 +235,8 @@ describe('MeController', () => {
           first_event_at: '2026-10-01T12:00:00.000Z',
           last_event_at: '2026-10-05T09:30:00.000Z',
           icon_version: '0123456789abcdef',
+          ingestion_suspended_at: '2026-10-06T08:00:00.000Z',
+          ingestion_suspension_reason: 'Forged traffic.',
         },
         {
           id: 'quiet-project',
@@ -240,6 +246,8 @@ describe('MeController', () => {
           first_event_at: null,
           last_event_at: null,
           icon_version: null,
+          ingestion_suspended_at: null,
+          ingestion_suspension_reason: null,
         },
       ],
     });

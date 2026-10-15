@@ -1,6 +1,7 @@
 import type { Project } from '../../domain/entities/project.entity';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryProjectIconRepository } from '../../test-utils/in-memory-project-icon.repository';
+import { InMemoryProjectSuspensionRepository } from '../../test-utils/in-memory-project-suspension.repository';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 
@@ -19,7 +20,7 @@ const SHOP = project('11111111-0000-4000-8000-000000000001', 'Shop');
 const BLOG = project('11111111-0000-4000-8000-000000000002', 'Blog');
 
 describe('DescribeAdminUseCase', () => {
-  it('tells, for each project, when its first and latest events happened and its icon version', async () => {
+  it('tells, for each project, its first and latest events, its icon and any suspension', async () => {
     const admins = new InMemoryAdminUserRepository();
     admins.addProject(SHOP);
     admins.addProject(BLOG);
@@ -39,14 +40,37 @@ describe('DescribeAdminUseCase', () => {
       fetchedAt: lastEventAt,
     });
 
-    const description = await new DescribeAdminUseCase(admins, activity, icons).execute(admin);
+    const restrictions = new InMemoryProjectSuspensionRepository();
+    restrictions.add(SHOP.id, SHOP.name, admin.id);
+    await restrictions.suspend(SHOP.id, 'Forged traffic.', lastEventAt);
+
+    const description = await new DescribeAdminUseCase(
+      admins,
+      activity,
+      icons,
+      restrictions,
+    ).execute(admin);
 
     expect(activity.asked).toEqual([[SHOP.id, BLOG.id]]);
     expect(description).toEqual({
       email: 'owner@shop.example.com',
       projects: [
-        { ...SHOP, firstEventAt, lastEventAt, iconVersion: null },
-        { ...BLOG, firstEventAt: null, lastEventAt: null, iconVersion: '0123456789abcdef' },
+        {
+          ...SHOP,
+          firstEventAt,
+          lastEventAt,
+          iconVersion: null,
+          ingestionSuspendedAt: lastEventAt,
+          ingestionSuspensionReason: 'Forged traffic.',
+        },
+        {
+          ...BLOG,
+          firstEventAt: null,
+          lastEventAt: null,
+          iconVersion: '0123456789abcdef',
+          ingestionSuspendedAt: null,
+          ingestionSuspensionReason: null,
+        },
       ],
     });
   });

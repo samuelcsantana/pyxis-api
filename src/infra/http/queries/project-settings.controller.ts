@@ -12,6 +12,7 @@ import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { type ProjectSettingsBody, projectSettingsSchema } from './project-settings.schemas';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
+import { projectRestrictionsBody } from './project-restrictions.schemas';
 
 function isoOrNull(at: Date | null): string | null {
   return at === null ? null : at.toISOString();
@@ -39,6 +40,7 @@ export function projectSettingsBody(settings: ProjectSettings): ProjectSettingsB
       id: key.id,
       created_at: key.createdAt.toISOString(),
     })),
+    ...projectRestrictionsBody(settings),
   };
 }
 
