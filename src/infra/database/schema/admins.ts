@@ -39,6 +39,7 @@ export const adminUsers = pgTable('admin_users', {
   email: varchar('email', { length: MAX_EMAIL_LENGTH }).notNull().unique(),
   emailLanguage: emailLanguage(),
   suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+  projectlessSince: timestamp('projectless_since', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
