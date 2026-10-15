@@ -223,7 +223,9 @@ or by setting its state to `DISABLED` in Terraform.
 After measuring the accounts, the job runs the account lifecycle and logs
 `accounts.lifecycle_done` with what it did: subscriptions reconciled with Stripe, keys revoked at
 the end of access, end and reminder e-mails, accounts deleted thirty days after the end, abandoned
-sign-ups removed. Look for `accounts.reconcile_failed` (Stripe could not be read for one account),
+sign-ups removed, and people left without any project or account: `projectlessMarked` counts the
+ones found alone for the first time, `projectlessRemoved` the ones deleted thirty days after that
+mark (`admin_users.projectless_since`; a person who gets a project back loses the mark). Look for `accounts.reconcile_failed` (Stripe could not be read for one account),
 `accounts.notice_failed` (an e-mail that will be tried again tomorrow), and
 `accounts.deletion_failed` or `accounts.incomplete_removal_failed`, which also fail the invocation
 so the error alarm fires; the next run continues from what is left. Reconciliation needs
