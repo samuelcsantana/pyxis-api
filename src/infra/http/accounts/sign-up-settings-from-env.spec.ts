@@ -1,16 +1,18 @@
 import { signUpSettingsFromEnv } from './sign-up-settings-from-env';
 
 describe('signUpSettingsFromEnv', () => {
-  it('opens sign-up when the switch is on and a terms version is published', () => {
-    expect(
-      signUpSettingsFromEnv({
-        SIGNUP_OPEN: 'true',
-        TERMS_VERSION: '2026-11-01',
-        DASHBOARD_ORIGIN: 'https://app.example.com',
-      }),
-    ).toEqual({
+  const PUBLISHED = {
+    SIGNUP_OPEN: 'true',
+    TERMS_VERSION: '2026-11-01',
+    TERMS_URL: 'https://example.com/terms',
+    DASHBOARD_ORIGIN: 'https://app.example.com',
+  } as const;
+
+  it('opens sign-up when the switch is on and the terms are published with their address', () => {
+    expect(signUpSettingsFromEnv(PUBLISHED)).toEqual({
       open: true,
       termsVersion: '2026-11-01',
+      termsUrl: 'https://example.com/terms',
       dashboardOrigin: 'https://app.example.com',
     });
   });
@@ -20,18 +22,17 @@ describe('signUpSettingsFromEnv', () => {
       signUpSettingsFromEnv({
         SIGNUP_OPEN: 'true',
         TERMS_VERSION: undefined,
+        TERMS_URL: undefined,
         DASHBOARD_ORIGIN: undefined,
       }),
-    ).toEqual({ open: false, termsVersion: null, dashboardOrigin: null });
+    ).toEqual({ open: false, termsVersion: null, termsUrl: null, dashboardOrigin: null });
+  });
+
+  it('keeps sign-up closed while the terms have no address', () => {
+    expect(signUpSettingsFromEnv({ ...PUBLISHED, TERMS_URL: undefined }).open).toBe(false);
   });
 
   it('keeps sign-up closed while the switch is off', () => {
-    expect(
-      signUpSettingsFromEnv({
-        SIGNUP_OPEN: 'false',
-        TERMS_VERSION: '2026-11-01',
-        DASHBOARD_ORIGIN: 'https://app.example.com',
-      }).open,
-    ).toBe(false);
+    expect(signUpSettingsFromEnv({ ...PUBLISHED, SIGNUP_OPEN: 'false' }).open).toBe(false);
   });
 });

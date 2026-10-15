@@ -27,6 +27,14 @@ locals {
   }
 }
 
+resource "aws_ssm_parameter" "terms_url" {
+  for_each    = var.terms_url == null ? toset([]) : toset(["app", "jobs"])
+  name        = "/${var.project}/${each.key}/TERMS_URL"
+  type        = "String"
+  value       = var.terms_url
+  description = "Where the published terms are; sign-up shows it and the welcome e-mail links to it."
+}
+
 resource "aws_ssm_parameter" "terms_version" {
   count       = var.terms_version == null ? 0 : 1
   name        = "/${var.project}/app/TERMS_VERSION"

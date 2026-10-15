@@ -39,7 +39,12 @@ const CLIENT = {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
   clientHints: {},
 };
-const OPEN: SignUpSettings = { open: true, termsVersion: TERMS, dashboardOrigin: ORIGIN };
+const OPEN: SignUpSettings = {
+  open: true,
+  termsVersion: TERMS,
+  termsUrl: 'https://example.com/terms',
+  dashboardOrigin: ORIGIN,
+};
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
 
 function setup(settings: SignUpSettings = OPEN) {

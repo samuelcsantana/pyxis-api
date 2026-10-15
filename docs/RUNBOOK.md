@@ -286,8 +286,10 @@ two settings are set. In this order:
    needs read access to Subscriptions too, for the daily reconciliation. Deploy, or wait for new containers, so the
    function reads them.
 3. Publish the terms, then set `terms_version` (the version the dashboard shows, such as
-   `2026-11-01`) and `signup_open = true` in `terraform.tfvars`, apply, and deploy so the function
-   reads them at cold start. `GET /v1/auth/sign-up` answers `{"open":true,"terms_version":"…"}` once they are read.
+   `2026-11-01`), `terms_url` (where they are published) and `signup_open = true` in
+   `terraform.tfvars`, apply, and deploy so the functions read them at cold start.
+   `GET /v1/auth/sign-up` answers `{"open":true,"terms_version":"…","terms_url":"…"}` once they are
+   read.
 
 To close sign-up again, set `signup_open = false`, apply and deploy; accounts
 already created keep working. A new version of the terms is the same change with a new

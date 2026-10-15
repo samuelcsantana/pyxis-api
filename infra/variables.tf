@@ -105,6 +105,17 @@ variable "terms_version" {
   }
 }
 
+variable "terms_url" {
+  description = "Address of the published terms, such as https://example.com/terms. Sign-up stays closed without it."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.terms_url == null || startswith(coalesce(var.terms_url, "https://"), "https://")
+    error_message = "terms_url is an https address."
+  }
+}
+
 variable "alert_email" {
   description = "Address that receives the operational alarms; AWS emails it a link to confirm the subscription."
   type        = string

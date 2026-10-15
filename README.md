@@ -182,8 +182,9 @@ Shipping now:
   answers 503 when Stripe cannot be read so Stripe sends the event again. `account:link` ties a
   subscription paid through a payment link to an account
   ([ADR 0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md))
-- Sign-up, closed until `SIGNUP_OPEN=true` and a `TERMS_VERSION` are both set (otherwise `404`):
-  `GET /v1/auth/sign-up` says whether it is open and which terms to show;
+- Sign-up, closed until `SIGNUP_OPEN=true`, a `TERMS_VERSION` and a `TERMS_URL` are set (otherwise
+  `404`):
+  `GET /v1/auth/sign-up` says whether it is open and which terms to show, with their address;
   `POST /v1/auth/sign-up/code` e-mails a code (202 for any address, the sign-in limits plus 50
   sign-up codes a day in all); `POST /v1/auth/sign-up/verify` takes the code and the terms version
   accepted (`409 terms_outdated` if it is not the current one), records the acceptance and answers
@@ -359,8 +360,9 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `SUPPORT_EMAIL`          | unset                                                         | Named in the account e-mails (quota notices), which send replies to it                                                                                                                                                                         |
 | `STRIPE_SECRET_KEY`      | unset                                                         | Stripe secret or restricted key of the hosted plan's billing (Checkout with the prices whose lookup keys are `pyxis_monthly_brl` and `pyxis_yearly_brl`, the customer portal); unset, or anything that is not a Stripe key, leaves billing off |
 | `STRIPE_WEBHOOK_SECRET`  | unset                                                         | Signing secret of the Stripe webhook endpoint; without it no billing event is accepted                                                                                                                                                         |
-| `SIGNUP_OPEN`            | `false`                                                       | `true` lets anyone create an account and subscribe, once `TERMS_VERSION` is set too                                                                                                                                                            |
+| `SIGNUP_OPEN`            | `false`                                                       | `true` lets anyone create an account and subscribe, once `TERMS_VERSION` and `TERMS_URL` are set too                                                                                                                                           |
 | `TERMS_VERSION`          | unset                                                         | The version of the published terms a new owner accepts (at most 32 characters); sign-up stays closed without it                                                                                                                                |
+| `TERMS_URL`              | unset                                                         | Where the published terms are (http or https); sign-up stays closed without it, and the welcome e-mail links to it                                                                                                                             |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.

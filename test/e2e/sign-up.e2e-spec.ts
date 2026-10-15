@@ -86,7 +86,7 @@ describe('sign-up while it is closed', () => {
       terms_version: TERMS,
     });
 
-    expect(status.json()).toEqual({ open: false, terms_version: null });
+    expect(status.json()).toEqual({ open: false, terms_version: null, terms_url: null });
     expect(code.statusCode).toBe(404);
     expect(code.json()).toMatchObject({ error: 'sign_up_closed' });
     expect(verify.statusCode).toBe(404);
@@ -140,7 +140,12 @@ describe('sign-up while it is open', () => {
         .overrideProvider(MAIL_SENDER)
         .useValue(mail)
         .overrideProvider(SIGN_UP_SETTINGS)
-        .useValue({ open: true, termsVersion: TERMS, dashboardOrigin: E2E_DASHBOARD_ORIGIN })
+        .useValue({
+          open: true,
+          termsVersion: TERMS,
+          termsUrl: 'https://pyxis.example.com/terms',
+          dashboardOrigin: E2E_DASHBOARD_ORIGIN,
+        })
         .overrideProvider(BILLING_GATEWAY)
         .useValue(new StripeBillingGateway(stripe.stripe, null)),
     );
@@ -162,7 +167,11 @@ describe('sign-up while it is open', () => {
     const response = await get('/v1/auth/sign-up');
 
     expect(response.statusCode).toBe(200);
-    expect(response.json()).toEqual({ open: true, terms_version: TERMS });
+    expect(response.json()).toEqual({
+      open: true,
+      terms_version: TERMS,
+      terms_url: 'https://pyxis.example.com/terms',
+    });
   });
 
   it('creates the owner, an account waiting for its subscription and the acceptance of the terms', async () => {
