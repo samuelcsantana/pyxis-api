@@ -15,7 +15,17 @@ describe('validateEnv', () => {
       MAIL_PROVIDER: 'resend',
       MAIL_FROM: DEFAULT_MAIL_FROM,
       SIGNUP_OPEN: 'false',
+      REMOTE_MCP_OPEN: 'false',
     });
+  });
+
+  it("reads the remote MCP switch and the API's own origin", () => {
+    expect(
+      validateEnv({ REMOTE_MCP_OPEN: 'true', API_ORIGIN: 'https://api.example.com' }),
+    ).toMatchObject({ REMOTE_MCP_OPEN: 'true', API_ORIGIN: 'https://api.example.com' });
+    expect(validateEnv({ API_ORIGIN: '' }).API_ORIGIN).toBeUndefined();
+    expect(() => validateEnv({ API_ORIGIN: 'https://api.example.com/mcp' })).toThrow(/API_ORIGIN/);
+    expect(() => validateEnv({ REMOTE_MCP_OPEN: 'yes' })).toThrow(/REMOTE_MCP_OPEN/);
   });
 
   it('reads the sign-up switch and the published terms version and address', () => {
@@ -192,6 +202,13 @@ describe('validateServerEnv', () => {
     );
     expect(validateEnv({ SUPPORT_EMAIL: '' }).SUPPORT_EMAIL).toBeUndefined();
     expect(() => validateEnv({ SUPPORT_EMAIL: 'hello' })).toThrow(/SUPPORT_EMAIL/);
+  });
+
+  it('refuses the remote MCP switched on without the origin that names the issuer', () => {
+    expect(() => validateServerEnv({ REMOTE_MCP_OPEN: 'true' })).toThrow(/API_ORIGIN/);
+    expect(
+      validateServerEnv({ REMOTE_MCP_OPEN: 'true', API_ORIGIN: 'http://localhost:3040' }),
+    ).toMatchObject({ REMOTE_MCP_OPEN: 'true' });
   });
 
   it('runs without either outside production', () => {

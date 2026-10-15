@@ -16,6 +16,10 @@ const postgresUrl = z.url({ protocol: /^postgres(ql)?$/ });
 const isBareOrigin = (value: string): boolean =>
   URL.canParse(value) && new URL(value).origin === value;
 
+const bareOrigin = z
+  .url({ protocol: /^https?$/ })
+  .refine(isBareOrigin, 'Write the origin only: scheme, host and port');
+
 export const MAIL_PROVIDERS = ['resend', 'ses'] as const;
 
 export const envSchema = z.object({
@@ -40,13 +44,9 @@ export const envSchema = z.object({
   JOBS_FUNCTION_NAME: z.preprocess(emptyAsUnset, z.string().regex(LAMBDA_FUNCTION_NAME).optional()),
   STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   STRIPE_WEBHOOK_SECRET: z.preprocess(emptyAsUnset, z.string().optional()),
-  DASHBOARD_ORIGIN: z.preprocess(
-    emptyAsUnset,
-    z
-      .url({ protocol: /^https?$/ })
-      .refine(isBareOrigin, 'Write the origin only: scheme, host and port')
-      .optional(),
-  ),
+  DASHBOARD_ORIGIN: z.preprocess(emptyAsUnset, bareOrigin.optional()),
+  API_ORIGIN: z.preprocess(emptyAsUnset, bareOrigin.optional()),
+  REMOTE_MCP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
 });
 
 export const serverEnvSchema = envSchema
@@ -65,6 +65,10 @@ export const serverEnvSchema = envSchema
   .refine((env) => env.NODE_ENV !== 'production' || env.DASHBOARD_ORIGIN !== undefined, {
     path: ['DASHBOARD_ORIGIN'],
     message: 'DASHBOARD_ORIGIN is required in production, for the dashboard CORS and Origin checks',
+  })
+  .refine((env) => env.REMOTE_MCP_OPEN !== 'true' || env.API_ORIGIN !== undefined, {
+    path: ['API_ORIGIN'],
+    message: 'API_ORIGIN is required when REMOTE_MCP_OPEN is true: it names the OAuth issuer',
   });
 
 export type EnvConfig = z.infer<typeof envSchema>;
