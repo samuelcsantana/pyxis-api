@@ -13,3 +13,8 @@ export const SUBJECT_RATE_WINDOW_MS = 60_000;
 export const ACCESS_TOKENS_THROTTLER = 'access-tokens';
 export const ACCESS_TOKEN_REQUESTS_PER_WINDOW = 60;
 export const ACCESS_TOKEN_RATE_WINDOW_MS = 60_000;
+
+export const OAUTH_THROTTLER = 'oauth';
+export const OAUTH_TOKEN_REQUESTS_PER_WINDOW = 600;
+export const OAUTH_AUTHORIZE_REQUESTS_PER_WINDOW = 60;
+export const OAUTH_RATE_WINDOW_MS = 60_000;

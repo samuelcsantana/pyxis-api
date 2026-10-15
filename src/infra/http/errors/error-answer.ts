@@ -57,6 +57,12 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['exports_unavailable', HttpStatus.SERVICE_UNAVAILABLE],
   ['account_ended', HttpStatus.CONFLICT],
   ['confirmation_mismatch', HttpStatus.CONFLICT],
+  ['not_found', HttpStatus.NOT_FOUND],
+  ['unknown_oauth_client', HttpStatus.BAD_REQUEST],
+  ['unregistered_redirect_uri', HttpStatus.BAD_REQUEST],
+  ['authorization_request_not_found', HttpStatus.NOT_FOUND],
+  ['too_many_connections', HttpStatus.CONFLICT],
+  ['connection_not_found', HttpStatus.NOT_FOUND],
 ]);
 
 const HTTP_ERRORS: ReadonlyMap<number, { readonly error: string; readonly message: string }> =

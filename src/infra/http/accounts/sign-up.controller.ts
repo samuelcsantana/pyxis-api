@@ -22,6 +22,7 @@ import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-thrott
 import {
   ACCESS_TOKENS_THROTTLER,
   INGEST_THROTTLER,
+  OAUTH_THROTTLER,
   SUBJECTS_THROTTLER,
 } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
@@ -42,6 +43,7 @@ import {
   [INGEST_THROTTLER]: true,
   [SUBJECTS_THROTTLER]: true,
   [ACCESS_TOKENS_THROTTLER]: true,
+  [OAUTH_THROTTLER]: true,
 })
 export class SignUpController {
   constructor(

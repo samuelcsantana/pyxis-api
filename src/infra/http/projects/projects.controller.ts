@@ -26,6 +26,7 @@ import {
   ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
   INGEST_THROTTLER,
+  OAUTH_THROTTLER,
   SUBJECTS_THROTTLER,
 } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
@@ -84,6 +85,7 @@ export function managedProjectBody(project: Project): ManagedProjectBody {
   [AUTH_THROTTLER]: true,
   [SUBJECTS_THROTTLER]: true,
   [ACCESS_TOKENS_THROTTLER]: true,
+  [OAUTH_THROTTLER]: true,
 })
 @UseGuards(DashboardOriginGuard, SessionGuard)
 export class ProjectsController {

@@ -23,6 +23,7 @@ import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-thrott
 import {
   ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
+  OAUTH_THROTTLER,
   SUBJECTS_THROTTLER,
 } from '../rate-limit/rate-limits';
 import { allowOrigin, answerPreflight } from './ingest-cors';
@@ -67,6 +68,7 @@ function ApiErrorResponses(): MethodDecorator {
   [AUTH_THROTTLER]: true,
   [SUBJECTS_THROTTLER]: true,
   [ACCESS_TOKENS_THROTTLER]: true,
+  [OAUTH_THROTTLER]: true,
 })
 export class IngestController {
   private readonly logger = new Logger(IngestController.name);
