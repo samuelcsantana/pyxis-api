@@ -15,6 +15,7 @@ import {
   BillingUnavailableError,
   InvalidBillingSignatureError,
 } from '../../domain/errors/billing.errors';
+import { trialNotice } from './trial-notice';
 
 const MILLISECONDS_PER_SECOND = 1000;
 const ACCOUNT_ID_METADATA = 'account_id';
@@ -180,6 +181,13 @@ export class StripeBillingGateway implements BillingGateway {
         billing_address_collection: 'required',
         tax_id_collection: { enabled: true },
         consent_collection: { terms_of_service: 'required' },
+        ...(request.trialDays === null
+          ? {}
+          : {
+              custom_text: {
+                submit: { message: trialNotice(request.language, request.trialDays) },
+              },
+            }),
         locale: STRIPE_LOCALES[request.language],
         success_url: request.successUrl,
         cancel_url: request.cancelUrl,
