@@ -450,19 +450,42 @@ account is deleted the daily job deletes the other projects and keeps the held o
 e-mail), finishing the deletion on the first run after `project:release`. The project settings
 show `deletion_held_at`, never the reason.
 
-### Stopping one person or one token
+### Stopping one person, one token or one connection
 
 ```bash
 MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s admin:suspend -- --email <email>
 MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s admin:resume -- --email <email>
 MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s token:revoke -- --token <id>
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s connection:revoke -- --connection <id>
 ```
 
-`admin:suspend` ends every live session and revokes every token of the person at once, keeps
-their grants, and keeps them out: no sign-in code is sent (the answer is the usual 202), a code
-sent before is refused, and a session that survived is refused too. `admin:resume` lets them sign
-in again; the old sessions and tokens stay ended. `token:revoke` takes the id the dashboard's
-Tokens panel shows; for a project key, use `key:revoke`.
+`admin:suspend` ends every live session, revokes every token and disconnects every application of
+the person at once, keeps their grants, and keeps them out: no sign-in code is sent (the answer is
+the usual 202), a code sent before is refused, and a session that survived is refused too.
+`admin:resume` lets them sign in again; the old sessions, tokens and connections stay ended.
+`token:revoke` takes the id the dashboard's Tokens panel shows; for a project key, use
+`key:revoke`. `connection:revoke` takes the id of a connected application (Claude, Claude Code);
+its tokens stop at once and the person can connect it again.
+
+## The Claude connector (OAuth)
+
+The API is the OAuth server Claude and Claude Code sign in through
+([ADR 0037](adr/0037-the-api-is-its-own-oauth-server-for-claude.md)). It is off until
+`remote_mcp_open = true` in `terraform.tfvars`, applied and deployed; Terraform also writes
+`/<project>/app/API_ORIGIN` (`https://<api_domain>`), the issuer. Check it once it is on:
+
+```bash
+curl -s https://<api_domain>/.well-known/oauth-authorization-server   # issuer = https://<api_domain>
+curl -s -o /dev/null -w '%{http_code}\n' 'https://<api_domain>/oauth/authorize'   # 400, never 404
+```
+
+While off, both answer 404. The logs name what happens, by id only:
+`oauth.authorization_started`, `oauth.authorization_approved`, `oauth.authorization_denied`,
+`oauth.connection_created`, `oauth.connection_revoked` (`by: client` or `admin`), and two
+warnings worth reading: `oauth.refresh_token_replayed` and `oauth.code_replayed`, each of which
+ended a connection because a token or a code came back after it was spent (a stolen token, or a
+client that lost its newest one). `oauth.client_metadata_unavailable` means a client's metadata
+document could not be read; the last good copy is used meanwhile.
 
 ## Exports
 
