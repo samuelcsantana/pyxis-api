@@ -210,6 +210,10 @@ Shipping now:
   revoked when access ends, the owner told and reminded by e-mail, everything deleted thirty days
   later (events in batches), and sign-ups that never subscribed removed after seven days; each step
   once, recorded on the account ([ADR 0022](docs/adr/0022-an-account-ends-in-steps.md))
+- The welcome e-mail, sent by the webhook as soon as an account gains access (the trial end, the
+  first step, the version and address of the terms accepted), with the daily job sending it to any
+  signed-up account the webhook could not welcome
+  ([ADR 0023](docs/adr/0023-the-welcome-follows-the-subscription.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -558,6 +562,7 @@ request never deploys.
 | [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md) | Owners manage their projects; the operator's stay in the command line   |
 | [0021](docs/adr/0021-people-are-counted-across-the-account.md)           | People are added per project and counted across the account             |
 | [0022](docs/adr/0022-an-account-ends-in-steps.md)                        | An account ends in steps, each done once by the daily job               |
+| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)            | The welcome follows the subscription, with the daily job as a fallback  |
 
 ## Roadmap
 
@@ -587,7 +592,8 @@ request never deploys.
 - [x] Projects and keys managed by the owner of their account
 - [x] People added and removed by the owner, with an invitation e-mail
 - [x] The end of an account: reconciliation, revoked keys, notices and deletion after thirty days
-- [ ] Hosted plan: export and account deletion requested by the owner; the welcome e-mail
+- [x] The welcome e-mail with the terms accepted
+- [ ] Hosted plan: export and account deletion requested by the owner
 
 ## Contributing and license
 

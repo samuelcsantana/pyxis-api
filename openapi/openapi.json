@@ -2842,6 +2842,18 @@
           "open": {
             "type": "boolean"
           },
+          "terms_url": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the terms of that version are published; null while closed."
+          },
           "terms_version": {
             "description": "The version of the terms the sign-up page must show; null while closed.",
             "type": [
@@ -2852,7 +2864,8 @@
         },
         "required": [
           "open",
-          "terms_version"
+          "terms_version",
+          "terms_url"
         ],
         "type": "object"
       },
