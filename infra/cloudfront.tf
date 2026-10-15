@@ -22,6 +22,33 @@ resource "aws_cloudfront_origin_request_policy" "api" {
   }
 }
 
+locals {
+  connector_path_patterns = ["/mcp", "/oauth/*", "/.well-known/oauth-*"]
+  not_found_body          = jsonencode({ status_code = 404, error = "not_found", message = "Nothing lives at this address." })
+}
+
+resource "aws_cloudfront_function" "connector_host" {
+  name    = "${var.project}-connector-host"
+  runtime = "cloudfront-js-2.0"
+  comment = "404 on the connector paths for any host but api_domain: OAuth names one resource."
+  publish = true
+  code    = <<-EOT
+    function handler(event) {
+      var request = event.request;
+      var host = request.headers.host ? request.headers.host.value.toLowerCase() : "";
+      if (host === ${jsonencode(lower(var.api_domain))}) {
+        return request;
+      }
+      return {
+        statusCode: 404,
+        statusDescription: "Not Found",
+        headers: { "content-type": { value: "application/json" } },
+        body: { encoding: "text", data: ${jsonencode(local.not_found_body)} }
+      };
+    }
+  EOT
+}
+
 resource "aws_cloudfront_distribution" "api" {
   enabled         = true
   is_ipv6_enabled = true
@@ -56,6 +83,25 @@ resource "aws_cloudfront_distribution" "api" {
     compress                 = true
     cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
     origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
+  }
+
+  dynamic "ordered_cache_behavior" {
+    for_each = local.connector_path_patterns
+    content {
+      path_pattern             = ordered_cache_behavior.value
+      target_origin_id         = "lambda-function-url"
+      viewer_protocol_policy   = "redirect-to-https"
+      allowed_methods          = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+      cached_methods           = ["GET", "HEAD"]
+      compress                 = true
+      cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
+      origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
+
+      function_association {
+        event_type   = "viewer-request"
+        function_arn = aws_cloudfront_function.connector_host.arn
+      }
+    }
   }
 
   restrictions {
