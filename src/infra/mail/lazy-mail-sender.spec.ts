@@ -26,6 +26,7 @@ describe('LazyMailSender', () => {
       { projectName: 'Shop', inviterEmail: 'ana@example.com' },
       'en',
     );
+    await sender.sendAccountNotice('ana@example.com', { kind: 'account_deleted' }, 'en');
     await sender.sendQuotaNotice('ana@example.com', NOTICE, 'pt-BR');
     await sender.sendWeeklyDigest('ana@example.com', { projectId: 'p' } as WeeklyDigest, 'es');
 
@@ -36,6 +37,7 @@ describe('LazyMailSender', () => {
     ]);
     expect(recording.quotaNotices).toHaveLength(1);
     expect(recording.invitations).toHaveLength(1);
+    expect(recording.accountNotices).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
   });
 

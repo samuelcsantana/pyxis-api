@@ -1,8 +1,10 @@
+import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { Invitation } from '../../domain/people/invitation';
 import type { MailSender } from '../../domain/services/mail-sender';
+import { buildAccountNoticeEmail } from './account-notice-email';
 import type { EmailContent, EmailLinks } from './email-layout';
 import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
@@ -48,6 +50,14 @@ export class ResendMailSender implements MailSender {
       email,
       buildInvitationEmail(invitation, language, this.links),
       invitation.inviterEmail,
+    );
+  }
+
+  sendAccountNotice(email: string, notice: AccountNotice, language: EmailLanguage): Promise<void> {
+    return this.deliver(
+      email,
+      buildAccountNoticeEmail(notice, language, this.links, this.supportEmail),
+      this.supportEmail,
     );
   }
 
