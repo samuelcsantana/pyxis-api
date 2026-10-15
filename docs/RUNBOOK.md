@@ -341,6 +341,22 @@ the owner with the reason, what was suspended, what to do and how to contest. Wr
 again keeps the moment of the first suspension; keys and tokens revoked meanwhile stay revoked
 after `account:resume`.
 
+### Closing an account as the operator
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' STRIPE_SECRET_KEY='<the restricted key>' \
+  npm run -s account:close -- --account <id> --reason '<what was seen, as written to the owner>' --refund prorata
+```
+
+`--refund full` refunds everything the latest paid invoice paid (a first payment inside the
+seven-day withdrawal period), `prorata` the whole days left of its period, counted from the start
+of the suspension when the account is suspended, and `none` nothing (a repeated free trial ended
+before any charge). The subscription is cancelled at once, the keys are revoked in the same
+transaction and the data is deleted thirty days later; the next daily job e-mails the owner the
+end of access and the date. If Stripe cannot cancel, nothing is closed; if only the refund fails,
+the account is closed, the output says so, and the refund is made by hand in Stripe. The reason is
+printed, not stored: write to the owner with it.
+
 ## Exports
 
 Owners export a project's events to a compressed CSV. Terraform creates the private bucket
