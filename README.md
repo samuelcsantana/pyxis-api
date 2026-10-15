@@ -174,7 +174,10 @@ Shipping now:
   ([ADR 0017](docs/adr/0017-monthly-quota-measured-daily.md)). The owner is told by e-mail once
   per level and month, in their language: at 80%, at 100% (nothing is cut off) and when the pause
   starts; a failed e-mail is tried again the next day, and the optional `SUPPORT_EMAIL` is named in
-  it and receives the replies
+  it and receives the replies. The operator can exempt an account from the pause until a day
+  (`account:exempt-quota`), for a customer of an earlier version of the terms until its renewal:
+  it is neither paused nor told of a pause before that day, and `GET /v1/me/accounts` shows
+  `quota_pause_exempt_until` ([ADR 0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -381,6 +384,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s account:close -- --account <id> --reason "<why>" --refund <full\|prorata\|none>`                                                                    | Ends the account at once as the operator: cancels the subscription, refunds as asked, revokes the keys; the daily job e-mails the owner; needs `STRIPE_SECRET_KEY` when there is a subscription |
 | `npm run -s account:hold -- --account <id> --reason "<why>"`                                                                                                    | Holds the deletion of the account and of its projects, keeping the reason (500 characters at most); the owner sees the hold, not the reason                                                     |
 | `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                       |
+| `npm run -s account:exempt-quota -- --account <id> --until <YYYY-MM-DD>`                                                                                        | Keeps the account from the pause at 150% of the plan until the start of that day (UTC), lifting a pause in place within a minute; `--clear` instead of `--until` ends the exemption             |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
@@ -637,6 +641,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0031](docs/adr/0031-people-without-a-project-are-deleted.md)                | People left without a project are deleted after thirty days                |
 | [0032](docs/adr/0032-a-project-reception-can-be-suspended-alone.md)          | A project's reception can be suspended on its own                          |
 | [0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md)                   | A hold keeps everything it covers, a single project included               |
+| [0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md)           | An account can be exempted from the quota pause until a day                |
 
 ## Roadmap
 
