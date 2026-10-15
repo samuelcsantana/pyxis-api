@@ -178,6 +178,10 @@ Shipping now:
   (`account:exempt-quota`), for a customer of an earlier version of the terms until its renewal:
   it is neither paused nor told of a pause before that day, and `GET /v1/me/accounts` shows
   `quota_pause_exempt_until` ([ADR 0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md))
+- A larger plan for one account: the operator gives it its own monthly events, projects and people
+  (`account:limits`), used by the measurement, its notices, project creation, adding people and
+  `GET /v1/me/accounts`; lowering a limit deletes nothing
+  ([ADR 0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -392,6 +396,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s account:hold -- --account <id> --reason "<why>"`                                                                                                    | Holds the deletion of the account and of its projects, keeping the reason (500 characters at most); the owner sees the hold, not the reason                                                                     |
 | `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                                       |
 | `npm run -s account:exempt-quota -- --account <id> --until <YYYY-MM-DD>`                                                                                        | Keeps the account from the pause at 150% of the plan until the start of that day (UTC), lifting a pause in place within a minute; `--clear` instead of `--until` ends the exemption                             |
+| `npm run -s account:limits -- --account <id> [--events <n>] [--projects <n>] [--people <n>]`                                                                    | Gives the account its own limits (any subset) and prints them, with anything already over; `--reset` alone goes back to the hosted plan                                                                         |
 | `npm run -s notice:create -- --campaign <name> --dir <folder> [--include-ended] [--dry-run]`                                                                    | Stores a notice to every account owner from `en.txt`, `pt-BR.txt` and `es.txt` in the folder (subject line, then paragraphs) and prints how many owners of each language it reaches; the jobs function sends it |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
@@ -651,6 +656,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md)                   | A hold keeps everything it covers, a single project included               |
 | [0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md)           | An account can be exempted from the quota pause until a day                |
 | [0035](docs/adr/0035-notices-to-every-owner-go-through-the-jobs-function.md) | Notices to every owner are stored, then sent by the jobs function          |
+| [0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md)              | A larger plan is limits on the account, set by the operator                |
 
 ## Roadmap
 
