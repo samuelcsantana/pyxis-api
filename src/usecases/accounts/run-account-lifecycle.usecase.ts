@@ -16,6 +16,7 @@ import type {
 } from '../../domain/repositories/account-lifecycle.repository';
 import type { Clock } from '../../domain/services/clock';
 import type { MailSender } from '../../domain/services/mail-sender';
+import type { SweepProjectlessPeopleUseCase } from '../people/sweep-projectless-people.usecase';
 import type { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 
 export interface AccountLifecycleReport {
@@ -29,6 +30,8 @@ export interface AccountLifecycleReport {
   readonly deleted: number;
   readonly incompleteRemoved: number;
   readonly peopleRemoved: number;
+  readonly projectlessMarked: number;
+  readonly projectlessRemoved: number;
 }
 
 export class AccountLifecycleFailedError extends Error {
@@ -54,6 +57,7 @@ export class RunAccountLifecycleUseCase {
     private readonly mail: MailSender,
     private readonly clock: Clock,
     private readonly welcomes: WelcomeAccountsUseCase,
+    private readonly projectless: SweepProjectlessPeopleUseCase,
   ) {}
 
   async execute(): Promise<AccountLifecycleReport> {
@@ -73,6 +77,7 @@ export class RunAccountLifecycleUseCase {
     );
     const deletion = await this.deleteEnded(now);
     const incomplete = await this.removeStaleIncomplete(now);
+    const sweep = await this.projectless.execute();
     const report: AccountLifecycleReport = {
       welcomes,
       ...reconciliation,
@@ -82,6 +87,7 @@ export class RunAccountLifecycleUseCase {
       deleted: deletion.removed,
       incompleteRemoved: incomplete.removed,
       peopleRemoved: deletion.peopleRemoved + incomplete.peopleRemoved,
+      ...sweep,
     };
     this.logger.log({ message: 'accounts.lifecycle_done', ...report });
     const failed = [...deletion.failed, ...incomplete.failed];

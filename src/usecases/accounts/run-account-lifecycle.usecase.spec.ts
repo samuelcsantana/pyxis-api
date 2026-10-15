@@ -6,7 +6,9 @@ import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccountBillingRepository } from '../../test-utils/in-memory-account-billing.repository';
 import { InMemoryAccountLifecycleRepository } from '../../test-utils/in-memory-account-lifecycle.repository';
 import { InMemoryAccountWelcomeRepository } from '../../test-utils/in-memory-account-welcome.repository';
+import { InMemoryProjectlessPeopleRepository } from '../../test-utils/in-memory-projectless-people.repository';
 import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
+import { SweepProjectlessPeopleUseCase } from '../people/sweep-projectless-people.usecase';
 import {
   AccountLifecycleFailedError,
   RunAccountLifecycleUseCase,
@@ -48,6 +50,7 @@ function setup() {
     termsUrl: null,
     dashboardOrigin: 'https://app.example.com',
   });
+  const projectless = new InMemoryProjectlessPeopleRepository();
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
@@ -55,8 +58,9 @@ function setup() {
     mail,
     clock,
     welcomes,
+    new SweepProjectlessPeopleUseCase(projectless, clock),
   );
-  return { lifecycle, billing, gateway, mail, welcomeRepository, useCase };
+  return { lifecycle, billing, gateway, mail, welcomeRepository, projectless, useCase };
 }
 
 describe('RunAccountLifecycleUseCase', () => {
@@ -87,8 +91,22 @@ describe('RunAccountLifecycleUseCase', () => {
       deleted: 0,
       incompleteRemoved: 0,
       peopleRemoved: 0,
+      projectlessMarked: 0,
+      projectlessRemoved: 0,
     });
     expect(mail.accountNotices).toEqual([]);
+  });
+
+  it('reports the people it marked and removed for having no project left', async () => {
+    const { projectless, useCase } = setup();
+    projectless.add({ adminUserId: 'taken-off' });
+    projectless.add({ adminUserId: 'long-gone', projectlessSince: daysAgo(31) });
+
+    await expect(useCase.execute()).resolves.toMatchObject({
+      projectlessMarked: 1,
+      projectlessRemoved: 1,
+    });
+    expect(projectless.person('long-gone')).toBeUndefined();
   });
 
   it('welcomes the owners the webhook could not, once', async () => {

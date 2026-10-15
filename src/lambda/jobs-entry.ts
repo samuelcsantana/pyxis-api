@@ -20,6 +20,8 @@ import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher'
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
+import { DrizzleProjectlessPeopleRepository } from '../infra/repositories/drizzle-projectless-people.repository';
+import { SweepProjectlessPeopleUseCase } from '../usecases/people/sweep-projectless-people.usecase';
 import { ProcessProjectExportUseCase } from '../usecases/exports/process-project-export.usecase';
 import { createExportStorage } from '../infra/exports/s3-export-storage';
 import { DrizzleProjectExportRepository } from '../infra/repositories/drizzle-project-export.repository';
@@ -98,6 +100,7 @@ export const handler = createJobsHandler({
           clock,
           signUpSettingsFromEnv(env),
         ),
+        new SweepProjectlessPeopleUseCase(new DrizzleProjectlessPeopleRepository(database), clock),
       ).execute();
     }),
   processExport: (exportId) =>
