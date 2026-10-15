@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
+import { type PlanLimits, planLimitsOf } from '../../domain/accounts/account-limits';
 import { AccountNotFoundError } from '../../domain/errors/account.errors';
 import { monthLabelOf } from '../../domain/queries/project-usage';
 import {
@@ -19,7 +19,7 @@ export interface ShowAccountCommand {
 }
 
 export interface AccountSummary extends AccountOverview {
-  readonly limits: typeof HOSTED_PLAN_LIMITS;
+  readonly limits: PlanLimits;
   readonly month: string;
   readonly usage: RecordedUsage | null;
 }
@@ -39,6 +39,6 @@ export class ShowAccountUseCase {
     }
     const month = monthLabelOf(this.clock.now());
     const usage = await this.usage.recordedFor(command.accountId, month);
-    return { ...overview, limits: HOSTED_PLAN_LIMITS, month, usage };
+    return { ...overview, limits: planLimitsOf(overview.account), month, usage };
   }
 }

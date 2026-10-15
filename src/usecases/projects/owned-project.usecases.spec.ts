@@ -47,7 +47,7 @@ async function setup(status: AccountStatus = 'trialing') {
   const clock = new FixedClock(NOW);
   const account = await accounts.create({ ownerAdminId: OWNER_ID, status });
   store.addAccount(account.id, OWNER_ID);
-  const createProject = new CreateProjectUseCase(store, random);
+  const createProject = new CreateProjectUseCase(store, random, accounts);
   const holds = new InMemoryProjectDeletionHoldRepository();
   return {
     store,

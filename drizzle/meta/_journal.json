@@ -190,6 +190,13 @@
       "when": 1792077015359,
       "tag": "0026_operator-notices",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1792086653671,
+      "tag": "0027_account-plan-limits",
+      "breakpoints": true
     }
   ]
 }

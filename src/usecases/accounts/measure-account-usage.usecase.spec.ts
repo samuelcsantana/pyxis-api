@@ -23,6 +23,7 @@ function usage(
     owner: { email: `${accountId.slice(-1)}@example.com`, language: 'pt-BR' },
     notifiedLevel: 0,
     pauseExemptUntil: null,
+    eventsPerMonthLimit: null,
     ...overrides,
   };
 }

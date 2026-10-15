@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
+import { type PlanLimits, planLimitsOf } from '../../domain/accounts/account-limits';
 import type { Account } from '../../domain/entities/account.entity';
 import { monthLabelOf } from '../../domain/queries/project-usage';
 import {
@@ -19,7 +19,7 @@ export interface MyAccount {
   readonly role: AccountRole;
   readonly month: string;
   readonly usage: RecordedUsage | null;
-  readonly limits: typeof HOSTED_PLAN_LIMITS;
+  readonly limits: PlanLimits;
 }
 
 @Injectable()
@@ -39,7 +39,7 @@ export class ListMyAccountsUseCase {
         role,
         month,
         usage: await this.usage.recordedFor(account.id, month),
-        limits: HOSTED_PLAN_LIMITS,
+        limits: planLimitsOf(account),
       })),
     );
   }

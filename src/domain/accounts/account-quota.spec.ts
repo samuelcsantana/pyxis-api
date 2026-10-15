@@ -1,6 +1,5 @@
 import {
   type AccountMonthUsage,
-  INGESTION_PAUSE_THRESHOLD,
   ingestionPauseFor,
   isPausedAt,
   isPauseExemptAt,
@@ -17,14 +16,23 @@ function usage(events: number, status: AccountMonthUsage['status'] = 'active'): 
     owner: { email: 'owner@example.com', language: 'en' },
     notifiedLevel: 0,
     pauseExemptUntil: null,
+    eventsPerMonthLimit: null,
   };
 }
 
 describe('ingestionPauseFor', () => {
   it('pauses an account at 150% of the plan, until the month ends', () => {
-    expect(INGESTION_PAUSE_THRESHOLD).toBe(150_000);
     expect(ingestionPauseFor(usage(150_000), MONTH_END, MEASURED_AT)).toBe(MONTH_END);
     expect(ingestionPauseFor(usage(149_999), MONTH_END, MEASURED_AT)).toBeNull();
+  });
+
+  it('pauses at 150% of the limit set for the account, when one is set', () => {
+    const larger = { ...usage(1_499_999), eventsPerMonthLimit: 1_000_000 };
+
+    expect(ingestionPauseFor(larger, MONTH_END, MEASURED_AT)).toBeNull();
+    expect(ingestionPauseFor({ ...larger, events: 1_500_000 }, MONTH_END, MEASURED_AT)).toBe(
+      MONTH_END,
+    );
   });
 
   it('never pauses a free account', () => {

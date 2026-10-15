@@ -42,6 +42,9 @@ const ACCOUNT: Account = {
   deletionHeldAt: null,
   deletionHoldReason: null,
   quotaPauseExemptUntil: null,
+  eventsPerMonthLimit: null,
+  projectsLimit: null,
+  peopleLimit: null,
   createdAt: new Date('2026-11-01T00:00:00.000Z'),
 };
 const MEASURED_AT = new Date('2026-11-02T03:00:00.000Z');

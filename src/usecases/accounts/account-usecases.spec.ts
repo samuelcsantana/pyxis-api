@@ -124,6 +124,9 @@ describe('ShowAccountUseCase', () => {
       deletionHeldAt: null,
       deletionHoldReason: null,
       quotaPauseExemptUntil: null,
+      eventsPerMonthLimit: null,
+      projectsLimit: null,
+      peopleLimit: null,
       createdAt: new Date('2026-10-14T00:00:00.000Z'),
     });
 

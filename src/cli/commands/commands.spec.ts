@@ -7,6 +7,8 @@ import { CliUsageError } from '../cli-args';
 import { accountCloseCommand } from './account-close.command';
 import { accountCreateCommand } from './account-create.command';
 import { accountExemptQuotaCommand } from './account-exempt-quota.command';
+import { AccountNotFoundError } from '../../domain/errors/account.errors';
+import { accountLimitsCommand } from './account-limits.command';
 import { accountHoldCommand } from './account-hold.command';
 import { accountReleaseCommand } from './account-release.command';
 import { accountLinkCommand } from './account-link.command';
@@ -155,6 +157,8 @@ describe('project:create', () => {
   it('creates the project in the account it names, for its owner to read', async () => {
     const context = inMemoryCliContext();
     context.store.addAccount(ACCOUNT_ID, OWNER_ID);
+    const account = await context.accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
+    expect(account.id).toBe(ACCOUNT_ID);
 
     await projectCreateCommand.execute(
       context,
@@ -339,6 +343,111 @@ describe('account:exempt-quota', () => {
 
     expect(cleared.out).toEqual([`account_id=${account.id}`, 'quota_pause_exempt_until=']);
     expect(cleared.err).toEqual([expect.stringContaining('next daily measurement')]);
+  });
+});
+
+describe('account:limits', () => {
+  it('parses the limits it is given or a reset, refusing both, neither or a bad number', () => {
+    expect(
+      accountLimitsCommand.parse(['--account', ACCOUNT_ID, '--projects', '10', '--people', '8']),
+    ).toEqual({ accountId: ACCOUNT_ID, changes: { projectsLimit: 10, peopleLimit: 8 } });
+    expect(accountLimitsCommand.parse(['--account', ACCOUNT_ID, '--events', '1000000'])).toEqual({
+      accountId: ACCOUNT_ID,
+      changes: { eventsPerMonthLimit: 1_000_000 },
+    });
+    expect(accountLimitsCommand.parse(['--account', ACCOUNT_ID, '--reset'])).toEqual({
+      accountId: ACCOUNT_ID,
+      changes: { eventsPerMonthLimit: null, projectsLimit: null, peopleLimit: null },
+    });
+    for (const argv of [
+      ['--account', ACCOUNT_ID],
+      ['--account', ACCOUNT_ID, '--projects', '10', '--reset'],
+      ['--account', ACCOUNT_ID, '--projects', '0'],
+      ['--account', ACCOUNT_ID, '--people', '2.5'],
+      ['--account', ACCOUNT_ID, '--events', '-1'],
+      ['--account', ACCOUNT_ID, '--projects', '101'],
+      ['--account', ACCOUNT_ID, '--events', '100000001'],
+    ]) {
+      expect(() => accountLimitsCommand.parse(argv)).toThrow(CliUsageError);
+    }
+  });
+
+  it('gives an account larger limits and shows them, with nothing over', async () => {
+    const context = inMemoryCliContext();
+    const owner = await context.admins.findOrCreateByEmail('owner@example.com');
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'active' });
+    const output = captureOutput();
+
+    await accountLimitsCommand.execute(
+      context,
+      { accountId: account.id, changes: { eventsPerMonthLimit: 1_000_000, projectsLimit: 10 } },
+      output,
+    );
+
+    expect(output.out).toEqual([
+      `account_id=${account.id}`,
+      'events_per_month=1000000',
+      'projects=0/10',
+      'people=0/3',
+    ]);
+    expect(output.err).toEqual([expect.stringContaining('from now on')]);
+  });
+
+  it('says what is over a lowered limit, deleting nothing', async () => {
+    const context = inMemoryCliContext();
+    const owner = await context.admins.findOrCreateByEmail('owner@example.com');
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'active' });
+    const project = {
+      name: 'Site',
+      allowedOrigins: ['https://site.example.com'],
+      timezone: 'UTC',
+      conversionEvent: null,
+      createdAt: new Date('2026-10-14T10:00:00.000Z'),
+    };
+    context.accounts.add(account, {
+      projects: [
+        { ...project, id: 'b0000000-0000-4000-8000-000000000001' },
+        { ...project, id: 'b0000000-0000-4000-8000-000000000002' },
+      ],
+      people: 3,
+    });
+    await context.accountUsage.record(
+      '2026-10',
+      [{ accountId: account.id, events: 900, ingestionPausedUntil: null }],
+      new Date('2026-10-06T03:00:00.000Z'),
+    );
+    const output = captureOutput();
+
+    await accountLimitsCommand.execute(
+      context,
+      {
+        accountId: account.id,
+        changes: { eventsPerMonthLimit: 500, projectsLimit: 1, peopleLimit: 2 },
+      },
+      output,
+    );
+
+    expect(output.out).toEqual([
+      `account_id=${account.id}`,
+      'events_per_month=500',
+      'projects=2/1',
+      'people=3/2',
+      'over_events=900/500',
+      'over_projects=2/1',
+      'over_people=3/2',
+    ]);
+    expect(output.err).toEqual([expect.stringContaining('Nothing is deleted')]);
+    expect(await context.accounts.projectsOf(account.id)).toHaveLength(2);
+  });
+
+  it('refuses an account that does not exist', async () => {
+    await expect(
+      accountLimitsCommand.execute(
+        inMemoryCliContext(),
+        { accountId: ACCOUNT_ID, changes: { projectsLimit: 5 } },
+        captureOutput(),
+      ),
+    ).rejects.toThrow(AccountNotFoundError);
   });
 });
 

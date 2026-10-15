@@ -17,6 +17,7 @@ import { StubProjectUsageQuery } from './stub-project-usage.query';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { ExemptAccountFromQuotaPauseUseCase } from '../usecases/accounts/exempt-account-from-quota-pause.usecase';
+import { SetAccountPlanLimitsUseCase } from '../usecases/accounts/set-account-plan-limits.usecase';
 import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
 import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
@@ -101,7 +102,7 @@ export function inMemoryCliContext(): CliContext & {
     projectHolds,
     notices,
     closed: false,
-    createProject: new CreateProjectUseCase(store, random),
+    createProject: new CreateProjectUseCase(store, random, accounts),
     createProjectKey: new CreateProjectKeyUseCase(store, store, random),
     revokeProjectKey: new RevokeProjectKeyUseCase(store, clock),
     updateProject: new UpdateProjectUseCase(store),
@@ -111,6 +112,7 @@ export function inMemoryCliContext(): CliContext & {
     revokeAdminAccess: new RevokeAdminAccessUseCase(admins, store, accounts, people),
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, accountUsage, clock),
+    setAccountPlanLimits: new SetAccountPlanLimitsUseCase(accounts),
     linkSubscription: new LinkSubscriptionUseCase(billing, accountBilling, clock),
     suspendAccount: new SuspendAccountUseCase(accounts, accounts, clock),
     resumeAccount: new ResumeAccountUseCase(accounts),
