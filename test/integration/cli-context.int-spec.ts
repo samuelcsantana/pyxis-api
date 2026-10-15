@@ -220,7 +220,7 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
-  it('suspends a person and lifts it, and revokes a token, with the migration connection', async () => {
+  it('suspends a person and lifts it, and revokes a token or a connection, with the migration connection', async () => {
     const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
     try {
       const project = await context.createProject.execute({
@@ -237,8 +237,21 @@ describe('openCliContext against a real Postgres', () => {
         RETURNING id
       `;
 
+      const [connection] = await owner<{ id: string }[]>`
+        INSERT INTO oauth_connections (admin_user_id, client_id, created_at, last_used_at)
+        VALUES (${ana.adminUserId}, 'https://claude.ai/oauth/mcp-oauth-client-metadata', now(), now())
+        RETURNING id
+      `;
+
       const suspended = await context.suspendAdmin.execute({ email: 'ana@example.com' });
-      expect(suspended).toMatchObject({ tokensRevoked: 1, sessionsEnded: 0 });
+      expect(suspended).toMatchObject({
+        tokensRevoked: 1,
+        sessionsEnded: 0,
+        connectionsRevoked: 1,
+      });
+      await expect(
+        context.revokeConnection.execute({ connectionId: connection?.id ?? '' }),
+      ).rejects.toMatchObject({ code: 'connection_not_found' });
       await context.resumeAdmin.execute({ email: 'ana@example.com' });
       const [admin] = await owner<{ suspended_at: Date | null }[]>`
         SELECT suspended_at FROM admin_users WHERE id = ${ana.adminUserId}

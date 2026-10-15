@@ -17,6 +17,10 @@ import {
   ADMIN_USER_REPOSITORY,
   type AdminUserRepository,
 } from '../../domain/repositories/admin-user.repository';
+import {
+  OAUTH_CONNECTION_REPOSITORY,
+  type OAuthConnectionRepository,
+} from '../../domain/repositories/oauth-connection.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 
 export interface AdminByEmailCommand {
@@ -29,6 +33,7 @@ export interface SuspendedAdmin {
   readonly suspendedAt: Date;
   readonly sessionsEnded: number;
   readonly tokensRevoked: number;
+  readonly connectionsRevoked: number;
 }
 
 @Injectable()
@@ -38,6 +43,7 @@ export class SuspendAdminUseCase {
     @Inject(ADMIN_SUSPENSION_REPOSITORY) private readonly suspensions: AdminSuspensionRepository,
     @Inject(ADMIN_SESSION_REPOSITORY) private readonly sessions: AdminSessionRepository,
     @Inject(ACCESS_TOKEN_REPOSITORY) private readonly tokens: AccessTokenRepository,
+    @Inject(OAUTH_CONNECTION_REPOSITORY) private readonly connections: OAuthConnectionRepository,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -57,6 +63,7 @@ export class SuspendAdminUseCase {
       suspendedAt,
       sessionsEnded: await this.sessions.revokeAllOf(admin.id, now),
       tokensRevoked: await this.tokens.revokeAllOf(admin.id, now),
+      connectionsRevoked: await this.connections.revokeAllOf(admin.id, now),
     };
   }
 }
