@@ -62,6 +62,7 @@ describe('DescribeAdminUseCase', () => {
           iconVersion: null,
           ingestionSuspendedAt: lastEventAt,
           ingestionSuspensionReason: 'Forged traffic.',
+          deletionHeldAt: null,
         },
         {
           ...BLOG,
@@ -70,6 +71,7 @@ describe('DescribeAdminUseCase', () => {
           iconVersion: '0123456789abcdef',
           ingestionSuspendedAt: null,
           ingestionSuspensionReason: null,
+          deletionHeldAt: null,
         },
       ],
     });

@@ -48,6 +48,14 @@ export const projectSettingsSchema = z
           'stored as a hash and never shown',
       ),
     ...projectRestrictionFields,
+    deletion_held_at: z.iso
+      .datetime()
+      .nullable()
+      .describe(
+        'Since when the operator holds the deletion of the project (a dispute or a legal order): ' +
+          'it cannot be deleted, and its events are kept past the retention, until released; ' +
+          'the reason is never shown',
+      ),
   })
   .meta({
     id: 'ProjectSettings',

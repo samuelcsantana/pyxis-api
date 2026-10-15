@@ -61,6 +61,7 @@ describe('ProjectSettingsController', () => {
       eventRetentionMonths: 13,
       ingestionSuspendedAt: new Date('2026-10-06T12:00:00.000Z'),
       ingestionSuspensionReason: 'Events carried e-mail addresses.',
+      deletionHeldAt: new Date('2026-10-07T12:00:00.000Z'),
     });
 
     const body = await controller.settings(requestFor(PROJECT));
@@ -88,6 +89,7 @@ describe('ProjectSettingsController', () => {
       secret_keys: [{ id: SECRET_KEY_ID, created_at: '2026-10-02T08:00:00.000Z' }],
       ingestion_suspended_at: '2026-10-06T12:00:00.000Z',
       ingestion_suspension_reason: 'Events carried e-mail addresses.',
+      deletion_held_at: '2026-10-07T12:00:00.000Z',
     });
   });
 
@@ -104,6 +106,7 @@ describe('ProjectSettingsController', () => {
       eventRetentionMonths: 13,
       ingestionSuspendedAt: null,
       ingestionSuspensionReason: null,
+      deletionHeldAt: null,
     });
 
     const body = await controller.settings(requestFor(PROJECT));
@@ -116,6 +119,7 @@ describe('ProjectSettingsController', () => {
       last_event_at: null,
       public_keys: [],
       secret_keys: [],
+      deletion_held_at: null,
     });
   });
 });

@@ -1,11 +1,13 @@
 export interface ProjectRestrictions {
   readonly ingestionSuspendedAt: Date | null;
   readonly ingestionSuspensionReason: string | null;
+  readonly deletionHeldAt: Date | null;
 }
 
 export const NO_RESTRICTIONS: ProjectRestrictions = {
   ingestionSuspendedAt: null,
   ingestionSuspensionReason: null,
+  deletionHeldAt: null,
 };
 
 export interface ProjectRestrictionsQuery {

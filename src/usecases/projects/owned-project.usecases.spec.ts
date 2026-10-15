@@ -22,6 +22,7 @@ import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.repository';
+import { InMemoryProjectDeletionHoldRepository } from '../../test-utils/in-memory-project-deletion-hold.repository';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { CreateOwnedProjectKeyUseCase } from './create-owned-project-key.usecase';
 import { CreateOwnedProjectUseCase } from './create-owned-project.usecase';
@@ -47,6 +48,7 @@ async function setup(status: AccountStatus = 'trialing') {
   const account = await accounts.create({ ownerAdminId: OWNER_ID, status });
   store.addAccount(account.id, OWNER_ID);
   const createProject = new CreateProjectUseCase(store, random);
+  const holds = new InMemoryProjectDeletionHoldRepository();
   return {
     store,
     accounts,
@@ -65,9 +67,11 @@ async function setup(status: AccountStatus = 'trialing') {
       new CreateProjectKeyUseCase(store, store, random),
     ),
     revokeOwnedKey: new RevokeOwnedProjectKeyUseCase(store, accounts, store, clock),
+    holds,
     deleteOwnedProject: new DeleteOwnedProjectUseCase(
       store,
       accounts,
+      holds,
       new DeleteProjectUseCase(store),
     ),
   };
@@ -342,6 +346,17 @@ describe('DeleteOwnedProjectUseCase', () => {
   it('keeps a project of an account whose deletion is held', async () => {
     const { deleteOwnedProject, projectId, accounts, account, store } = await withProject();
     accounts.add({ ...account, deletionHeldAt: NOW, deletionHoldReason: 'Court order' });
+
+    await expect(
+      deleteOwnedProject.execute({ adminUserId: OWNER_ID, projectId, confirmName: 'Shop' }),
+    ).rejects.toBeInstanceOf(DeletionOnHoldError);
+    expect(await store.findById(projectId)).not.toBeNull();
+  });
+
+  it('keeps a project whose own deletion is held', async () => {
+    const { deleteOwnedProject, projectId, holds, store } = await withProject();
+    holds.add(projectId, 'Shop');
+    await holds.hold(projectId, 'Court order', NOW);
 
     await expect(
       deleteOwnedProject.execute({ adminUserId: OWNER_ID, projectId, confirmName: 'Shop' }),

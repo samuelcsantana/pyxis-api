@@ -441,6 +441,7 @@ describe('dashboard sign-in', () => {
             iconVersion: null,
             ingestionSuspendedAt: null,
             ingestionSuspensionReason: null,
+            deletionHeldAt: null,
           },
         ],
       });

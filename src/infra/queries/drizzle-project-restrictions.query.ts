@@ -25,6 +25,7 @@ export class DrizzleProjectRestrictionsQuery implements ProjectRestrictionsQuery
         projectId: projects.id,
         ingestionSuspendedAt: projects.ingestionSuspendedAt,
         ingestionSuspensionReason: projects.ingestionSuspensionReason,
+        deletionHeldAt: projects.deletionHeldAt,
         ownerAdminId: accounts.ownerAdminId,
       })
       .from(projects)
@@ -37,6 +38,7 @@ export class DrizzleProjectRestrictionsQuery implements ProjectRestrictionsQuery
           ingestionSuspendedAt: row.ingestionSuspendedAt,
           ingestionSuspensionReason:
             row.ownerAdminId === adminUserId ? row.ingestionSuspensionReason : null,
+          deletionHeldAt: row.deletionHeldAt,
         },
       ]),
     );

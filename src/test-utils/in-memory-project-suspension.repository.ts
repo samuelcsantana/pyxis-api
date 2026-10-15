@@ -1,7 +1,6 @@
-import {
-  NO_RESTRICTIONS,
-  type ProjectRestrictions,
-  type ProjectRestrictionsQuery,
+import type {
+  ProjectRestrictions,
+  ProjectRestrictionsQuery,
 } from '../domain/queries/project-restrictions';
 import type {
   ProjectIngestionSuspension,
@@ -10,6 +9,7 @@ import type {
 
 interface RestrictedProject extends ProjectIngestionSuspension {
   readonly ownerAdminId: string | null;
+  readonly deletionHeldAt: Date | null;
 }
 
 export class InMemoryProjectSuspensionRepository
@@ -24,7 +24,15 @@ export class InMemoryProjectSuspensionRepository
       suspendedAt: null,
       reason: null,
       ownerAdminId,
+      deletionHeldAt: null,
     });
+  }
+
+  holdDeletion(projectId: string, at: Date): void {
+    const project = this.projects.get(projectId);
+    if (project !== undefined) {
+      this.projects.set(projectId, { ...project, deletionHeldAt: at });
+    }
   }
 
   suspensionOf(projectId: string): Promise<ProjectIngestionSuspension | null> {
@@ -53,10 +61,10 @@ export class InMemoryProjectSuspensionRepository
                 [
                   projectId,
                   {
-                    ...NO_RESTRICTIONS,
                     ingestionSuspendedAt: project.suspendedAt,
                     ingestionSuspensionReason:
                       project.ownerAdminId === adminUserId ? project.reason : null,
+                    deletionHeldAt: project.deletionHeldAt,
                   },
                 ] as const,
               ];

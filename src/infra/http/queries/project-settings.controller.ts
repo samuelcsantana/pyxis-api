@@ -41,6 +41,7 @@ export function projectSettingsBody(settings: ProjectSettings): ProjectSettingsB
       created_at: key.createdAt.toISOString(),
     })),
     ...projectRestrictionsBody(settings),
+    deletion_held_at: isoOrNull(settings.deletionHeldAt),
   };
 }
 

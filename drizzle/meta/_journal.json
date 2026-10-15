@@ -169,6 +169,13 @@
       "when": 1792074635171,
       "tag": "0023_project-ingestion-suspension",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1792075451434,
+      "tag": "0024_project-deletion-hold",
+      "breakpoints": true
     }
   ]
 }
