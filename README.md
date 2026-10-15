@@ -244,6 +244,10 @@ Shipping now:
   `account:release`): the daily job neither reminds nor deletes it, its owner cannot delete its
   projects (`409 deletion_on_hold`) and sees the hold, not the reason
   ([ADR 0029](docs/adr/0029-a-deletion-can-be-held.md))
+- Stopping one person or one token from the command line: `admin:suspend` ends every session and
+  token of the person and keeps them from signing in again until `admin:resume` (no code is sent,
+  and a session that survived is refused), and `token:revoke` revokes any read-only token by its
+  id ([ADR 0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -346,6 +350,9 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s key:revoke -- --key-id <id>`                                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                                            |
 | `npm run -s admin:grant -- --email <email> --project <id>`                                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                                                       |
 | `npm run -s admin:revoke -- --email <email> --project <id>`                                                                                                     | Takes the person off that project; the owner of the project's account always stays                                                                                                              |
+| `npm run -s admin:suspend -- --email <email>`                                                                                                                   | Ends every session and token of the person and keeps them from signing in until `admin:resume`; their grants stay                                                                               |
+| `npm run -s admin:resume -- --email <email>`                                                                                                                    | Lets the person sign in again; their ended sessions and tokens stay ended                                                                                                                       |
+| `npm run -s token:revoke -- --token <id>`                                                                                                                       | Revokes anyone's read-only access token by the id the dashboard shows, for a token published by mistake                                                                                         |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first                                       |
 | `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                                                  |
 | `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project                                |
@@ -607,6 +614,7 @@ starts a second free trial. Provisioning, deploys, checks, alarms and rollbacks 
 | [0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md)                 | A suspension is a mark on the account, not a status                        |
 | [0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md) | The operator closes an account with a chosen refund                        |
 | [0029](docs/adr/0029-a-deletion-can-be-held.md)                              | A deletion can be held for a dispute or a legal order                      |
+| [0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md)          | The operator can stop a person and a token                                 |
 
 ## Roadmap
 
