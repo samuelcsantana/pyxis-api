@@ -1,6 +1,7 @@
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
+import type { Invitation } from '../../domain/people/invitation';
 import type { MailSender } from '../../domain/services/mail-sender';
 
 export class LazyMailSender implements MailSender {
@@ -30,6 +31,14 @@ export class LazyMailSender implements MailSender {
     language: EmailLanguage,
   ): Promise<void> {
     await this.resolved().sendQuotaNotice(email, notice, language);
+  }
+
+  async sendInvitation(
+    email: string,
+    invitation: Invitation,
+    language: EmailLanguage,
+  ): Promise<void> {
+    await this.resolved().sendInvitation(email, invitation, language);
   }
 
   private resolved(): MailSender {

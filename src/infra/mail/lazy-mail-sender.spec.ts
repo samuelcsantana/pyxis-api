@@ -21,6 +21,11 @@ describe('LazyMailSender', () => {
     expect(create).not.toHaveBeenCalled();
     await sender.sendSignInCode('ana@example.com', '123456', 'en');
     await sender.sendSignUpCode('bia@example.com', '654321', 'es');
+    await sender.sendInvitation(
+      'guest@example.com',
+      { projectName: 'Shop', inviterEmail: 'ana@example.com' },
+      'en',
+    );
     await sender.sendQuotaNotice('ana@example.com', NOTICE, 'pt-BR');
     await sender.sendWeeklyDigest('ana@example.com', { projectId: 'p' } as WeeklyDigest, 'es');
 
@@ -30,6 +35,7 @@ describe('LazyMailSender', () => {
       { email: 'bia@example.com', code: '654321', language: 'es' },
     ]);
     expect(recording.quotaNotices).toHaveLength(1);
+    expect(recording.invitations).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
   });
 

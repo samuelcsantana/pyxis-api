@@ -8,6 +8,7 @@ import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
 import { SesMailSender, sesSend } from './ses-mail-sender';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
+import { buildInvitationEmail } from './invitation-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
@@ -125,6 +126,25 @@ describe('ResendMailSender', () => {
     ).rejects.toThrow(/^Resend answered 422$/);
   });
 
+  it('sends an invitation with replies going to the person who invited', async () => {
+    const send = okResend();
+    const invitation = { projectName: 'Shop', inviterEmail: 'owner@example.com' };
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send).sendInvitation(
+      'guest@example.com',
+      invitation,
+      'pt-BR',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'guest@example.com',
+      reply_to: 'owner@example.com',
+      ...buildInvitationEmail(invitation, 'pt-BR', LINKS),
+    });
+  });
+
   it('sends a quota notice with replies going to the support address', async () => {
     const send = okResend();
 
@@ -203,6 +223,23 @@ describe('SesMailSender', () => {
       buildSignUpCodeEmail('654321', 'en', LINKS).subject,
     );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
+  });
+
+  it('sends an invitation with replies going to the person who invited', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendInvitation(
+      'guest@example.com',
+      { projectName: 'Shop', inviterEmail: 'owner@example.com' },
+      'es',
+    );
+
+    expect(sent[0]).toEqual(
+      expect.objectContaining({
+        Destination: { ToAddresses: ['guest@example.com'] },
+        ReplyToAddresses: ['owner@example.com'],
+      }),
+    );
   });
 
   it('sends the weekly digest the same way', async () => {
@@ -325,6 +362,21 @@ describe('LoggingMailSender', () => {
         language: 'pt-BR',
       },
     ]);
+  });
+
+  it('logs the project and language of an invitation, never the addresses', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendInvitation(
+      'guest@example.com',
+      { projectName: 'Shop', inviterEmail: 'owner@example.com' },
+      'en',
+    );
+
+    expect(logs).toEqual([{ message: 'mail.invitation', project: 'Shop', language: 'en' }]);
   });
 });
 
