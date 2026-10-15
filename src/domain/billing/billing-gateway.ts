@@ -23,6 +23,7 @@ export interface BillingSubscription {
   readonly trialEndsAt: Date | null;
   readonly currentPeriodEndsAt: Date | null;
   readonly cancelAtPeriodEnd: boolean;
+  readonly cardFingerprint: string | null;
 }
 
 export interface BillingEvent {

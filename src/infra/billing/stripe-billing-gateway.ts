@@ -17,6 +17,7 @@ import {
 
 const MILLISECONDS_PER_SECOND = 1000;
 const ACCOUNT_ID_METADATA = 'account_id';
+const SUBSCRIPTION_EXPANSIONS = ['default_payment_method'];
 
 const STRIPE_LOCALES: Readonly<Record<EmailLanguage, Stripe.Checkout.SessionCreateParams.Locale>> =
   {
@@ -43,6 +44,11 @@ function intervalOf(subscription: Stripe.Subscription): BillingInterval | null {
   return BILLING_INTERVALS.find((known) => known === interval) ?? null;
 }
 
+function cardFingerprintOf(subscription: Stripe.Subscription): string | null {
+  const method = subscription.default_payment_method;
+  return method !== null && typeof method === 'object' ? (method.card?.fingerprint ?? null) : null;
+}
+
 export function toBillingSubscription(subscription: Stripe.Subscription): BillingSubscription {
   const endsAt = fromUnixSeconds(subscription.cancel_at);
   const clampedToEnd = (date: Date | null): Date | null =>
@@ -58,6 +64,7 @@ export function toBillingSubscription(subscription: Stripe.Subscription): Billin
       fromUnixSeconds(subscription.items.data[0]?.current_period_end),
     ),
     cancelAtPeriodEnd: subscription.cancel_at_period_end || endsAt !== null,
+    cardFingerprint: cardFingerprintOf(subscription),
   };
 }
 
@@ -179,7 +186,7 @@ export class StripeBillingGateway implements BillingGateway {
 
   async subscription(subscriptionId: string): Promise<BillingSubscription> {
     const subscription = await this.call('subscriptions.retrieve', () =>
-      this.stripe.subscriptions.retrieve(subscriptionId),
+      this.stripe.subscriptions.retrieve(subscriptionId, { expand: SUBSCRIPTION_EXPANSIONS }),
     );
     return toBillingSubscription(subscription);
   }

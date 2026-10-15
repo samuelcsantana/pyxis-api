@@ -30,6 +30,7 @@ function subscription(fields: Partial<BillingSubscription> = {}): BillingSubscri
     trialEndsAt: null,
     currentPeriodEndsAt: new Date('2026-12-20T00:00:00.000Z'),
     cancelAtPeriodEnd: false,
+    cardFingerprint: null,
     ...fields,
   };
 }

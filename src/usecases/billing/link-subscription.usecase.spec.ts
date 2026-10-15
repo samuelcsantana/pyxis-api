@@ -17,6 +17,7 @@ const PAID_BY_LINK: BillingSubscription = {
   trialEndsAt: null,
   currentPeriodEndsAt: PERIOD_END,
   cancelAtPeriodEnd: false,
+  cardFingerprint: null,
 };
 
 function setup() {
