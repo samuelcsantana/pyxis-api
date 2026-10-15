@@ -105,7 +105,7 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
-  it('grants a project to an admin, creating the admin once', async () => {
+  it('grants a project to an admin, creating the admin once, and revokes it', async () => {
     const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
     try {
       const project = await context.createProject.execute({
@@ -128,6 +128,12 @@ describe('openCliContext against a real Postgres', () => {
         FROM admin_project_access JOIN admin_users ON admin_users.id = admin_project_access.admin_user_id
       `;
       expect(access).toEqual([{ email: 'ana@example.com', project_id: project.projectId }]);
+
+      await context.revokeAdminAccess.execute({
+        email: 'ana@example.com',
+        projectId: project.projectId,
+      });
+      expect(await owner`SELECT 1 FROM admin_project_access`).toHaveLength(0);
     } finally {
       await context.close();
     }
