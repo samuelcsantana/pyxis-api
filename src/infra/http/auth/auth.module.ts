@@ -74,6 +74,7 @@ import { ReadAccessGuard } from './read-access.guard';
           RESEND_API_KEY: config.get('RESEND_API_KEY', { infer: true }),
           MAIL_FROM: config.get('MAIL_FROM', { infer: true }),
           DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
+          SUPPORT_EMAIL: config.get('SUPPORT_EMAIL', { infer: true }),
         }),
     },
   ],
@@ -82,6 +83,7 @@ import { ReadAccessGuard } from './read-access.guard';
     AuthenticateAccessTokenUseCase,
     ADMIN_USER_REPOSITORY,
     CLOCK,
+    MAIL_SENDER,
   ],
 })
 export class AuthModule {}

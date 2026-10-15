@@ -79,7 +79,7 @@ describe('AddProjectPersonUseCase', () => {
 
     expect(added).toEqual({
       added: true,
-      person: expect.objectContaining({ email: 'guest@example.com' }) as unknown,
+      person: expect.objectContaining({ email: 'guest@example.com', role: 'member' }) as unknown,
     });
     expect(mail.invitations).toEqual([
       {
@@ -106,8 +106,16 @@ describe('AddProjectPersonUseCase', () => {
     await addPerson.execute(command);
 
     const again = await addPerson.execute(command);
+    const ownerAgain = await addPerson.execute({ ...command, email: OWNER_EMAIL });
 
-    expect(again.added).toBe(false);
+    expect(again).toEqual({
+      added: false,
+      person: expect.objectContaining({ role: 'member' }) as unknown,
+    });
+    expect(ownerAgain).toEqual({
+      added: false,
+      person: expect.objectContaining({ email: OWNER_EMAIL, role: 'owner' }) as unknown,
+    });
     expect(mail.invitations).toHaveLength(1);
   });
 

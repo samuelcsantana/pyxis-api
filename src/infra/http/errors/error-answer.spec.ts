@@ -13,6 +13,11 @@ import {
 } from '../../../domain/errors/ingest.errors';
 import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
 import {
+  OwnerStaysError,
+  PeopleLimitReachedError,
+  PersonNotFoundError,
+} from '../../../domain/errors/people.errors';
+import {
   ProjectLimitReachedError,
   SubscriptionRequiredError,
 } from '../../../domain/errors/account.errors';
@@ -73,6 +78,9 @@ describe('toErrorAnswer', () => {
     [new ProjectKeyNotFoundError(), 404, 'key_not_found'],
     [new LastPublicKeyError(), 409, 'last_public_key'],
     [new KeyLimitReachedError(5), 409, 'key_limit_reached'],
+    [new PeopleLimitReachedError(3), 409, 'people_limit_reached'],
+    [new OwnerStaysError(), 409, 'owner_stays'],
+    [new PersonNotFoundError(), 404, 'person_not_found'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },
