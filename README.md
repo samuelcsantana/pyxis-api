@@ -182,6 +182,11 @@ Shipping now:
   answers 503 when Stripe cannot be read so Stripe sends the event again. `account:link` ties a
   subscription paid through a payment link to an account
   ([ADR 0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md))
+- Repeated free trials: the subscription is read with its card, and the card's Stripe
+  fingerprint (never the number) is recorded once per account when it starts a trial; a card that
+  already started a trial in another account is logged as `billing.repeated_trial` and raises an
+  alarm, and nothing else happens. The records outlive their account and are deleted after twelve
+  months ([ADR 0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md))
 - Sign-up, closed until `SIGNUP_OPEN=true`, a `TERMS_VERSION` and a `TERMS_URL` are set (otherwise
   `404`):
   `GET /v1/auth/sign-up` says whether it is open and which terms to show, with their address;
@@ -231,8 +236,9 @@ Shipping now:
   ([ADR 0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md))
 
 - A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
-  codes, then measures each account's month (the quota); each step logs its count, and a failed
-  step fails the run so the scheduler retries.
+  codes and the cards of trials started more than twelve months ago, then measures each account's
+  month (the quota); each step logs its count, and a failed step fails the run so the scheduler
+  retries.
   Last, it refreshes the project icons, best effort: an icon found replaces the stored one, a
   site that answers without one loses it, and a site that cannot be reached keeps it
 
@@ -481,9 +487,9 @@ provisioned by the Terraform in `infra/` and shipped by `scripts/deploy-lambda.s
 migrations before updating the HTTP function. Every request must carry the secret header
 CloudFront adds; the function's own URL answers 403 without it. CloudWatch alarms e-mail the
 operator when requests end in unexpected errors, when the function fails, times out or is
-throttled, when the database grows, and when sign-in codes are being guessed. Provisioning,
-deploys, checks, alarms and rollbacks are in the [runbook](docs/RUNBOOK.md). Merging a pull
-request never deploys.
+throttled, when the database grows, when sign-in codes are being guessed, and when a card
+starts a second free trial. Provisioning, deploys, checks, alarms and rollbacks are in the
+[runbook](docs/RUNBOOK.md). Merging a pull request never deploys.
 
 ## Privacy and security
 
@@ -577,6 +583,7 @@ request never deploys.
 | [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)            | The welcome follows the subscription, with the daily job as a fallback     |
 | [0024](docs/adr/0024-exports-are-files-with-short-links.md)              | Exports are files that live a week, reached through links signed on demand |
 | [0025](docs/adr/0025-the-owner-closes-the-account-at-once.md)            | The owner closes the account at once, with a refund inside seven days      |
+| [0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md)        | Repeated free trials are detected and reported, never blocked              |
 
 ## Roadmap
 
@@ -608,6 +615,7 @@ request never deploys.
 - [x] The end of an account: reconciliation, revoked keys, notices and deletion after thirty days
 - [x] The welcome e-mail with the terms accepted
 - [x] Exports of a project, by e-mail, for a week
+- [x] Repeated free trials with the same card detected, with an alarm
 - [x] Account closed by its owner: cancelled at once, refunded inside seven days, deleted later
 
 ## Contributing and license

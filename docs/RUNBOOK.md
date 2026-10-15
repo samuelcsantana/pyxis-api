@@ -182,6 +182,7 @@ and once when it clears.
 | `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch            |
 | `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                             |
 | `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                               |
+| `pyxis-api-repeated-trials`               | A card starts a free trial already started by another account        |
 
 The thresholds are Terraform variables. All of them watch sa-east-1, so an outage before the
 function (DNS, the certificate, CloudFront itself) raises none; an external uptime check of
@@ -297,6 +298,25 @@ two settings are set. In this order:
 To close sign-up again, set `signup_open = false`, apply and deploy; accounts
 already created keep working. A new version of the terms is the same change with a new
 `terms_version`: a page still showing the old one is refused with `409 terms_outdated`.
+
+### Repeated free trials
+
+When a card that already started a free trial in another account starts one again, the HTTP
+function logs `billing.repeated_trial { accountId, earlierAccountIds }` and the alarm
+`pyxis-api-repeated-trials` fires. Nothing is done automatically: the customer keeps the trial
+Checkout promised. To look into it:
+
+```bash
+aws logs tail /aws/lambda/pyxis-api --since 1d --profile pyxis-api | grep -E 'billing.repeated_trial'
+npm run -s account:show -- --account <accountId>        # the new account
+npm run -s account:show -- --account <earlierAccountId> # each earlier one
+```
+
+An earlier account answered with "No account has this id." was closed and deleted; Stripe still
+has its customer and subscription. Decide by hand under the terms (for example, write to the
+owner, or close the new account). `billing.repeated_trial_check_failed` means the check itself
+failed for an event; the event was applied anyway. The cards are deleted twelve months after
+their trial started.
 
 ## Exports
 
