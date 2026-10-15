@@ -1,6 +1,7 @@
 import { SendEmailCommand, type SendEmailCommandInput, SESv2Client } from '@aws-sdk/client-sesv2';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
+import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { Invitation } from '../../domain/people/invitation';
@@ -11,6 +12,7 @@ import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
+import { buildWelcomeEmail } from './welcome-email';
 
 export type SesSend = (input: SendEmailCommandInput) => Promise<unknown>;
 
@@ -66,6 +68,10 @@ export class SesMailSender implements MailSender {
       buildAccountNoticeEmail(notice, language, this.links, this.supportEmail),
       this.supportEmail,
     );
+  }
+
+  sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
+    return this.deliver(email, buildWelcomeEmail(welcome, language, this.links), this.supportEmail);
   }
 
   private async deliver(

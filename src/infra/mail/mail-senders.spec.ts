@@ -10,6 +10,7 @@ import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildAccountNoticeEmail } from './account-notice-email';
 import { buildInvitationEmail } from './invitation-email';
+import { buildWelcomeEmail } from './welcome-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
@@ -125,6 +126,25 @@ describe('ResendMailSender', () => {
         'en',
       ),
     ).rejects.toThrow(/^Resend answered 422$/);
+  });
+
+  it('sends the welcome with replies going to the support address', async () => {
+    const send = okResend();
+    const welcome = { trialEndsAt: null, terms: null };
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendWelcome(
+      'owner@example.com',
+      welcome,
+      'es',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildWelcomeEmail(welcome, 'es', LINKS),
+    });
   });
 
   it('sends an account notice with replies going to the support address', async () => {
@@ -243,6 +263,18 @@ describe('SesMailSender', () => {
       buildSignUpCodeEmail('654321', 'en', LINKS).subject,
     );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
+  });
+
+  it('sends the welcome through SES too', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendWelcome(
+      'owner@example.com',
+      { trialEndsAt: null, terms: null },
+      'en',
+    );
+
+    expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
   });
 
   it('sends an account notice with replies going to the support address', async () => {
@@ -398,6 +430,23 @@ describe('LoggingMailSender', () => {
         events: 150_412,
         language: 'pt-BR',
       },
+    ]);
+  });
+
+  it('logs whether a welcome has a trial and terms, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendWelcome(
+      'owner@example.com',
+      { trialEndsAt: new Date('2026-11-15T00:00:00.000Z'), terms: null },
+      'en',
+    );
+
+    expect(logs).toEqual([
+      { message: 'mail.welcome', trial: true, withTerms: false, language: 'en' },
     ]);
   });
 

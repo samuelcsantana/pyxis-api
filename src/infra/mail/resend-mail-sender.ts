@@ -1,5 +1,6 @@
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
+import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { Invitation } from '../../domain/people/invitation';
@@ -10,6 +11,7 @@ import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
+import { buildWelcomeEmail } from './welcome-email';
 
 export const RESEND_EMAILS_URL = 'https://api.resend.com/emails';
 export const RESEND_TIMEOUT_MS = 10_000;
@@ -59,6 +61,10 @@ export class ResendMailSender implements MailSender {
       buildAccountNoticeEmail(notice, language, this.links, this.supportEmail),
       this.supportEmail,
     );
+  }
+
+  sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
+    return this.deliver(email, buildWelcomeEmail(welcome, language, this.links), this.supportEmail);
   }
 
   private async deliver(
