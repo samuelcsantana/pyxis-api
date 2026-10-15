@@ -28,6 +28,7 @@ export interface AccountLifecycleReport {
   readonly endedNotices: number;
   readonly reminders: number;
   readonly deleted: number;
+  readonly partlyHeld: number;
   readonly incompleteRemoved: number;
   readonly peopleRemoved: number;
   readonly projectlessMarked: number;
@@ -46,6 +47,15 @@ interface Removal {
   readonly peopleRemoved: number;
   readonly failed: readonly string[];
 }
+
+interface EndedAccountDeletion extends Removal {
+  readonly partlyHeld: number;
+}
+
+type DeletionOutcome =
+  | { readonly kind: 'deleted'; readonly peopleRemoved: number }
+  | { readonly kind: 'partlyHeld'; readonly peopleRemoved: number }
+  | { readonly kind: 'failed' };
 
 export class RunAccountLifecycleUseCase {
   private readonly logger = new Logger(RunAccountLifecycleUseCase.name);
@@ -85,6 +95,7 @@ export class RunAccountLifecycleUseCase {
       endedNotices,
       reminders,
       deleted: deletion.removed,
+      partlyHeld: deletion.partlyHeld,
       incompleteRemoved: incomplete.removed,
       peopleRemoved: deletion.peopleRemoved + incomplete.peopleRemoved,
       ...sweep,
@@ -154,35 +165,63 @@ export class RunAccountLifecycleUseCase {
     return sent;
   }
 
-  private async deleteEnded(now: Date): Promise<Removal> {
+  private async deleteEnded(now: Date): Promise<EndedAccountDeletion> {
     let removed = 0;
+    let partlyHeld = 0;
     let peopleRemoved = 0;
     const failed: string[] = [];
     for (const account of await this.lifecycle.dueForDeletion(deletionThreshold(now))) {
-      try {
-        const people = await this.lifecycle.peopleOf(account.accountId);
-        for (const projectId of await this.lifecycle.projectIdsOf(account.accountId)) {
+      const outcome = await this.deleteAccountData(account);
+      if (outcome.kind === 'failed') {
+        failed.push(account.accountId);
+        continue;
+      }
+      peopleRemoved += outcome.peopleRemoved;
+      if (outcome.kind === 'partlyHeld') {
+        partlyHeld += 1;
+        continue;
+      }
+      removed += 1;
+      await this.tryNotifyDeleted(account);
+    }
+    return { removed, partlyHeld, peopleRemoved, failed };
+  }
+
+  private async deleteAccountData(account: EndedAccount): Promise<DeletionOutcome> {
+    try {
+      const people = await this.lifecycle.peopleOf(account.accountId);
+      const held = new Set(await this.lifecycle.heldProjectIdsOf(account.accountId));
+      for (const projectId of await this.lifecycle.projectIdsOf(account.accountId)) {
+        if (!held.has(projectId)) {
           await this.deleteEventsOf(projectId);
           await this.lifecycle.deleteProject(projectId);
         }
-        await this.lifecycle.deleteAccount(account.accountId);
-        peopleRemoved += await this.lifecycle.deleteAdminsLeftWithout([
-          ...new Set([...people, account.ownerAdminId]),
-        ]);
-        removed += 1;
-        this.logger.log({ message: 'accounts.deleted', accountId: account.accountId });
-      } catch (error) {
-        failed.push(account.accountId);
-        this.logger.error({
-          message: 'accounts.deletion_failed',
-          accountId: account.accountId,
-          reason: String(error),
-        });
-        continue;
       }
-      await this.tryNotifyDeleted(account);
+      if (held.size > 0) {
+        this.logger.log({
+          message: 'accounts.deletion_partly_held',
+          accountId: account.accountId,
+          heldProjects: held.size,
+        });
+        return {
+          kind: 'partlyHeld',
+          peopleRemoved: await this.lifecycle.deleteAdminsLeftWithout(people),
+        };
+      }
+      await this.lifecycle.deleteAccount(account.accountId);
+      const peopleRemoved = await this.lifecycle.deleteAdminsLeftWithout([
+        ...new Set([...people, account.ownerAdminId]),
+      ]);
+      this.logger.log({ message: 'accounts.deleted', accountId: account.accountId });
+      return { kind: 'deleted', peopleRemoved };
+    } catch (error) {
+      this.logger.error({
+        message: 'accounts.deletion_failed',
+        accountId: account.accountId,
+        reason: String(error),
+      });
+      return { kind: 'failed' };
     }
-    return { removed, peopleRemoved, failed };
   }
 
   private async deleteEventsOf(projectId: string): Promise<void> {
