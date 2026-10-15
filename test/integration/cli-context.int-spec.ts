@@ -337,6 +337,25 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('stores an operator notice with the migration connection', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      await context.createCompedAccount.execute({ ownerEmail: 'notice@example.com' });
+      const text = { subject: 'Prices change', paragraphs: ['From December.'] };
+
+      const outcome = await context.createOperatorNotice.execute({
+        campaign: 'prices',
+        content: { en: text, 'pt-BR': text, es: text },
+        includeEnded: false,
+        dryRun: false,
+      });
+
+      expect(outcome).toMatchObject({ created: true, recipients: 1 });
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',
