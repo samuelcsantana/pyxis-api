@@ -1,6 +1,8 @@
 import { FakeBillingGateway } from './fake-billing-gateway';
 import { FixedClock } from './fixed-clock';
+import { InMemoryAccessTokenRepository } from './in-memory-access-token.repository';
 import { InMemoryAccountBillingRepository } from './in-memory-account-billing.repository';
+import { InMemoryAdminSessionRepository } from './in-memory-admin-session.repository';
 import { InMemoryAccountClosureRepository } from './in-memory-account-closure.repository';
 import { InMemoryAccountUsageRepository } from './in-memory-account-usage.repository';
 import { InMemoryAccountRepository } from './in-memory-account.repository';
@@ -17,6 +19,9 @@ import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecas
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
+import { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
+import { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
@@ -46,6 +51,8 @@ export function inMemoryCliContext(): CliContext & {
   readonly billing: FakeBillingGateway;
   readonly accountBilling: InMemoryAccountBillingRepository;
   readonly closure: InMemoryAccountClosureRepository;
+  readonly sessions: InMemoryAdminSessionRepository;
+  readonly tokens: InMemoryAccessTokenRepository;
   readonly people: InMemoryProjectPeopleRepository;
   readonly usage: StubProjectUsageQuery;
   closed: boolean;
@@ -57,6 +64,8 @@ export function inMemoryCliContext(): CliContext & {
   const billing = new FakeBillingGateway();
   const accountBilling = new InMemoryAccountBillingRepository();
   const closure = new InMemoryAccountClosureRepository();
+  const sessions = new InMemoryAdminSessionRepository();
+  const tokens = new InMemoryAccessTokenRepository();
   const people = new InMemoryProjectPeopleRepository();
   const usage = new StubProjectUsageQuery();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
@@ -69,6 +78,8 @@ export function inMemoryCliContext(): CliContext & {
     billing,
     accountBilling,
     closure,
+    sessions,
+    tokens,
     people,
     usage,
     closed: false,
@@ -88,6 +99,9 @@ export function inMemoryCliContext(): CliContext & {
     closeAccountAsOperator: new CloseAccountAsOperatorUseCase(accounts, closure, billing, clock),
     holdAccountDeletion: new HoldAccountDeletionUseCase(accounts, accounts, clock),
     releaseAccountDeletion: new ReleaseAccountDeletionUseCase(accounts),
+    suspendAdmin: new SuspendAdminUseCase(admins, admins, sessions, tokens, clock),
+    resumeAdmin: new ResumeAdminUseCase(admins, admins),
+    revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(tokens, clock),
     close: () => {
       context.closed = true;
       return Promise.resolve();

@@ -6,6 +6,9 @@ import type { ResumeAccountUseCase } from '../usecases/accounts/resume-account.u
 import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import type { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
 import type { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import type { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
+import type { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
+import type { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
 import type { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import type { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
 import type { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
@@ -32,6 +35,9 @@ export interface CliContext {
   readonly closeAccountAsOperator: CloseAccountAsOperatorUseCase;
   readonly holdAccountDeletion: HoldAccountDeletionUseCase;
   readonly releaseAccountDeletion: ReleaseAccountDeletionUseCase;
+  readonly suspendAdmin: SuspendAdminUseCase;
+  readonly resumeAdmin: ResumeAdminUseCase;
+  readonly revokeAccessToken: RevokeAccessTokenAsOperatorUseCase;
   close(): Promise<void>;
 }
 
