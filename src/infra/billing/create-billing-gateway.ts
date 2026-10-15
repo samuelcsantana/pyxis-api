@@ -3,6 +3,7 @@ import type {
   BillingEvent,
   BillingGateway,
   BillingSubscription,
+  PaidInvoice,
 } from '../../domain/billing/billing-gateway';
 import { BillingUnavailableError } from '../../domain/errors/billing.errors';
 import { StripeBillingGateway } from './stripe-billing-gateway';
@@ -35,6 +36,14 @@ export class UnconfiguredBillingGateway implements BillingGateway {
   }
 
   refundFirstPaymentSince(): Promise<number> {
+    return Promise.reject(new BillingUnavailableError(NOT_CONFIGURED));
+  }
+
+  latestPaidInvoice(): Promise<PaidInvoice | null> {
+    return Promise.reject(new BillingUnavailableError(NOT_CONFIGURED));
+  }
+
+  refundInvoice(): Promise<number> {
     return Promise.reject(new BillingUnavailableError(NOT_CONFIGURED));
   }
 

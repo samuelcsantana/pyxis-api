@@ -26,6 +26,13 @@ export interface BillingSubscription {
   readonly cardFingerprint: string | null;
 }
 
+export interface PaidInvoice {
+  readonly invoiceId: string;
+  readonly amountPaid: number;
+  readonly periodStart: Date;
+  readonly periodEnd: Date;
+}
+
 export interface BillingEvent {
   readonly id: string;
   readonly type: string;
@@ -44,6 +51,8 @@ export interface BillingGateway {
   subscription(subscriptionId: string): Promise<BillingSubscription>;
   cancelSubscription(subscriptionId: string): Promise<void>;
   refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number>;
+  latestPaidInvoice(subscriptionId: string): Promise<PaidInvoice | null>;
+  refundInvoice(invoiceId: string, amount: number): Promise<number>;
   parseEvent(rawBody: Buffer, signature: string | null): BillingEvent;
 }
 
