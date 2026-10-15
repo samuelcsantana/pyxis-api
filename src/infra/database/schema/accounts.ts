@@ -51,6 +51,9 @@ export const accounts = pgTable(
       length: MAX_DELETION_HOLD_REASON_LENGTH,
     }),
     quotaPauseExemptUntil: timestamp('quota_pause_exempt_until', { withTimezone: true }),
+    eventsPerMonthLimit: integer('events_per_month_limit'),
+    projectsLimit: integer('projects_limit'),
+    peopleLimit: integer('people_limit'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

@@ -113,6 +113,9 @@ function accountOf(overrides: Partial<Account> & Pick<Account, 'ownerAdminId'>):
     deletionHeldAt: null,
     deletionHoldReason: null,
     quotaPauseExemptUntil: null,
+    eventsPerMonthLimit: null,
+    projectsLimit: null,
+    peopleLimit: null,
     createdAt: new Date('2026-11-01T00:00:00.000Z'),
     ...overrides,
   };

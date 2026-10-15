@@ -27,6 +27,7 @@ export class DrizzleAccountUsageRepository implements AccountUsageRepository {
         ownerLanguage: adminUsers.emailLanguage,
         notifiedLevel: sql<number>`coalesce(${accountUsageMonths.notifiedLevel}, 0)`,
         pauseExemptUntil: accounts.quotaPauseExemptUntil,
+        eventsPerMonthLimit: accounts.eventsPerMonthLimit,
       })
       .from(accounts)
       .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))

@@ -32,6 +32,9 @@ export function toAccount(row: AccountRow): Account {
     deletionHeldAt: row.deletionHeldAt,
     deletionHoldReason: row.deletionHoldReason,
     quotaPauseExemptUntil: row.quotaPauseExemptUntil,
+    eventsPerMonthLimit: row.eventsPerMonthLimit,
+    projectsLimit: row.projectsLimit,
+    peopleLimit: row.peopleLimit,
     createdAt: row.createdAt,
   };
 }

@@ -1,7 +1,8 @@
+import type { PlanLimitOverrides } from '../accounts/account-limits';
 import type { AccountStatus } from '../accounts/account-status';
 import type { BillingInterval } from '../billing/billing-gateway';
 
-export interface Account {
+export interface Account extends PlanLimitOverrides {
   readonly id: string;
   readonly ownerAdminId: string;
   readonly status: AccountStatus;

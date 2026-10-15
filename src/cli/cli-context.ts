@@ -10,6 +10,7 @@ import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-acc
 import { DrizzleAccountClosureRepository } from '../infra/repositories/drizzle-account-closure.repository';
 import { DrizzleAccountDeletionHoldRepository } from '../infra/repositories/drizzle-account-deletion-hold.repository';
 import { DrizzleAccountQuotaExemptionRepository } from '../infra/repositories/drizzle-account-quota-exemption.repository';
+import { DrizzleAccountPlanLimitsRepository } from '../infra/repositories/drizzle-account-plan-limits.repository';
 import { DrizzleAccountSuspensionRepository } from '../infra/repositories/drizzle-account-suspension.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAccessTokenRepository } from '../infra/repositories/drizzle-access-token.repository';
@@ -23,6 +24,7 @@ import { DrizzleProjectDeletionHoldRepository } from '../infra/repositories/driz
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { ExemptAccountFromQuotaPauseUseCase } from '../usecases/accounts/exempt-account-from-quota-pause.usecase';
+import { SetAccountPlanLimitsUseCase } from '../usecases/accounts/set-account-plan-limits.usecase';
 import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
 import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
@@ -77,7 +79,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const projectSuspensions = new DrizzleProjectSuspensionRepository(db);
   const projectHolds = new DrizzleProjectDeletionHoldRepository(db);
   return {
-    createProject: new CreateProjectUseCase(settings, random),
+    createProject: new CreateProjectUseCase(settings, random, accounts),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
     revokeProjectKey: new RevokeProjectKeyUseCase(keys, clock),
     updateProject: new UpdateProjectUseCase(settings),
@@ -92,6 +94,9 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     ),
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, new DrizzleAccountUsageRepository(db), clock),
+    setAccountPlanLimits: new SetAccountPlanLimitsUseCase(
+      new DrizzleAccountPlanLimitsRepository(db),
+    ),
     linkSubscription: new LinkSubscriptionUseCase(
       billing,
       new DrizzleAccountBillingRepository(db),

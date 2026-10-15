@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
+import { planLimitsOf } from '../../domain/accounts/account-limits';
 import { normalizeEmail } from '../../domain/auth/email';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import { PeopleLimitReachedError } from '../../domain/errors/people.errors';
@@ -51,7 +51,7 @@ export class AddProjectPersonUseCase {
       command.projectId,
       command.adminUserId,
     );
-    const maxPeople = HOSTED_PLAN_LIMITS.people;
+    const maxPeople = planLimitsOf(account).people;
     const addition = await this.people.addToAccountProject(
       normalizeEmail(command.email),
       project.id,

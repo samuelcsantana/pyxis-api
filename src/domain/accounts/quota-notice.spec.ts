@@ -16,6 +16,7 @@ function usage(events: number, status: AccountMonthUsage['status'] = 'active'): 
     owner: { email: 'owner@example.com', language: 'en' },
     notifiedLevel: 0,
     pauseExemptUntil: null,
+    eventsPerMonthLimit: null,
   };
 }
 
@@ -28,7 +29,18 @@ describe('quotaLevelOf', () => {
     [149_999, 100],
     [150_000, 150],
   ])('puts %i events at level %i', (events, level) => {
-    expect(quotaLevelOf(events)).toBe(level);
+    expect(quotaLevelOf(events, 100_000)).toBe(level);
+  });
+});
+
+describe('quotaLevelOf with a larger plan', () => {
+  it.each([
+    [799_999, 0],
+    [800_000, 80],
+    [1_000_000, 100],
+    [1_500_000, 150],
+  ])('puts %i events at level %i of a million', (events, level) => {
+    expect(quotaLevelOf(events, 1_000_000)).toBe(level);
   });
 });
 

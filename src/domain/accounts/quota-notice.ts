@@ -1,9 +1,5 @@
-import {
-  type AccountMonthUsage,
-  INGESTION_PAUSE_THRESHOLD,
-  isPauseExemptAt,
-} from './account-quota';
-import { HOSTED_PLAN_LIMITS } from './hosted-plan';
+import { eventsPerMonthOf, ingestionPauseThresholdOf } from './account-limits';
+import { type AccountMonthUsage, isPauseExemptAt } from './account-quota';
 
 export const QUOTA_WARNING_PERCENTS = [80, 100] as const;
 export const QUOTA_PAUSED_LEVEL = 150;
@@ -35,19 +31,19 @@ export type QuotaNotice =
 
 const PERCENT = 100;
 
-function eventsAt(percent: number): number {
-  return Math.ceil((HOSTED_PLAN_LIMITS.eventsPerMonth * percent) / PERCENT);
+function eventsAt(eventsPerMonth: number, percent: number): number {
+  return Math.ceil((eventsPerMonth * percent) / PERCENT);
 }
 
-export function quotaLevelOf(events: number): QuotaNoticeLevel {
-  if (events >= INGESTION_PAUSE_THRESHOLD) {
+export function quotaLevelOf(events: number, eventsPerMonth: number): QuotaNoticeLevel {
+  if (events >= ingestionPauseThresholdOf(eventsPerMonth)) {
     return QUOTA_PAUSED_LEVEL;
   }
   const [warning, full] = QUOTA_WARNING_PERCENTS;
-  if (events >= eventsAt(full)) {
+  if (events >= eventsAt(eventsPerMonth, full)) {
     return full;
   }
-  return events >= eventsAt(warning) ? warning : NOT_NOTIFIED;
+  return events >= eventsAt(eventsPerMonth, warning) ? warning : NOT_NOTIFIED;
 }
 
 export interface QuotaNoticeContext {
@@ -70,14 +66,15 @@ export function quotaNoticeDue(
     return null;
   }
   const exempt = isPauseExemptAt(usage.pauseExemptUntil, context.measuredAt);
-  const reached = quotaLevelOf(usage.events);
+  const eventsPerMonth = eventsPerMonthOf(usage.eventsPerMonthLimit);
+  const reached = quotaLevelOf(usage.events, eventsPerMonth);
   const level = exempt && reached === QUOTA_PAUSED_LEVEL ? QUOTA_WARNING_PERCENTS[1] : reached;
   if (level === NOT_NOTIFIED || level <= context.notifiedLevel) {
     return null;
   }
   const figures: QuotaFigures = {
     events: usage.events,
-    limit: HOSTED_PLAN_LIMITS.eventsPerMonth,
+    limit: eventsPerMonth,
     month: context.month,
     measuredAt: context.measuredAt,
   };
@@ -90,7 +87,9 @@ export function quotaNoticeDue(
       ...figures,
       kind: 'quota_warning',
       percent: level,
-      pause: exempt ? null : { atEvents: INGESTION_PAUSE_THRESHOLD, until: context.monthEnd },
+      pause: exempt
+        ? null
+        : { atEvents: ingestionPauseThresholdOf(eventsPerMonth), until: context.monthEnd },
     },
   };
 }

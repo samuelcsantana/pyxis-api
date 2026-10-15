@@ -1,7 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
+import { planLimitsOf } from '../../domain/accounts/account-limits';
 import { AccountNotFoundError, ProjectLimitReachedError } from '../../domain/errors/account.errors';
 import { generatePublicKey } from '../../domain/keys/project-keys';
+import {
+  ACCOUNT_REPOSITORY,
+  type AccountRepository,
+} from '../../domain/repositories/account.repository';
 import {
   DEFAULT_TIMEZONE,
   requireConversionEvent,
@@ -36,6 +40,7 @@ export class CreateProjectUseCase {
   constructor(
     @Inject(PROJECT_SETTINGS_REPOSITORY) private readonly projects: ProjectSettingsRepository,
     @Inject(RANDOM_SOURCE) private readonly random: RandomSource,
+    @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
   ) {}
 
   async execute(command: CreateProjectCommand): Promise<CreateProjectResult> {
@@ -61,7 +66,11 @@ export class CreateProjectUseCase {
     publicKey: string,
     accountId: string,
   ): Promise<CreatedProject> {
-    const maxProjects = HOSTED_PLAN_LIMITS.projects;
+    const account = await this.accounts.findById(accountId);
+    if (account === null) {
+      throw new AccountNotFoundError();
+    }
+    const maxProjects = planLimitsOf(account).projects;
     const result = await this.projects.createWithPublicKeyInAccount(settings, publicKey, {
       accountId,
       maxProjects,

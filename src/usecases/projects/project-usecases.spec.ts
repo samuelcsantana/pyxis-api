@@ -1,3 +1,5 @@
+import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
+import type { Account } from '../../domain/entities/account.entity';
 import { AccountNotFoundError, ProjectLimitReachedError } from '../../domain/errors/account.errors';
 import {
   InvalidProjectSettingsError,
@@ -12,6 +14,8 @@ import {
   SECRET_KEY_PATTERN,
 } from '../../domain/keys/project-keys';
 import { FixedClock } from '../../test-utils/fixed-clock';
+import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
+import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.repository';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { CreateProjectKeyUseCase } from './create-project-key.usecase';
@@ -25,12 +29,36 @@ const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
 const ACCOUNT_ID = 'acc00000-0000-4000-a000-000000000001';
 const OWNER_ID = 'ad000000-0000-4000-a000-000000000001';
 
+function accountWith(overrides: Partial<Account> = {}): Account {
+  return {
+    id: ACCOUNT_ID,
+    ownerAdminId: OWNER_ID,
+    status: 'active',
+    ingestionPausedUntil: null,
+    stripeCustomerId: null,
+    billingInterval: null,
+    trialEndsAt: null,
+    currentPeriodEndsAt: null,
+    accessEndsAt: null,
+    suspendedAt: null,
+    suspensionReason: null,
+    deletionHeldAt: null,
+    deletionHoldReason: null,
+    quotaPauseExemptUntil: null,
+    ...NO_LIMIT_OVERRIDES,
+    createdAt: NOW,
+    ...overrides,
+  };
+}
+
 function setup() {
   const store = new InMemoryProjectRepository();
+  const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   return {
     store,
-    createProject: new CreateProjectUseCase(store, random),
+    accounts,
+    createProject: new CreateProjectUseCase(store, random, accounts),
     createKey: new CreateProjectKeyUseCase(store, store, random),
     revokeKey: new RevokeProjectKeyUseCase(store, new FixedClock(NOW)),
     updateProject: new UpdateProjectUseCase(store),
@@ -108,8 +136,9 @@ describe('CreateProjectUseCase in an account', () => {
   }
 
   it('creates the project in the account and lets the owner read it', async () => {
-    const { store, createProject } = setup();
+    const { store, accounts, createProject } = setup();
     store.addAccount(ACCOUNT_ID, OWNER_ID);
+    accounts.add(accountWith());
 
     const created = await createProject.execute(inAccount('shop'));
 
@@ -129,9 +158,49 @@ describe('CreateProjectUseCase in an account', () => {
     expect(store.storedKeys).toEqual([]);
   });
 
-  it('refuses a project past the plan limit, and takes one again once a project is deleted', async () => {
-    const { store, createProject, deleteProject } = setup();
+  it('refuses an account that disappears while the project is created', async () => {
+    const { store, accounts, createProject } = setup();
+    accounts.add(accountWith());
+
+    await expect(createProject.execute(inAccount('shop'))).rejects.toBeInstanceOf(
+      AccountNotFoundError,
+    );
+    expect(store.storedKeys).toEqual([]);
+  });
+
+  it('takes as many projects as the limit set for the account', async () => {
+    const { store, accounts, createProject } = setup();
     store.addAccount(ACCOUNT_ID, OWNER_ID);
+    accounts.add(accountWith({ projectsLimit: 4 }));
+    for (const name of ['one', 'two', 'three', 'four']) {
+      await createProject.execute(inAccount(name));
+    }
+
+    await expect(createProject.execute(inAccount('five'))).rejects.toMatchObject({ limit: 4 });
+  });
+
+  it('refuses a new project while the account is over a lowered limit, deleting nothing', async () => {
+    const { store, accounts, createProject } = setup();
+    store.addAccount(ACCOUNT_ID, OWNER_ID);
+    accounts.add(accountWith());
+    const made = [];
+    for (const name of ['one', 'two', 'three']) {
+      made.push(await createProject.execute(inAccount(name)));
+    }
+    accounts.add(accountWith({ projectsLimit: 2 }));
+
+    await expect(createProject.execute(inAccount('four'))).rejects.toMatchObject({ limit: 2 });
+    expect(made.map(({ projectId }) => store.accountOf(projectId))).toEqual([
+      ACCOUNT_ID,
+      ACCOUNT_ID,
+      ACCOUNT_ID,
+    ]);
+  });
+
+  it('refuses a project past the plan limit, and takes one again once a project is deleted', async () => {
+    const { store, accounts, createProject, deleteProject } = setup();
+    store.addAccount(ACCOUNT_ID, OWNER_ID);
+    accounts.add(accountWith());
     await createProject.execute(inAccount('one'));
     await createProject.execute(inAccount('two'));
     const third = await createProject.execute(inAccount('three'));

@@ -103,6 +103,7 @@ describe('account usage and the state of its projects against a real Postgres', 
         owner: { email: 'owner@example.com', language: 'pt-BR' },
         notifiedLevel: 0,
         pauseExemptUntil: null,
+        eventsPerMonthLimit: null,
       },
       {
         accountId: QUIET_ID,
@@ -111,7 +112,21 @@ describe('account usage and the state of its projects against a real Postgres', 
         owner: { email: 'owner@example.com', language: 'pt-BR' },
         notifiedLevel: 0,
         pauseExemptUntil: null,
+        eventsPerMonthLimit: null,
       },
+    ]);
+  });
+
+  it("reads each account's own monthly limit when the operator gave it one", async () => {
+    await owner`UPDATE accounts SET events_per_month_limit = 1000000 WHERE id = ${BUSY_ID}`;
+
+    const measured = await usage.measure('2026-10', OCTOBER.from, OCTOBER.to);
+
+    expect(
+      measured.map(({ accountId, eventsPerMonthLimit }) => [accountId, eventsPerMonthLimit]),
+    ).toEqual([
+      [BUSY_ID, 1_000_000],
+      [QUIET_ID, null],
     ]);
   });
 
