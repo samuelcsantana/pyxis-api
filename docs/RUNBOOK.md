@@ -275,7 +275,10 @@ Billing stays off until the two Stripe parameters hold real values, and sign-up 
 two settings are set. In this order:
 
 1. In Stripe, create a restricted key with write access to Checkout Sessions, Customer portal,
-   Customers and Subscriptions, and read access to Prices, and a webhook endpoint for
+   Customers, Subscriptions and Refunds, and read access to Prices and Invoices (an owner who
+   closes the account within seven days of the first payment is refunded with it; if a closure
+   logs `accounts.refund_failed`, the key's request log in Stripe names the permission missing,
+   and the refund is made by hand), and a webhook endpoint for
    `https://<api_domain>/v1/billing/stripe/webhook` with the events
    `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
    `customer.subscription.deleted`, `invoice.paid` and `invoice.payment_failed`. The prices are
