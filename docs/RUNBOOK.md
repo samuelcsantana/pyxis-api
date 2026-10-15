@@ -386,10 +386,23 @@ MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:rele
 ```
 
 While held, the daily job neither reminds nor deletes the account (nor removes it as an abandoned
-sign-up), and its owner cannot delete its projects (`409 deletion_on_hold`); the dashboard shows
-the hold, not the reason. Retention of events older than thirteen months and the erasure of a
-person's events go on. Releasing the hold of an account ended more than thirty days ago lets the
-next daily run delete it.
+sign-up), its owner cannot delete its projects (`409 deletion_on_hold`), and the retention keeps
+the events of its projects past thirteen months; the dashboard shows the hold, not the reason. The
+erasure of a person's events goes on. Releasing the hold of an account ended more than thirty days
+ago lets the next daily run delete it.
+
+To keep one project only (an order that reaches one site), hold the project instead:
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s project:hold -- --project <id> --reason '<the dispute or the order>'
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s project:release -- --project <id>
+```
+
+Its owner cannot delete it (`409 deletion_on_hold`), the retention keeps its events, and when its
+account is deleted the daily job deletes the other projects and keeps the held one and the account
+(`accounts.deletion_partly_held` in the log, `partlyHeld` in `accounts.lifecycle_done`, no
+e-mail), finishing the deletion on the first run after `project:release`. The project settings
+show `deletion_held_at`, never the reason.
 
 ### Stopping one person or one token
 
