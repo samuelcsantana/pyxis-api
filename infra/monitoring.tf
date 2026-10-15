@@ -178,3 +178,68 @@ resource "aws_cloudwatch_metric_alarm" "repeated_trials" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
 }
+
+locals {
+  account_log_groups = {
+    http = aws_cloudwatch_log_group.function[var.project].name
+    jobs = aws_cloudwatch_log_group.function["${var.project}-jobs"].name
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "refund_failures" {
+  for_each       = local.account_log_groups
+  name           = "${var.project}-refund-failures-${each.key}"
+  log_group_name = each.value
+  pattern        = "{ $.message.message = \"accounts.refund_failed\" }"
+
+  metric_transformation {
+    name          = "RefundFailures"
+    namespace     = var.metrics_namespace
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "refund_failures" {
+  alarm_name          = "${var.project}-refund-failures"
+  alarm_description   = "${var.refund_failures_alarm_threshold} or more refunds failed within an hour when an account was closed: find the accounts.refund_failed log line and refund by hand in Stripe within two business days."
+  namespace           = var.metrics_namespace
+  metric_name         = "RefundFailures"
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.refund_failures_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
+
+resource "aws_cloudwatch_log_metric_filter" "account_notice_failures" {
+  for_each       = local.account_log_groups
+  name           = "${var.project}-account-notice-failures-${each.key}"
+  log_group_name = each.value
+  pattern        = "{ $.message.message = \"accounts.notice_failed\" }"
+
+  metric_transformation {
+    name          = "AccountNoticeFailures"
+    namespace     = var.metrics_namespace
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "account_notice_failures" {
+  alarm_name          = "${var.project}-account-notice-failures"
+  alarm_description   = "${var.account_notice_failures_alarm_threshold} or more account e-mails (end of access, deletion reminder, deletion) failed within an hour: the daily job tries again tomorrow; check the e-mail provider."
+  namespace           = var.metrics_namespace
+  metric_name         = "AccountNoticeFailures"
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.account_notice_failures_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}

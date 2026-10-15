@@ -174,3 +174,15 @@ variable "repeated_trials_alarm_threshold" {
   type        = number
   default     = 1
 }
+
+variable "refund_failures_alarm_threshold" {
+  description = "Refunds that failed within an hour when an account was closed, at which the alarm fires."
+  type        = number
+  default     = 1
+}
+
+variable "account_notice_failures_alarm_threshold" {
+  description = "Account e-mails that failed within an hour, at which the alarm fires."
+  type        = number
+  default     = 1
+}
