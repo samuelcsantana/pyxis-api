@@ -281,9 +281,39 @@ describe('sign-up while it is open', () => {
     expect(form?.get('subscription_data[trial_period_days]')).toBe(String(TRIAL_DAYS));
     expect(form?.get('locale')).toBe('pt-BR');
     expect(form?.get('success_url')).toBe(`${E2E_DASHBOARD_ORIGIN}/welcome?account=${accountId}`);
+    expect(form?.get('cancel_url')).toBe(`${E2E_DASHBOARD_ORIGIN}/sign-up?step=plan`);
     expect(someoneElses.statusCode).toBe(404);
     expect(someoneElses.json()).toMatchObject({ error: 'account_not_found' });
     expect(notAnId.statusCode).toBe(400);
+  });
+
+  it('opens a Checkout with no trial for an ended account, sending a change of mind back to /account', async () => {
+    const { cookie, accountId } = await signUp();
+    await owner`
+      UPDATE accounts SET status = 'ended', stripe_customer_id = 'cus_e2e_back',
+        access_ends_at = now() - interval '1 day'
+      WHERE id = ${accountId}
+    `;
+    stripe.answer('GET', '/v1/prices', { body: MONTHLY_PRICES });
+    stripe.answer('POST', '/v1/checkout/sessions', {
+      body: {
+        id: 'cs_e2e_back',
+        object: 'checkout.session',
+        url: 'https://checkout.stripe.com/c/back',
+      },
+    });
+
+    const opened = await post(
+      `/v1/accounts/${accountId}/checkout`,
+      { interval: 'year', locale: 'en' },
+      { cookie },
+    );
+
+    expect(opened.statusCode).toBe(200);
+    const form = stripe.requests.findLast(({ path }) => path === '/v1/checkout/sessions')?.form;
+    expect(form?.get('customer')).toBe('cus_e2e_back');
+    expect(form?.get('subscription_data[trial_period_days]')).toBeNull();
+    expect(form?.get('cancel_url')).toBe(`${E2E_DASHBOARD_ORIGIN}/account`);
   });
 
   it('has no billing portal before the first subscription, and needs a session', async () => {
