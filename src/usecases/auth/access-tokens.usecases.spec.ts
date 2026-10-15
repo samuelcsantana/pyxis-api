@@ -221,6 +221,13 @@ describe('AuthenticateAccessTokenUseCase', () => {
     await expect(authenticate.execute(created.secret)).rejects.toBeInstanceOf(UnauthenticatedError);
   });
 
+  it('refuses the token of a suspended admin', async () => {
+    const { authenticate, admins, ana, created } = await withToken();
+    await admins.suspend(ana.id, NOW);
+
+    await expect(authenticate.execute(created.secret)).rejects.toBeInstanceOf(UnauthenticatedError);
+  });
+
   it('refuses a token whose admin no longer exists', async () => {
     const { tokens, clock, created } = await withToken();
     class NoAdmins extends InMemoryAdminUserRepository {

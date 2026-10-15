@@ -293,6 +293,22 @@ describe('CompleteSignUpUseCase', () => {
     expect(terms.recorded).toHaveLength(2);
   });
 
+  it('opens no session for a suspended person, the code spent', async () => {
+    const { requestCode, completeSignUp, mail, admins, sessions } = setup();
+    const owner = await admins.findOrCreateByEmail(EMAIL);
+    await admins.suspend(owner.id, NOW);
+
+    await expect(
+      completeSignUp.execute({
+        email: EMAIL,
+        code: await sentCode(requestCode, mail),
+        termsVersion: TERMS,
+        client: CLIENT,
+      }),
+    ).rejects.toBeInstanceOf(InvalidSignInCodeError);
+    expect(sessions.stored).toEqual([]);
+  });
+
   it('opens a new account for an owner whose only account has ended', async () => {
     const { requestCode, completeSignUp, mail, admins, accounts } = setup();
     const owner = await admins.findOrCreateByEmail(EMAIL);

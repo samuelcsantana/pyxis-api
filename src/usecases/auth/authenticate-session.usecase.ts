@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { isSuspended } from '../../domain/accounts/account-suspension';
 import type { AdminSession } from '../../domain/entities/admin-session.entity';
 import type { AdminUser } from '../../domain/entities/admin-user.entity';
 import { sha256Hex } from '../../domain/auth/hashing';
@@ -40,7 +41,7 @@ export class AuthenticateSessionUseCase {
       await this.sessions.touch(session.id, now);
     }
     const admin = await this.admins.findById(session.adminUserId);
-    if (admin === null) {
+    if (admin === null || isSuspended(admin)) {
       throw new UnauthenticatedError();
     }
     return { admin, session };

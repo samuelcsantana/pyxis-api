@@ -228,6 +228,16 @@ describe('dashboard sign-in', () => {
       expect(codes.stored.map((code) => code.emailLanguage)).toEqual(['es']);
     });
 
+    it('sends nothing to a suspended admin, answering the same', async () => {
+      const { requestCode, admins, admin, mail, codes, clock } = await setup();
+      await admins.suspend(admin.id, clock.now());
+
+      await expect(requestCode.execute(ADMIN_EMAIL)).resolves.toBeUndefined();
+
+      expect(mail.sent).toEqual([]);
+      expect(codes.stored).toEqual([]);
+    });
+
     it('does nothing for an email that is not an admin', async () => {
       const { requestCode, mail, codes } = await setup();
 
@@ -290,6 +300,17 @@ describe('dashboard sign-in', () => {
       expect(sessions.stored).toEqual([
         expect.objectContaining({ tokenHash: sha256Hex(signedIn.sessionToken), revokedAt: null }),
       ]);
+    });
+
+    it('refuses a code sent before the admin was suspended, opening no session', async () => {
+      const { requestCode, verifyCode, admins, admin, sessions, clock } = await setup();
+      await requestCode.execute(ADMIN_EMAIL);
+      await admins.suspend(admin.id, clock.now());
+
+      await expect(verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT)).rejects.toBeInstanceOf(
+        InvalidSignInCodeError,
+      );
+      expect(sessions.stored).toEqual([]);
     });
 
     it('remembers the language of the code for the admin who signs in with it', async () => {
@@ -412,6 +433,13 @@ describe('dashboard sign-in', () => {
         email: ADMIN_EMAIL,
         projects: [{ ...PROJECT, firstEventAt: null, lastEventAt: null, iconVersion: null }],
       });
+    });
+
+    it('refuses the session of an admin suspended since', async () => {
+      const { authenticate, sessionToken, admins, admin, clock } = await signedIn();
+      await admins.suspend(admin.id, clock.now());
+
+      await expect(authenticate.execute(sessionToken)).rejects.toBeInstanceOf(UnauthenticatedError);
     });
 
     it('records the last use at most every five minutes', async () => {

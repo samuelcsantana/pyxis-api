@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { isSuspended } from '../../domain/accounts/account-suspension';
 import { normalizeEmail } from '../../domain/auth/email';
 import { type EmailLanguage, resolveEmailLanguage } from '../../domain/auth/email-language';
 import { sha256Hex } from '../../domain/auth/hashing';
@@ -34,7 +35,8 @@ export class RequestSignInCodeUseCase {
 
   async execute(rawEmail: string, requestedLanguage?: string): Promise<void> {
     const email = normalizeEmail(rawEmail);
-    if ((await this.admins.findByEmail(email)) === null) {
+    const admin = await this.admins.findByEmail(email);
+    if (admin === null || isSuspended(admin)) {
       return;
     }
     const now = this.clock.now();
