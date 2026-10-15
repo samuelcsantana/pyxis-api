@@ -6,6 +6,7 @@ import {
   CLIENT_BATCHES_PER_WINDOW,
   CLIENT_RATE_WINDOW_MS,
   INGEST_THROTTLER,
+  MCP_MESSAGES_PER_WINDOW,
   OAUTH_AUTHORIZE_REQUESTS_PER_WINDOW,
   OAUTH_RATE_WINDOW_MS,
   OAUTH_THROTTLER,
@@ -52,6 +53,14 @@ describe('rate limits', () => {
       ACCESS_TOKEN_REQUESTS_PER_WINDOW: 60,
       ACCESS_TOKEN_RATE_WINDOW_MS: 60_000,
     });
+  });
+
+  it('lets one token send the MCP endpoint twice as many messages as tool reads', () => {
+    expect({ MCP_MESSAGES_PER_WINDOW, ACCESS_TOKEN_RATE_WINDOW_MS }).toEqual({
+      MCP_MESSAGES_PER_WINDOW: 2 * ACCESS_TOKEN_REQUESTS_PER_WINDOW,
+      ACCESS_TOKEN_RATE_WINDOW_MS: 60_000,
+    });
+    expect(MCP_MESSAGES_PER_WINDOW).toBe(120);
   });
 
   it('only breaks the circuit for an address that floods the token endpoint', () => {

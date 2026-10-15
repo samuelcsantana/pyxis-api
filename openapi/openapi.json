@@ -1588,6 +1588,48 @@
         ],
         "type": "object"
       },
+      "JsonRpcMessage": {
+        "additionalProperties": {},
+        "description": "A JSON-RPC 2.0 answer of the Model Context Protocol: a result or an error.",
+        "properties": {
+          "error": {
+            "additionalProperties": {},
+            "properties": {
+              "code": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "message": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "type": "object"
+          },
+          "id": {
+            "type": [
+              "string",
+              "number",
+              "null"
+            ]
+          },
+          "jsonrpc": {
+            "enum": [
+              "2.0"
+            ],
+            "type": "string"
+          },
+          "result": {}
+        },
+        "required": [
+          "jsonrpc"
+        ],
+        "type": "object"
+      },
       "ManagedProject": {
         "additionalProperties": false,
         "description": "The settings of the project after the change.",
@@ -4319,6 +4361,109 @@
         "summary": "Liveness check of the API",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/mcp": {
+      "post": {
+        "description": "Stateless Streamable HTTP with JSON answers. Each tool reads one dashboard query with the caller's token, inside this API. Without a token, or with a refused one, the answer is 401 with a WWW-Authenticate header that points at the protected resource metadata. A request with an Origin header is refused (403). 404 while the remote MCP is switched off.",
+        "operationId": "McpController_message",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "jsonrpc": {
+                    "const": "2.0"
+                  }
+                },
+                "required": [
+                  "jsonrpc"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "description": "One JSON-RPC 2.0 message of the Model Context Protocol, as JSON.",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonRpcMessage"
+                }
+              }
+            },
+            "description": ""
+          },
+          "202": {
+            "description": "A notification, accepted."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonRpcMessage"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access_token": []
+          },
+          {
+            "connection_token": []
+          }
+        ],
+        "summary": "The remote MCP server: the read-only tools of pyxis-mcp, for Claude and others",
+        "tags": [
+          "mcp"
         ]
       }
     },
