@@ -10,6 +10,9 @@ import {
   events,
   noticeDeliveries,
   notices,
+  oauthAuthorizationRequests,
+  oauthConnectionTokens,
+  oauthConnections,
   otpCodes,
   projectExports,
   projectIcons,
@@ -33,7 +36,10 @@ function foreignKeyTargets(
     | typeof noticeDeliveries
     | typeof projectIcons
     | typeof termsAcceptances
-    | typeof projectExports,
+    | typeof projectExports
+    | typeof oauthConnections
+    | typeof oauthAuthorizationRequests
+    | typeof oauthConnectionTokens,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -236,6 +242,41 @@ describe('database schema', () => {
       'admin_access_tokens_admin_user_id_idx',
     ]);
     expect(config.columns.find((column) => column.name === 'token_hash')?.isUnique).toBe(true);
+  });
+
+  it('ties connections to their admin and indexes them by admin', () => {
+    const config = getTableConfig(oauthConnections);
+
+    expect(foreignKeyTargets(oauthConnections)).toEqual(['admin_users.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'oauth_connections_admin_user_id_idx',
+    ]);
+  });
+
+  it('keeps each connection token hash once, gone with its connection', () => {
+    const config = getTableConfig(oauthConnectionTokens);
+
+    expect(foreignKeyTargets(oauthConnectionTokens)).toEqual(['oauth_connections.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+    expect(config.columns.find((column) => column.name === 'token_hash')?.isUnique).toBe(true);
+    expect(config.checks.map((constraint) => constraint.name)).toEqual([
+      'oauth_connection_tokens_kind_check',
+    ]);
+  });
+
+  it('keeps each authorization code hash once and lets a request outlive its connection', () => {
+    const config = getTableConfig(oauthAuthorizationRequests);
+
+    expect(foreignKeyTargets(oauthAuthorizationRequests)).toEqual([
+      'admin_users.id',
+      'oauth_connections.id',
+    ]);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual([
+      'cascade',
+      'set null',
+    ]);
+    expect(config.columns.find((column) => column.name === 'code_hash')?.isUnique).toBe(true);
   });
 
   it('finds the codes of an email by creation time', () => {
