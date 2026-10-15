@@ -347,6 +347,21 @@ the owner with the reason, what was suspended, what to do and how to contest. Wr
 again keeps the moment of the first suspension; keys and tokens revoked meanwhile stay revoked
 after `account:resume`.
 
+### Suspending the reception of one project
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s project:suspend -- --project <id> --reason '<what was seen, as written to the owner>'
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s project:resume -- --project <id>
+```
+
+The lighter measure, for one site of an account (for example events carrying e-mail addresses).
+Within a minute the project's batches are answered `403 project_suspended`, which the tracker
+drops; its screens, settings, exports and people stay open, and the rest of the account goes on.
+The dashboard shows the suspension to everyone who reads the project and the reason to the
+account's owner. Works on the operator's own projects too. Billing is not touched. Nothing is
+e-mailed: write to the owner with the reason and how to contest. When the whole account is
+suspended as well, its batches are answered `account_suspended`.
+
 ### Closing an account as the operator
 
 ```bash

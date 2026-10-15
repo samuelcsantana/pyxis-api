@@ -239,6 +239,11 @@ Shipping now:
   read-only tokens alike; sign-in, the account and its reason, billing, closing, exports and the
   secret-key erasure stay open, and the subscription is never touched
   ([ADR 0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md))
+- Suspending the event reception of a single project (`project:suspend`, `project:resume`):
+  within a minute its batches are answered `403 project_suspended`, readable by the site, while
+  its screens, exports and people stay open; `GET /v1/me` and the project settings show the
+  suspension to everyone who reads the project and the reason to the account's owner
+  ([ADR 0032](docs/adr/0032-a-project-reception-can-be-suspended-alone.md))
 - Closing an account as the operator (`account:close --refund full|prorata|none`): cancels the
   subscription, refunds the latest paid invoice in full, by the whole days left (from the start of
   a suspension when there was one) or not at all, and ends access with the same closure as the
@@ -363,6 +368,8 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s account:link -- --account <id> --subscription <sub_…>`                                                                                              | Ties a subscription paid outside sign-up (a payment link) to the account and copies its state; needs `STRIPE_SECRET_KEY`                                                                        |
 | `npm run -s account:suspend -- --account <id> --reason "<why>"`                                                                                                 | Suspends the account for abuse, keeping the reason the owner was told (500 characters at most); its projects stop taking events and opening in the dashboard within a minute                    |
 | `npm run -s account:resume -- --account <id>`                                                                                                                   | Lifts the suspension; keys and tokens revoked meanwhile stay revoked                                                                                                                            |
+| `npm run -s project:suspend -- --project <id> --reason "<why>"`                                                                                                 | Suspends only the event reception of the project, keeping the reason the owner was told (500 characters at most); within a minute its batches are refused while its screens stay open           |
+| `npm run -s project:resume -- --project <id>`                                                                                                                   | Lifts the suspension of the reception; the project takes events again within a minute                                                                                                           |
 | `npm run -s account:close -- --account <id> --reason "<why>" --refund <full\|prorata\|none>`                                                                    | Ends the account at once as the operator: cancels the subscription, refunds as asked, revokes the keys; the daily job e-mails the owner; needs `STRIPE_SECRET_KEY` when there is a subscription |
 | `npm run -s account:hold -- --account <id> --reason "<why>"`                                                                                                    | Holds the deletion of the account and of its projects, keeping the reason (500 characters at most); the owner sees the hold, not the reason                                                     |
 | `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                       |
@@ -620,6 +627,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0029](docs/adr/0029-a-deletion-can-be-held.md)                              | A deletion can be held for a dispute or a legal order                      |
 | [0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md)          | The operator can stop a person and a token                                 |
 | [0031](docs/adr/0031-people-without-a-project-are-deleted.md)                | People left without a project are deleted after thirty days                |
+| [0032](docs/adr/0032-a-project-reception-can-be-suspended-alone.md)          | A project's reception can be suspended on its own                          |
 
 ## Roadmap
 
