@@ -1,10 +1,10 @@
-import { sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type {
   ExpiredSessionCutoffs,
   RetentionRepository,
 } from '../../domain/retention/retention.repository';
 import type { DrizzleDatabase } from '../database/drizzle.types';
-import { trialCards } from '../database/schema/accounts';
+import { accounts, trialCards } from '../database/schema/accounts';
 import { adminSessions, otpCodes } from '../database/schema/admins';
 import { events } from '../database/schema/events';
 import { projects } from '../database/schema/projects';
@@ -12,8 +12,12 @@ import { projects } from '../database/schema/projects';
 export class DrizzleRetentionRepository implements RetentionRepository {
   constructor(private readonly db: DrizzleDatabase) {}
 
-  async projectIds(): Promise<readonly string[]> {
-    const rows = await this.db.select({ id: projects.id }).from(projects);
+  async projectIdsNotHeld(): Promise<readonly string[]> {
+    const rows = await this.db
+      .select({ id: projects.id })
+      .from(projects)
+      .leftJoin(accounts, eq(accounts.id, projects.accountId))
+      .where(and(isNull(projects.deletionHeldAt), isNull(accounts.deletionHeldAt)));
     return rows.map((row) => row.id);
   }
 
