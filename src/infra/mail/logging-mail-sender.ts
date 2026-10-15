@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
+import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { Invitation } from '../../domain/people/invitation';
@@ -44,6 +45,16 @@ export class LoggingMailSender implements MailSender {
 
   sendAccountNotice(_email: string, notice: AccountNotice, language: EmailLanguage): Promise<void> {
     this.logger.log({ message: 'mail.account_notice', kind: notice.kind, language });
+    return Promise.resolve();
+  }
+
+  sendWelcome(_email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
+    this.logger.log({
+      message: 'mail.welcome',
+      trial: welcome.trialEndsAt !== null,
+      withTerms: welcome.terms !== null,
+      language,
+    });
     return Promise.resolve();
   }
 
