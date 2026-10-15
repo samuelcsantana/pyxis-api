@@ -3645,6 +3645,12 @@
         "scheme": "bearer",
         "type": "http"
       },
+      "connection_token": {
+        "bearerFormat": "opaque",
+        "description": "The access token of an application connected through OAuth, read-only, valid one hour: pyxis_oat_ followed by 43 letters, digits, - or _",
+        "scheme": "bearer",
+        "type": "http"
+      },
       "pyxis_session": {
         "in": "cookie",
         "name": "pyxis_session",
@@ -4559,6 +4565,9 @@
           },
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           }
         ],
         "summary": "The signed-in admin and their projects",
@@ -5082,6 +5091,9 @@
             "access_token": []
           },
           {
+            "connection_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -5268,6 +5280,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -5521,6 +5536,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -5789,6 +5807,9 @@
             "access_token": []
           },
           {
+            "connection_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -5898,6 +5919,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -6021,6 +6045,9 @@
             "access_token": []
           },
           {
+            "connection_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -6140,6 +6167,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -6292,6 +6322,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -6653,6 +6686,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -7029,6 +7065,9 @@
             "access_token": []
           },
           {
+            "connection_token": []
+          },
+          {
             "pyxis_session": []
           }
         ],
@@ -7097,6 +7136,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -7197,6 +7239,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -7304,6 +7349,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
@@ -7549,6 +7597,9 @@
         "security": [
           {
             "access_token": []
+          },
+          {
+            "connection_token": []
           },
           {
             "pyxis_session": []
