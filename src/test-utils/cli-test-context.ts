@@ -1,6 +1,7 @@
 import { FakeBillingGateway } from './fake-billing-gateway';
 import { FixedClock } from './fixed-clock';
 import { InMemoryAccountBillingRepository } from './in-memory-account-billing.repository';
+import { InMemoryAccountClosureRepository } from './in-memory-account-closure.repository';
 import { InMemoryAccountUsageRepository } from './in-memory-account-usage.repository';
 import { InMemoryAccountRepository } from './in-memory-account.repository';
 import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
@@ -8,6 +9,7 @@ import { InMemoryProjectPeopleRepository } from './in-memory-project-people.repo
 import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
+import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
@@ -41,6 +43,7 @@ export function inMemoryCliContext(): CliContext & {
   readonly accountUsage: InMemoryAccountUsageRepository;
   readonly billing: FakeBillingGateway;
   readonly accountBilling: InMemoryAccountBillingRepository;
+  readonly closure: InMemoryAccountClosureRepository;
   readonly people: InMemoryProjectPeopleRepository;
   readonly usage: StubProjectUsageQuery;
   closed: boolean;
@@ -51,6 +54,7 @@ export function inMemoryCliContext(): CliContext & {
   const accountUsage = new InMemoryAccountUsageRepository();
   const billing = new FakeBillingGateway();
   const accountBilling = new InMemoryAccountBillingRepository();
+  const closure = new InMemoryAccountClosureRepository();
   const people = new InMemoryProjectPeopleRepository();
   const usage = new StubProjectUsageQuery();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
@@ -62,6 +66,7 @@ export function inMemoryCliContext(): CliContext & {
     accountUsage,
     billing,
     accountBilling,
+    closure,
     people,
     usage,
     closed: false,
@@ -78,6 +83,7 @@ export function inMemoryCliContext(): CliContext & {
     linkSubscription: new LinkSubscriptionUseCase(billing, accountBilling, clock),
     suspendAccount: new SuspendAccountUseCase(accounts, accounts, clock),
     resumeAccount: new ResumeAccountUseCase(accounts),
+    closeAccountAsOperator: new CloseAccountAsOperatorUseCase(accounts, closure, billing, clock),
     close: () => {
       context.closed = true;
       return Promise.resolve();

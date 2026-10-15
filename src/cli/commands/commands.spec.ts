@@ -1,6 +1,7 @@
 import { PUBLIC_KEY_PATTERN, SECRET_KEY_PATTERN } from '../../domain/keys/project-keys';
 import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-context';
 import { CliUsageError } from '../cli-args';
+import { accountCloseCommand } from './account-close.command';
 import { accountCreateCommand } from './account-create.command';
 import { accountLinkCommand } from './account-link.command';
 import { accountResumeCommand } from './account-resume.command';
@@ -310,6 +311,78 @@ describe('account:suspend and account:resume', () => {
 
     expect(resumed.out).toEqual([`account_id=${account.id}`, 'status=active', 'suspended_at=']);
     expect(resumed.err).toEqual([expect.stringContaining('stay revoked')]);
+  });
+});
+
+describe('account:close', () => {
+  it('parses the account, the reason and a refund mode, refusing an unknown one', () => {
+    expect(
+      accountCloseCommand.parse([
+        '--account',
+        ACCOUNT_ID,
+        '--reason',
+        ' Repeated forged traffic ',
+        '--refund',
+        'prorata',
+      ]),
+    ).toEqual({ accountId: ACCOUNT_ID, reason: 'Repeated forged traffic', refund: 'prorata' });
+    expect(() =>
+      accountCloseCommand.parse(['--account', ACCOUNT_ID, '--reason', 'x', '--refund', 'half']),
+    ).toThrow(CliUsageError);
+    expect(() => accountCloseCommand.parse(['--account', ACCOUNT_ID, '--reason', 'x'])).toThrow(
+      CliUsageError,
+    );
+  });
+
+  async function subscribedAccount() {
+    const context = inMemoryCliContext();
+    const account = await context.accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
+    context.closure.subscribe(account.id, 'sub_1');
+    context.billing.latestInvoice = {
+      invoiceId: 'in_1',
+      amountPaid: 3900,
+      periodStart: new Date('2026-10-01T00:00:00.000Z'),
+      periodEnd: new Date('2026-10-31T00:00:00.000Z'),
+    };
+    return { context, account };
+  }
+
+  it('closes the account, cancels and refunds, printing what happened', async () => {
+    const { context, account } = await subscribedAccount();
+    const output = captureOutput();
+
+    await accountCloseCommand.execute(
+      context,
+      { accountId: account.id, reason: 'Repeated forged traffic', refund: 'full' },
+      output,
+    );
+
+    expect(output.out).toEqual([
+      `account_id=${account.id}`,
+      'status=ended',
+      'access_ended_at=2026-10-06T14:00:00.000Z',
+      'deletion_on=2026-11-05T14:00:00.000Z',
+      'subscription_cancelled=true',
+      'refund=full',
+      'refunded_amount=3900',
+      'reason=Repeated forged traffic',
+    ]);
+    expect(output.err).toEqual([expect.stringContaining('next daily job')]);
+  });
+
+  it('tells the operator to refund by hand when the refund failed', async () => {
+    const { context, account } = await subscribedAccount();
+    context.billing.refundFailure = new Error('refunds.create failed');
+    const output = captureOutput();
+
+    await accountCloseCommand.execute(
+      context,
+      { accountId: account.id, reason: 'Fraud', refund: 'full' },
+      output,
+    );
+
+    expect(output.out).toContain('refunded_amount=0');
+    expect(output.err).toEqual([expect.stringContaining('refund it by hand in Stripe')]);
   });
 });
 

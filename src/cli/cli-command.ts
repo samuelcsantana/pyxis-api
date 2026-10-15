@@ -1,3 +1,4 @@
+import type { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import type { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import type { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
@@ -26,6 +27,7 @@ export interface CliContext {
   readonly linkSubscription: LinkSubscriptionUseCase;
   readonly suspendAccount: SuspendAccountUseCase;
   readonly resumeAccount: ResumeAccountUseCase;
+  readonly closeAccountAsOperator: CloseAccountAsOperatorUseCase;
   close(): Promise<void>;
 }
 
