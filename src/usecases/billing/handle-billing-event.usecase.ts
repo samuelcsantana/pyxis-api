@@ -12,6 +12,7 @@ import {
 } from '../../domain/repositories/billing-event.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { WelcomeAccountsUseCase } from '../accounts/welcome-accounts.usecase';
+import { DetectRepeatedTrialUseCase } from './detect-repeated-trial.usecase';
 
 export interface HandleBillingEventCommand {
   readonly rawBody: Buffer;
@@ -30,6 +31,7 @@ export class HandleBillingEventUseCase {
     @Inject(ACCOUNT_BILLING_REPOSITORY) private readonly accounts: AccountBillingRepository,
     @Inject(CLOCK) private readonly clock: Clock,
     private readonly welcomes: WelcomeAccountsUseCase,
+    private readonly repeatedTrials: DetectRepeatedTrialUseCase,
   ) {}
 
   async execute(command: HandleBillingEventCommand): Promise<BillingEventOutcome> {
@@ -62,6 +64,7 @@ export class HandleBillingEventUseCase {
     if (update.restoresAccess && !hasAccess(account.status)) {
       await this.welcomes.tryWelcome(account.accountId);
     }
+    await this.repeatedTrials.tryDetect(account.accountId, subscription);
     await this.events.complete(event.id, now);
     this.logger.log({
       message: 'billing.event_applied',

@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
 import Stripe from 'stripe';
@@ -12,16 +13,23 @@ import { e2eOwnerUrl } from './e2e-database';
 const WEBHOOK_SECRET = 'whsec_e2e_secret';
 const OWNER_ID = 'd9d8d7d6-0000-4000-8000-000000000001';
 const ACCOUNT_ID = 'd9d8d7d6-0000-4000-8000-000000000011';
+const SECOND_ACCOUNT_ID = 'd9d8d7d6-0000-4000-8000-000000000012';
+const CARD_FINGERPRINT = 'fp_e2e_card';
 const TRIAL_END_SECONDS = 1_793_000_000;
 const WEBHOOK = '/v1/billing/stripe/webhook';
 
-function subscription(status: string): object {
+function subscription(status: string, accountId = ACCOUNT_ID): object {
   return {
     id: 'sub_e2e',
     object: 'subscription',
     customer: 'cus_e2e',
     status,
-    metadata: { account_id: ACCOUNT_ID },
+    metadata: { account_id: accountId },
+    default_payment_method: {
+      id: 'pm_e2e',
+      object: 'payment_method',
+      card: { fingerprint: CARD_FINGERPRINT },
+    },
     trial_end: TRIAL_END_SECONDS,
     cancel_at: null,
     cancel_at_period_end: false,
@@ -61,7 +69,8 @@ describe('POST /v1/billing/stripe/webhook', () => {
     owner = postgres(e2eOwnerUrl(), { max: 1, onnotice: () => undefined });
     await owner`INSERT INTO admin_users (id, email) VALUES (${OWNER_ID}, 'billing-owner@example.com')`;
     await owner`
-      INSERT INTO accounts (id, owner_admin_id, status) VALUES (${ACCOUNT_ID}, ${OWNER_ID}, 'incomplete')
+      INSERT INTO accounts (id, owner_admin_id, status)
+      VALUES (${ACCOUNT_ID}, ${OWNER_ID}, 'incomplete'), (${SECOND_ACCOUNT_ID}, ${OWNER_ID}, 'incomplete')
     `;
     app = await createTestApp((builder) =>
       builder
@@ -74,7 +83,8 @@ describe('POST /v1/billing/stripe/webhook', () => {
 
   afterAll(async () => {
     await app.close();
-    await owner`DELETE FROM accounts WHERE id = ${ACCOUNT_ID}`;
+    await owner`DELETE FROM trial_cards WHERE fingerprint = ${CARD_FINGERPRINT}`;
+    await owner`DELETE FROM accounts WHERE id IN (${ACCOUNT_ID}, ${SECOND_ACCOUNT_ID})`;
     await owner`DELETE FROM admin_users WHERE id = ${OWNER_ID}`;
     await owner.end();
   });
@@ -189,5 +199,40 @@ describe('POST /v1/billing/stripe/webhook', () => {
     expect(payload.length).toBeGreaterThan(32_768);
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ received: 'applied' });
+  });
+
+  it('records the card of each trial and warns when a second account starts one with it', async () => {
+    const warnings: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+      warnings.push(message);
+    });
+    stripe.answer('GET', '/v1/subscriptions/sub_e2e_again', {
+      body: {
+        ...subscription('trialing', SECOND_ACCOUNT_ID),
+        id: 'sub_e2e_again',
+        customer: 'cus_e2e_again',
+      },
+    });
+    const { payload, signature } = signedEvent('evt_e2e_5', 'checkout.session.completed', {
+      object: 'checkout.session',
+      subscription: 'sub_e2e_again',
+      customer: 'cus_e2e_again',
+      client_reference_id: SECOND_ACCOUNT_ID,
+    });
+
+    const response = await deliver(payload, signature);
+
+    expect(response.json()).toEqual({ received: 'applied' });
+    const cards = await owner<{ account_id: string }[]>`
+      SELECT account_id FROM trial_cards WHERE fingerprint = ${CARD_FINGERPRINT}
+      ORDER BY trial_started_at
+    `;
+    expect(cards).toEqual([{ account_id: ACCOUNT_ID }, { account_id: SECOND_ACCOUNT_ID }]);
+    expect(warnings).toContainEqual({
+      message: 'billing.repeated_trial',
+      accountId: SECOND_ACCOUNT_ID,
+      earlierAccountIds: [ACCOUNT_ID],
+    });
+    jest.restoreAllMocks();
   });
 });
