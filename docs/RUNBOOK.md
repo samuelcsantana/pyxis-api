@@ -302,7 +302,8 @@ two settings are set. In this order:
    read.
 
 To close sign-up again, set `signup_open = false`, apply and deploy; accounts
-already created keep working. A new version of the terms is the same change with a new
+already created keep working, and an ended account not yet deleted can still subscribe again from
+Account and billing (a Checkout with no trial; coming back is not a new sign-up). A new version of the terms is the same change with a new
 `terms_version`: a page still showing the old one is refused with `409 terms_outdated`.
 
 ### Repeated free trials
