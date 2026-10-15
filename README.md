@@ -205,6 +205,10 @@ Shipping now:
   someone off (`DELETE .../people/{adminUserId}`). The plan's three people are counted across the
   account's projects, the owner included, under the account lock; the owner always stays
   ([ADR 0021](docs/adr/0021-people-are-counted-across-the-account.md))
+- The end of a hosted account, run by the daily job: subscriptions reconciled with Stripe, keys
+  revoked when access ends, the owner told and reminded by e-mail, everything deleted thirty days
+  later (events in batches), and sign-ups that never subscribed removed after seven days; each step
+  once, recorded on the account ([ADR 0022](docs/adr/0022-an-account-ends-in-steps.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -551,6 +555,7 @@ request never deploys.
 | [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)   | Sign-up behind a switch, tied to the version of the terms accepted      |
 | [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md) | Owners manage their projects; the operator's stay in the command line   |
 | [0021](docs/adr/0021-people-are-counted-across-the-account.md)           | People are added per project and counted across the account             |
+| [0022](docs/adr/0022-an-account-ends-in-steps.md)                        | An account ends in steps, each done once by the daily job               |
 
 ## Roadmap
 
@@ -579,7 +584,8 @@ request never deploys.
 - [x] Sign-up behind a switch, with the terms version accepted and Checkout for the owner
 - [x] Projects and keys managed by the owner of their account
 - [x] People added and removed by the owner, with an invitation e-mail
-- [ ] Hosted plan: the account's lifecycle, export and deletion
+- [x] The end of an account: reconciliation, revoked keys, notices and deletion after thirty days
+- [ ] Hosted plan: export and account deletion requested by the owner; the welcome e-mail
 
 ## Contributing and license
 

@@ -215,6 +215,15 @@ Then `retention.step_done { step, deleted }` is logged for each step; `retention
 names a step that failed and why. The schedule can be paused with `aws scheduler update-schedule`
 or by setting its state to `DISABLED` in Terraform.
 
+After measuring the accounts, the job runs the account lifecycle and logs
+`accounts.lifecycle_done` with what it did: subscriptions reconciled with Stripe, keys revoked at
+the end of access, end and reminder e-mails, accounts deleted thirty days after the end, abandoned
+sign-ups removed. Look for `accounts.reconcile_failed` (Stripe could not be read for one account),
+`accounts.notice_failed` (an e-mail that will be tried again tomorrow), and
+`accounts.deletion_failed` or `accounts.incomplete_removal_failed`, which also fail the invocation
+so the error alarm fires; the next run continues from what is left. Reconciliation needs
+`/<project>/jobs/STRIPE_SECRET_KEY`, the same value as `/<project>/app/STRIPE_SECRET_KEY`.
+
 ## The weekly digest
 
 On Mondays at 11:00 UTC the schedule `pyxis-api-weekly-digest` invokes the jobs function with
@@ -271,9 +280,10 @@ two settings are set. In this order:
    `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`,
    `customer.subscription.deleted`, `invoice.paid` and `invoice.payment_failed`. The prices are
    found by their lookup keys, `pyxis_monthly_brl` and `pyxis_yearly_brl`.
-2. Paste the key into `/<project>/app/STRIPE_SECRET_KEY` and the endpoint's signing secret into
-   `/<project>/app/STRIPE_WEBHOOK_SECRET` (Parameter Store, SecureString; Terraform created both
-   with a placeholder and never reads them back). Deploy, or wait for new containers, so the
+2. Paste the key into `/<project>/app/STRIPE_SECRET_KEY` and `/<project>/jobs/STRIPE_SECRET_KEY`,
+   and the endpoint's signing secret into `/<project>/app/STRIPE_WEBHOOK_SECRET` (Parameter Store,
+   SecureString; Terraform created them with a placeholder and never reads them back). The key
+   needs read access to Subscriptions too, for the daily reconciliation. Deploy, or wait for new containers, so the
    function reads them.
 3. Publish the terms, then set `terms_version` (the version the dashboard shows, such as
    `2026-11-01`) and `signup_open = true` in `terraform.tfvars`, apply, and deploy so the function
