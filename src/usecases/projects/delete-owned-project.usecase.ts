@@ -5,6 +5,11 @@ import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
 } from '../../domain/repositories/account.repository';
+import { isProjectDeletionHeld } from '../../domain/projects/project-deletion-hold';
+import {
+  PROJECT_DELETION_HOLD_REPOSITORY,
+  type ProjectDeletionHoldRepository,
+} from '../../domain/repositories/project-deletion-hold.repository';
 import {
   type DeletedProject,
   PROJECT_SETTINGS_REPOSITORY,
@@ -22,6 +27,8 @@ export class DeleteOwnedProjectUseCase {
   constructor(
     @Inject(PROJECT_SETTINGS_REPOSITORY) private readonly projects: ProjectSettingsRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
+    @Inject(PROJECT_DELETION_HOLD_REPOSITORY)
+    private readonly holds: ProjectDeletionHoldRepository,
     private readonly deleteProject: DeleteProjectUseCase,
   ) {}
 
@@ -33,7 +40,10 @@ export class DeleteOwnedProjectUseCase {
       deletion.projectId,
       adminUserId,
     );
-    if (isDeletionHeld(account)) {
+    if (
+      isDeletionHeld(account) ||
+      isProjectDeletionHeld(await this.holds.holdOf(deletion.projectId))
+    ) {
       throw new DeletionOnHoldError();
     }
     return this.deleteProject.execute(deletion);

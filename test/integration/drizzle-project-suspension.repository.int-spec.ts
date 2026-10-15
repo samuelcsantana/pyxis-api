@@ -83,6 +83,7 @@ describe("suspending a project's reception against a real Postgres", () => {
   it("tells the reason to the account's owner only, and to nobody on the operator's projects", async () => {
     await suspensions.suspend(SHOP_ID, 'Forged traffic', NOW);
     await suspensions.suspend(OPERATOR_ID, 'Load test gone wrong', NOW);
+    await owner`UPDATE projects SET deletion_held_at = ${NOW} WHERE id = ${BLOG_ID}`;
 
     const forOwner = await restrictions.restrictionsOf(ANA, [SHOP_ID, BLOG_ID, OPERATOR_ID]);
     const forMember = await restrictions.restrictionsOf(BIA, [SHOP_ID]);
@@ -90,18 +91,22 @@ describe("suspending a project's reception against a real Postgres", () => {
     expect(forOwner.get(SHOP_ID)).toEqual({
       ingestionSuspendedAt: NOW,
       ingestionSuspensionReason: 'Forged traffic',
+      deletionHeldAt: null,
     });
     expect(forOwner.get(BLOG_ID)).toEqual({
       ingestionSuspendedAt: null,
       ingestionSuspensionReason: null,
+      deletionHeldAt: NOW,
     });
     expect(forOwner.get(OPERATOR_ID)).toEqual({
       ingestionSuspendedAt: NOW,
       ingestionSuspensionReason: null,
+      deletionHeldAt: null,
     });
     expect(forMember.get(SHOP_ID)).toEqual({
       ingestionSuspendedAt: NOW,
       ingestionSuspensionReason: null,
+      deletionHeldAt: null,
     });
     expect(await restrictions.restrictionsOf(ANA, [])).toEqual(new Map());
   });

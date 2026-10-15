@@ -85,6 +85,7 @@ describe('GetProjectSettingsUseCase', () => {
       eventRetentionMonths: 13,
       ingestionSuspendedAt: null,
       ingestionSuspensionReason: null,
+      deletionHeldAt: null,
     });
     expect(JSON.stringify(settings)).not.toContain(SECRET_HASH);
   });
@@ -104,6 +105,16 @@ describe('GetProjectSettingsUseCase', () => {
       ingestionSuspendedAt: suspendedAt,
       ingestionSuspensionReason: null,
     });
+  });
+
+  it('shows a held deletion to anyone who reads the project', async () => {
+    const { store, restrictions, useCase } = setup();
+    store.add(SHOP);
+    const heldAt = new Date('2026-10-07T12:00:00.000Z');
+    restrictions.add(SHOP.id, SHOP.name, OWNER_ID);
+    restrictions.holdDeletion(SHOP.id, heldAt);
+
+    expect(await useCase.execute(SHOP, MEMBER_ID)).toMatchObject({ deletionHeldAt: heldAt });
   });
 
   it('tells a project that never received an event apart, with no key left', async () => {

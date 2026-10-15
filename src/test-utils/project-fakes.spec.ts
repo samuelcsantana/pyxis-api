@@ -15,5 +15,7 @@ describe('InMemoryProjectSuspensionRepository', () => {
 
     expect(await suspensions.restrictionsOf('admin', ['missing-project'])).toEqual(new Map());
     expect(await suspensions.suspensionOf('missing-project')).toBeNull();
+    suspensions.holdDeletion('missing-project', new Date('2026-10-07T12:00:00.000Z'));
+    expect(await suspensions.restrictionsOf('admin', ['missing-project'])).toEqual(new Map());
   });
 });
