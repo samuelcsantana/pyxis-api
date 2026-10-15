@@ -214,6 +214,11 @@ Shipping now:
   first step, the version and address of the terms accepted), with the daily job sending it to any
   signed-up account the webhook could not welcome
   ([ADR 0023](docs/adr/0023-the-welcome-follows-the-subscription.md))
+- Exports for the owner, in any account state: `POST /v1/projects/{projectId}/exports` (202; one
+  waiting, three a day) hands the export to the jobs function, which writes the events as a gzipped
+  CSV to a private bucket that deletes it after a week and e-mails the owner; `GET
+.../exports/{exportId}` shows it with a download link signed for five minutes
+  ([ADR 0024](docs/adr/0024-exports-are-files-with-short-links.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -367,6 +372,8 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `SIGNUP_OPEN`            | `false`                                                       | `true` lets anyone create an account and subscribe, once `TERMS_VERSION` and `TERMS_URL` are set too                                                                                                                                           |
 | `TERMS_VERSION`          | unset                                                         | The version of the published terms a new owner accepts (at most 32 characters); sign-up stays closed without it                                                                                                                                |
 | `TERMS_URL`              | unset                                                         | Where the published terms are (http or https); sign-up stays closed without it, and the welcome e-mail links to it                                                                                                                             |
+| `EXPORT_BUCKET`          | unset                                                         | The bucket project exports are written to; without it exports answer 503                                                                                                                                                                       |
+| `JOBS_FUNCTION_NAME`     | unset                                                         | The jobs function an export is handed to; without it exports wait for the daily job                                                                                                                                                            |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
@@ -538,31 +545,32 @@ request never deploys.
 
 ## Architecture decisions
 
-| ADR                                                                      | Decision                                                                |
-| ------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| [0001](docs/adr/0001-record-architecture-decisions.md)                   | Record architecture decisions                                           |
-| [0002](docs/adr/0002-clean-architecture.md)                              | Clean Architecture with ports and adapters                              |
-| [0003](docs/adr/0003-openapi-from-zod.md)                                | Generate the OpenAPI 3.1 contract from Zod                              |
-| [0004](docs/adr/0004-least-privilege-database-roles.md)                  | Least-privilege database roles                                          |
-| [0005](docs/adr/0005-per-event-validation.md)                            | Validate each event of a batch on its own                               |
-| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                        | Run on Lambda behind CloudFront, with an edge secret                    |
-| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)         | Sign admins in with an emailed code and an opaque session cookie        |
-| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)                 | Answer dashboard queries from the raw events, without rollups           |
-| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)         | Erase a person together with the visits they identified in              |
-| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)   | Compare an unfinished day up to the same time of day                    |
-| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)            | Send a weekly digest by e-mail from the jobs function                   |
-| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)             | Let the dashboard keep the session in a cookie of its own host          |
-| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)             | Fetch each project's icon from its site, and keep a copy                |
-| [0014](docs/adr/0014-store-the-region-never-the-city.md)                 | Store the viewer's region, never the city                               |
-| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)              | Give agents read-only access tokens, scoped to their admin              |
-| [0016](docs/adr/0016-accounts-own-projects.md)                           | Accounts own projects; a project without one is the operator's          |
-| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                    | Measure each account's month daily; pause ingestion at 150%             |
-| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)      | Billing follows Stripe through its webhook, re-reading the subscription |
-| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)   | Sign-up behind a switch, tied to the version of the terms accepted      |
-| [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md) | Owners manage their projects; the operator's stay in the command line   |
-| [0021](docs/adr/0021-people-are-counted-across-the-account.md)           | People are added per project and counted across the account             |
-| [0022](docs/adr/0022-an-account-ends-in-steps.md)                        | An account ends in steps, each done once by the daily job               |
-| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)            | The welcome follows the subscription, with the daily job as a fallback  |
+| ADR                                                                      | Decision                                                                   |
+| ------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| [0001](docs/adr/0001-record-architecture-decisions.md)                   | Record architecture decisions                                              |
+| [0002](docs/adr/0002-clean-architecture.md)                              | Clean Architecture with ports and adapters                                 |
+| [0003](docs/adr/0003-openapi-from-zod.md)                                | Generate the OpenAPI 3.1 contract from Zod                                 |
+| [0004](docs/adr/0004-least-privilege-database-roles.md)                  | Least-privilege database roles                                             |
+| [0005](docs/adr/0005-per-event-validation.md)                            | Validate each event of a batch on its own                                  |
+| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                        | Run on Lambda behind CloudFront, with an edge secret                       |
+| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)         | Sign admins in with an emailed code and an opaque session cookie           |
+| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)                 | Answer dashboard queries from the raw events, without rollups              |
+| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)         | Erase a person together with the visits they identified in                 |
+| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)   | Compare an unfinished day up to the same time of day                       |
+| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)            | Send a weekly digest by e-mail from the jobs function                      |
+| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)             | Let the dashboard keep the session in a cookie of its own host             |
+| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)             | Fetch each project's icon from its site, and keep a copy                   |
+| [0014](docs/adr/0014-store-the-region-never-the-city.md)                 | Store the viewer's region, never the city                                  |
+| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)              | Give agents read-only access tokens, scoped to their admin                 |
+| [0016](docs/adr/0016-accounts-own-projects.md)                           | Accounts own projects; a project without one is the operator's             |
+| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                    | Measure each account's month daily; pause ingestion at 150%                |
+| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)      | Billing follows Stripe through its webhook, re-reading the subscription    |
+| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)   | Sign-up behind a switch, tied to the version of the terms accepted         |
+| [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md) | Owners manage their projects; the operator's stay in the command line      |
+| [0021](docs/adr/0021-people-are-counted-across-the-account.md)           | People are added per project and counted across the account                |
+| [0022](docs/adr/0022-an-account-ends-in-steps.md)                        | An account ends in steps, each done once by the daily job                  |
+| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)            | The welcome follows the subscription, with the daily job as a fallback     |
+| [0024](docs/adr/0024-exports-are-files-with-short-links.md)              | Exports are files that live a week, reached through links signed on demand |
 
 ## Roadmap
 
@@ -593,7 +601,8 @@ request never deploys.
 - [x] People added and removed by the owner, with an invitation e-mail
 - [x] The end of an account: reconciliation, revoked keys, notices and deletion after thirty days
 - [x] The welcome e-mail with the terms accepted
-- [ ] Hosted plan: export and account deletion requested by the owner
+- [x] Exports of a project, by e-mail, for a week
+- [ ] Hosted plan: account deletion requested by the owner
 
 ## Contributing and license
 
