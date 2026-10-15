@@ -12,6 +12,7 @@ import type { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
 import type { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
 import type { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
 import type { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
+import type { RevokeConnectionAsOperatorUseCase } from '../usecases/oauth/revoke-connection-as-operator.usecase';
 import type { CreateOperatorNoticeUseCase } from '../usecases/notices/create-operator-notice.usecase';
 import type { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
 import type { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
@@ -46,6 +47,7 @@ export interface CliContext {
   readonly suspendAdmin: SuspendAdminUseCase;
   readonly resumeAdmin: ResumeAdminUseCase;
   readonly revokeAccessToken: RevokeAccessTokenAsOperatorUseCase;
+  readonly revokeConnection: RevokeConnectionAsOperatorUseCase;
   readonly suspendProjectIngestion: SuspendProjectIngestionUseCase;
   readonly resumeProjectIngestion: ResumeProjectIngestionUseCase;
   readonly holdProjectDeletion: HoldProjectDeletionUseCase;

@@ -3,6 +3,7 @@ import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccessTokenRepository } from '../../test-utils/in-memory-access-token.repository';
 import { InMemoryAdminSessionRepository } from '../../test-utils/in-memory-admin-session.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
+import { InMemoryOAuthConnectionRepository } from '../../test-utils/in-memory-oauth-connection.repository';
 import { ResumeAdminUseCase } from './resume-admin.usecase';
 import { SuspendAdminUseCase } from './suspend-admin.usecase';
 
@@ -14,6 +15,7 @@ async function setup() {
   const admins = new InMemoryAdminUserRepository();
   const sessions = new InMemoryAdminSessionRepository();
   const tokens = new InMemoryAccessTokenRepository();
+  const connections = new InMemoryOAuthConnectionRepository();
   const clock = new FixedClock(NOW);
   const ana = await admins.findOrCreateByEmail('ana@example.com');
   const bruno = await admins.findOrCreateByEmail('bruno@example.com');
@@ -30,21 +32,23 @@ async function setup() {
       createdAt: NOW,
       expiresAt: EXPIRES_AT,
     });
+    await connections.create({ adminUserId: admin.id, clientId: 'claude', createdAt: NOW }, []);
   }
   return {
     admins,
     sessions,
     tokens,
+    connections,
     clock,
     ana,
-    suspend: new SuspendAdminUseCase(admins, admins, sessions, tokens, clock),
+    suspend: new SuspendAdminUseCase(admins, admins, sessions, tokens, connections, clock),
     resume: new ResumeAdminUseCase(admins, admins),
   };
 }
 
 describe('SuspendAdminUseCase', () => {
-  it("marks the person suspended and ends their sessions and tokens, nobody else's", async () => {
-    const { suspend, sessions, tokens, ana } = await setup();
+  it("marks the person suspended and ends their sessions, tokens and connections, nobody else's", async () => {
+    const { suspend, sessions, tokens, connections, ana } = await setup();
 
     const suspended = await suspend.execute({ email: ' Ana@Example.com ' });
 
@@ -54,9 +58,11 @@ describe('SuspendAdminUseCase', () => {
       suspendedAt: NOW,
       sessionsEnded: 2,
       tokensRevoked: 2,
+      connectionsRevoked: 2,
     });
     expect(sessions.stored.map(({ revokedAt }) => revokedAt)).toEqual([NOW, NOW, null]);
     expect(tokens.stored.map(({ revokedAt }) => revokedAt)).toEqual([NOW, NOW, null]);
+    expect(connections.connections.map(({ revokedAt }) => revokedAt)).toEqual([NOW, NOW, null]);
   });
 
   it('keeps the moment of the first suspension when run again', async () => {
@@ -66,16 +72,22 @@ describe('SuspendAdminUseCase', () => {
 
     const again = await suspend.execute({ email: 'ana@example.com' });
 
-    expect(again).toMatchObject({ suspendedAt: NOW, sessionsEnded: 0, tokensRevoked: 0 });
+    expect(again).toMatchObject({
+      suspendedAt: NOW,
+      sessionsEnded: 0,
+      tokensRevoked: 0,
+      connectionsRevoked: 0,
+    });
   });
 
   it('answers not found for an address that is no admin, or one gone in between', async () => {
-    const { suspend, admins, sessions, tokens, clock } = await setup();
+    const { suspend, admins, sessions, tokens, connections, clock } = await setup();
     const vanishing = new SuspendAdminUseCase(
       admins,
       { suspend: () => Promise.resolve(null), resume: () => Promise.resolve(null) },
       sessions,
       tokens,
+      connections,
       clock,
     );
 

@@ -43,6 +43,7 @@
     "admin:suspend": "node dist/cli/admin-suspend.main.js",
     "admin:resume": "node dist/cli/admin-resume.main.js",
     "token:revoke": "node dist/cli/token-revoke.main.js",
+    "connection:revoke": "node dist/cli/connection-revoke.main.js",
     "usage:report": "node dist/cli/usage-report.main.js",
     "account:create": "node dist/cli/account-create.main.js",
     "account:show": "node dist/cli/account-show.main.js",

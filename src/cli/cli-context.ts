@@ -17,6 +17,7 @@ import { DrizzleAccessTokenRepository } from '../infra/repositories/drizzle-acce
 import { DrizzleAdminSessionRepository } from '../infra/repositories/drizzle-admin-session.repository';
 import { DrizzleAdminSuspensionRepository } from '../infra/repositories/drizzle-admin-suspension.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
+import { DrizzleOAuthConnectionRepository } from '../infra/repositories/drizzle-oauth-connection.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
 import { DrizzleProjectSuspensionRepository } from '../infra/repositories/drizzle-project-suspension.repository';
@@ -35,6 +36,7 @@ import { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
 import { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
 import { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
+import { RevokeConnectionAsOperatorUseCase } from '../usecases/oauth/revoke-connection-as-operator.usecase';
 import { DrizzleProjectPeopleRepository } from '../infra/repositories/drizzle-project-people.repository';
 import { CreateOperatorNoticeUseCase } from '../usecases/notices/create-operator-notice.usecase';
 import { DrizzleNoticeRepository } from '../infra/repositories/drizzle-notice.repository';
@@ -76,6 +78,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const holds = new DrizzleAccountDeletionHoldRepository(db);
   const adminSuspensions = new DrizzleAdminSuspensionRepository(db);
   const accessTokens = new DrizzleAccessTokenRepository(db);
+  const connections = new DrizzleOAuthConnectionRepository(db);
   const projectSuspensions = new DrizzleProjectSuspensionRepository(db);
   const projectHolds = new DrizzleProjectDeletionHoldRepository(db);
   return {
@@ -117,10 +120,12 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
       adminSuspensions,
       new DrizzleAdminSessionRepository(db),
       accessTokens,
+      connections,
       clock,
     ),
     resumeAdmin: new ResumeAdminUseCase(admins, adminSuspensions),
     revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(accessTokens, clock),
+    revokeConnection: new RevokeConnectionAsOperatorUseCase(connections, clock),
     suspendProjectIngestion: new SuspendProjectIngestionUseCase(projectSuspensions, clock),
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),

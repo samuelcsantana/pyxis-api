@@ -20,9 +20,10 @@ export const adminSuspendCommand: CliCommand<AdminByEmailArgs> = {
     output.stdout(`suspended_at=${suspended.suspendedAt.toISOString()}`);
     output.stdout(`sessions_ended=${String(suspended.sessionsEnded)}`);
     output.stdout(`tokens_revoked=${String(suspended.tokensRevoked)}`);
+    output.stdout(`connections_revoked=${String(suspended.connectionsRevoked)}`);
     output.stderr(
-      'Signed out everywhere and every token revoked; no sign-in code is sent to this address ' +
-        'until `admin:resume`. Their grants are kept.',
+      'Signed out everywhere, every token revoked and every application disconnected; no ' +
+        'sign-in code is sent to this address until `admin:resume`. Their grants are kept.',
     );
   },
 };

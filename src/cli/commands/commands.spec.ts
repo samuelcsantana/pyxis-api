@@ -19,6 +19,7 @@ import { adminGrantCommand } from './admin-grant.command';
 import { adminResumeCommand } from './admin-resume.command';
 import { adminRevokeCommand } from './admin-revoke.command';
 import { adminSuspendCommand } from './admin-suspend.command';
+import { connectionRevokeCommand } from './connection-revoke.command';
 import { keyCreateCommand } from './key-create.command';
 import { noticeCreateCommand } from './notice-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
@@ -662,7 +663,7 @@ describe('project:hold and project:release', () => {
   });
 });
 
-describe('admin:suspend, admin:resume and token:revoke', () => {
+describe('admin:suspend, admin:resume, token:revoke and connection:revoke', () => {
   it('parse an e-mail address or a token id, refusing anything else', () => {
     expect(adminSuspendCommand.parse(['--email', 'ana@example.com'])).toEqual({
       email: 'ana@example.com',
@@ -673,9 +674,13 @@ describe('admin:suspend, admin:resume and token:revoke', () => {
     expect(() => adminSuspendCommand.parse(['--email', 'ana'])).toThrow(CliUsageError);
     expect(tokenRevokeCommand.parse(['--token', ACCOUNT_ID])).toEqual({ tokenId: ACCOUNT_ID });
     expect(() => tokenRevokeCommand.parse(['--token', 'pyxis_at_x'])).toThrow(CliUsageError);
+    expect(connectionRevokeCommand.parse(['--connection', ACCOUNT_ID])).toEqual({
+      connectionId: ACCOUNT_ID,
+    });
+    expect(() => connectionRevokeCommand.parse(['--connection', 'claude'])).toThrow(CliUsageError);
   });
 
-  it('suspend a person, ending their sessions and tokens, and lift it', async () => {
+  it('suspend a person, ending their sessions, tokens and connections, and lift it', async () => {
     const context = inMemoryCliContext();
     const ana = await context.admins.findOrCreateByEmail('ana@example.com');
     await context.sessions.create({
@@ -683,6 +688,10 @@ describe('admin:suspend, admin:resume and token:revoke', () => {
       tokenHash: 'a'.repeat(64),
       createdAt: new Date('2026-10-06T10:00:00.000Z'),
     });
+    await context.connections.create(
+      { adminUserId: ana.id, clientId: 'claude', createdAt: new Date('2026-10-06T10:00:00.000Z') },
+      [],
+    );
     const suspended = captureOutput();
 
     await adminSuspendCommand.execute(context, { email: 'ana@example.com' }, suspended);
@@ -693,6 +702,7 @@ describe('admin:suspend, admin:resume and token:revoke', () => {
       'suspended_at=2026-10-06T14:00:00.000Z',
       'sessions_ended=1',
       'tokens_revoked=0',
+      'connections_revoked=1',
     ]);
     expect(suspended.err).toEqual([expect.stringContaining('admin:resume')]);
 
@@ -722,6 +732,25 @@ describe('admin:suspend, admin:resume and token:revoke', () => {
 
     expect(output.out).toEqual([`token_id=${token.id}`, 'revoked=true']);
     expect(context.tokens.stored[0]?.revokedAt).not.toBeNull();
+  });
+
+  it("revokes anyone's connection by the id the dashboard shows", async () => {
+    const context = inMemoryCliContext();
+    const connection = await context.connections.create(
+      {
+        adminUserId: OWNER_ID,
+        clientId: 'claude',
+        createdAt: new Date('2026-10-06T10:00:00.000Z'),
+      },
+      [],
+    );
+    const output = captureOutput();
+
+    await connectionRevokeCommand.execute(context, { connectionId: connection.id }, output);
+
+    expect(output.out).toEqual([`connection_id=${connection.id}`, 'revoked=true']);
+    expect(output.err).toEqual([expect.stringContaining('connect it again')]);
+    expect(context.connections.connections[0]?.revokedAt).not.toBeNull();
   });
 });
 
