@@ -325,6 +325,19 @@ owner, or close the new account). `billing.repeated_trial_check_failed` means th
 failed for an event; the event was applied anyway. The cards are deleted twelve months after
 their trial started.
 
+### Exempting an account from the pause
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:exempt-quota -- --account <id> --until <YYYY-MM-DD>
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:exempt-quota -- --account <id> --clear
+```
+
+For a customer who accepted a version of the terms without the pause at 150%: the pause only
+applies to them from their next renewal after the notice, so exempt them until that day. A pause
+already in place is lifted at once (batches are taken again within a minute); until that day the
+daily measurement neither pauses the account nor sends the pause e-mail (the 80% and 100% notices
+still go, without the sentence about a pause). `account:show` prints the exemption.
+
 ## Abuse
 
 The terms let the operator act on an account that abuses the service, from the mildest measure up.
