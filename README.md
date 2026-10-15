@@ -162,6 +162,18 @@ Shipping now:
   `GET /v1/me` and every `GET /v1/projects/{projectId}/…` report of the projects its admin is
   granted, and nothing else ([ADR 0015](docs/adr/0015-read-only-access-tokens-for-agents.md))
 
+- An OAuth 2.1 server for the Claude connector, behind `REMOTE_MCP_OPEN` (off by default, every
+  OAuth address answers 404 until it is on): the issuer metadata at
+  `/.well-known/oauth-authorization-server`, `/oauth/authorize` (PKCE S256 required), `/oauth/token`
+  and `/oauth/revoke`. Only Claude and Claude Code connect, known by the address of their client
+  metadata document, which is fetched from those two addresses only. The person consents on the
+  dashboard's `/connect` page, which reads and answers the request through
+  `GET /v1/oauth/requests/{id}` and `POST …/approve` or `…/deny`. A connection holds a one-hour
+  access token (`pyxis_oat_`) that reads exactly what a read-only token reads, and a refresh token
+  (`pyxis_ort_`) traded once: presenting a traded one after a minute ends the connection. People
+  see and end their connections with `GET` and `DELETE /v1/me/connections`
+  ([ADR 0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md))
+
 - Accounts for the hosted plan: an account is who pays, with one owner and the projects it holds
   (3 at most, counted under a lock so two requests cannot both take the last place). A project
   without an account is the operator's own, as every project was before, with no plan and no
@@ -273,10 +285,11 @@ Shipping now:
   (`--include-ended` adds the ended ones not yet deleted). The jobs function sends them in each
   owner's language, once, on its daily run or when invoked with `{"job":"account-notices"}`, and
   picks up where it stopped ([ADR 0035](docs/adr/0035-notices-to-every-owner-go-through-the-jobs-function.md))
-- Stopping one person or one token from the command line: `admin:suspend` ends every session and
-  token of the person and keeps them from signing in again until `admin:resume` (no code is sent,
-  and a session that survived is refused), and `token:revoke` revokes any read-only token by its
-  id ([ADR 0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md))
+- Stopping one person, one token or one connection from the command line: `admin:suspend` ends
+  every session, token and connected application of the person and keeps them from signing in
+  again until `admin:resume` (no code is sent, and a session that survived is refused),
+  `token:revoke` revokes any read-only token by its id and `connection:revoke` ends any connected
+  application by its id ([ADR 0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -284,7 +297,8 @@ Shipping now:
   ([ADR 0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md))
 
 - A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
-  codes and the cards of trials started more than twelve months ago, then measures each account's
+  codes, the cards of trials started more than twelve months ago and the ended connections, spent
+  connection tokens and finished authorization requests, then measures each account's
   month (the quota); each step logs its count, and a failed step fails the run so the scheduler
   retries.
   Last, it refreshes the project icons, best effort: an icon found replaces the stored one, a
@@ -379,9 +393,10 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s key:revoke -- --key-id <id>`                                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                                                            |
 | `npm run -s admin:grant -- --email <email> --project <id>`                                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                                                                       |
 | `npm run -s admin:revoke -- --email <email> --project <id>`                                                                                                     | Takes the person off that project; the owner of the project's account always stays                                                                                                                              |
-| `npm run -s admin:suspend -- --email <email>`                                                                                                                   | Ends every session and token of the person and keeps them from signing in until `admin:resume`; their grants stay                                                                                               |
+| `npm run -s admin:suspend -- --email <email>`                                                                                                                   | Ends every session, token and connected application of the person and keeps them from signing in until `admin:resume`; their grants stay                                                                        |
 | `npm run -s admin:resume -- --email <email>`                                                                                                                    | Lets the person sign in again; their ended sessions and tokens stay ended                                                                                                                                       |
 | `npm run -s token:revoke -- --token <id>`                                                                                                                       | Revokes anyone's read-only access token by the id the dashboard shows, for a token published by mistake                                                                                                         |
+| `npm run -s connection:revoke -- --connection <id>`                                                                                                             | Ends anyone's connected application (Claude, Claude Code) by the id the dashboard shows, its tokens included                                                                                                    |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first                                                       |
 | `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                                                                  |
 | `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project                                                |
@@ -448,6 +463,8 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `TERMS_URL`              | unset                                                         | Where the published terms are (http or https); sign-up stays closed without it, and the welcome e-mail links to it                                                                                                                                                                                        |
 | `EXPORT_BUCKET`          | unset                                                         | The bucket project exports are written to; without it exports answer 503                                                                                                                                                                                                                                  |
 | `JOBS_FUNCTION_NAME`     | unset                                                         | The jobs function an export is handed to; without it exports wait for the daily job                                                                                                                                                                                                                       |
+| `API_ORIGIN`             | unset; required when `REMOTE_MCP_OPEN` is `true`              | The API's own origin, such as `https://api.example.com`: the OAuth issuer, and `${API_ORIGIN}/mcp` the only resource a connection reads                                                                                                                                                                   |
+| `REMOTE_MCP_OPEN`        | `false`                                                       | `true` lets Claude and Claude Code connect through OAuth, once `API_ORIGIN` and `DASHBOARD_ORIGIN` are set; otherwise the OAuth addresses and the consent routes answer 404                                                                                                                               |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
@@ -607,6 +624,14 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
   ignores it, and a request that carries one is judged by it alone, even with a session cookie. Each token allows 60 requests a minute
   and lasts at most a year; creating and revoking them needs a dashboard session and the
   dashboard's `Origin`, and the logs name tokens and admins by id only
+- A connected application's tokens are 256 random bits each, stored only as SHA-256 hashes and
+  bound to one person and one client. The code works once, for five minutes, and only with the
+  PKCE verifier of its challenge; a code presented twice ends the connection it made, and so does a
+  refresh token presented again more than a minute after it was traded. The client's return
+  address must be one its own metadata document lists (any port only for a loopback address
+  registered without one), and an unknown client or return address is never redirected to. The
+  token endpoint has no limit an address shares with every user of the same client, only a
+  circuit breaker; its errors follow RFC 6749
 - Fetching a site's icon is the API's only request to an address it does not choose: https only,
   the host resolved before every request (redirects too, at most three, followed by hand) and
   refused when any address is loopback, private, link-local, carrier-grade NAT, unique-local,
@@ -657,6 +682,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md)           | An account can be exempted from the quota pause until a day                |
 | [0035](docs/adr/0035-notices-to-every-owner-go-through-the-jobs-function.md) | Notices to every owner are stored, then sent by the jobs function          |
 | [0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md)              | A larger plan is limits on the account, set by the operator                |
+| [0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md)          | The API is its own OAuth server for Claude                                 |
 
 ## Roadmap
 
@@ -692,6 +718,8 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 - [x] Account closed by its owner: cancelled at once, refunded inside seven days, deleted later
 - [x] Abuse tools for the operator: suspend an account or a person, close with a chosen refund,
       hold a deletion, revoke a token; alarms on failed refunds and account e-mails
+- [x] OAuth server for the Claude connector, behind a switch
+- [ ] The remote MCP endpoint, `/mcp`, with the tools of `pyxis-mcp`
 
 ## Contributing and license
 
