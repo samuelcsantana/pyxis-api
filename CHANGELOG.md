@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.19.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.18.0...v0.19.0) (2026-10-15)
+
+
+### Features
+
+* **accounts:** exempt an account from the quota pause until a day ([f8fda78](https://github.com/samuelcsantana/pyxis-api/commit/f8fda78112a0272fa4e705e5a7f2dc16574b6910))
+* **accounts:** keep a held project through the deletion of its account ([fe31a00](https://github.com/samuelcsantana/pyxis-api/commit/fe31a006b04d143dab1659d74d89a5dbffdb2d67))
+* **accounts:** sweep the people left without a project every day ([021fcf3](https://github.com/samuelcsantana/pyxis-api/commit/021fcf31773c123ce908c65a97384c4328757bfd))
+* **billing:** let an ended account subscribe again, even with sign-up closed ([d2a88ce](https://github.com/samuelcsantana/pyxis-api/commit/d2a88ce4b4f13abd7271c366d29a5d6a06f6971d))
+* **cli:** hold and release the deletion of a project ([bb41b0d](https://github.com/samuelcsantana/pyxis-api/commit/bb41b0df9e1160aea15520df0ec82f03800bfcb5))
+* **cli:** store a notice to every account owner from a folder of texts ([82bc215](https://github.com/samuelcsantana/pyxis-api/commit/82bc215fa2a67930d6c868def65df671c915a77d))
+* **cli:** suspend and resume the reception of a project ([df9102f](https://github.com/samuelcsantana/pyxis-api/commit/df9102f0882135f7612e0898913237e797b8791a))
+* **infra:** count failed notices in the account e-mail alarm ([166ec15](https://github.com/samuelcsantana/pyxis-api/commit/166ec15b71d0e5d132d1fdd0bb8a36cf9893586e))
+* **notices:** send a notice to every account owner from the jobs function ([705b57d](https://github.com/samuelcsantana/pyxis-api/commit/705b57dd1b83c6c22cf1c22b5c7387fb03a79b15))
+* **people:** delete people left without a project for thirty days ([eb71861](https://github.com/samuelcsantana/pyxis-api/commit/eb718612fbf67e82510bce3d89aef6ddaa71c242))
+* **projects:** hold the deletion of a single project ([9008cee](https://github.com/samuelcsantana/pyxis-api/commit/9008ceea8d2b65e4ef945f6b359e825da217f3de))
+* **projects:** suspend the event reception of a single project ([159d986](https://github.com/samuelcsantana/pyxis-api/commit/159d9865eaab741477e753cd2edf6c01e4b1619d))
+
+
+### Bug Fixes
+
+* **retention:** keep the events of held projects and held accounts ([1b23c84](https://github.com/samuelcsantana/pyxis-api/commit/1b23c8459916ac1a61d4f887aeb2feee4c55003e))
+
+
+### Documentation
+
+* describe holding one project's deletion and add ADR 0033 ([a5d5c20](https://github.com/samuelcsantana/pyxis-api/commit/a5d5c20d00d65a8969e53db7692d4e58f93f303f))
+* describe notices to every account owner and add ADR 0035 ([7a9553b](https://github.com/samuelcsantana/pyxis-api/commit/7a9553b8dbdfc4cc76ca4a47ab894025622d2ae0))
+* describe suspending one project's reception and add ADR 0032 ([cfb5883](https://github.com/samuelcsantana/pyxis-api/commit/cfb58833c136ab6edce63a812891c3eb86fb020f))
+* describe the exemption from the quota pause and add ADR 0034 ([53f6e91](https://github.com/samuelcsantana/pyxis-api/commit/53f6e916608d5e7cc310844f39c0b3d0d2354ae1))
+* describe the sweep of people without a project and add ADR 0031 ([d8bdffe](https://github.com/samuelcsantana/pyxis-api/commit/d8bdffe225f512af5f777a8bf6f61ba26cbcfbd7))
+* say an ended account can subscribe again while sign-up is closed ([3e67484](https://github.com/samuelcsantana/pyxis-api/commit/3e67484c346b9d6fdbced979371009b80e4724a3))
+
 ## [0.18.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.17.0...v0.18.0) (2026-10-15)
 
 
