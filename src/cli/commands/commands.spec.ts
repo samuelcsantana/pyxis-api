@@ -285,6 +285,7 @@ describe('account:link', () => {
       trialEndsAt: new Date('2026-10-28T00:00:00.000Z'),
       currentPeriodEndsAt: null,
       cancelAtPeriodEnd: false,
+      cardFingerprint: null,
     });
     const output = captureOutput();
 

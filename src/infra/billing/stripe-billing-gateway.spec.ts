@@ -197,9 +197,17 @@ describe('StripeBillingGateway.createPortal and subscription', () => {
     });
   });
 
-  it('reads a subscription from Stripe', async () => {
-    const { gateway, answer } = setup();
-    answer('GET', '/v1/subscriptions/sub_1', { body: subscription() });
+  it('reads a subscription from Stripe, with its card expanded', async () => {
+    const { gateway, answer, requests } = setup();
+    answer('GET', '/v1/subscriptions/sub_1', {
+      body: subscription({
+        default_payment_method: {
+          id: 'pm_1',
+          object: 'payment_method',
+          card: { fingerprint: 'fp_card_1' },
+        } as Stripe.PaymentMethod,
+      }),
+    });
 
     expect(await gateway.subscription('sub_1')).toEqual({
       subscriptionId: 'sub_1',
@@ -210,7 +218,9 @@ describe('StripeBillingGateway.createPortal and subscription', () => {
       trialEndsAt: new Date(1_762_000_000_000),
       currentPeriodEndsAt: new Date(1_762_000_000_000),
       cancelAtPeriodEnd: false,
+      cardFingerprint: 'fp_card_1',
     });
+    expect(requests[0]?.query.get('expand[0]')).toBe('default_payment_method');
   });
 });
 
@@ -374,6 +384,20 @@ describe('toBillingSubscription', () => {
     expect(
       toBillingSubscription(subscription({ customer: null as unknown as string })),
     ).toMatchObject({ customerId: '' });
+  });
+
+  it('knows no card fingerprint without an expanded card payment method', () => {
+    const fingerprintOf = (method: unknown) =>
+      toBillingSubscription(
+        subscription({ default_payment_method: method as Stripe.PaymentMethod | null }),
+      ).cardFingerprint;
+
+    expect(fingerprintOf(null)).toBeNull();
+    expect(fingerprintOf('pm_not_expanded')).toBeNull();
+    expect(fingerprintOf({ id: 'pm_pix', object: 'payment_method', type: 'pix' })).toBeNull();
+    expect(
+      fingerprintOf({ id: 'pm_2', object: 'payment_method', card: { fingerprint: null } }),
+    ).toBeNull();
   });
 });
 

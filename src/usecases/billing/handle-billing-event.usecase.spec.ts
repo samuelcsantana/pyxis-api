@@ -29,6 +29,7 @@ const TRIALING: BillingSubscription = {
   trialEndsAt: TRIAL_END,
   currentPeriodEndsAt: TRIAL_END,
   cancelAtPeriodEnd: false,
+  cardFingerprint: null,
 };
 
 function event(overrides: Partial<BillingEvent> = {}): BillingEvent {

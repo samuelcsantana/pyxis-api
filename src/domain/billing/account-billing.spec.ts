@@ -20,6 +20,7 @@ function subscription(overrides: Partial<BillingSubscription> = {}): BillingSubs
     trialEndsAt: TRIAL_END,
     currentPeriodEndsAt: TRIAL_END,
     cancelAtPeriodEnd: false,
+    cardFingerprint: null,
     ...overrides,
   };
 }
