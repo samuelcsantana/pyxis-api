@@ -338,6 +338,26 @@ already in place is lifted at once (batches are taken again within a minute); un
 daily measurement neither pauses the account nor sends the pause e-mail (the 80% and 100% notices
 still go, without the sentence about a pause). `account:show` prints the exemption.
 
+### Notices to every account owner
+
+For a change of prices or terms (30 days before, Terms 21.1 and 22.1), a new subprocessor, or an
+outage longer than a day. Write one folder with `en.txt`, `pt-BR.txt` and `es.txt`: the first line
+is the subject, then paragraphs separated by a blank line, plain text only. Then:
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s notice:create -- --campaign prices-2026-12 --dir ./notice --dry-run
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s notice:create -- --campaign prices-2026-12 --dir ./notice
+aws lambda invoke --function-name pyxis-api-jobs --region sa-east-1 --profile pyxis-api \
+  --cli-binary-format raw-in-base64-out --payload '{"job":"account-notices"}' notices.json && cat notices.json
+```
+
+The dry run prints how many owners each language reaches and stores nothing. A campaign name is
+used once. Each owner of an account with access gets the notice once, in their language, with
+replies going to `SUPPORT_EMAIL`; `--include-ended` adds the ended accounts not yet deleted. The
+jobs function sends what is pending on every daily run too, so a failed e-mail
+(`notices.delivery_failed`, which fires the account e-mail alarm) is tried again the next day.
+Deliveries go with their account; the text of the notice stays, as a record of what was said.
+
 ## Abuse
 
 The terms let the operator act on an account that abuses the service, from the mildest measure up.
