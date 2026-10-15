@@ -147,6 +147,21 @@ describe('the account lifecycle against a real Postgres', () => {
     ).toEqual([ENDED_ID]);
   });
 
+  it('neither reminds nor deletes an account whose deletion is held, nor drops it as abandoned', async () => {
+    const remindBefore = daysAgo(23);
+    const deleteBefore = daysAgo(30);
+    await owner`
+      UPDATE accounts SET deletion_held_at = ${NOW}, deletion_hold_reason = 'Court order'
+      WHERE id IN (${ENDED_ID}, ${INCOMPLETE_ID})
+    `;
+
+    await setEnded(daysAgo(24));
+    expect(await lifecycle.dueForReminder(remindBefore, deleteBefore)).toEqual([]);
+    await setEnded(daysAgo(31));
+    expect(await lifecycle.dueForDeletion(deleteBefore)).toEqual([]);
+    expect(await lifecycle.staleIncomplete(daysAgo(7))).toEqual([]);
+  });
+
   it('finds the abandoned sign-ups: incomplete, never subscribed, old and without projects', async () => {
     expect(await lifecycle.staleIncomplete(daysAgo(7))).toEqual([
       { accountId: INCOMPLETE_ID, ownerAdminId: DORA },

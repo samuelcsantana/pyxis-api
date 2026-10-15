@@ -1467,6 +1467,19 @@
                     }
                   ]
                 },
+                "deletion_held_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Set while the operator holds the deletion of the account (a dispute or a legal order): nothing of it is deleted, and its projects cannot be deleted, until it is released. Null for members."
+                },
                 "events_this_month": {
                   "anyOf": [
                     {
@@ -1602,6 +1615,7 @@
                 "ingestion_paused_until",
                 "suspended_at",
                 "suspension_reason",
+                "deletion_held_at",
                 "month",
                 "events_this_month",
                 "measured_at",
@@ -5007,7 +5021,7 @@
     },
     "/v1/projects/{projectId}/delete": {
       "post": {
-        "description": "The name typed again must match; allowed whatever the subscription.",
+        "description": "The name typed again must match; allowed whatever the subscription, but not while the operator holds the deletion of the account (deletion_on_hold).",
         "operationId": "ProjectsController_remove",
         "parameters": [
           {
@@ -5079,7 +5093,7 @@
                 }
               }
             },
-            "description": "The account has no running subscription, or the change breaks a limit."
+            "description": "The name does not match (project_name_mismatch), or the deletion is held (deletion_on_hold)."
           }
         },
         "security": [

@@ -2,6 +2,7 @@ import type { AccountStatus } from '../../domain/accounts/account-status';
 import {
   AccountNotFoundError,
   AccountSuspendedError,
+  DeletionOnHoldError,
   ProjectLimitReachedError,
   SubscriptionRequiredError,
 } from '../../domain/errors/account.errors';
@@ -336,6 +337,16 @@ describe('DeleteOwnedProjectUseCase', () => {
 
     expect(deleted).toEqual(expect.objectContaining({ deletedKeys: 1 }));
     expect(await store.findById(projectId)).toBeNull();
+  });
+
+  it('keeps a project of an account whose deletion is held', async () => {
+    const { deleteOwnedProject, projectId, accounts, account, store } = await withProject();
+    accounts.add({ ...account, deletionHeldAt: NOW, deletionHoldReason: 'Court order' });
+
+    await expect(
+      deleteOwnedProject.execute({ adminUserId: OWNER_ID, projectId, confirmName: 'Shop' }),
+    ).rejects.toBeInstanceOf(DeletionOnHoldError);
+    expect(await store.findById(projectId)).not.toBeNull();
   });
 
   it('keeps the project when the name does not match', async () => {

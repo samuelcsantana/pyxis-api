@@ -104,6 +104,7 @@ export class DrizzleAccountLifecycleRepository implements AccountLifecycleReposi
         lte(accounts.accessEndsAt, remindBefore),
         gt(accounts.accessEndsAt, deleteBefore),
         isNull(accounts.deletionRemindedAt),
+        isNull(accounts.deletionHeldAt),
       ),
     );
   }
@@ -116,7 +117,9 @@ export class DrizzleAccountLifecycleRepository implements AccountLifecycleReposi
   }
 
   dueForDeletion(deleteBefore: Date): Promise<readonly EndedAccount[]> {
-    return this.ended(lte(accounts.accessEndsAt, deleteBefore));
+    return this.ended(
+      and(lte(accounts.accessEndsAt, deleteBefore), isNull(accounts.deletionHeldAt)),
+    );
   }
 
   staleIncomplete(createdBefore: Date): Promise<readonly StaleAccount[]> {
@@ -128,6 +131,7 @@ export class DrizzleAccountLifecycleRepository implements AccountLifecycleReposi
           eq(accounts.status, 'incomplete'),
           isNull(accounts.stripeSubscriptionId),
           lt(accounts.createdAt, createdBefore),
+          isNull(accounts.deletionHeldAt),
           not(
             exists(
               this.db

@@ -64,6 +64,7 @@ export function myAccountBody({ account, role, month, usage, limits }: MyAccount
     ingestion_paused_until: isoOrNull(account.ingestionPausedUntil),
     suspended_at: isoOrNull(account.suspendedAt),
     suspension_reason: owner ? account.suspensionReason : null,
+    deletion_held_at: owner ? isoOrNull(account.deletionHeldAt) : null,
     month,
     events_this_month: usage === null ? null : usage.events,
     measured_at: usage === null ? null : usage.updatedAt.toISOString(),

@@ -265,6 +265,42 @@ describe('RunAccountLifecycleUseCase', () => {
     ]);
   });
 
+  it('neither reminds nor deletes an account whose deletion is held', async () => {
+    const { lifecycle, mail, useCase } = setup();
+    lifecycle.add({
+      accountId: 'held-due',
+      ownerAdminId: 'ana',
+      status: 'ended',
+      accessEndsAt: daysAgo(40),
+      endedNotifiedAt: daysAgo(40),
+      deletionRemindedAt: daysAgo(16),
+      deletionHeldAt: daysAgo(20),
+    });
+    lifecycle.add({
+      accountId: 'held-soon',
+      ownerAdminId: 'bia',
+      status: 'ended',
+      accessEndsAt: daysAgo(24),
+      endedNotifiedAt: daysAgo(24),
+      deletionHeldAt: daysAgo(2),
+    });
+    lifecycle.add({
+      accountId: 'held-abandoned',
+      ownerAdminId: 'carla',
+      status: 'incomplete',
+      createdAt: daysAgo(10),
+      deletionHeldAt: daysAgo(1),
+    });
+
+    const report = await useCase.execute();
+
+    expect(report).toMatchObject({ reminders: 0, deleted: 0, incompleteRemoved: 0 });
+    expect(lifecycle.account('held-due')).toBeDefined();
+    expect(lifecycle.account('held-soon')).toBeDefined();
+    expect(lifecycle.account('held-abandoned')).toBeDefined();
+    expect(mail.accountNotices).toEqual([]);
+  });
+
   it('keeps the deletion when the last e-mail fails', async () => {
     const { lifecycle, mail, useCase } = setup();
     lifecycle.add({

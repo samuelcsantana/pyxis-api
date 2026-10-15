@@ -88,6 +88,11 @@ export const myAccountsSchema = z
           .string()
           .nullable()
           .describe('Why the account is suspended, as told to the owner; null for members.'),
+        deletion_held_at: isoDate.describe(
+          'Set while the operator holds the deletion of the account (a dispute or a legal order): ' +
+            'nothing of it is deleted, and its projects cannot be deleted, until it is released. ' +
+            'Null for members.',
+        ),
         month: z.string().describe('The calendar month in UTC the usage is counted in, YYYY-MM.'),
         events_this_month: z
           .number()

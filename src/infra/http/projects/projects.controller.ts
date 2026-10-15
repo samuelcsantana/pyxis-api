@@ -152,10 +152,18 @@ export class ProjectsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Delete a project the admin owns, with its events and keys',
-    description: 'The name typed again must match; allowed whatever the subscription.',
+    description:
+      'The name typed again must match; allowed whatever the subscription, but not while the ' +
+      'operator holds the deletion of the account (deletion_on_hold).',
   })
   @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: deletedProjectSchema })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description:
+      'The name does not match (project_name_mismatch), or the deletion is held (deletion_on_hold).',
+    standardSchema: errorResponseSchema,
+  })
   async remove(
     @Req() request: FastifyRequest,
     @Param('projectId', new SchemaPipe(idSchema)) projectId: string,

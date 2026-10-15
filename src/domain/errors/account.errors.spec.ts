@@ -1,6 +1,7 @@
 import {
   AccountNotFoundError,
   AccountSuspendedError,
+  DeletionOnHoldError,
   ProjectLimitReachedError,
 } from './account.errors';
 import { DomainError } from './domain.error';
@@ -10,6 +11,7 @@ describe('account errors', () => {
     [new AccountNotFoundError(), 'account_not_found'],
     [new ProjectLimitReachedError(3), 'project_limit_reached'],
     [new AccountSuspendedError(), 'account_suspended'],
+    [new DeletionOnHoldError(), 'deletion_on_hold'],
   ])('%s carries a stable machine code', (error, code) => {
     expect(error).toBeInstanceOf(DomainError);
     expect(error.code).toBe(code);

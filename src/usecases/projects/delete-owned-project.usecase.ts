@@ -1,4 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { isDeletionHeld } from '../../domain/accounts/account-deletion-hold';
+import { DeletionOnHoldError } from '../../domain/errors/account.errors';
 import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
@@ -25,7 +27,15 @@ export class DeleteOwnedProjectUseCase {
 
   async execute(command: DeleteOwnedProjectCommand): Promise<DeletedProject> {
     const { adminUserId, ...deletion } = command;
-    await projectOwnedBy(this.projects, this.accounts, deletion.projectId, adminUserId);
+    const { account } = await projectOwnedBy(
+      this.projects,
+      this.accounts,
+      deletion.projectId,
+      adminUserId,
+    );
+    if (isDeletionHeld(account)) {
+      throw new DeletionOnHoldError();
+    }
     return this.deleteProject.execute(deletion);
   }
 }
