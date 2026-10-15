@@ -1,4 +1,4 @@
-import { ACCOUNT_STATUSES, hasAccess } from './account-status';
+import { ACCOUNT_STATUSES, hasAccess, hasRunningSubscription } from './account-status';
 
 describe('hasAccess', () => {
   it.each(['trialing', 'active', 'past_due', 'ending', 'comped'] as const)(
@@ -17,5 +17,18 @@ describe('hasAccess', () => {
 
   it('decides for every status', () => {
     expect(ACCOUNT_STATUSES.filter(hasAccess)).toHaveLength(5);
+  });
+});
+
+describe('hasRunningSubscription', () => {
+  it.each(['trialing', 'active', 'past_due', 'ending'] as const)(
+    'knows a %s account has a subscription to cancel',
+    (status) => {
+      expect(hasRunningSubscription(status)).toBe(true);
+    },
+  );
+
+  it.each(['incomplete', 'ended', 'comped'] as const)('knows a %s account has none', (status) => {
+    expect(hasRunningSubscription(status)).toBe(false);
   });
 });

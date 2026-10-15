@@ -21,3 +21,14 @@ const STATUSES_WITH_ACCESS: ReadonlySet<AccountStatus> = new Set([
 export function hasAccess(status: AccountStatus): boolean {
   return STATUSES_WITH_ACCESS.has(status);
 }
+
+const STATUSES_WITH_A_SUBSCRIPTION: ReadonlySet<AccountStatus> = new Set([
+  'trialing',
+  'active',
+  'past_due',
+  'ending',
+]);
+
+export function hasRunningSubscription(status: AccountStatus): boolean {
+  return STATUSES_WITH_A_SUBSCRIPTION.has(status);
+}

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { deletionDueAt, withdrawalWindowStart } from '../../domain/accounts/account-lifecycle';
-import type { AccountStatus } from '../../domain/accounts/account-status';
+import { hasRunningSubscription } from '../../domain/accounts/account-status';
 import { normalizeEmail } from '../../domain/auth/email';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import { BILLING_GATEWAY, type BillingGateway } from '../../domain/billing/billing-gateway';
@@ -16,13 +16,6 @@ import {
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { MAIL_SENDER, type MailSender } from '../../domain/services/mail-sender';
 import { ownedAccount } from './owned-account';
-
-const STATUSES_WITH_A_SUBSCRIPTION: ReadonlySet<AccountStatus> = new Set([
-  'trialing',
-  'active',
-  'past_due',
-  'ending',
-]);
 
 export interface CloseAccountCommand {
   readonly adminUserId: string;
@@ -61,7 +54,7 @@ export class CloseAccountUseCase {
     const now = this.clock.now();
     const subscriptionId = await this.closure.subscriptionOf(account.id);
     const refundedAmount =
-      subscriptionId !== null && STATUSES_WITH_A_SUBSCRIPTION.has(account.status)
+      subscriptionId !== null && hasRunningSubscription(account.status)
         ? await this.cancel(account.id, subscriptionId, now)
         : 0;
     await this.closure.close(account.id, now);
