@@ -7,14 +7,12 @@ import { ACCOUNT_USAGE_REPOSITORY } from '../../../domain/repositories/account-u
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
 import { TERMS_ACCEPTANCE_REPOSITORY } from '../../../domain/repositories/terms-acceptance.repository';
-import { MAIL_SENDER } from '../../../domain/services/mail-sender';
 import { RANDOM_SOURCE } from '../../../domain/services/random-source';
 import { CompleteSignUpUseCase } from '../../../usecases/accounts/complete-sign-up.usecase';
 import { ListMyAccountsUseCase } from '../../../usecases/accounts/list-my-accounts.usecase';
 import { OpenBillingPortalUseCase } from '../../../usecases/accounts/open-billing-portal.usecase';
 import { RequestSignUpCodeUseCase } from '../../../usecases/accounts/request-sign-up-code.usecase';
 import { StartCheckoutUseCase } from '../../../usecases/accounts/start-checkout.usecase';
-import { createMailSender } from '../../mail/create-mail-sender';
 import { CryptoRandomSource } from '../../random/crypto-random-source';
 import { DrizzleAccountUsageRepository } from '../../repositories/drizzle-account-usage.repository';
 import { DrizzleAccountRepository } from '../../repositories/drizzle-account.repository';
@@ -53,19 +51,6 @@ import { signUpSettingsFromEnv } from './sign-up-settings-from-env';
           SIGNUP_OPEN: config.get('SIGNUP_OPEN', { infer: true }),
           TERMS_VERSION: config.get('TERMS_VERSION', { infer: true }),
           DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
-        }),
-    },
-    {
-      provide: MAIL_SENDER,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvConfig, true>) =>
-        createMailSender({
-          NODE_ENV: config.get('NODE_ENV', { infer: true }),
-          MAIL_PROVIDER: config.get('MAIL_PROVIDER', { infer: true }),
-          RESEND_API_KEY: config.get('RESEND_API_KEY', { infer: true }),
-          MAIL_FROM: config.get('MAIL_FROM', { infer: true }),
-          DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
-          SUPPORT_EMAIL: config.get('SUPPORT_EMAIL', { infer: true }),
         }),
     },
   ],

@@ -11,7 +11,6 @@ import {
 import {
   PROJECT_PEOPLE_REPOSITORY,
   type ProjectPeopleRepository,
-  type ProjectPerson,
 } from '../../domain/repositories/project-people.repository';
 import {
   PROJECT_SETTINGS_REPOSITORY,
@@ -19,6 +18,7 @@ import {
 } from '../../domain/repositories/project-settings.repository';
 import { MAIL_SENDER, type MailSender } from '../../domain/services/mail-sender';
 import { changeableProject } from '../projects/owned-project';
+import type { PersonOfProject } from './list-project-people.usecase';
 
 export interface AddProjectPersonCommand {
   readonly adminUserId: string;
@@ -29,7 +29,7 @@ export interface AddProjectPersonCommand {
 }
 
 export interface AddedPerson {
-  readonly person: ProjectPerson;
+  readonly person: PersonOfProject;
   readonly added: boolean;
 }
 
@@ -60,15 +60,17 @@ export class AddProjectPersonUseCase {
     switch (addition.outcome) {
       case 'people_limit_reached':
         throw new PeopleLimitReachedError(maxPeople);
-      case 'already_there':
-        return { person: addition.person, added: false };
+      case 'already_there': {
+        const role = addition.person.adminUserId === account.ownerAdminId ? 'owner' : 'member';
+        return { person: { ...addition.person, role }, added: false };
+      }
       case 'added':
         await this.tryInviting(
           addition.person.email,
           { projectName: project.name, inviterEmail: command.inviterEmail },
           command.language,
         );
-        return { person: addition.person, added: true };
+        return { person: { ...addition.person, role: 'member' }, added: true };
     }
   }
 
