@@ -16,6 +16,8 @@ const LIFECYCLE = {
   deleted: 0,
   incompleteRemoved: 2,
   peopleRemoved: 2,
+  projectlessMarked: 1,
+  projectlessRemoved: 0,
 };
 const ACCOUNT_USAGE = {
   month: '2026-10',
