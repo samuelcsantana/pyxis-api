@@ -1,5 +1,7 @@
 import type { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import type { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import type { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
+import type { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import type { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import type { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
@@ -28,6 +30,8 @@ export interface CliContext {
   readonly suspendAccount: SuspendAccountUseCase;
   readonly resumeAccount: ResumeAccountUseCase;
   readonly closeAccountAsOperator: CloseAccountAsOperatorUseCase;
+  readonly holdAccountDeletion: HoldAccountDeletionUseCase;
+  readonly releaseAccountDeletion: ReleaseAccountDeletionUseCase;
   close(): Promise<void>;
 }
 

@@ -35,6 +35,8 @@ export const accountShowCommand: CliCommand<AccountShowArgs> = {
     );
     output.stdout(`suspended_at=${summary.account.suspendedAt?.toISOString() ?? ''}`);
     output.stdout(`suspension_reason=${summary.account.suspensionReason ?? ''}`);
+    output.stdout(`deletion_held_at=${summary.account.deletionHeldAt?.toISOString() ?? ''}`);
+    output.stdout(`deletion_hold_reason=${summary.account.deletionHoldReason ?? ''}`);
     for (const project of summary.projects) {
       output.stdout(`project=${project.id}\t${project.name}`);
     }
