@@ -8,6 +8,10 @@ locals {
   ]
 
   app_settings = {
+    API_ORIGIN = {
+      value       = var.api_domain_enabled ? "https://${var.api_domain}" : "https://${aws_cloudfront_distribution.api.domain_name}"
+      description = "The API's own origin: the OAuth issuer of the Claude connector and the base of its MCP address."
+    }
     DASHBOARD_ORIGIN = {
       value       = var.dashboard_origin
       description = "The only origin the dashboard sign-in routes accept and grant CORS to, and the base of the e-mail links and logo."
@@ -19,6 +23,10 @@ locals {
     MAIL_PROVIDER = {
       value       = var.mail_provider
       description = "Which service sends the sign-in code e-mails: resend or ses."
+    }
+    REMOTE_MCP_OPEN = {
+      value       = tostring(var.remote_mcp_open)
+      description = "Whether applications can connect through OAuth; while false the OAuth addresses answer 404."
     }
     SIGNUP_OPEN = {
       value       = tostring(var.signup_open)
