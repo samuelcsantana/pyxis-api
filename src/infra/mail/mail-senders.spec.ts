@@ -8,6 +8,7 @@ import { RESEND_EMAILS_URL, ResendMailSender } from './resend-mail-sender';
 import { SesMailSender, sesSend } from './ses-mail-sender';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
+import { buildAccountNoticeEmail } from './account-notice-email';
 import { buildInvitationEmail } from './invitation-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
@@ -126,6 +127,25 @@ describe('ResendMailSender', () => {
     ).rejects.toThrow(/^Resend answered 422$/);
   });
 
+  it('sends an account notice with replies going to the support address', async () => {
+    const send = okResend();
+    const notice = { kind: 'account_deleted' } as const;
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendAccountNotice(
+      'owner@example.com',
+      notice,
+      'en',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildAccountNoticeEmail(notice, 'en', LINKS, SUPPORT),
+    });
+  });
+
   it('sends an invitation with replies going to the person who invited', async () => {
     const send = okResend();
     const invitation = { projectName: 'Shop', inviterEmail: 'owner@example.com' };
@@ -223,6 +243,23 @@ describe('SesMailSender', () => {
       buildSignUpCodeEmail('654321', 'en', LINKS).subject,
     );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
+  });
+
+  it('sends an account notice with replies going to the support address', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send, SUPPORT).sendAccountNotice(
+      'owner@example.com',
+      { kind: 'deletion_reminder', deletionOn: new Date('2026-12-14T00:00:00.000Z') },
+      'es',
+    );
+
+    expect(sent[0]).toEqual(
+      expect.objectContaining({
+        Destination: { ToAddresses: ['owner@example.com'] },
+        ReplyToAddresses: [SUPPORT],
+      }),
+    );
   });
 
   it('sends an invitation with replies going to the person who invited', async () => {
@@ -361,6 +398,23 @@ describe('LoggingMailSender', () => {
         events: 150_412,
         language: 'pt-BR',
       },
+    ]);
+  });
+
+  it('logs the kind and language of an account notice, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendAccountNotice(
+      'owner@example.com',
+      { kind: 'account_deleted' },
+      'pt-BR',
+    );
+
+    expect(logs).toEqual([
+      { message: 'mail.account_notice', kind: 'account_deleted', language: 'pt-BR' },
     ]);
   });
 
