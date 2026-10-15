@@ -78,6 +78,7 @@ describe('HandleBillingEventUseCase', () => {
           trialEndsAt: TRIAL_END,
           currentPeriodEndsAt: TRIAL_END,
           accessEndsAt: null,
+          restoresAccess: true,
         },
       },
     ]);

@@ -34,7 +34,20 @@ describe('billingUpdateFor', () => {
       trialEndsAt: TRIAL_END,
       currentPeriodEndsAt: TRIAL_END,
       accessEndsAt: null,
+      restoresAccess: true,
     });
+  });
+
+  it('restores access while the subscription runs, and not once it has ended', () => {
+    expect(
+      billingUpdateFor(subscription({ status: 'past_due' }), CURRENT, NOW).restoresAccess,
+    ).toBe(true);
+    expect(
+      billingUpdateFor(subscription({ status: 'canceled' }), CURRENT, NOW).restoresAccess,
+    ).toBe(false);
+    expect(
+      billingUpdateFor(subscription({ status: 'incomplete' }), CURRENT, NOW).restoresAccess,
+    ).toBe(false);
   });
 
   it.each([
