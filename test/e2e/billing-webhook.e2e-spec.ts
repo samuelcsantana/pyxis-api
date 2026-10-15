@@ -2,7 +2,9 @@ import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
 import Stripe from 'stripe';
 import { BILLING_GATEWAY } from '../../src/domain/billing/billing-gateway';
+import { MAIL_SENDER } from '../../src/domain/services/mail-sender';
 import { StripeBillingGateway } from '../../src/infra/billing/stripe-billing-gateway';
+import { RecordingMailSender } from '../../src/test-utils/recording-mail-sender';
 import { fakeStripe } from '../../src/test-utils/stripe-fake-http';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
@@ -42,6 +44,7 @@ describe('POST /v1/billing/stripe/webhook', () => {
   let app: NestFastifyApplication;
   let owner: postgres.Sql;
   const stripe = fakeStripe();
+  const mail = new RecordingMailSender();
 
   const deliver = (payload: string, signature: string | null, contentType = 'application/json') =>
     app.inject({
@@ -63,7 +66,9 @@ describe('POST /v1/billing/stripe/webhook', () => {
     app = await createTestApp((builder) =>
       builder
         .overrideProvider(BILLING_GATEWAY)
-        .useValue(new StripeBillingGateway(stripe.stripe, WEBHOOK_SECRET)),
+        .useValue(new StripeBillingGateway(stripe.stripe, WEBHOOK_SECRET))
+        .overrideProvider(MAIL_SENDER)
+        .useValue(mail),
     );
   });
 
@@ -104,6 +109,17 @@ describe('POST /v1/billing/stripe/webhook', () => {
       billing_interval: 'year',
       trial_ends_at: new Date(TRIAL_END_SECONDS * 1000),
     });
+    expect(mail.welcomes).toEqual([
+      {
+        email: 'billing-owner@example.com',
+        welcome: { trialEndsAt: new Date(TRIAL_END_SECONDS * 1000), terms: null },
+        language: 'en',
+      },
+    ]);
+    const [welcomed] = await owner<{ welcomed: boolean }[]>`
+      SELECT welcomed_at IS NOT NULL AS welcomed FROM accounts WHERE id = ${ACCOUNT_ID}
+    `;
+    expect(welcomed).toEqual({ welcomed: true });
   });
 
   it('answers a resent event as a duplicate and changes nothing', async () => {

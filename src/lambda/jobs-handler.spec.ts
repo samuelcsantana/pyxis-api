@@ -5,6 +5,7 @@ const RETENTION = { events: 12, sessions: 1, signInCodes: 2 };
 const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
 const LIFECYCLE = {
+  welcomes: 1,
   reconciled: 4,
   statusChanges: 1,
   reconcileFailures: 0,

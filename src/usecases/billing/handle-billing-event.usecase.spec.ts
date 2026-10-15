@@ -6,6 +6,9 @@ import {
 } from '../../domain/errors/billing.errors';
 import { FakeBillingGateway } from '../../test-utils/fake-billing-gateway';
 import { FixedClock } from '../../test-utils/fixed-clock';
+import { InMemoryAccountWelcomeRepository } from '../../test-utils/in-memory-account-welcome.repository';
+import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
+import { WelcomeAccountsUseCase } from '../accounts/welcome-accounts.usecase';
 import {
   InMemoryAccountBillingRepository,
   InMemoryBillingEventRepository,
@@ -39,19 +42,36 @@ function event(overrides: Partial<BillingEvent> = {}): BillingEvent {
   };
 }
 
-function setup() {
+function setup(before: 'incomplete' | 'active' = 'incomplete') {
   const gateway = new FakeBillingGateway();
   const events = new InMemoryBillingEventRepository();
   const accounts = new InMemoryAccountBillingRepository();
   accounts.add({
     accountId: ACCOUNT_ID,
-    status: 'incomplete',
+    status: before,
     accessEndsAt: null,
     stripeCustomerId: null,
     stripeSubscriptionId: null,
   });
-  const useCase = new HandleBillingEventUseCase(gateway, events, accounts, new FixedClock(NOW));
-  return { gateway, events, accounts, useCase };
+  const clock = new FixedClock(NOW);
+  const welcomeRepository = new InMemoryAccountWelcomeRepository();
+  welcomeRepository.add({
+    accountId: ACCOUNT_ID,
+    ownerEmail: 'owner@example.com',
+    ownerLanguage: 'pt-BR',
+    status: 'trialing',
+    trialEndsAt: TRIAL_END,
+    termsVersion: '2026-11-01',
+  });
+  const mail = new RecordingMailSender();
+  const welcomes = new WelcomeAccountsUseCase(welcomeRepository, mail, clock, {
+    open: true,
+    termsVersion: '2026-11-01',
+    termsUrl: 'https://example.com/termos',
+    dashboardOrigin: 'https://app.example.com',
+  });
+  const useCase = new HandleBillingEventUseCase(gateway, events, accounts, clock, welcomes);
+  return { gateway, events, accounts, mail, useCase };
 }
 
 describe('HandleBillingEventUseCase', () => {
@@ -82,6 +102,40 @@ describe('HandleBillingEventUseCase', () => {
         },
       },
     ]);
+  });
+
+  it('welcomes the owner when the account gains access for the first time', async () => {
+    const { gateway, mail, useCase } = setup();
+    gateway.addSubscription(TRIALING);
+    gateway.willReceive(event());
+
+    await useCase.execute(COMMAND);
+
+    expect(mail.welcomes).toEqual([
+      {
+        email: 'owner@example.com',
+        welcome: {
+          trialEndsAt: TRIAL_END,
+          terms: { version: '2026-11-01', url: 'https://example.com/termos' },
+        },
+        language: 'pt-BR',
+      },
+    ]);
+  });
+
+  it('sends no welcome to an account that already had access, nor for an end', async () => {
+    const running = setup('active');
+    running.gateway.addSubscription(TRIALING);
+    running.gateway.willReceive(event());
+    const ending = setup();
+    ending.gateway.addSubscription({ ...TRIALING, status: 'canceled' });
+    ending.gateway.willReceive(event());
+
+    await running.useCase.execute(COMMAND);
+    await ending.useCase.execute(COMMAND);
+
+    expect(running.mail.welcomes).toEqual([]);
+    expect(ending.mail.welcomes).toEqual([]);
   });
 
   it('applies an event once, however many times Stripe sends it', async () => {

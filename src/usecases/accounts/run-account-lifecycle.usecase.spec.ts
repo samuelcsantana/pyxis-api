@@ -5,11 +5,13 @@ import { FakeBillingGateway } from '../../test-utils/fake-billing-gateway';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccountBillingRepository } from '../../test-utils/in-memory-account-billing.repository';
 import { InMemoryAccountLifecycleRepository } from '../../test-utils/in-memory-account-lifecycle.repository';
+import { InMemoryAccountWelcomeRepository } from '../../test-utils/in-memory-account-welcome.repository';
 import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
 import {
   AccountLifecycleFailedError,
   RunAccountLifecycleUseCase,
 } from './run-account-lifecycle.usecase';
+import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 
 const NOW = new Date('2026-12-01T03:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -37,14 +39,23 @@ function setup() {
   const billing = new InMemoryAccountBillingRepository();
   const gateway = new FakeBillingGateway();
   const mail = new RecordingMailSender();
+  const clock = new FixedClock(NOW);
+  const welcomeRepository = new InMemoryAccountWelcomeRepository();
+  const welcomes = new WelcomeAccountsUseCase(welcomeRepository, mail, clock, {
+    open: true,
+    termsVersion: '2026-11-01',
+    termsUrl: null,
+    dashboardOrigin: 'https://app.example.com',
+  });
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
     gateway,
     mail,
-    new FixedClock(NOW),
+    clock,
+    welcomes,
   );
-  return { lifecycle, billing, gateway, mail, useCase };
+  return { lifecycle, billing, gateway, mail, welcomeRepository, useCase };
 }
 
 describe('RunAccountLifecycleUseCase', () => {
@@ -65,6 +76,7 @@ describe('RunAccountLifecycleUseCase', () => {
     const { useCase, mail } = setup();
 
     await expect(useCase.execute()).resolves.toEqual({
+      welcomes: 0,
       reconciled: 0,
       statusChanges: 0,
       reconcileFailures: 0,
@@ -76,6 +88,27 @@ describe('RunAccountLifecycleUseCase', () => {
       peopleRemoved: 0,
     });
     expect(mail.accountNotices).toEqual([]);
+  });
+
+  it('welcomes the owners the webhook could not, once', async () => {
+    const { welcomeRepository, mail, useCase } = setup();
+    welcomeRepository.add({
+      accountId: 'acc-new',
+      ownerEmail: 'ana@example.com',
+      ownerLanguage: 'es',
+      status: 'active',
+      trialEndsAt: new Date('2026-11-15T00:00:00.000Z'),
+      termsVersion: '2026-11-01',
+    });
+
+    const first = await useCase.execute();
+    const second = await useCase.execute();
+
+    expect(first.welcomes).toBe(1);
+    expect(second.welcomes).toBe(0);
+    expect(mail.welcomes).toEqual([
+      { email: 'ana@example.com', welcome: { trialEndsAt: null, terms: null }, language: 'es' },
+    ]);
   });
 
   it('brings each subscribed account in line with Stripe, telling a missed change apart', async () => {

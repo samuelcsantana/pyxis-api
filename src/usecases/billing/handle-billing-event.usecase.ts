@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { hasAccess } from '../../domain/accounts/account-status';
 import { billingUpdateFor } from '../../domain/billing/account-billing';
 import { BILLING_GATEWAY, type BillingGateway } from '../../domain/billing/billing-gateway';
 import {
@@ -10,6 +11,7 @@ import {
   type BillingEventRepository,
 } from '../../domain/repositories/billing-event.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
+import { WelcomeAccountsUseCase } from '../accounts/welcome-accounts.usecase';
 
 export interface HandleBillingEventCommand {
   readonly rawBody: Buffer;
@@ -27,6 +29,7 @@ export class HandleBillingEventUseCase {
     @Inject(BILLING_EVENT_REPOSITORY) private readonly events: BillingEventRepository,
     @Inject(ACCOUNT_BILLING_REPOSITORY) private readonly accounts: AccountBillingRepository,
     @Inject(CLOCK) private readonly clock: Clock,
+    private readonly welcomes: WelcomeAccountsUseCase,
   ) {}
 
   async execute(command: HandleBillingEventCommand): Promise<BillingEventOutcome> {
@@ -56,6 +59,9 @@ export class HandleBillingEventUseCase {
     }
     const update = billingUpdateFor(subscription, account, now);
     await this.accounts.apply(account.accountId, update);
+    if (update.restoresAccess && !hasAccess(account.status)) {
+      await this.welcomes.tryWelcome(account.accountId);
+    }
     await this.events.complete(event.id, now);
     this.logger.log({
       message: 'billing.event_applied',

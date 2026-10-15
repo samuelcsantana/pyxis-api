@@ -20,6 +20,9 @@ import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher'
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
+import { WelcomeAccountsUseCase } from '../usecases/accounts/welcome-accounts.usecase';
+import { signUpSettingsFromEnv } from '../infra/http/accounts/sign-up-settings-from-env';
+import { DrizzleAccountWelcomeRepository } from '../infra/repositories/drizzle-account-welcome.repository';
 import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest.usecase';
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
 import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
@@ -64,12 +67,20 @@ export const handler = createJobsHandler({
   runAccountLifecycle: () =>
     withDatabase((database) => {
       const env = validateEnv(process.env);
+      const mail = new LazyMailSender(() => createMailSender(env));
+      const clock = new SystemClock();
       return new RunAccountLifecycleUseCase(
         new DrizzleAccountLifecycleRepository(database),
         new DrizzleAccountBillingRepository(database),
         createBillingGateway(env),
-        new LazyMailSender(() => createMailSender(env)),
-        new SystemClock(),
+        mail,
+        clock,
+        new WelcomeAccountsUseCase(
+          new DrizzleAccountWelcomeRepository(database),
+          mail,
+          clock,
+          signUpSettingsFromEnv(env),
+        ),
       ).execute();
     }),
   sendWeeklyDigests: () =>
