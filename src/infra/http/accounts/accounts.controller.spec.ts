@@ -3,6 +3,10 @@ import { HOSTED_PLAN_LIMITS } from '../../../domain/accounts/hosted-plan';
 import type { Account } from '../../../domain/entities/account.entity';
 import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type {
+  CloseAccountCommand,
+  CloseAccountUseCase,
+} from '../../../usecases/accounts/close-account.usecase';
+import type {
   ListMyAccountsUseCase,
   MyAccount,
 } from '../../../usecases/accounts/list-my-accounts.usecase';
@@ -43,6 +47,7 @@ function signedIn(): FastifyRequest {
 function accountsController(accounts: readonly MyAccount[] = []) {
   const checkouts: StartCheckoutCommand[] = [];
   const portals: OpenBillingPortalCommand[] = [];
+  const closures: CloseAccountCommand[] = [];
   const controller = new AccountsController(
     { execute: () => Promise.resolve(accounts) } as unknown as ListMyAccountsUseCase,
     {
@@ -57,8 +62,18 @@ function accountsController(accounts: readonly MyAccount[] = []) {
         return Promise.resolve({ url: 'https://portal.example.com/1' });
       },
     } as unknown as OpenBillingPortalUseCase,
+    {
+      execute: (command: CloseAccountCommand) => {
+        closures.push(command);
+        return Promise.resolve({
+          accessEndsAt: new Date('2026-11-20T15:00:00.000Z'),
+          deletionOn: new Date('2026-12-20T15:00:00.000Z'),
+          refundedAmount: 3900,
+        });
+      },
+    } as unknown as CloseAccountUseCase,
   );
-  return { controller, checkouts, portals };
+  return { controller, checkouts, portals, closures };
 }
 
 describe('myAccountBody', () => {
@@ -179,5 +194,28 @@ describe('AccountsController', () => {
 
     expect(body).toEqual({ url: 'https://portal.example.com/1' });
     expect(portals).toEqual([{ adminUserId: ADMIN.id, accountId: ACCOUNT.id, language: 'en' }]);
+  });
+
+  it("closes the account with the owner's typed address, in the owner's language", async () => {
+    const { controller, closures } = accountsController();
+
+    const body = await controller.close(signedIn(), ACCOUNT.id, {
+      confirm_email: 'founder@example.com',
+    });
+
+    expect(closures).toEqual([
+      {
+        adminUserId: ADMIN.id,
+        ownerEmail: ADMIN.email,
+        ownerLanguage: 'en',
+        accountId: ACCOUNT.id,
+        confirmEmail: 'founder@example.com',
+      },
+    ]);
+    expect(body).toEqual({
+      access_ends_at: '2026-11-20T15:00:00.000Z',
+      deletion_on: '2026-12-20T15:00:00.000Z',
+      refunded_amount: 3900,
+    });
   });
 });

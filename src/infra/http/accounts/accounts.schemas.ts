@@ -102,6 +102,29 @@ export const myAccountsSchema = z
       'owners and the month measured so far.',
   });
 
+export const closeAccountSchema = z
+  .strictObject({
+    confirm_email: emailSchema.describe("The owner's e-mail address, typed again to confirm"),
+  })
+  .meta({ id: 'CloseAccountRequest', description: 'The confirmation of a closure.' });
+
+export const closedAccountSchema = z
+  .strictObject({
+    access_ends_at: z.iso.datetime(),
+    deletion_on: z.iso
+      .datetime()
+      .describe('When the projects, their events and their keys are deleted for good'),
+    refunded_amount: z
+      .int()
+      .describe(
+        'What was refunded, in the smallest unit of the currency (centavos); 0 for nothing',
+      ),
+  })
+  .meta({
+    id: 'ClosedAccount',
+    description: 'The account, closed now: its keys are revoked and its data waits for deletion.',
+  });
+
 export const accountIdSchema = z.uuid();
 
 export type SignUpStatusBody = z.infer<typeof signUpStatusSchema>;
@@ -112,3 +135,5 @@ export type CheckoutRequestBody = z.infer<typeof checkoutRequestSchema>;
 export type PortalRequestBody = z.infer<typeof portalRequestSchema>;
 export type BillingRedirectBody = z.infer<typeof billingRedirectSchema>;
 export type MyAccountsBody = z.infer<typeof myAccountsSchema>;
+export type CloseAccountBody = z.infer<typeof closeAccountSchema>;
+export type ClosedAccountBody = z.infer<typeof closedAccountSchema>;

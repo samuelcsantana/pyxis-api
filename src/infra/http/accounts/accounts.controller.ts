@@ -13,6 +13,7 @@ import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@ne
 import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { resolveEmailLanguage } from '../../../domain/auth/email-language';
+import { CloseAccountUseCase } from '../../../usecases/accounts/close-account.usecase';
 import {
   ListMyAccountsUseCase,
   type MyAccount,
@@ -32,6 +33,10 @@ import {
   accountIdSchema,
   type BillingRedirectBody,
   billingRedirectSchema,
+  type CloseAccountBody,
+  closeAccountSchema,
+  type ClosedAccountBody,
+  closedAccountSchema,
   type CheckoutRequestBody,
   checkoutRequestSchema,
   type MyAccountsBody,
@@ -81,6 +86,7 @@ export class AccountsController {
     private readonly listMyAccounts: ListMyAccountsUseCase,
     private readonly startCheckout: StartCheckoutUseCase,
     private readonly openBillingPortal: OpenBillingPortalUseCase,
+    private readonly closeAccount: CloseAccountUseCase,
   ) {}
 
   @Get('me/accounts')
@@ -145,5 +151,41 @@ export class AccountsController {
       accountId,
       language: resolveEmailLanguage(body.locale),
     });
+  }
+
+  @Post('accounts/:accountId/close')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Close an account the admin owns',
+    description:
+      'Cancels the subscription at once, refunds a first payment made in the last seven days, ' +
+      'revokes the keys of its projects and deletes everything thirty days later.',
+  })
+  @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: closedAccountSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.CONFLICT, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.SERVICE_UNAVAILABLE, standardSchema: errorResponseSchema })
+  async close(
+    @Req() request: FastifyRequest,
+    @Param('accountId', new SchemaPipe(accountIdSchema)) accountId: string,
+    @Body({ schema: closeAccountSchema, pipes: [new SchemaPipe(closeAccountSchema)] })
+    body: CloseAccountBody,
+  ): Promise<ClosedAccountBody> {
+    const admin = adminOf(request);
+    const closed = await this.closeAccount.execute({
+      adminUserId: admin.id,
+      ownerEmail: admin.email,
+      ownerLanguage: admin.emailLanguage,
+      accountId,
+      confirmEmail: body.confirm_email,
+    });
+    return {
+      access_ends_at: closed.accessEndsAt.toISOString(),
+      deletion_on: closed.deletionOn.toISOString(),
+      refunded_amount: closed.refundedAmount,
+    };
   }
 }
