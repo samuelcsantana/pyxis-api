@@ -13,6 +13,7 @@ class ScriptedRetention implements RetentionRepository {
   readonly eventCalls: { readonly projectId: string; readonly cutoff: Date }[] = [];
   readonly sessionCutoffs: ExpiredSessionCutoffs[] = [];
   readonly codeNows: Date[] = [];
+  readonly trialCardCutoffs: Date[] = [];
   failing: string | null = null;
 
   constructor(private readonly batches: Readonly<Record<string, number[]>>) {}
@@ -38,6 +39,11 @@ class ScriptedRetention implements RetentionRepository {
   deleteExpiredSignInCodes(now: Date): Promise<number> {
     this.codeNows.push(now);
     return Promise.resolve(5);
+  }
+
+  deleteTrialCardsStartedBefore(cutoff: Date): Promise<number> {
+    this.trialCardCutoffs.push(cutoff);
+    return Promise.resolve(2);
   }
 }
 
@@ -70,6 +76,7 @@ describe('RunRetentionUseCase', () => {
       events: RETENTION_BATCH_SIZE * 2 + 7,
       sessions: 3,
       signInCodes: 5,
+      trialCards: 2,
     });
     expect(retention.eventCalls.map((call) => call.projectId)).toEqual([
       'project-a',
@@ -85,6 +92,7 @@ describe('RunRetentionUseCase', () => {
       },
     ]);
     expect(retention.codeNows).toEqual([NOW]);
+    expect(retention.trialCardCutoffs).toEqual([new Date('2025-10-06T06:00:00.000Z')]);
     expect(logs).toContainEqual({
       level: 'log',
       message: { message: 'retention.step_done', step: 'signInCodes', deleted: 5 },
