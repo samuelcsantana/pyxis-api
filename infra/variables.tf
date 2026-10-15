@@ -116,6 +116,12 @@ variable "terms_url" {
   }
 }
 
+variable "export_file_days" {
+  description = "Days an export file stays in the bucket before the lifecycle rule deletes it; the API offers the download for the same days."
+  type        = number
+  default     = 7
+}
+
 variable "alert_email" {
   description = "Address that receives the operational alarms; AWS emails it a link to confirm the subscription."
   type        = string
