@@ -5,9 +5,11 @@ import { BILLING_GATEWAY } from '../../../domain/billing/billing-gateway';
 import { ACCOUNT_WELCOME_REPOSITORY } from '../../../domain/repositories/account-welcome.repository';
 import { ACCOUNT_BILLING_REPOSITORY } from '../../../domain/repositories/account-billing.repository';
 import { BILLING_EVENT_REPOSITORY } from '../../../domain/repositories/billing-event.repository';
+import { TRIAL_CARD_REPOSITORY } from '../../../domain/repositories/trial-card.repository';
 import { CLOCK } from '../../../domain/services/clock';
 import type { EnvConfig } from '../../../config/env.schema';
 import { WelcomeAccountsUseCase } from '../../../usecases/accounts/welcome-accounts.usecase';
+import { DetectRepeatedTrialUseCase } from '../../../usecases/billing/detect-repeated-trial.usecase';
 import { HandleBillingEventUseCase } from '../../../usecases/billing/handle-billing-event.usecase';
 import { createBillingGateway } from '../../billing/create-billing-gateway';
 import { SystemClock } from '../../clock/system-clock';
@@ -16,6 +18,7 @@ import {
   DrizzleBillingEventRepository,
 } from '../../repositories/drizzle-account-billing.repository';
 import { DrizzleAccountWelcomeRepository } from '../../repositories/drizzle-account-welcome.repository';
+import { DrizzleTrialCardRepository } from '../../repositories/drizzle-trial-card.repository';
 import { signUpSettingsFromEnv } from '../accounts/sign-up-settings-from-env';
 import { AuthModule } from '../auth/auth.module';
 import { BillingWebhookController } from './billing-webhook.controller';
@@ -26,6 +29,8 @@ import { BillingWebhookController } from './billing-webhook.controller';
   providers: [
     HandleBillingEventUseCase,
     WelcomeAccountsUseCase,
+    DetectRepeatedTrialUseCase,
+    { provide: TRIAL_CARD_REPOSITORY, useClass: DrizzleTrialCardRepository },
     { provide: ACCOUNT_WELCOME_REPOSITORY, useClass: DrizzleAccountWelcomeRepository },
     {
       provide: SIGN_UP_SETTINGS,

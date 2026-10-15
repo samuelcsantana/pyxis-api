@@ -13,6 +13,8 @@ import {
   InMemoryAccountBillingRepository,
   InMemoryBillingEventRepository,
 } from '../../test-utils/in-memory-account-billing.repository';
+import { InMemoryTrialCardRepository } from '../../test-utils/in-memory-trial-card.repository';
+import { DetectRepeatedTrialUseCase } from './detect-repeated-trial.usecase';
 import { HandleBillingEventUseCase } from './handle-billing-event.usecase';
 
 const NOW = new Date('2026-10-20T12:00:00.000Z');
@@ -71,8 +73,16 @@ function setup(before: 'incomplete' | 'active' = 'incomplete') {
     termsUrl: 'https://example.com/termos',
     dashboardOrigin: 'https://app.example.com',
   });
-  const useCase = new HandleBillingEventUseCase(gateway, events, accounts, clock, welcomes);
-  return { gateway, events, accounts, mail, useCase };
+  const trialCards = new InMemoryTrialCardRepository();
+  const useCase = new HandleBillingEventUseCase(
+    gateway,
+    events,
+    accounts,
+    clock,
+    welcomes,
+    new DetectRepeatedTrialUseCase(trialCards, clock),
+  );
+  return { gateway, events, accounts, mail, trialCards, useCase };
 }
 
 describe('HandleBillingEventUseCase', () => {
@@ -213,5 +223,18 @@ describe('HandleBillingEventUseCase', () => {
 
     await expect(useCase.execute(COMMAND)).rejects.toBeInstanceOf(InvalidBillingSignatureError);
     expect(events.claimed).toEqual([]);
+  });
+
+  it('records the card of a trial, and only for an applied event', async () => {
+    const { gateway, trialCards, useCase } = setup();
+    gateway.addSubscription({ ...TRIALING, cardFingerprint: 'fp_card_1' });
+    gateway.willReceive(event());
+
+    await useCase.execute(COMMAND);
+    await useCase.execute(COMMAND);
+
+    expect(trialCards.cards).toEqual([
+      { fingerprint: 'fp_card_1', accountId: ACCOUNT_ID, trialStartedAt: NOW },
+    ]);
   });
 });
