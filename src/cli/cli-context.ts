@@ -17,6 +17,7 @@ import { DrizzleAdminSuspensionRepository } from '../infra/repositories/drizzle-
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
+import { DrizzleProjectSuspensionRepository } from '../infra/repositories/drizzle-project-suspension.repository';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
@@ -37,7 +38,9 @@ import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
+import { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
+import { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext } from './cli-command';
 
@@ -64,6 +67,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const holds = new DrizzleAccountDeletionHoldRepository(db);
   const adminSuspensions = new DrizzleAdminSuspensionRepository(db);
   const accessTokens = new DrizzleAccessTokenRepository(db);
+  const projectSuspensions = new DrizzleProjectSuspensionRepository(db);
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -104,6 +108,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     ),
     resumeAdmin: new ResumeAdminUseCase(admins, adminSuspensions),
     revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(accessTokens, clock),
+    suspendProjectIngestion: new SuspendProjectIngestionUseCase(projectSuspensions, clock),
+    resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     close: () => client.end(),
   };
 }

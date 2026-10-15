@@ -32,6 +32,8 @@
     "project:create": "node dist/cli/project-create.main.js",
     "project:update": "node dist/cli/project-update.main.js",
     "project:delete": "node dist/cli/project-delete.main.js",
+    "project:suspend": "node dist/cli/project-suspend.main.js",
+    "project:resume": "node dist/cli/project-resume.main.js",
     "key:create": "node dist/cli/key-create.main.js",
     "key:revoke": "node dist/cli/key-revoke.main.js",
     "admin:grant": "node dist/cli/admin-grant.main.js",

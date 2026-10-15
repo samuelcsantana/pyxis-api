@@ -15,7 +15,9 @@ import type { CreateProjectKeyUseCase } from '../usecases/projects/create-projec
 import type { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import type { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import type { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
+import type { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import type { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
+import type { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
 import type { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 
 export interface CliContext {
@@ -38,6 +40,8 @@ export interface CliContext {
   readonly suspendAdmin: SuspendAdminUseCase;
   readonly resumeAdmin: ResumeAdminUseCase;
   readonly revokeAccessToken: RevokeAccessTokenAsOperatorUseCase;
+  readonly suspendProjectIngestion: SuspendProjectIngestionUseCase;
+  readonly resumeProjectIngestion: ResumeProjectIngestionUseCase;
   close(): Promise<void>;
 }
 
