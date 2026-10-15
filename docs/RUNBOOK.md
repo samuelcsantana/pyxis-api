@@ -370,6 +370,20 @@ the hold, not the reason. Retention of events older than thirteen months and the
 person's events go on. Releasing the hold of an account ended more than thirty days ago lets the
 next daily run delete it.
 
+### Stopping one person or one token
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s admin:suspend -- --email <email>
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s admin:resume -- --email <email>
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s token:revoke -- --token <id>
+```
+
+`admin:suspend` ends every live session and revokes every token of the person at once, keeps
+their grants, and keeps them out: no sign-in code is sent (the answer is the usual 202), a code
+sent before is refused, and a session that survived is refused too. `admin:resume` lets them sign
+in again; the old sessions and tokens stay ended. `token:revoke` takes the id the dashboard's
+Tokens panel shows; for a project key, use `key:revoke`.
+
 ## Exports
 
 Owners export a project's events to a compressed CSV. Terraform creates the private bucket
@@ -437,8 +451,8 @@ There is no sign-up. Grant an email a project, and it can ask the dashboard for 
 MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s admin:grant -- --email <email> --project <id>
 ```
 
-Running it again changes nothing. To end every session of an admin at once, delete their rows
-in `admin_sessions` (or the admin, which cascades to sessions and grants).
+Running it again changes nothing. To end every session and token of an admin at once and keep
+them out, use `admin:suspend` (see "Stopping one person or one token").
 
 If no code arrives, look for `auth.code_delivery_failed` in the logs: Resend refused the key or
 the sender. `auth.code_rate_limited` means five codes were already sent to that email this
