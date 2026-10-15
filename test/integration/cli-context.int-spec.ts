@@ -277,6 +277,29 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it("holds a project's deletion and releases it with the migration connection", async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const project = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+      });
+
+      const held = await context.holdProjectDeletion.execute({
+        projectId: project.projectId,
+        reason: 'Court order',
+      });
+      expect(held).toMatchObject({ projectName: 'Shop', reason: 'Court order' });
+      await context.releaseProjectDeletion.execute({ projectId: project.projectId });
+      const [row] = await owner<{ deletion_held_at: Date | null }[]>`
+        SELECT deletion_held_at FROM projects WHERE id = ${project.projectId}
+      `;
+      expect(row?.deletion_held_at).toBeNull();
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',

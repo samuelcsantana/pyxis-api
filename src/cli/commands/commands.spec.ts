@@ -17,6 +17,8 @@ import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
 import { projectDeleteCommand } from './project-delete.command';
+import { projectHoldCommand } from './project-hold.command';
+import { projectReleaseCommand } from './project-release.command';
 import { projectResumeCommand } from './project-resume.command';
 import { projectSuspendCommand } from './project-suspend.command';
 import { projectUpdateCommand } from './project-update.command';
@@ -367,6 +369,47 @@ describe('project:suspend and project:resume', () => {
       'ingestion_suspended_at=',
     ]);
     expect(resumed.err).toEqual([expect.stringContaining('Within a minute')]);
+  });
+});
+
+describe('project:hold and project:release', () => {
+  it('parse the project and a trimmed reason, refusing none or one too long', () => {
+    expect(
+      projectHoldCommand.parse(['--project', PROJECT_ID, '--reason', '  Court order  ']),
+    ).toEqual({ projectId: PROJECT_ID, reason: 'Court order' });
+    expect(() => projectHoldCommand.parse(['--project', PROJECT_ID])).toThrow(CliUsageError);
+    expect(() =>
+      projectHoldCommand.parse(['--project', PROJECT_ID, '--reason', 'x'.repeat(501)]),
+    ).toThrow(CliUsageError);
+    expect(projectReleaseCommand.parse(['--project', PROJECT_ID])).toEqual({
+      projectId: PROJECT_ID,
+    });
+  });
+
+  it('hold the deletion of a project and release it, saying what that keeps', async () => {
+    const context = inMemoryCliContext();
+    context.projectHolds.add(PROJECT_ID, 'My Shop');
+    const held = captureOutput();
+
+    await projectHoldCommand.execute(
+      context,
+      { projectId: PROJECT_ID, reason: 'Court order' },
+      held,
+    );
+
+    expect(held.out).toEqual([
+      `project_id=${PROJECT_ID}`,
+      'name=My Shop',
+      'deletion_held_at=2026-10-06T14:00:00.000Z',
+      'deletion_hold_reason=Court order',
+    ]);
+    expect(held.err).toEqual([expect.stringContaining('project:release')]);
+
+    const released = captureOutput();
+    await projectReleaseCommand.execute(context, { projectId: PROJECT_ID }, released);
+
+    expect(released.out).toEqual([`project_id=${PROJECT_ID}`, 'name=My Shop', 'deletion_held_at=']);
+    expect(released.err).toEqual([expect.stringContaining('next daily job')]);
   });
 });
 

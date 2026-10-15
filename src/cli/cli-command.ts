@@ -15,6 +15,8 @@ import type { CreateProjectKeyUseCase } from '../usecases/projects/create-projec
 import type { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import type { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import type { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
+import type { HoldProjectDeletionUseCase } from '../usecases/projects/hold-project-deletion.usecase';
+import type { ReleaseProjectDeletionUseCase } from '../usecases/projects/release-project-deletion.usecase';
 import type { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import type { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import type { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
@@ -42,6 +44,8 @@ export interface CliContext {
   readonly revokeAccessToken: RevokeAccessTokenAsOperatorUseCase;
   readonly suspendProjectIngestion: SuspendProjectIngestionUseCase;
   readonly resumeProjectIngestion: ResumeProjectIngestionUseCase;
+  readonly holdProjectDeletion: HoldProjectDeletionUseCase;
+  readonly releaseProjectDeletion: ReleaseProjectDeletionUseCase;
   close(): Promise<void>;
 }
 
