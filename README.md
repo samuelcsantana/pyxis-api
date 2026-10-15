@@ -197,7 +197,9 @@ Shipping now:
   their billing state and the month measured; `POST /v1/accounts/{accountId}/checkout` opens
   Stripe Checkout (with the 14-day trial the first time, and a line above the button saying it is
   one per customer) and `.../portal` the billing portal, for
-  the owner only ([ADR 0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
+  the owner only. An ended account not yet deleted subscribes again through the same Checkout, with
+  no trial, even while sign-up is closed, and leaving that Checkout goes back to `/account`
+  ([ADR 0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
   required): `POST /v1/accounts/{accountId}/projects` (the plan's three), `PATCH
 /v1/projects/{projectId}` (name, up to five origins, time zone, conversion event),
