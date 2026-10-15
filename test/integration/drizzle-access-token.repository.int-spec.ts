@@ -76,6 +76,19 @@ describe('DrizzleAccessTokenRepository against a real Postgres', () => {
     expect(await tokens.findLiveByTokenHash(sha256Hex(`Claude Code-${anaId}`))).toBeNull();
   });
 
+  it("revokes every live token of one admin, or any admin's token by its id, once", async () => {
+    const first = await create(anaId, 'Claude Code', NOW);
+    await create(anaId, 'Cursor', NOW);
+    const brunos = await create(brunoId, 'Codex', NOW);
+
+    expect(await tokens.revokeAllOf(anaId, NOW)).toBe(2);
+    expect(await tokens.revokeAllOf(anaId, NOW)).toBe(0);
+    expect(await tokens.revoke(first.id, NOW)).toBe(false);
+    expect(await tokens.revoke(brunos.id, NOW)).toBe(true);
+    expect(await tokens.revoke(brunos.id, NOW)).toBe(false);
+    expect(await tokens.listLiveOf(brunoId, NOW)).toEqual([]);
+  });
+
   it('lists the live tokens of one admin, newest first, without the expired or revoked', async () => {
     const old = await create(anaId, 'old', at(-2 * DAY));
     const expired = await create(anaId, 'expired', at(-40 * DAY));

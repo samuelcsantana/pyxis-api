@@ -5,6 +5,7 @@ import {
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleAdminSessionRepository } from '../../src/infra/repositories/drizzle-admin-session.repository';
+import { DrizzleAdminSuspensionRepository } from '../../src/infra/repositories/drizzle-admin-suspension.repository';
 import { DrizzleAdminUserRepository } from '../../src/infra/repositories/drizzle-admin-user.repository';
 import { DrizzleOtpCodeRepository } from '../../src/infra/repositories/drizzle-otp-code.repository';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
@@ -25,6 +26,7 @@ describe('admin repositories against a real Postgres', () => {
   let admins: DrizzleAdminUserRepository;
   let codes: DrizzleOtpCodeRepository;
   let sessions: DrizzleAdminSessionRepository;
+  let suspensions: DrizzleAdminSuspensionRepository;
 
   beforeAll(async () => {
     await migrateTestDatabase();
@@ -34,6 +36,7 @@ describe('admin repositories against a real Postgres', () => {
     admins = new DrizzleAdminUserRepository(db);
     codes = new DrizzleOtpCodeRepository(db);
     sessions = new DrizzleAdminSessionRepository(db);
+    suspensions = new DrizzleAdminSuspensionRepository(db);
   });
 
   beforeEach(async () => {
@@ -67,6 +70,7 @@ describe('admin repositories against a real Postgres', () => {
         id: expect.any(String) as string,
         email: 'ana@example.com',
         emailLanguage: 'en',
+        suspendedAt: null,
         createdAt: expect.any(Date) as Date,
       });
       expect((await admins.projectsOf(admin.id)).map((project) => project.name)).toEqual([
@@ -84,6 +88,20 @@ describe('admin repositories against a real Postgres', () => {
       expect(await admins.findById(admin.id)).toEqual(admin);
       expect(await admins.findByEmail('stranger@example.com')).toBeNull();
       expect(await admins.findById('ffffffff-ffff-4fff-bfff-ffffffffffff')).toBeNull();
+    });
+
+    it('suspends an admin and lifts it, the mark read back with the admin', async () => {
+      const ana = await admins.findOrCreateByEmail('ana@example.com');
+      const bruno = await admins.findOrCreateByEmail('bruno@example.com');
+      const at = new Date('2026-11-03T12:00:00.000Z');
+
+      expect(ana.suspendedAt).toBeNull();
+      expect(await suspensions.suspend(ana.id, at)).toMatchObject({ id: ana.id, suspendedAt: at });
+      expect((await admins.findByEmail('ana@example.com'))?.suspendedAt).toEqual(at);
+      expect((await admins.findById(bruno.id))?.suspendedAt).toBeNull();
+      expect(await suspensions.resume(ana.id)).toMatchObject({ suspendedAt: null });
+      expect(await suspensions.suspend('ffffffff-ffff-4fff-bfff-ffffffffffff', at)).toBeNull();
+      expect(await suspensions.resume('ffffffff-ffff-4fff-bfff-ffffffffffff')).toBeNull();
     });
 
     it('stores the language of an admin, leaving the other admins alone', async () => {

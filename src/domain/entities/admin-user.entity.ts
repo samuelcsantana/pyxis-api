@@ -4,5 +4,6 @@ export interface AdminUser {
   readonly id: string;
   readonly email: string;
   readonly emailLanguage: EmailLanguage;
+  readonly suspendedAt: Date | null;
   readonly createdAt: Date;
 }

@@ -1,11 +1,12 @@
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../domain/auth/email-language';
 import type { AdminUser } from '../domain/entities/admin-user.entity';
 import type { Project } from '../domain/entities/project.entity';
+import type { AdminSuspensionRepository } from '../domain/repositories/admin-suspension.repository';
 import type { AdminUserRepository } from '../domain/repositories/admin-user.repository';
 
 const CREATED_AT = new Date('2026-10-01T00:00:00.000Z');
 
-export class InMemoryAdminUserRepository implements AdminUserRepository {
+export class InMemoryAdminUserRepository implements AdminUserRepository, AdminSuspensionRepository {
   private admins: readonly AdminUser[] = [];
   private readonly projects = new Map<string, Project>();
   private readonly access: { readonly adminUserId: string; readonly projectId: string }[] = [];
@@ -52,6 +53,26 @@ export class InMemoryAdminUserRepository implements AdminUserRepository {
     return admin;
   }
 
+  suspend(adminUserId: string, at: Date): Promise<AdminUser | null> {
+    return Promise.resolve(this.change(adminUserId, { suspendedAt: at }));
+  }
+
+  resume(adminUserId: string): Promise<AdminUser | null> {
+    return Promise.resolve(this.change(adminUserId, { suspendedAt: null }));
+  }
+
+  private change(adminUserId: string, changes: Partial<AdminUser>): AdminUser | null {
+    const admin = this.admins.find((candidate) => candidate.id === adminUserId);
+    if (admin === undefined) {
+      return null;
+    }
+    const changed = { ...admin, ...changes };
+    this.admins = this.admins.map((candidate) =>
+      candidate.id === adminUserId ? changed : candidate,
+    );
+    return changed;
+  }
+
   setEmailLanguage(adminUserId: string, language: EmailLanguage): Promise<void> {
     this.admins = this.admins.map((admin) =>
       admin.id === adminUserId ? { ...admin, emailLanguage: language } : admin,
@@ -64,6 +85,7 @@ export class InMemoryAdminUserRepository implements AdminUserRepository {
       id: `00000000-0000-4000-a000-${String(this.admins.length + 1).padStart(12, '0')}`,
       email,
       emailLanguage: DEFAULT_EMAIL_LANGUAGE,
+      suspendedAt: null,
       createdAt: CREATED_AT,
     };
     this.admins = [...this.admins, admin];

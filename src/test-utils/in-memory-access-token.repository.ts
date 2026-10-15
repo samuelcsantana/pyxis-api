@@ -70,4 +70,25 @@ export class InMemoryAccessTokenRepository implements AccessTokenRepository {
     entry.revokedAt = revokedAt;
     return Promise.resolve(true);
   }
+
+  revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number> {
+    const live = this.stored.filter(
+      (candidate) => candidate.token.adminUserId === adminUserId && candidate.revokedAt === null,
+    );
+    for (const entry of live) {
+      entry.revokedAt = revokedAt;
+    }
+    return Promise.resolve(live.length);
+  }
+
+  revoke(tokenId: string, revokedAt: Date): Promise<boolean> {
+    const entry = this.stored.find(
+      (candidate) => candidate.token.id === tokenId && candidate.revokedAt === null,
+    );
+    if (entry === undefined) {
+      return Promise.resolve(false);
+    }
+    entry.revokedAt = revokedAt;
+    return Promise.resolve(true);
+  }
 }

@@ -14,6 +14,8 @@ export interface AccessTokenRepository {
   listLiveOf(adminUserId: string, now: Date): Promise<readonly AccessToken[]>;
   touch(tokenId: string, usedAt: Date): Promise<void>;
   revokeOneOf(adminUserId: string, tokenId: string, revokedAt: Date): Promise<boolean>;
+  revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number>;
+  revoke(tokenId: string, revokedAt: Date): Promise<boolean>;
 }
 
 export const ACCESS_TOKEN_REPOSITORY = Symbol('AccessTokenRepository');

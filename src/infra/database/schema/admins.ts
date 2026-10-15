@@ -38,6 +38,7 @@ export const adminUsers = pgTable('admin_users', {
   id: uuid('id').primaryKey().defaultRandom(),
   email: varchar('email', { length: MAX_EMAIL_LENGTH }).notNull().unique(),
   emailLanguage: emailLanguage(),
+  suspendedAt: timestamp('suspended_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
