@@ -1,0 +1,221 @@
+import { Logger } from '@nestjs/common';
+import {
+  ACCOUNT_DELETION_BATCH_SIZE,
+  deletionDueAt,
+  deletionThreshold,
+  incompleteThreshold,
+  reminderThreshold,
+} from '../../domain/accounts/account-lifecycle';
+import type { AccountNotice } from '../../domain/accounts/account-notice';
+import { billingUpdateFor } from '../../domain/billing/account-billing';
+import type { BillingGateway } from '../../domain/billing/billing-gateway';
+import type { AccountBillingRepository } from '../../domain/repositories/account-billing.repository';
+import type {
+  AccountLifecycleRepository,
+  EndedAccount,
+} from '../../domain/repositories/account-lifecycle.repository';
+import type { Clock } from '../../domain/services/clock';
+import type { MailSender } from '../../domain/services/mail-sender';
+
+export interface AccountLifecycleReport {
+  readonly reconciled: number;
+  readonly statusChanges: number;
+  readonly reconcileFailures: number;
+  readonly keysRevoked: number;
+  readonly endedNotices: number;
+  readonly reminders: number;
+  readonly deleted: number;
+  readonly incompleteRemoved: number;
+  readonly peopleRemoved: number;
+}
+
+export class AccountLifecycleFailedError extends Error {
+  constructor(readonly failedAccounts: readonly string[]) {
+    super(`The account lifecycle failed for ${String(failedAccounts.length)} account(s).`);
+    this.name = 'AccountLifecycleFailedError';
+  }
+}
+
+interface Removal {
+  readonly removed: number;
+  readonly peopleRemoved: number;
+  readonly failed: readonly string[];
+}
+
+export class RunAccountLifecycleUseCase {
+  private readonly logger = new Logger(RunAccountLifecycleUseCase.name);
+
+  constructor(
+    private readonly lifecycle: AccountLifecycleRepository,
+    private readonly billing: AccountBillingRepository,
+    private readonly gateway: BillingGateway,
+    private readonly mail: MailSender,
+    private readonly clock: Clock,
+  ) {}
+
+  async execute(): Promise<AccountLifecycleReport> {
+    const now = this.clock.now();
+    const reconciliation = await this.reconcile(now);
+    const keysRevoked = await this.lifecycle.revokeKeysOfEndedAccounts(now);
+    const endedNotices = await this.notifyEach(
+      await this.lifecycle.endedToNotify(now),
+      (account) => ({ kind: 'access_ended', deletionOn: deletionDueAt(account.accessEndsAt) }),
+      (accountId) => this.lifecycle.markEndedNotified(accountId, now),
+    );
+    const reminders = await this.notifyEach(
+      await this.lifecycle.dueForReminder(reminderThreshold(now), deletionThreshold(now)),
+      (account) => ({ kind: 'deletion_reminder', deletionOn: deletionDueAt(account.accessEndsAt) }),
+      (accountId) => this.lifecycle.markReminded(accountId, now),
+    );
+    const deletion = await this.deleteEnded(now);
+    const incomplete = await this.removeStaleIncomplete(now);
+    const report: AccountLifecycleReport = {
+      ...reconciliation,
+      keysRevoked,
+      endedNotices,
+      reminders,
+      deleted: deletion.removed,
+      incompleteRemoved: incomplete.removed,
+      peopleRemoved: deletion.peopleRemoved + incomplete.peopleRemoved,
+    };
+    this.logger.log({ message: 'accounts.lifecycle_done', ...report });
+    const failed = [...deletion.failed, ...incomplete.failed];
+    if (failed.length > 0) {
+      throw new AccountLifecycleFailedError(failed);
+    }
+    return report;
+  }
+
+  private async reconcile(
+    now: Date,
+  ): Promise<Pick<AccountLifecycleReport, 'reconciled' | 'statusChanges' | 'reconcileFailures'>> {
+    let reconciled = 0;
+    let statusChanges = 0;
+    let reconcileFailures = 0;
+    for (const account of await this.lifecycle.reconcilable()) {
+      try {
+        const subscription = await this.gateway.subscription(account.subscriptionId);
+        const update = billingUpdateFor(subscription, account, now);
+        await this.billing.apply(account.accountId, update);
+        reconciled += 1;
+        if (update.status !== account.status) {
+          statusChanges += 1;
+          this.logger.warn({
+            message: 'accounts.reconciled_status',
+            accountId: account.accountId,
+            from: account.status,
+            to: update.status,
+          });
+        }
+      } catch (error) {
+        reconcileFailures += 1;
+        this.logger.warn({
+          message: 'accounts.reconcile_failed',
+          accountId: account.accountId,
+          reason: String(error),
+        });
+      }
+    }
+    return { reconciled, statusChanges, reconcileFailures };
+  }
+
+  private async notifyEach(
+    accounts: readonly EndedAccount[],
+    noticeFor: (account: EndedAccount) => AccountNotice,
+    mark: (accountId: string) => Promise<void>,
+  ): Promise<number> {
+    let sent = 0;
+    for (const account of accounts) {
+      const notice = noticeFor(account);
+      try {
+        await this.mail.sendAccountNotice(account.ownerEmail, notice, account.ownerLanguage);
+        await mark(account.accountId);
+        sent += 1;
+      } catch (error) {
+        this.logger.error({
+          message: 'accounts.notice_failed',
+          kind: notice.kind,
+          accountId: account.accountId,
+          reason: String(error),
+        });
+      }
+    }
+    return sent;
+  }
+
+  private async deleteEnded(now: Date): Promise<Removal> {
+    let removed = 0;
+    let peopleRemoved = 0;
+    const failed: string[] = [];
+    for (const account of await this.lifecycle.dueForDeletion(deletionThreshold(now))) {
+      try {
+        const people = await this.lifecycle.peopleOf(account.accountId);
+        for (const projectId of await this.lifecycle.projectIdsOf(account.accountId)) {
+          await this.deleteEventsOf(projectId);
+          await this.lifecycle.deleteProject(projectId);
+        }
+        await this.lifecycle.deleteAccount(account.accountId);
+        peopleRemoved += await this.lifecycle.deleteAdminsLeftWithout([
+          ...new Set([...people, account.ownerAdminId]),
+        ]);
+        removed += 1;
+        this.logger.log({ message: 'accounts.deleted', accountId: account.accountId });
+      } catch (error) {
+        failed.push(account.accountId);
+        this.logger.error({
+          message: 'accounts.deletion_failed',
+          accountId: account.accountId,
+          reason: String(error),
+        });
+        continue;
+      }
+      await this.tryNotifyDeleted(account);
+    }
+    return { removed, peopleRemoved, failed };
+  }
+
+  private async deleteEventsOf(projectId: string): Promise<void> {
+    let deleted: number;
+    do {
+      deleted = await this.lifecycle.deleteEventsOf(projectId, ACCOUNT_DELETION_BATCH_SIZE);
+    } while (deleted === ACCOUNT_DELETION_BATCH_SIZE);
+  }
+
+  private async tryNotifyDeleted(account: EndedAccount): Promise<void> {
+    try {
+      await this.mail.sendAccountNotice(
+        account.ownerEmail,
+        { kind: 'account_deleted' },
+        account.ownerLanguage,
+      );
+    } catch (error) {
+      this.logger.error({
+        message: 'accounts.notice_failed',
+        kind: 'account_deleted',
+        accountId: account.accountId,
+        reason: String(error),
+      });
+    }
+  }
+
+  private async removeStaleIncomplete(now: Date): Promise<Removal> {
+    let removed = 0;
+    let peopleRemoved = 0;
+    const failed: string[] = [];
+    for (const account of await this.lifecycle.staleIncomplete(incompleteThreshold(now))) {
+      try {
+        await this.lifecycle.deleteAccount(account.accountId);
+        peopleRemoved += await this.lifecycle.deleteAdminsLeftWithout([account.ownerAdminId]);
+        removed += 1;
+      } catch (error) {
+        failed.push(account.accountId);
+        this.logger.error({
+          message: 'accounts.incomplete_removal_failed',
+          accountId: account.accountId,
+          reason: String(error),
+        });
+      }
+    }
+    return { removed, peopleRemoved, failed };
+  }
+}
