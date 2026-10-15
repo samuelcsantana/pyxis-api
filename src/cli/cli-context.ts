@@ -7,12 +7,15 @@ import { CONNECT_TIMEOUT_SECONDS } from '../infra/database/postgres-options';
 import { DrizzleProjectUsageQuery } from '../infra/queries/drizzle-project-usage.query';
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
+import { DrizzleAccountSuspensionRepository } from '../infra/repositories/drizzle-account-suspension.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
+import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import { DrizzleProjectPeopleRepository } from '../infra/repositories/drizzle-project-people.repository';
@@ -45,6 +48,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const accounts = new DrizzleAccountRepository(db);
   const random = new CryptoRandomSource();
   const clock = new SystemClock();
+  const suspensions = new DrizzleAccountSuspensionRepository(db);
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -66,6 +70,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
       new DrizzleAccountBillingRepository(db),
       clock,
     ),
+    suspendAccount: new SuspendAccountUseCase(accounts, suspensions, clock),
+    resumeAccount: new ResumeAccountUseCase(suspensions),
     close: () => client.end(),
   };
 }

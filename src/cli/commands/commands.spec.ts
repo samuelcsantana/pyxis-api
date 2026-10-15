@@ -3,7 +3,9 @@ import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-con
 import { CliUsageError } from '../cli-args';
 import { accountCreateCommand } from './account-create.command';
 import { accountLinkCommand } from './account-link.command';
+import { accountResumeCommand } from './account-resume.command';
 import { accountShowCommand } from './account-show.command';
+import { accountSuspendCommand } from './account-suspend.command';
 import { adminGrantCommand } from './admin-grant.command';
 import { adminRevokeCommand } from './admin-revoke.command';
 import { keyCreateCommand } from './key-create.command';
@@ -226,6 +228,8 @@ describe('account:show', () => {
       'people=2/3',
       'events_2026-10=not measured yet/100000',
       'ingestion_paused_until=',
+      'suspended_at=',
+      'suspension_reason=',
       `project=${PROJECT_ID}\tMy Shop`,
     ]);
   });
@@ -253,7 +257,59 @@ describe('account:show', () => {
       'events_2026-10=151000/100000',
       'measured_at=2026-10-06T03:00:00.000Z',
       'ingestion_paused_until=2026-11-01T00:00:00.000Z',
+      'suspended_at=',
+      'suspension_reason=',
     ]);
+  });
+});
+
+describe('account:suspend and account:resume', () => {
+  it('parse the account and a trimmed reason, refusing none or one too long', () => {
+    expect(
+      accountSuspendCommand.parse(['--account', ACCOUNT_ID, '--reason', '  Forged traffic  ']),
+    ).toEqual({ accountId: ACCOUNT_ID, reason: 'Forged traffic' });
+    expect(() => accountSuspendCommand.parse(['--account', ACCOUNT_ID])).toThrow(CliUsageError);
+    expect(() =>
+      accountSuspendCommand.parse(['--account', ACCOUNT_ID, '--reason', 'x'.repeat(501)]),
+    ).toThrow(CliUsageError);
+    expect(accountResumeCommand.parse(['--account', ACCOUNT_ID])).toEqual({
+      accountId: ACCOUNT_ID,
+    });
+  });
+
+  it('suspend an account and lift it, printing its state and what to do next', async () => {
+    const context = inMemoryCliContext();
+    const owner = await context.admins.findOrCreateByEmail('owner@example.com');
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'active' });
+    const suspended = captureOutput();
+
+    await accountSuspendCommand.execute(
+      context,
+      { accountId: account.id, reason: 'Forged traffic' },
+      suspended,
+    );
+
+    expect(suspended.out).toEqual([
+      `account_id=${account.id}`,
+      'status=active',
+      'suspended_at=2026-10-06T14:00:00.000Z',
+      'suspension_reason=Forged traffic',
+    ]);
+    expect(suspended.err).toEqual([expect.stringContaining('account:resume')]);
+    const shown = captureOutput();
+    await accountShowCommand.execute(context, { accountId: account.id }, shown);
+    expect(shown.out).toEqual(
+      expect.arrayContaining([
+        'suspended_at=2026-10-06T14:00:00.000Z',
+        'suspension_reason=Forged traffic',
+      ]),
+    );
+
+    const resumed = captureOutput();
+    await accountResumeCommand.execute(context, { accountId: account.id }, resumed);
+
+    expect(resumed.out).toEqual([`account_id=${account.id}`, 'status=active', 'suspended_at=']);
+    expect(resumed.err).toEqual([expect.stringContaining('stay revoked')]);
   });
 });
 

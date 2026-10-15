@@ -9,7 +9,9 @@ import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
+import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
@@ -74,6 +76,8 @@ export function inMemoryCliContext(): CliContext & {
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, accountUsage, clock),
     linkSubscription: new LinkSubscriptionUseCase(billing, accountBilling, clock),
+    suspendAccount: new SuspendAccountUseCase(accounts, accounts, clock),
+    resumeAccount: new ResumeAccountUseCase(accounts),
     close: () => {
       context.closed = true;
       return Promise.resolve();

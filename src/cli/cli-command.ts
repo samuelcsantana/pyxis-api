@@ -1,5 +1,7 @@
 import type { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import type { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
+import type { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
 import type { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import type { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import type { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
@@ -22,6 +24,8 @@ export interface CliContext {
   readonly createCompedAccount: CreateCompedAccountUseCase;
   readonly showAccount: ShowAccountUseCase;
   readonly linkSubscription: LinkSubscriptionUseCase;
+  readonly suspendAccount: SuspendAccountUseCase;
+  readonly resumeAccount: ResumeAccountUseCase;
   close(): Promise<void>;
 }
 
