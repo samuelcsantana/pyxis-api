@@ -18,6 +18,7 @@ import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
 import { DrizzleProjectSuspensionRepository } from '../infra/repositories/drizzle-project-suspension.repository';
+import { DrizzleProjectDeletionHoldRepository } from '../infra/repositories/drizzle-project-deletion-hold.repository';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
@@ -38,6 +39,8 @@ import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
+import { HoldProjectDeletionUseCase } from '../usecases/projects/hold-project-deletion.usecase';
+import { ReleaseProjectDeletionUseCase } from '../usecases/projects/release-project-deletion.usecase';
 import { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
 import { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
@@ -68,6 +71,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const adminSuspensions = new DrizzleAdminSuspensionRepository(db);
   const accessTokens = new DrizzleAccessTokenRepository(db);
   const projectSuspensions = new DrizzleProjectSuspensionRepository(db);
+  const projectHolds = new DrizzleProjectDeletionHoldRepository(db);
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -110,6 +114,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(accessTokens, clock),
     suspendProjectIngestion: new SuspendProjectIngestionUseCase(projectSuspensions, clock),
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
+    holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),
+    releaseProjectDeletion: new ReleaseProjectDeletionUseCase(projectHolds),
     close: () => client.end(),
   };
 }
