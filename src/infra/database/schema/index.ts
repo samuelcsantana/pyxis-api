@@ -3,6 +3,7 @@ export * from './admins';
 export * from './digest';
 export * from './events';
 export * from './exports';
+export * from './notices';
 export * from './project-icons';
 export * from './project-keys';
 export * from './projects';

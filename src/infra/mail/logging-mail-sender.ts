@@ -1,3 +1,4 @@
+import type { NoticeText } from '../../domain/notices/operator-notice';
 import { Logger } from '@nestjs/common';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
@@ -66,6 +67,11 @@ export class LoggingMailSender implements MailSender {
       events: ready.eventCount,
       language,
     });
+    return Promise.resolve();
+  }
+
+  sendOperatorNotice(_email: string, notice: NoticeText, language: EmailLanguage): Promise<void> {
+    this.logger.log({ message: 'mail.operator_notice', subject: notice.subject, language });
     return Promise.resolve();
   }
 

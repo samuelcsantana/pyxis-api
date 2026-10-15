@@ -9,6 +9,8 @@ import type { MailSender } from '../../domain/services/mail-sender';
 import { buildAccountNoticeEmail } from './account-notice-email';
 import type { EmailContent, EmailLinks } from './email-layout';
 import { buildExportReadyEmail } from './export-ready-email';
+import { buildOperatorNoticeEmail } from './operator-notice-email';
+import type { NoticeText } from '../../domain/notices/operator-notice';
 import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
@@ -73,6 +75,14 @@ export class ResendMailSender implements MailSender {
     return this.deliver(
       email,
       buildExportReadyEmail(ready, language, this.links),
+      this.supportEmail,
+    );
+  }
+
+  sendOperatorNotice(email: string, notice: NoticeText, language: EmailLanguage): Promise<void> {
+    return this.deliver(
+      email,
+      buildOperatorNoticeEmail(notice, language, this.links, this.supportEmail),
       this.supportEmail,
     );
   }

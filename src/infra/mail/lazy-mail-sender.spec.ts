@@ -40,6 +40,11 @@ describe('LazyMailSender', () => {
       'en',
     );
     await sender.sendQuotaNotice('ana@example.com', NOTICE, 'pt-BR');
+    await sender.sendOperatorNotice(
+      'ana@example.com',
+      { subject: 'Prices change', paragraphs: ['From December.'] },
+      'en',
+    );
     await sender.sendWeeklyDigest('ana@example.com', { projectId: 'p' } as WeeklyDigest, 'es');
 
     expect(create).toHaveBeenCalledTimes(1);
@@ -52,6 +57,7 @@ describe('LazyMailSender', () => {
     expect(recording.accountNotices).toHaveLength(1);
     expect(recording.welcomes).toHaveLength(1);
     expect(recording.exportsReady).toHaveLength(1);
+    expect(recording.operatorNotices).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
   });
 

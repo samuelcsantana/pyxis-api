@@ -1,3 +1,4 @@
+import type { OperatorNoticesReport } from '../usecases/notices/send-operator-notices.usecase';
 import { Logger } from '@nestjs/common';
 import type { DatabaseSizeReport } from '../domain/monitoring/database-size';
 import { EXPORT_JOB } from '../infra/exports/lambda-export-dispatcher';
@@ -12,6 +13,7 @@ import type {
 } from '../usecases/exports/process-project-export.usecase';
 
 export const WEEKLY_DIGEST_JOB = 'weekly-digest';
+export const OPERATOR_NOTICES_JOB = 'account-notices';
 
 export interface JobsHandlerDependencies {
   readonly loadParameters: () => Promise<unknown>;
@@ -23,6 +25,7 @@ export interface JobsHandlerDependencies {
   readonly refreshProjectIcons: () => Promise<ProjectIconsReport>;
   readonly processExport: (exportId: string) => Promise<ExportOutcome>;
   readonly processStalledExports: () => Promise<StalledExportsReport>;
+  readonly sendOperatorNotices: () => Promise<OperatorNoticesReport>;
 }
 
 export type JobsOutcome =
@@ -34,12 +37,18 @@ export type JobsOutcome =
       readonly accountUsage: AccountUsageReport;
       readonly accountLifecycle: AccountLifecycleReport;
       readonly exports: StalledExportsReport;
+      readonly operatorNotices: OperatorNoticesReport;
       readonly projectIcons: ProjectIconsReport | null;
     }
   | {
       readonly ok: true;
       readonly job: typeof WEEKLY_DIGEST_JOB;
       readonly digest: DigestReport;
+    }
+  | {
+      readonly ok: true;
+      readonly job: typeof OPERATOR_NOTICES_JOB;
+      readonly operatorNotices: OperatorNoticesReport;
     }
   | {
       readonly ok: true;
@@ -59,10 +68,8 @@ function exportAskedBy(event: unknown): string | null {
     : null;
 }
 
-function asksForWeeklyDigest(event: unknown): boolean {
-  return (
-    typeof event === 'object' && event !== null && 'job' in event && event.job === WEEKLY_DIGEST_JOB
-  );
+function asksFor(job: string, event: unknown): boolean {
+  return typeof event === 'object' && event !== null && 'job' in event && event.job === job;
 }
 
 const logger = new Logger('JobsHandler');
@@ -86,8 +93,15 @@ export function createJobsHandler(
 ): (event?: unknown) => Promise<JobsOutcome> {
   return async (event) => {
     await dependencies.loadParameters();
-    if (asksForWeeklyDigest(event)) {
+    if (asksFor(WEEKLY_DIGEST_JOB, event)) {
       return { ok: true, job: WEEKLY_DIGEST_JOB, digest: await dependencies.sendWeeklyDigests() };
+    }
+    if (asksFor(OPERATOR_NOTICES_JOB, event)) {
+      return {
+        ok: true,
+        job: OPERATOR_NOTICES_JOB,
+        operatorNotices: await dependencies.sendOperatorNotices(),
+      };
     }
     const exportId = exportAskedBy(event);
     if (exportId !== null) {
@@ -99,6 +113,7 @@ export function createJobsHandler(
     const accountUsage = await dependencies.measureAccountUsage();
     const accountLifecycle = await dependencies.runAccountLifecycle();
     const stalledExports = await dependencies.processStalledExports();
+    const operatorNotices = await dependencies.sendOperatorNotices();
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
     return {
       ok: true,
@@ -108,6 +123,7 @@ export function createJobsHandler(
       accountUsage,
       accountLifecycle,
       exports: stalledExports,
+      operatorNotices,
       projectIcons,
     };
   };

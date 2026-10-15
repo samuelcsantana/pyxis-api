@@ -5,6 +5,7 @@ const RETENTION = { events: 12, sessions: 1, signInCodes: 2, trialCards: 0 };
 const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
 const EXPORTS = { done: 1, failed: 0 };
+const NOTICES = { sent: 3, failed: 0 };
 const LIFECYCLE = {
   welcomes: 1,
   reconciled: 4,
@@ -62,6 +63,10 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
       order.push('digest');
       return Promise.resolve(DIGEST);
     },
+    sendOperatorNotices: () => {
+      order.push('notices');
+      return Promise.resolve(NOTICES);
+    },
     refreshProjectIcons: () => {
       order.push('icons');
       return Promise.resolve(ICONS);
@@ -77,7 +82,7 @@ describe('createJobsHandler', () => {
     ['an event that is not an object', 'weekly-digest'],
     ['null', null],
   ])(
-    'runs the daily jobs for %s: parameters, size, retention, usage, lifecycle, exports, icons',
+    'runs the daily jobs for %s: parameters to icons, notices before the icons',
     async (_label, event) => {
       const order: string[] = [];
 
@@ -89,6 +94,7 @@ describe('createJobsHandler', () => {
         accountUsage: ACCOUNT_USAGE,
         accountLifecycle: LIFECYCLE,
         exports: EXPORTS,
+        operatorNotices: NOTICES,
         projectIcons: ICONS,
       });
       expect(order).toEqual([
@@ -98,6 +104,7 @@ describe('createJobsHandler', () => {
         'usage',
         'lifecycle',
         'exports',
+        'notices',
         'icons',
       ]);
     },
@@ -110,6 +117,15 @@ describe('createJobsHandler', () => {
       createJobsHandler(recordingDependencies(order))({ job: 'weekly-digest' }),
     ).resolves.toEqual({ ok: true, job: 'weekly-digest', digest: DIGEST });
     expect(order).toEqual(['parameters', 'digest']);
+  });
+
+  it('sends the pending notices, and only them, when the operator asks', async () => {
+    const order: string[] = [];
+
+    await expect(
+      createJobsHandler(recordingDependencies(order))({ job: 'account-notices' }),
+    ).resolves.toEqual({ ok: true, job: 'account-notices', operatorNotices: NOTICES });
+    expect(order).toEqual(['parameters', 'notices']);
   });
 
   it('runs one export, and only it, when the jobs function is handed one', async () => {
