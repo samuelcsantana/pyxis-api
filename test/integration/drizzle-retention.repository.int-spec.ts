@@ -16,6 +16,9 @@ const SHOP_ID = 'a9b0c1d2-e3f4-4a5b-8c6d-7e8f9a0b1c2d';
 const BLOG_ID = 'b0c1d2e3-f4a5-4b6c-9d7e-8f9a0b1c2d3e';
 const NOW = new Date('2026-10-06T06:00:00.000Z');
 const CUTOFF = new Date('2025-09-06T06:00:00.000Z');
+const LIVE_CONNECTION = 'd1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f01';
+const IDLE_CONNECTION = 'd1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f02';
+const REVOKED_CONNECTION = 'd1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f03';
 
 let sequence = 0;
 
@@ -90,6 +93,29 @@ describe('retention against a real Postgres', () => {
         ('fp_recent', 'f9f9f9f9-0000-4000-8000-000000000001', '2025-10-06T06:00:00Z'),
         ('fp_old', 'f9f9f9f9-0000-4000-8000-000000000002', '2025-10-06T05:59:59.999Z')
     `;
+    await owner`
+      INSERT INTO oauth_connections (id, admin_user_id, client_id, created_at, last_used_at, revoked_at)
+      VALUES
+        (${LIVE_CONNECTION}, ${adminId}, 'claude', ${NOW}, ${NOW}, NULL),
+        (${IDLE_CONNECTION}, ${adminId}, 'claude', '2026-07-01T00:00:00Z', '2026-07-08T06:00:00Z', NULL),
+        (${REVOKED_CONNECTION}, ${adminId}, 'claude', ${NOW}, ${NOW}, ${NOW})
+    `;
+    await owner`
+      INSERT INTO oauth_connection_tokens (connection_id, kind, token_hash, created_at, expires_at, rotated_at)
+      VALUES
+        (${LIVE_CONNECTION}, 'access', ${sha256Hex('live-access')}, ${NOW}, '2026-10-06T07:00:00Z', NULL),
+        (${LIVE_CONNECTION}, 'access', ${sha256Hex('expired-access')}, '2026-10-06T05:00:00Z', ${NOW}, NULL),
+        (${LIVE_CONNECTION}, 'refresh', ${sha256Hex('live-refresh')}, ${NOW}, '2027-01-04T06:00:00Z', NULL),
+        (${LIVE_CONNECTION}, 'refresh', ${sha256Hex('recently-rotated')}, '2026-09-10T00:00:00Z', '2026-12-09T00:00:00Z', '2026-09-06T06:00:00Z'),
+        (${LIVE_CONNECTION}, 'refresh', ${sha256Hex('long-rotated')}, '2026-09-01T00:00:00Z', '2026-11-30T00:00:00Z', '2026-09-06T05:59:59.999Z')
+    `;
+    await owner`
+      INSERT INTO oauth_authorization_requests (client_id, redirect_uri, code_challenge, created_at, expires_at)
+      VALUES
+        ('claude', 'https://claude.ai/cb', ${'c'.repeat(43)}, ${NOW}, '2026-10-06T06:10:00Z'),
+        ('claude', 'https://claude.ai/cb', ${'c'.repeat(43)}, '2026-10-05T05:50:00Z', '2026-10-05T06:00:00Z'),
+        ('claude', 'https://claude.ai/cb', ${'c'.repeat(43)}, '2026-10-05T05:49:59Z', '2026-10-05T05:59:59.999Z')
+    `;
   });
 
   afterAll(async () => {
@@ -100,7 +126,15 @@ describe('retention against a real Postgres', () => {
   it('deletes, as the application role, exactly what is past its time', async () => {
     const report = await new RunRetentionUseCase(retention, new FixedClock(NOW)).execute();
 
-    expect(report).toEqual({ events: 3, sessions: 3, signInCodes: 1, trialCards: 1 });
+    expect(report).toEqual({
+      events: 3,
+      sessions: 3,
+      signInCodes: 1,
+      trialCards: 1,
+      oauthConnections: 2,
+      oauthTokens: 2,
+      oauthRequests: 1,
+    });
     const events = await owner<{ occurred_at: Date }[]>`
       SELECT occurred_at FROM events ORDER BY occurred_at
     `;
@@ -114,6 +148,18 @@ describe('retention against a real Postgres', () => {
     expect(codes?.count).toBe(1);
     const cards = await owner<{ fingerprint: string }[]>`SELECT fingerprint FROM trial_cards`;
     expect(cards).toEqual([{ fingerprint: 'fp_recent' }]);
+    const connections = await owner<{ id: string }[]>`SELECT id FROM oauth_connections`;
+    expect(connections).toEqual([{ id: LIVE_CONNECTION }]);
+    const tokens = await owner<{ token_hash: string }[]>`
+      SELECT token_hash FROM oauth_connection_tokens ORDER BY created_at
+    `;
+    expect(tokens.map((row) => row.token_hash).sort()).toEqual(
+      [sha256Hex('live-access'), sha256Hex('live-refresh'), sha256Hex('recently-rotated')].sort(),
+    );
+    const [requests] = await owner<{ count: number }[]>`
+      SELECT count(*)::int AS count FROM oauth_authorization_requests
+    `;
+    expect(requests?.count).toBe(2);
   });
 
   it("keeps the old events of a held project and of a held account's projects", async () => {
@@ -149,6 +195,9 @@ describe('retention against a real Postgres', () => {
       sessions: 0,
       signInCodes: 0,
       trialCards: 0,
+      oauthConnections: 0,
+      oauthTokens: 0,
+      oauthRequests: 0,
     });
   });
 });

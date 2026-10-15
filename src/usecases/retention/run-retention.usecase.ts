@@ -1,6 +1,12 @@
 import { Logger } from '@nestjs/common';
 import { SESSION_ABSOLUTE_TTL_MS, SESSION_IDLE_TTL_MS } from '../../domain/auth/session-policy';
 import {
+  FINISHED_AUTHORIZATION_REQUEST_RETENTION_DAYS,
+  idleConnectionCutoff,
+  later,
+  SPENT_REFRESH_TOKEN_RETENTION_DAYS,
+} from '../../domain/oauth/oauth-policy';
+import {
   eventRetentionCutoff,
   RETENTION_BATCH_SIZE,
   trialCardRetentionCutoff,
@@ -8,10 +14,20 @@ import {
 import type { RetentionRepository } from '../../domain/retention/retention.repository';
 import type { Clock } from '../../domain/services/clock';
 
-export const RETENTION_STEPS = ['events', 'sessions', 'signInCodes', 'trialCards'] as const;
+export const RETENTION_STEPS = [
+  'events',
+  'sessions',
+  'signInCodes',
+  'trialCards',
+  'oauthConnections',
+  'oauthTokens',
+  'oauthRequests',
+] as const;
 export type RetentionStep = (typeof RETENTION_STEPS)[number];
 
 export type RetentionReport = Readonly<Record<RetentionStep, number>>;
+
+const MILLISECONDS_PER_DAY = 86_400_000;
 
 export class RetentionFailedError extends Error {
   constructor(readonly failedSteps: readonly RetentionStep[]) {
@@ -39,12 +55,25 @@ export class RunRetentionUseCase {
         }),
       signInCodes: () => this.retention.deleteExpiredSignInCodes(now),
       trialCards: () => this.retention.deleteTrialCardsStartedBefore(trialCardRetentionCutoff(now)),
+      oauthConnections: () => this.retention.deleteEndedConnections(idleConnectionCutoff(now)),
+      oauthTokens: () =>
+        this.retention.deleteSpentConnectionTokens({
+          expiredBefore: now,
+          rotatedBefore: later(now, -SPENT_REFRESH_TOKEN_RETENTION_DAYS * MILLISECONDS_PER_DAY),
+        }),
+      oauthRequests: () =>
+        this.retention.deleteFinishedAuthorizationRequests(
+          later(now, -FINISHED_AUTHORIZATION_REQUEST_RETENTION_DAYS * MILLISECONDS_PER_DAY),
+        ),
     };
     const report: Record<RetentionStep, number> = {
       events: 0,
       sessions: 0,
       signInCodes: 0,
       trialCards: 0,
+      oauthConnections: 0,
+      oauthTokens: 0,
+      oauthRequests: 0,
     };
     const failed: RetentionStep[] = [];
     for (const step of RETENTION_STEPS) {
