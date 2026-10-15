@@ -7,6 +7,7 @@ import { AuthModule } from './infra/http/auth/auth.module';
 import { BillingModule } from './infra/http/billing/billing.module';
 import { HealthModule } from './infra/http/health/health.module';
 import { IngestModule } from './infra/http/ingest/ingest.module';
+import { McpModule } from './infra/http/mcp/mcp.module';
 import { OAuthModule } from './infra/http/oauth/oauth.module';
 import { PreferencesModule } from './infra/http/preferences/preferences.module';
 import { ProjectsModule } from './infra/http/projects/projects.module';
@@ -29,6 +30,7 @@ import { SubjectsModule } from './infra/http/subjects/subjects.module';
     ProjectsModule,
     SubjectsModule,
     OAuthModule,
+    McpModule,
   ],
 })
 export class AppModule {}
