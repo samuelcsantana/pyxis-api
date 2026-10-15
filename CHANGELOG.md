@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.20.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.19.0...v0.20.0) (2026-10-15)
+
+
+### Features
+
+* **accounts:** give an account its own plan limits, set by the operator ([0de59f9](https://github.com/samuelcsantana/pyxis-api/commit/0de59f9f00ac07df7816103aee662a92bd72a089))
+
+
+### Documentation
+
+* describe per-account plan limits and add ADR 0036 ([f3a2bdc](https://github.com/samuelcsantana/pyxis-api/commit/f3a2bdc594329df300ca0979777a47ca13da97a1))
+
 ## [0.19.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.18.0...v0.19.0) (2026-10-15)
 
 
