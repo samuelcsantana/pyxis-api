@@ -11,6 +11,7 @@ import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildAccountNoticeEmail } from './account-notice-email';
 import { buildInvitationEmail } from './invitation-email';
 import { buildWelcomeEmail } from './welcome-email';
+import { buildExportReadyEmail } from './export-ready-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
@@ -126,6 +127,31 @@ describe('ResendMailSender', () => {
         'en',
       ),
     ).rejects.toThrow(/^Resend answered 422$/);
+  });
+
+  it('sends the export notice with replies going to the support address', async () => {
+    const send = okResend();
+    const ready = {
+      projectId: 'p-1',
+      exportId: 'e-1',
+      projectName: 'Shop',
+      eventCount: 3,
+      availableUntil: new Date('2026-11-09T00:00:00.000Z'),
+    };
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendExportReady(
+      'owner@example.com',
+      ready,
+      'en',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildExportReadyEmail(ready, 'en', LINKS),
+    });
   });
 
   it('sends the welcome with replies going to the support address', async () => {
@@ -263,6 +289,24 @@ describe('SesMailSender', () => {
       buildSignUpCodeEmail('654321', 'en', LINKS).subject,
     );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
+  });
+
+  it('sends the export notice through SES too', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendExportReady(
+      'owner@example.com',
+      {
+        projectId: 'p-1',
+        exportId: 'e-1',
+        projectName: 'Shop',
+        eventCount: 3,
+        availableUntil: new Date('2026-11-09T00:00:00.000Z'),
+      },
+      'pt-BR',
+    );
+
+    expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
   });
 
   it('sends the welcome through SES too', async () => {
@@ -430,6 +474,29 @@ describe('LoggingMailSender', () => {
         events: 150_412,
         language: 'pt-BR',
       },
+    ]);
+  });
+
+  it('logs the export and its size, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendExportReady(
+      'owner@example.com',
+      {
+        projectId: 'p-1',
+        exportId: 'e-1',
+        projectName: 'Shop',
+        eventCount: 3,
+        availableUntil: new Date('2026-11-09T00:00:00.000Z'),
+      },
+      'es',
+    );
+
+    expect(logs).toEqual([
+      { message: 'mail.export_ready', exportId: 'e-1', events: 3, language: 'es' },
     ]);
   });
 

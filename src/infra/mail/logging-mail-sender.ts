@@ -4,6 +4,7 @@ import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
+import type { ExportReady } from '../../domain/exports/export-ready';
 import type { Invitation } from '../../domain/people/invitation';
 import type { MailSender } from '../../domain/services/mail-sender';
 import { weeklyDigestSubject } from './weekly-digest-email';
@@ -53,6 +54,16 @@ export class LoggingMailSender implements MailSender {
       message: 'mail.welcome',
       trial: welcome.trialEndsAt !== null,
       withTerms: welcome.terms !== null,
+      language,
+    });
+    return Promise.resolve();
+  }
+
+  sendExportReady(_email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {
+    this.logger.log({
+      message: 'mail.export_ready',
+      exportId: ready.exportId,
+      events: ready.eventCount,
       language,
     });
     return Promise.resolve();

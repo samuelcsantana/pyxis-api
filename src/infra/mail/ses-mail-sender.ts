@@ -4,10 +4,12 @@ import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
+import type { ExportReady } from '../../domain/exports/export-ready';
 import type { Invitation } from '../../domain/people/invitation';
 import type { MailSender } from '../../domain/services/mail-sender';
 import { buildAccountNoticeEmail } from './account-notice-email';
 import type { EmailContent, EmailLinks } from './email-layout';
+import { buildExportReadyEmail } from './export-ready-email';
 import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
@@ -72,6 +74,14 @@ export class SesMailSender implements MailSender {
 
   sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
     return this.deliver(email, buildWelcomeEmail(welcome, language, this.links), this.supportEmail);
+  }
+
+  sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {
+    return this.deliver(
+      email,
+      buildExportReadyEmail(ready, language, this.links),
+      this.supportEmail,
+    );
   }
 
   private async deliver(
