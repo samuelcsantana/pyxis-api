@@ -5,6 +5,7 @@ import { accountCreateCommand } from './account-create.command';
 import { accountLinkCommand } from './account-link.command';
 import { accountShowCommand } from './account-show.command';
 import { adminGrantCommand } from './admin-grant.command';
+import { adminRevokeCommand } from './admin-revoke.command';
 import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
@@ -474,6 +475,33 @@ describe('key:revoke', () => {
     expect(output.out).toEqual([`revoked_key_id=${publicKeyId}`]);
     expect(output.err).toEqual([expect.stringContaining('60 seconds')]);
     expect(await context.store.findByPublicKey(publicKey)).toBeNull();
+  });
+});
+
+describe('admin:revoke', () => {
+  it('parses the email and the project id', () => {
+    expect(
+      adminRevokeCommand.parse(['--email', 'ana@example.com', '--project', PROJECT_ID]),
+    ).toEqual({ email: 'ana@example.com', projectId: PROJECT_ID });
+  });
+
+  it('refuses a project id that is not one', () => {
+    expect(() =>
+      adminRevokeCommand.parse(['--email', 'ana@example.com', '--project', 'x']),
+    ).toThrow(CliUsageError);
+  });
+
+  it('takes the person off the project and prints their id', async () => {
+    const { context, projectId } = await createdProject();
+    const admin = await context.admins.findOrCreateByEmail('ana@example.com');
+    context.people.addPerson(projectId, 'ana@example.com', admin.id);
+    const output = captureOutput();
+
+    await adminRevokeCommand.execute(context, { email: 'ana@example.com', projectId }, output);
+
+    expect(output.out).toEqual([`admin_user_id=${admin.id}`, `project_id=${projectId}`]);
+    expect(output.err).toEqual([expect.stringContaining('ana@example.com no longer reads')]);
+    expect(await context.people.peopleOf(projectId)).toEqual([]);
   });
 });
 

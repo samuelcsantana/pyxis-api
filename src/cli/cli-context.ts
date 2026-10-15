@@ -15,6 +15,8 @@ import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-a
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
+import { DrizzleProjectPeopleRepository } from '../infra/repositories/drizzle-project-people.repository';
+import { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
 import { createBillingGateway } from '../infra/billing/create-billing-gateway';
 import { DrizzleAccountBillingRepository } from '../infra/repositories/drizzle-account-billing.repository';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
@@ -51,6 +53,12 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     deleteProject: new DeleteProjectUseCase(settings),
     reportUsage: new ReportProjectUsageUseCase(new DrizzleProjectUsageQuery(db), clock),
     grantAdminAccess: new GrantAdminAccessUseCase(settings, admins),
+    revokeAdminAccess: new RevokeAdminAccessUseCase(
+      admins,
+      settings,
+      accounts,
+      new DrizzleProjectPeopleRepository(db),
+    ),
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, new DrizzleAccountUsageRepository(db), clock),
     linkSubscription: new LinkSubscriptionUseCase(

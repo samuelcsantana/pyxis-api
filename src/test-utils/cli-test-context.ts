@@ -4,6 +4,7 @@ import { InMemoryAccountBillingRepository } from './in-memory-account-billing.re
 import { InMemoryAccountUsageRepository } from './in-memory-account-usage.repository';
 import { InMemoryAccountRepository } from './in-memory-account.repository';
 import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
+import { InMemoryProjectPeopleRepository } from './in-memory-project-people.repository';
 import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
@@ -11,6 +12,7 @@ import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-a
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
+import { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
 import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key.usecase';
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
@@ -37,6 +39,7 @@ export function inMemoryCliContext(): CliContext & {
   readonly accountUsage: InMemoryAccountUsageRepository;
   readonly billing: FakeBillingGateway;
   readonly accountBilling: InMemoryAccountBillingRepository;
+  readonly people: InMemoryProjectPeopleRepository;
   readonly usage: StubProjectUsageQuery;
   closed: boolean;
 } {
@@ -46,6 +49,7 @@ export function inMemoryCliContext(): CliContext & {
   const accountUsage = new InMemoryAccountUsageRepository();
   const billing = new FakeBillingGateway();
   const accountBilling = new InMemoryAccountBillingRepository();
+  const people = new InMemoryProjectPeopleRepository();
   const usage = new StubProjectUsageQuery();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
@@ -56,6 +60,7 @@ export function inMemoryCliContext(): CliContext & {
     accountUsage,
     billing,
     accountBilling,
+    people,
     usage,
     closed: false,
     createProject: new CreateProjectUseCase(store, random),
@@ -65,6 +70,7 @@ export function inMemoryCliContext(): CliContext & {
     deleteProject: new DeleteProjectUseCase(store),
     reportUsage: new ReportProjectUsageUseCase(usage, clock),
     grantAdminAccess: new GrantAdminAccessUseCase(store, admins),
+    revokeAdminAccess: new RevokeAdminAccessUseCase(admins, store, accounts, people),
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, accountUsage, clock),
     linkSubscription: new LinkSubscriptionUseCase(billing, accountBilling, clock),

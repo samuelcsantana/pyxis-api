@@ -35,6 +35,7 @@
     "key:create": "node dist/cli/key-create.main.js",
     "key:revoke": "node dist/cli/key-revoke.main.js",
     "admin:grant": "node dist/cli/admin-grant.main.js",
+    "admin:revoke": "node dist/cli/admin-revoke.main.js",
     "usage:report": "node dist/cli/usage-report.main.js",
     "account:create": "node dist/cli/account-create.main.js",
     "account:show": "node dist/cli/account-show.main.js",
