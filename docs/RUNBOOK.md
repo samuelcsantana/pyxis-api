@@ -295,6 +295,25 @@ To close sign-up again, set `signup_open = false`, apply and deploy; accounts
 already created keep working. A new version of the terms is the same change with a new
 `terms_version`: a page still showing the old one is refused with `409 terms_outdated`.
 
+## Exports
+
+Owners export a project's events to a compressed CSV. Terraform creates the private bucket
+`<project>-exports-<account-id>` (public access blocked, encrypted, files under `exports/` deleted
+after `export_file_days`, 7 by default), lets the jobs function write there and the HTTP function
+read (to sign download links) and invoke the jobs function, and writes `EXPORT_BUCKET` and
+`JOBS_FUNCTION_NAME` to the parameters. The Terraform role needs the `ExportsBucket` statement of
+`docs/iam/pyxis-api-terraform-policy.json` (a new version of its managed policy) before the
+first apply.
+
+A request is handed to the jobs function at once (`{"job":"export","exportId":"…"}`); one that
+waited more than fifteen minutes is run by the next daily job. Logs: `exports.done { exportId,
+events }`, `exports.failed` (the export is marked failed and the invocation fails),
+`exports.dispatch_failed` (the daily job will run it). To run one by hand:
+
+```bash
+aws lambda invoke --function-name pyxis-api-jobs --region sa-east-1 --profile pyxis-api   --cli-binary-format raw-in-base64-out --payload '{"job":"export","exportId":"<id>"}' out.json
+```
+
 ## Rollback
 
 ECR keeps the last five tagged images. Point the HTTP function back at the previous tag:

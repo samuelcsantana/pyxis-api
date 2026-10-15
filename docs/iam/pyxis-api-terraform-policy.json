@@ -94,6 +94,12 @@
       "Resource": ["arn:aws:s3:::pyxis-api-tfstate*", "arn:aws:s3:::pyxis-api-tfstate*/*"]
     },
     {
+      "Sid": "ExportsBucket",
+      "Effect": "Allow",
+      "Action": "s3:*",
+      "Resource": ["arn:aws:s3:::pyxis-api-exports-*", "arn:aws:s3:::pyxis-api-exports-*/*"]
+    },
+    {
       "Sid": "IamForTheFunctionRolesOnly",
       "Effect": "Allow",
       "Action": [
