@@ -240,6 +240,10 @@ Shipping now:
   a suspension when there was one) or not at all, and ends access with the same closure as the
   owner's; a failed refund never keeps the account open
   ([ADR 0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md))
+- Holding the deletion of an account for a dispute or a legal order (`account:hold`,
+  `account:release`): the daily job neither reminds nor deletes it, its owner cannot delete its
+  projects (`409 deletion_on_hold`) and sees the hold, not the reason
+  ([ADR 0029](docs/adr/0029-a-deletion-can-be-held.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -349,6 +353,8 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s account:suspend -- --account <id> --reason "<why>"`                                                                                                 | Suspends the account for abuse, keeping the reason the owner was told (500 characters at most); its projects stop taking events and opening in the dashboard within a minute                    |
 | `npm run -s account:resume -- --account <id>`                                                                                                                   | Lifts the suspension; keys and tokens revoked meanwhile stay revoked                                                                                                                            |
 | `npm run -s account:close -- --account <id> --reason "<why>" --refund <full\|prorata\|none>`                                                                    | Ends the account at once as the operator: cancels the subscription, refunds as asked, revokes the keys; the daily job e-mails the owner; needs `STRIPE_SECRET_KEY` when there is a subscription |
+| `npm run -s account:hold -- --account <id> --reason "<why>"`                                                                                                    | Holds the deletion of the account and of its projects, keeping the reason (500 characters at most); the owner sees the hold, not the reason                                                     |
+| `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                       |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
@@ -600,6 +606,7 @@ starts a second free trial. Provisioning, deploys, checks, alarms and rollbacks 
 | [0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md)            | Repeated free trials are detected and reported, never blocked              |
 | [0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md)                 | A suspension is a mark on the account, not a status                        |
 | [0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md) | The operator closes an account with a chosen refund                        |
+| [0029](docs/adr/0029-a-deletion-can-be-held.md)                              | A deletion can be held for a dispute or a legal order                      |
 
 ## Roadmap
 
