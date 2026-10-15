@@ -2,12 +2,15 @@ import { ConsoleLogger, Logger } from '@nestjs/common';
 import { validateEnv } from '../config/env.schema';
 import { SystemClock } from '../infra/clock/system-clock';
 import { createDrizzleDatabase, createPostgresClient } from '../infra/database/postgres-client';
+import { createBillingGateway } from '../infra/billing/create-billing-gateway';
 import { createMailSender } from '../infra/mail/create-mail-sender';
 import { LazyMailSender } from '../infra/mail/lazy-mail-sender';
 import { DrizzleDigestRecipientsQuery } from '../infra/queries/drizzle-digest-recipients.query';
 import { DrizzleOverviewQuery } from '../infra/queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../infra/queries/drizzle-project-activity.query';
 import { DrizzleRequestsQuery } from '../infra/queries/drizzle-requests.query';
+import { DrizzleAccountBillingRepository } from '../infra/repositories/drizzle-account-billing.repository';
+import { DrizzleAccountLifecycleRepository } from '../infra/repositories/drizzle-account-lifecycle.repository';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleDigestDeliveryRepository } from '../infra/repositories/drizzle-digest-delivery.repository';
 import { DrizzleRetentionRepository } from '../infra/repositories/drizzle-retention.repository';
@@ -16,6 +19,7 @@ import { PostgresDatabaseSizeProbe } from '../infra/repositories/postgres-databa
 import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher';
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
+import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
 import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest.usecase';
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
 import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
@@ -57,6 +61,17 @@ export const handler = createJobsHandler({
         new SystemClock(),
       ).execute(),
     ),
+  runAccountLifecycle: () =>
+    withDatabase((database) => {
+      const env = validateEnv(process.env);
+      return new RunAccountLifecycleUseCase(
+        new DrizzleAccountLifecycleRepository(database),
+        new DrizzleAccountBillingRepository(database),
+        createBillingGateway(env),
+        new LazyMailSender(() => createMailSender(env)),
+        new SystemClock(),
+      ).execute();
+    }),
   sendWeeklyDigests: () =>
     withDatabase((database) =>
       new SendWeeklyDigestsUseCase(
