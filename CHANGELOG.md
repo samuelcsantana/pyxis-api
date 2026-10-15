@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.17.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.16.0...v0.17.0) (2026-10-15)
+
+
+### Features
+
+* **billing:** keep the cards that started a free trial ([921ec15](https://github.com/samuelcsantana/pyxis-api/commit/921ec1599e5050bd07452bc68262f369a3c5335d))
+* **billing:** read the card fingerprint of a subscription ([16258c2](https://github.com/samuelcsantana/pyxis-api/commit/16258c250fcbb0637326e57f9861db4f7c5621d3))
+* **billing:** warn when a card starts a second free trial ([05765bc](https://github.com/samuelcsantana/pyxis-api/commit/05765bc79f85b5954369e333640227c2982ac9e8))
+* **infra:** alarm when a card starts a second free trial ([758395a](https://github.com/samuelcsantana/pyxis-api/commit/758395a6c19e4dd56ecafe30c1dad946af01484f))
+* **retention:** delete the cards of trials older than a year ([fef7a55](https://github.com/samuelcsantana/pyxis-api/commit/fef7a55e9756c10956cdacf3df2e9cbf8fe6bb26))
+
+
+### Documentation
+
+* describe the detection of repeated free trials ([929235f](https://github.com/samuelcsantana/pyxis-api/commit/929235f756390d763359e9da7660975db552088d))
+
 ## [0.16.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.15.0...v0.16.0) (2026-10-15)
 
 
