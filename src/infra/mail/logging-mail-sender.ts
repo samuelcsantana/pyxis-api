@@ -2,6 +2,7 @@ import { Logger } from '@nestjs/common';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
+import type { Invitation } from '../../domain/people/invitation';
 import type { MailSender } from '../../domain/services/mail-sender';
 import { weeklyDigestSubject } from './weekly-digest-email';
 
@@ -37,6 +38,11 @@ export class LoggingMailSender implements MailSender {
       events: notice.events,
       language,
     });
+    return Promise.resolve();
+  }
+
+  sendInvitation(_email: string, invitation: Invitation, language: EmailLanguage): Promise<void> {
+    this.logger.log({ message: 'mail.invitation', project: invitation.projectName, language });
     return Promise.resolve();
   }
 }

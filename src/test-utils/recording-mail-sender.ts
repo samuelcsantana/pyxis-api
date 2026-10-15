@@ -1,6 +1,7 @@
 import type { QuotaNotice } from '../domain/accounts/quota-notice';
 import type { EmailLanguage } from '../domain/auth/email-language';
 import type { WeeklyDigest } from '../domain/digest/weekly-digest';
+import type { Invitation } from '../domain/people/invitation';
 import type { MailSender } from '../domain/services/mail-sender';
 
 export interface SentSignInCode {
@@ -21,11 +22,18 @@ export interface SentQuotaNotice {
   readonly language: EmailLanguage;
 }
 
+export interface SentInvitation {
+  readonly email: string;
+  readonly invitation: Invitation;
+  readonly language: EmailLanguage;
+}
+
 export class RecordingMailSender implements MailSender {
   readonly sent: SentSignInCode[] = [];
   readonly signUpCodes: SentSignInCode[] = [];
   readonly quotaNotices: SentQuotaNotice[] = [];
   readonly digests: SentWeeklyDigest[] = [];
+  readonly invitations: SentInvitation[] = [];
   private failure: Error | null = null;
   private readonly failingAddresses = new Map<string, Error>();
 
@@ -68,6 +76,15 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(failure);
     }
     this.quotaNotices.push({ email, notice, language });
+    return Promise.resolve();
+  }
+
+  sendInvitation(email: string, invitation: Invitation, language: EmailLanguage): Promise<void> {
+    const failure = this.failingAddresses.get(email);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
+    }
+    this.invitations.push({ email, invitation, language });
     return Promise.resolve();
   }
 }
