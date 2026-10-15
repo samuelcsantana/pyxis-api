@@ -16,8 +16,10 @@ import type {
 } from '../../domain/repositories/account-lifecycle.repository';
 import type { Clock } from '../../domain/services/clock';
 import type { MailSender } from '../../domain/services/mail-sender';
+import type { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 
 export interface AccountLifecycleReport {
+  readonly welcomes: number;
   readonly reconciled: number;
   readonly statusChanges: number;
   readonly reconcileFailures: number;
@@ -51,10 +53,12 @@ export class RunAccountLifecycleUseCase {
     private readonly gateway: BillingGateway,
     private readonly mail: MailSender,
     private readonly clock: Clock,
+    private readonly welcomes: WelcomeAccountsUseCase,
   ) {}
 
   async execute(): Promise<AccountLifecycleReport> {
     const now = this.clock.now();
+    const welcomes = await this.welcomes.welcomePending();
     const reconciliation = await this.reconcile(now);
     const keysRevoked = await this.lifecycle.revokeKeysOfEndedAccounts(now);
     const endedNotices = await this.notifyEach(
@@ -70,6 +74,7 @@ export class RunAccountLifecycleUseCase {
     const deletion = await this.deleteEnded(now);
     const incomplete = await this.removeStaleIncomplete(now);
     const report: AccountLifecycleReport = {
+      welcomes,
       ...reconciliation,
       keysRevoked,
       endedNotices,

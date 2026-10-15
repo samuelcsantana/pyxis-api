@@ -1,7 +1,4 @@
 import { Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import type { EnvConfig } from '../../../config/env.schema';
-import { SIGN_UP_SETTINGS } from '../../../domain/accounts/sign-up-settings';
 import { ACCOUNT_REPOSITORY } from '../../../domain/repositories/account.repository';
 import { ACCOUNT_USAGE_REPOSITORY } from '../../../domain/repositories/account-usage.repository';
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
@@ -24,7 +21,6 @@ import { DashboardOriginGuard, SessionGuard } from '../auth/auth.guards';
 import { BillingModule } from '../billing/billing.module';
 import { AccountsController } from './accounts.controller';
 import { SignUpController } from './sign-up.controller';
-import { signUpSettingsFromEnv } from './sign-up-settings-from-env';
 
 @Module({
   imports: [AuthModule, BillingModule],
@@ -43,17 +39,6 @@ import { signUpSettingsFromEnv } from './sign-up-settings-from-env';
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: ACCOUNT_USAGE_REPOSITORY, useClass: DrizzleAccountUsageRepository },
     { provide: TERMS_ACCEPTANCE_REPOSITORY, useClass: DrizzleTermsAcceptanceRepository },
-    {
-      provide: SIGN_UP_SETTINGS,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<EnvConfig, true>) =>
-        signUpSettingsFromEnv({
-          SIGNUP_OPEN: config.get('SIGNUP_OPEN', { infer: true }),
-          TERMS_VERSION: config.get('TERMS_VERSION', { infer: true }),
-          TERMS_URL: config.get('TERMS_URL', { infer: true }),
-          DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
-        }),
-    },
   ],
 })
 export class AccountsModule {}
