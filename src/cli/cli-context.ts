@@ -8,6 +8,7 @@ import { DrizzleProjectUsageQuery } from '../infra/queries/drizzle-project-usage
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleAccountClosureRepository } from '../infra/repositories/drizzle-account-closure.repository';
+import { DrizzleAccountDeletionHoldRepository } from '../infra/repositories/drizzle-account-deletion-hold.repository';
 import { DrizzleAccountSuspensionRepository } from '../infra/repositories/drizzle-account-suspension.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
@@ -15,6 +16,8 @@ import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-proje
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
+import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
@@ -52,6 +55,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const clock = new SystemClock();
   const suspensions = new DrizzleAccountSuspensionRepository(db);
   const billing = createBillingGateway(config);
+  const holds = new DrizzleAccountDeletionHoldRepository(db);
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -81,6 +85,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
       billing,
       clock,
     ),
+    holdAccountDeletion: new HoldAccountDeletionUseCase(accounts, holds, clock),
+    releaseAccountDeletion: new ReleaseAccountDeletionUseCase(holds),
     close: () => client.end(),
   };
 }

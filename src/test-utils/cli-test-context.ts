@@ -11,6 +11,8 @@ import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
+import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
@@ -84,6 +86,8 @@ export function inMemoryCliContext(): CliContext & {
     suspendAccount: new SuspendAccountUseCase(accounts, accounts, clock),
     resumeAccount: new ResumeAccountUseCase(accounts),
     closeAccountAsOperator: new CloseAccountAsOperatorUseCase(accounts, closure, billing, clock),
+    holdAccountDeletion: new HoldAccountDeletionUseCase(accounts, accounts, clock),
+    releaseAccountDeletion: new ReleaseAccountDeletionUseCase(accounts),
     close: () => {
       context.closed = true;
       return Promise.resolve();

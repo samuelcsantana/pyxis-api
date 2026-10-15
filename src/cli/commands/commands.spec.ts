@@ -3,6 +3,8 @@ import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-con
 import { CliUsageError } from '../cli-args';
 import { accountCloseCommand } from './account-close.command';
 import { accountCreateCommand } from './account-create.command';
+import { accountHoldCommand } from './account-hold.command';
+import { accountReleaseCommand } from './account-release.command';
 import { accountLinkCommand } from './account-link.command';
 import { accountResumeCommand } from './account-resume.command';
 import { accountShowCommand } from './account-show.command';
@@ -231,6 +233,8 @@ describe('account:show', () => {
       'ingestion_paused_until=',
       'suspended_at=',
       'suspension_reason=',
+      'deletion_held_at=',
+      'deletion_hold_reason=',
       `project=${PROJECT_ID}\tMy Shop`,
     ]);
   });
@@ -260,6 +264,8 @@ describe('account:show', () => {
       'ingestion_paused_until=2026-11-01T00:00:00.000Z',
       'suspended_at=',
       'suspension_reason=',
+      'deletion_held_at=',
+      'deletion_hold_reason=',
     ]);
   });
 });
@@ -311,6 +317,56 @@ describe('account:suspend and account:resume', () => {
 
     expect(resumed.out).toEqual([`account_id=${account.id}`, 'status=active', 'suspended_at=']);
     expect(resumed.err).toEqual([expect.stringContaining('stay revoked')]);
+  });
+});
+
+describe('account:hold and account:release', () => {
+  it('parse the account and a trimmed reason, refusing none or one too long', () => {
+    expect(
+      accountHoldCommand.parse(['--account', ACCOUNT_ID, '--reason', ' Court order 123 ']),
+    ).toEqual({ accountId: ACCOUNT_ID, reason: 'Court order 123' });
+    expect(() => accountHoldCommand.parse(['--account', ACCOUNT_ID])).toThrow(CliUsageError);
+    expect(() =>
+      accountHoldCommand.parse(['--account', ACCOUNT_ID, '--reason', 'x'.repeat(501)]),
+    ).toThrow(CliUsageError);
+    expect(accountReleaseCommand.parse(['--account', ACCOUNT_ID])).toEqual({
+      accountId: ACCOUNT_ID,
+    });
+  });
+
+  it('hold the deletion and release it, printing the state and what follows', async () => {
+    const context = inMemoryCliContext();
+    const owner = await context.admins.findOrCreateByEmail('owner@example.com');
+    const account = await context.accounts.create({ ownerAdminId: owner.id, status: 'ended' });
+    const held = captureOutput();
+
+    await accountHoldCommand.execute(
+      context,
+      { accountId: account.id, reason: 'Court order 123' },
+      held,
+    );
+
+    expect(held.out).toEqual([
+      `account_id=${account.id}`,
+      'status=ended',
+      'deletion_held_at=2026-10-06T14:00:00.000Z',
+      'deletion_hold_reason=Court order 123',
+    ]);
+    expect(held.err).toEqual([expect.stringContaining('account:release')]);
+    const shown = captureOutput();
+    await accountShowCommand.execute(context, { accountId: account.id }, shown);
+    expect(shown.out).toEqual(
+      expect.arrayContaining([
+        'deletion_held_at=2026-10-06T14:00:00.000Z',
+        'deletion_hold_reason=Court order 123',
+      ]),
+    );
+
+    const released = captureOutput();
+    await accountReleaseCommand.execute(context, { accountId: account.id }, released);
+
+    expect(released.out).toEqual([`account_id=${account.id}`, 'status=ended', 'deletion_held_at=']);
+    expect(released.err).toEqual([expect.stringContaining('next daily job')]);
   });
 });
 

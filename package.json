@@ -43,6 +43,8 @@
     "account:suspend": "node dist/cli/account-suspend.main.js",
     "account:resume": "node dist/cli/account-resume.main.js",
     "account:close": "node dist/cli/account-close.main.js",
+    "account:hold": "node dist/cli/account-hold.main.js",
+    "account:release": "node dist/cli/account-release.main.js",
     "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand",
     "docs:build": "redocly build-docs openapi/openapi.json --output api-reference/index.html --title \"Pyxis API reference\""
   },
