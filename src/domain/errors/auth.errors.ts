@@ -24,6 +24,14 @@ export class SessionNotFoundError extends DomainError {
   }
 }
 
+export class AdminNotFoundError extends DomainError {
+  readonly code = 'admin_not_found';
+
+  constructor() {
+    super('No admin has this e-mail address.');
+  }
+}
+
 export class AccessTokenNotFoundError extends DomainError {
   readonly code = 'access_token_not_found';
 

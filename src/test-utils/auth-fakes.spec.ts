@@ -36,6 +36,17 @@ describe('InMemoryAdminUserRepository', () => {
     expect(await admins.accessibleProject('stranger', PROJECT.id)).toBeNull();
   });
 
+  it('suspends and resumes a known admin only', async () => {
+    const admins = new InMemoryAdminUserRepository();
+    const ana = await admins.findOrCreateByEmail('ana@example.com');
+    const at = new Date('2026-11-03T12:00:00.000Z');
+
+    expect(await admins.suspend(ana.id, at)).toMatchObject({ suspendedAt: at });
+    expect(await admins.resume(ana.id)).toMatchObject({ suspendedAt: null });
+    expect(await admins.suspend('nobody', at)).toBeNull();
+    expect(await admins.resume('nobody')).toBeNull();
+  });
+
   it('changes the language of one admin only', async () => {
     const admins = new InMemoryAdminUserRepository();
     const ana = await admins.grantAccess('ana@example.com', PROJECT.id);

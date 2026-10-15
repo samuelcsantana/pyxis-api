@@ -18,6 +18,7 @@ import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { AuthenticateAccessTokenUseCase } from './authenticate-access-token.usecase';
 import { CreateAccessTokenUseCase } from './create-access-token.usecase';
 import { ListAccessTokensUseCase } from './list-access-tokens.usecase';
+import { RevokeAccessTokenAsOperatorUseCase } from './revoke-access-token-as-operator.usecase';
 import { RevokeAccessTokenUseCase } from './revoke-access-token.usecase';
 
 const NOW = new Date('2026-10-14T12:00:00.000Z');
@@ -39,6 +40,7 @@ async function setup() {
     create: new CreateAccessTokenUseCase(tokens, random, clock),
     list: new ListAccessTokensUseCase(tokens, clock),
     revoke: new RevokeAccessTokenUseCase(tokens, clock),
+    revokeAsOperator: new RevokeAccessTokenAsOperatorUseCase(tokens, clock),
     authenticate: new AuthenticateAccessTokenUseCase(tokens, admins, clock),
   };
 }
@@ -231,5 +233,27 @@ describe('AuthenticateAccessTokenUseCase', () => {
     await expect(withoutAdmins.execute(created.secret)).rejects.toBeInstanceOf(
       UnauthenticatedError,
     );
+  });
+});
+
+describe('RevokeAccessTokenAsOperatorUseCase', () => {
+  it("revokes anyone's token by its id, once", async () => {
+    const { create, revokeAsOperator, tokens, bruno } = await setup();
+    const created = await create.execute(bruno, { name: 'Published by mistake', lifetimeDays: 30 });
+
+    await revokeAsOperator.execute({ tokenId: created.token.id });
+
+    expect(tokens.stored[0]?.revokedAt).toEqual(NOW);
+    await expect(revokeAsOperator.execute({ tokenId: created.token.id })).rejects.toBeInstanceOf(
+      AccessTokenNotFoundError,
+    );
+  });
+
+  it('answers not found for a token that does not exist', async () => {
+    const { revokeAsOperator } = await setup();
+
+    await expect(
+      revokeAsOperator.execute({ tokenId: 'ffffffff-ffff-4fff-bfff-ffffffffffff' }),
+    ).rejects.toBeInstanceOf(AccessTokenNotFoundError);
   });
 });

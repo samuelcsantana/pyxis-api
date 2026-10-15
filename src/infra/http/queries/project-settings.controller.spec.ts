@@ -24,6 +24,7 @@ const ADMIN: AdminUser = {
   id: '3e0b4f5a-6c7d-4e8f-9a0b-1c2d3e4f5a6b',
   email: 'ana@example.com',
   emailLanguage: 'en',
+  suspendedAt: null,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 

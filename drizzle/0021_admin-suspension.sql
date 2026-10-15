@@ -1,0 +1,1 @@
+ALTER TABLE "admin_users" ADD COLUMN "suspended_at" timestamp with time zone;

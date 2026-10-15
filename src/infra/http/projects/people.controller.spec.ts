@@ -19,6 +19,7 @@ const ADMIN: AdminUser = {
   id: '00000000-0000-4000-a000-000000000001',
   email: 'owner@example.com',
   emailLanguage: 'en',
+  suspendedAt: null,
   createdAt: new Date('2026-11-01T00:00:00.000Z'),
 };
 const PROJECT: Project = {

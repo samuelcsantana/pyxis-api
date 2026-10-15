@@ -13,11 +13,12 @@ import { toProject } from './drizzle-project.repository';
 
 type AdminUserRow = typeof adminUsers.$inferSelect;
 
-function toAdminUser(row: AdminUserRow): AdminUser {
+export function toAdminUser(row: AdminUserRow): AdminUser {
   return {
     id: row.id,
     email: row.email,
     emailLanguage: row.emailLanguage,
+    suspendedAt: row.suspendedAt,
     createdAt: row.createdAt,
   };
 }

@@ -88,4 +88,24 @@ export class DrizzleAccessTokenRepository implements AccessTokenRepository {
       .returning({ id: adminAccessTokens.id });
     return revoked.length > 0;
   }
+
+  async revokeAllOf(adminUserId: string, revokedAt: Date): Promise<number> {
+    const revoked = await this.db
+      .update(adminAccessTokens)
+      .set({ revokedAt })
+      .where(
+        and(eq(adminAccessTokens.adminUserId, adminUserId), isNull(adminAccessTokens.revokedAt)),
+      )
+      .returning({ id: adminAccessTokens.id });
+    return revoked.length;
+  }
+
+  async revoke(tokenId: string, revokedAt: Date): Promise<boolean> {
+    const revoked = await this.db
+      .update(adminAccessTokens)
+      .set({ revokedAt })
+      .where(and(eq(adminAccessTokens.id, tokenId), isNull(adminAccessTokens.revokedAt)))
+      .returning({ id: adminAccessTokens.id });
+    return revoked.length > 0;
+  }
 }
