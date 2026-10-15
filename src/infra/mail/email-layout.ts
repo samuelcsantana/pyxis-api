@@ -56,6 +56,7 @@ export const DARK = {
 } as const;
 
 export const LAYOUT_TABLE = 'role="presentation" cellpadding="0" cellspacing="0" border="0"';
+export const ACCENT = '#f5b83d';
 const PREHEADER_STYLE =
   'display:none;max-height:0;max-width:0;overflow:hidden;opacity:0;mso-hide:all;' +
   'font-size:1px;line-height:1px;color:transparent;';
@@ -122,6 +123,22 @@ export function brandHeader(logoAlt: string, links: EmailLinks): readonly string
     '</table>',
     '</td>',
     '</tr>',
+  ];
+}
+
+export function actionButton(href: string, label: string): readonly string[] {
+  const cellStyle = `background-color:${ACCENT};border-radius:8px;`;
+  const linkStyle =
+    `display:inline-block;padding:12px 20px;font-family:${SANS_FONTS};font-size:15px;` +
+    `line-height:20px;font-weight:600;color:${LIGHT.ink};text-decoration:none;`;
+  return [
+    `<table ${LAYOUT_TABLE} style="margin:28px 0 0 0;">`,
+    '<tr>',
+    `<td style="${cellStyle}">`,
+    `<a href="${escapeHtml(href)}" style="${linkStyle}">${escapeHtml(label)}</a>`,
+    '</td>',
+    '</tr>',
+    '</table>',
   ];
 }
 
