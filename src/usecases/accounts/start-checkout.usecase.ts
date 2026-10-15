@@ -24,6 +24,9 @@ export interface StartCheckoutCommand {
 }
 
 const CHECKOUT_STATUSES: ReadonlySet<string> = new Set(['incomplete', 'ended']);
+const SIGN_UP_STATUS = 'incomplete';
+const SIGN_UP_CANCEL_PATH = '/sign-up?step=plan';
+const RETURN_CANCEL_PATH = '/account';
 
 @Injectable()
 export class StartCheckoutUseCase {
@@ -34,16 +37,17 @@ export class StartCheckoutUseCase {
   ) {}
 
   async execute(command: StartCheckoutCommand): Promise<{ readonly url: string }> {
-    if (!this.settings.open) {
+    const account = await ownedAccount(this.accounts, command.accountId, command.adminUserId);
+    const signingUp = account.status === SIGN_UP_STATUS;
+    if (signingUp && !this.settings.open) {
       throw new SignUpClosedError();
+    }
+    if (!CHECKOUT_STATUSES.has(account.status)) {
+      throw new SubscriptionExistsError();
     }
     const origin = this.settings.dashboardOrigin;
     if (origin === null) {
       throw new BillingUnavailableError('DASHBOARD_ORIGIN is not set');
-    }
-    const account = await ownedAccount(this.accounts, command.accountId, command.adminUserId);
-    if (!CHECKOUT_STATUSES.has(account.status)) {
-      throw new SubscriptionExistsError();
     }
     return this.gateway.createCheckout({
       accountId: account.id,
@@ -53,7 +57,7 @@ export class StartCheckoutUseCase {
       language: command.language,
       trialDays: account.stripeCustomerId === null ? TRIAL_DAYS : null,
       successUrl: `${origin}/welcome?account=${account.id}`,
-      cancelUrl: `${origin}/sign-up?step=plan`,
+      cancelUrl: `${origin}${signingUp ? SIGN_UP_CANCEL_PATH : RETURN_CANCEL_PATH}`,
     });
   }
 }

@@ -441,8 +441,30 @@ describe('StartCheckoutUseCase', () => {
     });
 
     expect(context.gateway.checkouts[0]).toEqual(
-      expect.objectContaining({ customerId: 'cus_back', trialDays: null }),
+      expect.objectContaining({
+        customerId: 'cus_back',
+        trialDays: null,
+        cancelUrl: `${ORIGIN}/account`,
+      }),
     );
+  });
+
+  it('lets a customer come back while sign-up is closed, since that is no new sign-up', async () => {
+    const context = setup({ ...OPEN, open: false });
+    const { ownerId, account } = await ownerWith(context, {
+      status: 'ended',
+      stripeCustomerId: 'cus_back',
+    });
+
+    await expect(
+      context.startCheckout.execute({
+        adminUserId: ownerId,
+        ownerEmail: EMAIL,
+        accountId: account.id,
+        interval: 'year',
+        language: 'pt-BR',
+      }),
+    ).resolves.toEqual({ url: `https://checkout.example.com/${account.id}` });
   });
 
   it('refuses an account that already has a running subscription', async () => {
@@ -479,7 +501,7 @@ describe('StartCheckoutUseCase', () => {
     }
   });
 
-  it('refuses while sign-up is closed', async () => {
+  it('refuses an unfinished sign-up while sign-up is closed', async () => {
     const context = setup({ ...OPEN, open: false });
     const { ownerId, account } = await ownerWith(context);
 
