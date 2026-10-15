@@ -487,6 +487,20 @@ ended a connection because a token or a code came back after it was spent (a sto
 client that lost its newest one). `oauth.client_metadata_unavailable` means a client's metadata
 document could not be read; the last good copy is used meanwhile.
 
+The same switch opens the MCP endpoint, `/mcp`
+([ADR 0038](adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md)). Check it too:
+
+```bash
+curl -s -o /dev/null -D - -X POST https://<api_domain>/mcp | grep -i www-authenticate   # Bearer resource_metadata="…/mcp", scope="read"
+curl -s https://<api_domain>/.well-known/oauth-protected-resource/mcp   # resource = https://<api_domain>/mcp
+curl -s -o /dev/null -w '%{http_code}
+' -X POST https://<older name>/mcp   # 404, from CloudFront
+```
+
+The last one answers from the CloudFront Function `<project>-connector-host`, which turns away
+`/mcp`, `/oauth/*` and `/.well-known/oauth-*` on every host but `api_domain`, before the function
+is reached; `aws cloudfront test-function` runs it against a sample event without a request.
+
 ## Exports
 
 Owners export a project's events to a compressed CSV. Terraform creates the private bucket
