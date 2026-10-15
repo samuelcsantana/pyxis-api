@@ -94,6 +94,12 @@ variable "signup_open" {
   default     = false
 }
 
+variable "remote_mcp_open" {
+  description = "Let Claude and Claude Code connect through OAuth. Keep false until the terms that describe the connector are published."
+  type        = bool
+  default     = false
+}
+
 variable "terms_version" {
   description = "Version of the published terms a new owner accepts, such as 2026-11-01; the dashboard shows the same version. Sign-up stays closed without it."
   type        = string
