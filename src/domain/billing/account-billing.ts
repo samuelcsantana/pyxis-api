@@ -1,4 +1,4 @@
-import type { AccountStatus } from '../accounts/account-status';
+import { type AccountStatus, hasAccess } from '../accounts/account-status';
 import type { BillingInterval, BillingSubscription } from './billing-gateway';
 
 export interface AccountBillingState {
@@ -15,6 +15,7 @@ export interface AccountBillingUpdate {
   readonly trialEndsAt: Date | null;
   readonly currentPeriodEndsAt: Date | null;
   readonly accessEndsAt: Date | null;
+  readonly restoresAccess: boolean;
 }
 
 const RUNNING_STATUSES: ReadonlySet<string> = new Set(['trialing', 'active']);
@@ -67,5 +68,6 @@ export function billingUpdateFor(
     trialEndsAt: subscription.trialEndsAt,
     currentPeriodEndsAt: subscription.currentPeriodEndsAt,
     accessEndsAt: accessEndFor(status, subscription, current, now),
+    restoresAccess: hasAccess(status),
   };
 }

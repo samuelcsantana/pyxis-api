@@ -38,6 +38,9 @@ export const accounts = pgTable(
     trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
     currentPeriodEndsAt: timestamp('current_period_ends_at', { withTimezone: true }),
     accessEndsAt: timestamp('access_ends_at', { withTimezone: true }),
+    keysRevokedAt: timestamp('keys_revoked_at', { withTimezone: true }),
+    endedNotifiedAt: timestamp('ended_notified_at', { withTimezone: true }),
+    deletionRemindedAt: timestamp('deletion_reminded_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

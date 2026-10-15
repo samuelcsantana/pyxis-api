@@ -17,6 +17,12 @@ import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { accounts, billingEvents } from '../database/schema/accounts';
 
+const END_OF_ACCESS_CLEARED = {
+  keysRevokedAt: null,
+  endedNotifiedAt: null,
+  deletionRemindedAt: null,
+} as const;
+
 function ownerConditions(lookup: BillingOwnerLookup): SQL[] {
   return [
     ...(lookup.accountId !== null && isUuid(lookup.accountId)
@@ -51,7 +57,11 @@ export class DrizzleAccountBillingRepository implements AccountBillingRepository
   }
 
   async apply(accountId: string, update: AccountBillingUpdate): Promise<void> {
-    await this.db.update(accounts).set(update).where(eq(accounts.id, accountId));
+    const { restoresAccess, ...columns } = update;
+    await this.db
+      .update(accounts)
+      .set({ ...columns, ...(restoresAccess ? END_OF_ACCESS_CLEARED : {}) })
+      .where(eq(accounts.id, accountId));
   }
 }
 

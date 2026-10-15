@@ -55,6 +55,7 @@ describe('account billing and billing events against a real Postgres', () => {
       trialEndsAt: TRIAL_END,
       currentPeriodEndsAt: TRIAL_END,
       accessEndsAt: null,
+      restoresAccess: true,
     });
 
     const expected = { accountId: ACCOUNT_ID, status: 'trialing', accessEndsAt: null };
@@ -82,10 +83,55 @@ describe('account billing and billing events against a real Postgres', () => {
       trialEndsAt: null,
       currentPeriodEndsAt: null,
       accessEndsAt: null,
+      restoresAccess: true,
     };
     await accounts.apply(ACCOUNT_ID, update);
 
     await expect(accounts.apply(OTHER_ID, update)).rejects.toThrow();
+  });
+
+  it('clears the end-of-access marks when the account regains access, and keeps them otherwise', async () => {
+    const marked = new Date('2026-10-01T00:00:00.000Z');
+    const marks = () => owner<
+      {
+        keys_revoked_at: Date | null;
+        ended_notified_at: Date | null;
+        deletion_reminded_at: Date | null;
+      }[]
+    >`
+      SELECT keys_revoked_at, ended_notified_at, deletion_reminded_at FROM accounts
+      WHERE id = ${ACCOUNT_ID}
+    `;
+    await owner`
+      UPDATE accounts
+      SET keys_revoked_at = ${marked}, ended_notified_at = ${marked}, deletion_reminded_at = ${marked}
+      WHERE id = ${ACCOUNT_ID}
+    `;
+    const ended = {
+      status: 'ended' as const,
+      stripeCustomerId: 'cus_1',
+      stripeSubscriptionId: 'sub_1',
+      billingInterval: null,
+      trialEndsAt: null,
+      currentPeriodEndsAt: null,
+      accessEndsAt: marked,
+      restoresAccess: false,
+    };
+
+    await accounts.apply(ACCOUNT_ID, ended);
+    expect(await marks()).toEqual([
+      { keys_revoked_at: marked, ended_notified_at: marked, deletion_reminded_at: marked },
+    ]);
+
+    await accounts.apply(ACCOUNT_ID, {
+      ...ended,
+      status: 'active',
+      accessEndsAt: null,
+      restoresAccess: true,
+    });
+    expect(await marks()).toEqual([
+      { keys_revoked_at: null, ended_notified_at: null, deletion_reminded_at: null },
+    ]);
   });
 
   it('claims an event until it is completed, and never after', async () => {
