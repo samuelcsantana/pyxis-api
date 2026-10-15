@@ -150,3 +150,31 @@ resource "aws_cloudwatch_metric_alarm" "function_throttles" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
 }
+
+resource "aws_cloudwatch_log_metric_filter" "repeated_trials" {
+  name           = "${var.project}-repeated-trials"
+  log_group_name = aws_cloudwatch_log_group.function[var.project].name
+  pattern        = "{ $.message.message = \"billing.repeated_trial\" }"
+
+  metric_transformation {
+    name          = "RepeatedTrials"
+    namespace     = var.metrics_namespace
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "repeated_trials" {
+  alarm_name          = "${var.project}-repeated-trials"
+  alarm_description   = "${var.repeated_trials_alarm_threshold} or more free trials started within an hour with a card that already started a trial in another account: look up the accounts named in the billing.repeated_trial log line and decide by hand."
+  namespace           = var.metrics_namespace
+  metric_name         = "RepeatedTrials"
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.repeated_trials_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
