@@ -33,6 +33,7 @@ export const envSchema = z.object({
   SUPPORT_EMAIL: z.preprocess(emptyAsUnset, z.email().optional()),
   SIGNUP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
   TERMS_VERSION: z.preprocess(emptyAsUnset, z.string().max(MAX_TERMS_VERSION_LENGTH).optional()),
+  TERMS_URL: z.preprocess(emptyAsUnset, z.url({ protocol: /^https?$/ }).optional()),
   STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   STRIPE_WEBHOOK_SECRET: z.preprocess(emptyAsUnset, z.string().optional()),
   DASHBOARD_ORIGIN: z.preprocess(

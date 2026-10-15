@@ -50,6 +50,7 @@ import { signUpSettingsFromEnv } from './sign-up-settings-from-env';
         signUpSettingsFromEnv({
           SIGNUP_OPEN: config.get('SIGNUP_OPEN', { infer: true }),
           TERMS_VERSION: config.get('TERMS_VERSION', { infer: true }),
+          TERMS_URL: config.get('TERMS_URL', { infer: true }),
           DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
         }),
     },

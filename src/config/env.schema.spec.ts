@@ -18,11 +18,24 @@ describe('validateEnv', () => {
     });
   });
 
-  it('reads the sign-up switch and the published terms version', () => {
-    expect(validateEnv({ SIGNUP_OPEN: 'true', TERMS_VERSION: '2026-11-01' })).toMatchObject({
+  it('reads the sign-up switch and the published terms version and address', () => {
+    expect(
+      validateEnv({
+        SIGNUP_OPEN: 'true',
+        TERMS_VERSION: '2026-11-01',
+        TERMS_URL: 'https://example.com/terms',
+      }),
+    ).toMatchObject({
       SIGNUP_OPEN: 'true',
       TERMS_VERSION: '2026-11-01',
+      TERMS_URL: 'https://example.com/terms',
     });
+  });
+
+  it('rejects a terms address that is not a web address', () => {
+    expect(() => validateEnv({ TERMS_URL: 'ftp://example.com/terms' })).toThrow(
+      'Invalid environment configuration',
+    );
   });
 
   it('rejects a sign-up switch that is not true or false, and an overlong terms version', () => {

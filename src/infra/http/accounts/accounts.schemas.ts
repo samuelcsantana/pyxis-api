@@ -12,6 +12,10 @@ export const signUpStatusSchema = z
       .string()
       .nullable()
       .describe('The version of the terms the sign-up page must show; null while closed.'),
+    terms_url: z
+      .url()
+      .nullable()
+      .describe('Where the terms of that version are published; null while closed.'),
   })
   .meta({ id: 'SignUpStatus', description: 'Whether anyone can create an account now.' });
 

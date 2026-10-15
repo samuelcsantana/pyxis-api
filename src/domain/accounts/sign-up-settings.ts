@@ -1,6 +1,7 @@
 export interface SignUpSettings {
   readonly open: boolean;
   readonly termsVersion: string | null;
+  readonly termsUrl: string | null;
   readonly dashboardOrigin: string | null;
 }
 

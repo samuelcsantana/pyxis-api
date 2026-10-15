@@ -56,9 +56,13 @@ export class SignUpController {
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: signUpStatusSchema })
   status(): SignUpStatusBody {
+    if (!this.settings.open) {
+      return { open: false, terms_version: null, terms_url: null };
+    }
     return {
-      open: this.settings.open,
-      terms_version: this.settings.open ? this.settings.termsVersion : null,
+      open: true,
+      terms_version: this.settings.termsVersion,
+      terms_url: this.settings.termsUrl,
     };
   }
 

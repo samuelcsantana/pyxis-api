@@ -38,6 +38,7 @@ function signUpController(settings: SignUpSettings) {
 const OPEN: SignUpSettings = {
   open: true,
   termsVersion: '2026-11-01',
+  termsUrl: 'https://example.com/terms',
   dashboardOrigin: 'https://app.example.com',
 };
 
@@ -46,6 +47,7 @@ describe('SignUpController', () => {
     expect(signUpController(OPEN).controller.status()).toEqual({
       open: true,
       terms_version: '2026-11-01',
+      terms_url: 'https://example.com/terms',
     });
   });
 
@@ -53,6 +55,7 @@ describe('SignUpController', () => {
     expect(signUpController({ ...OPEN, open: false }).controller.status()).toEqual({
       open: false,
       terms_version: null,
+      terms_url: null,
     });
   });
 
