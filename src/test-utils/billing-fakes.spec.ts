@@ -1,4 +1,5 @@
 import { FakeBillingGateway } from './fake-billing-gateway';
+import { InMemoryTrialCardRepository } from './in-memory-trial-card.repository';
 
 describe('FakeBillingGateway', () => {
   it('records the Checkouts and portals it opens and answers a URL for each', async () => {
@@ -24,5 +25,24 @@ describe('FakeBillingGateway', () => {
     expect(gateway.portals).toEqual([
       { customerId: 'cus_1', returnUrl: 'https://app.example.com/account', language: 'es' },
     ]);
+  });
+});
+
+describe('InMemoryTrialCardRepository', () => {
+  it('records a card once per account and names the other accounts, earliest first', async () => {
+    const cards = new InMemoryTrialCardRepository();
+    const later = { fingerprint: 'fp_1', accountId: 'b', trialStartedAt: new Date(2000) };
+    const earlier = { fingerprint: 'fp_1', accountId: 'a', trialStartedAt: new Date(1000) };
+
+    expect(await cards.record(later)).toBe(true);
+    expect(await cards.record(earlier)).toBe(true);
+    expect(await cards.record({ ...later, trialStartedAt: new Date(3000) })).toBe(false);
+    expect(
+      await cards.record({ fingerprint: 'fp_2', accountId: 'b', trialStartedAt: new Date(1) }),
+    ).toBe(true);
+
+    expect(await cards.otherAccountIds('fp_1', 'c')).toEqual(['a', 'b']);
+    expect(await cards.otherAccountIds('fp_1', 'a')).toEqual(['b']);
+    expect(cards.cards).toHaveLength(3);
   });
 });
