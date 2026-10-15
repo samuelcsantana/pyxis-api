@@ -1,5 +1,86 @@
 # Changelog
 
+## [0.15.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.14.0...v0.15.0) (2026-10-15)
+
+
+### Features
+
+* **accounts:** add accounts that own projects ([f00e1ec](https://github.com/samuelcsantana/pyxis-api/commit/f00e1ecb31293a7a232671f922f21e8363dc6be5))
+* **accounts:** create a free account and show an account ([ea576f4](https://github.com/samuelcsantana/pyxis-api/commit/ea576f45642452f0e61974e44abc40749cd474cc))
+* **accounts:** hold an account to the plan's project limit ([37f2d0b](https://github.com/samuelcsantana/pyxis-api/commit/37f2d0b3e73fa709b82d335d22c4efd5a94f5dd4))
+* **accounts:** mark each step of an account's end, and clear the marks on return ([cc91a57](https://github.com/samuelcsantana/pyxis-api/commit/cc91a57fe2d60c7d0ce8790c2d495d3148f68347))
+* **accounts:** measure each account's month and pause it past 150% ([7bd477d](https://github.com/samuelcsantana/pyxis-api/commit/7bd477d5854a36dcfebe87c6e59197ab4e9c2960))
+* **accounts:** read an owner's live account and the accounts an admin belongs to ([3771576](https://github.com/samuelcsantana/pyxis-api/commit/37715761b0e7b1fa5e582bffdd27e9cd0cd1c513))
+* **accounts:** record each acceptance of the terms ([cf4f692](https://github.com/samuelcsantana/pyxis-api/commit/cf4f6921960eaa8308bbd10f9e0171a5a218416a))
+* **accounts:** require the address of the published terms to open sign-up ([d1428ca](https://github.com/samuelcsantana/pyxis-api/commit/d1428cad1ecdfcb1f6c7d8a4e769daffd174106a))
+* **accounts:** run each account through the end of its subscription ([5568d91](https://github.com/samuelcsantana/pyxis-api/commit/5568d91938edcd1d86f34af25befb5d0b4b51fb4))
+* **accounts:** sign up with an e-mailed code, then subscribe through Checkout ([0e80413](https://github.com/samuelcsantana/pyxis-api/commit/0e80413562b5c3b65ed4cfa3dcddca0fc4ccdb16))
+* **accounts:** tell owners at 80%, 100% and when ingestion pauses ([ff36023](https://github.com/samuelcsantana/pyxis-api/commit/ff3602331c250ef5b3aa69f77ce278fafb987cb6))
+* **accounts:** welcome the owner right after the subscription starts ([d1f87b6](https://github.com/samuelcsantana/pyxis-api/commit/d1f87b6471e7c5e270a8628ddf44611b696de233))
+* **auth:** create, list, revoke and authenticate access tokens ([c601f53](https://github.com/samuelcsantana/pyxis-api/commit/c601f53f346f0b79f7e9eb8f68f427227448cfba))
+* **auth:** define read-only access tokens in the domain ([a9d620f](https://github.com/samuelcsantana/pyxis-api/commit/a9d620f83320b9fdd75f2095f1b0fd50c09d6deb))
+* **auth:** give each e-mailed code a purpose ([4cf40a3](https://github.com/samuelcsantana/pyxis-api/commit/4cf40a351608ad82f2917fb2aaf1e9e74aca59ee))
+* **auth:** read the dashboard queries with access tokens ([e0debce](https://github.com/samuelcsantana/pyxis-api/commit/e0debced2c6a1434df2c0a3f0d3f61b1dba2ed2e))
+* **auth:** store access tokens in admin_access_tokens ([ca2a0f2](https://github.com/samuelcsantana/pyxis-api/commit/ca2a0f2b54a89d6aacf3266166054174c036a5d0))
+* **billing:** add a billing gateway backed by Stripe ([0a9a3ce](https://github.com/samuelcsantana/pyxis-api/commit/0a9a3ceb14d6da2a29fe5f25d5039af7214345b4))
+* **billing:** keep each account's subscription state ([06b4225](https://github.com/samuelcsantana/pyxis-api/commit/06b4225f9564017c08cdb1d5b504405cb7fafe82))
+* **billing:** open a Checkout without a trial when asked ([c540465](https://github.com/samuelcsantana/pyxis-api/commit/c540465d3e9c1279608474bbf36ecd24eef300ad))
+* **billing:** take Stripe's signed events at a webhook ([c571e24](https://github.com/samuelcsantana/pyxis-api/commit/c571e241d39310bce061d3a10ad2de59f9c02026))
+* **cli:** add project:delete ([87cef79](https://github.com/samuelcsantana/pyxis-api/commit/87cef79846d769ac4a932c5e576f758ea2f70cbf))
+* **cli:** add usage:report ([a606565](https://github.com/samuelcsantana/pyxis-api/commit/a606565390c9067b597d0336dec247f523f7d6f5))
+* **cli:** link a subscription paid by payment link to an account ([fe3973a](https://github.com/samuelcsantana/pyxis-api/commit/fe3973af9b9945974c0365ccfe27c43a69e3a319))
+* **cli:** open free accounts and put projects in them ([caab19f](https://github.com/samuelcsantana/pyxis-api/commit/caab19f6cbf4034fc35b31c6b64738cdf1a1a2c7))
+* **cli:** take a person off a project with admin:revoke ([43554de](https://github.com/samuelcsantana/pyxis-api/commit/43554de94167a84a8b259b399aacbbeb974422c0))
+* **infra:** add the sign-up switch and the terms version to the parameter store ([f6e3e5c](https://github.com/samuelcsantana/pyxis-api/commit/f6e3e5c8f746f32defc53c4c8761f1f8f2d8fc5b))
+* **infra:** keep the Stripe keys in the parameter store ([80d1c0c](https://github.com/samuelcsantana/pyxis-api/commit/80d1c0caf031d442be1a3b6474c4db317ee41a88))
+* **infra:** verify the mail domain in Amazon SES and let the functions send ([d17d32e](https://github.com/samuelcsantana/pyxis-api/commit/d17d32ea9c825693f3589b3c2f94dc8261b9a850))
+* **ingest:** refuse the batches of a paused account ([24e3fff](https://github.com/samuelcsantana/pyxis-api/commit/24e3fff66d577ce77b94e5c482906d6458706aa4))
+* **jobs:** run the account lifecycle every day ([5bbd6c2](https://github.com/samuelcsantana/pyxis-api/commit/5bbd6c25e730aa175cbd8eb590f08e7fdc00358a))
+* **mail:** link the e-mails to the configured dashboard ([25f0944](https://github.com/samuelcsantana/pyxis-api/commit/25f0944eb987981286391c4a386f780f902922ec))
+* **mail:** send e-mail through Amazon SES when configured ([6a287d2](https://github.com/samuelcsantana/pyxis-api/commit/6a287d225c861d0c56a40b7a64cb9521ca567e60))
+* **mail:** write and send the invitation e-mail ([b1e1265](https://github.com/samuelcsantana/pyxis-api/commit/b1e12654a3921d90e137a086b90738a6eb1d9854))
+* **mail:** write and send the sign-up code e-mail ([92d08f3](https://github.com/samuelcsantana/pyxis-api/commit/92d08f31212f2eeca2dd8001ed708a8ded4e117d))
+* **mail:** write the notices of an account's end ([33d4c01](https://github.com/samuelcsantana/pyxis-api/commit/33d4c0175658abd0943e5d772cc62d2e0dc1d9ac))
+* **mail:** write the quota notice e-mail in three languages ([f57dbc0](https://github.com/samuelcsantana/pyxis-api/commit/f57dbc07b69061fc28bf531c6c1fb66ae7e15801))
+* **mail:** write the welcome e-mail ([6ea6483](https://github.com/samuelcsantana/pyxis-api/commit/6ea6483e47ed9a1d967ce2e0bfb604bee1017ce8))
+* **people:** add, list and remove the people of a project ([12f1d6c](https://github.com/samuelcsantana/pyxis-api/commit/12f1d6c24db8689a45c2cde4ecf93cd3806cdae1))
+* **people:** manage the people of a project from the dashboard ([1e2802b](https://github.com/samuelcsantana/pyxis-api/commit/1e2802b0e431974d044ce77e519f177b3ff2be13))
+* **projects:** delete a project with everything it owns ([7e2e6e0](https://github.com/samuelcsantana/pyxis-api/commit/7e2e6e09133b75ccb16244f0e1b0f92072bbb2a4))
+* **projects:** let an account's owner manage its projects and keys ([b2b2d7e](https://github.com/samuelcsantana/pyxis-api/commit/b2b2d7ee86795ca9b84834fe7b8d01871842a085))
+* **projects:** manage projects and keys from the dashboard ([960e6d2](https://github.com/samuelcsantana/pyxis-api/commit/960e6d2b88da491ffb5a5aee4e7eacd42daf64a6))
+* **projects:** rename a project and allow at most five origins ([750de7b](https://github.com/samuelcsantana/pyxis-api/commit/750de7b35531fda197d00d1f7478473f64c501f2))
+* **projects:** report each project's usage in a month ([e18bf2b](https://github.com/samuelcsantana/pyxis-api/commit/e18bf2b2fe37f973a2d03f4ba2e095a4108c2610))
+* **queries:** tell the dashboard who may change a project ([97b8511](https://github.com/samuelcsantana/pyxis-api/commit/97b851137bcf64183a7db33b6c10a03948d675ee))
+
+
+### Bug Fixes
+
+* **lambda:** keep query values with commas whole ([28c4e09](https://github.com/samuelcsantana/pyxis-api/commit/28c4e0990d9f631cdc6bc583a9a7720b8758a813))
+* **preferences:** accept the e-mail preferences change only from the dashboard ([4291be5](https://github.com/samuelcsantana/pyxis-api/commit/4291be59f38fa4d3f86bea4ce0b29fe4254f7a13))
+
+
+### Refactoring
+
+* **mail:** share the call-to-action button of the e-mails ([75c6c45](https://github.com/samuelcsantana/pyxis-api/commit/75c6c45f650a289778207a357ac5aebedae44aa0))
+
+
+### Documentation
+
+* describe accounts and add ADR 0016 ([9d612d7](https://github.com/samuelcsantana/pyxis-api/commit/9d612d7a9d9638060960e8301b50ed4dee37fbc4))
+* describe project management by the owner and add ADR 0020 ([daea20d](https://github.com/samuelcsantana/pyxis-api/commit/daea20d99e25c2f3a835f7f0361dce99b139d3f1))
+* describe sending through Amazon SES ([1acbd72](https://github.com/samuelcsantana/pyxis-api/commit/1acbd726aa4b295d39e7e7f4978eac1f2c4d9f78))
+* describe sign-up and add ADR 0019 ([8900f57](https://github.com/samuelcsantana/pyxis-api/commit/8900f57bbae5eeafda6d89bb77d5624bb58f3e06))
+* describe the billing webhook and add ADR 0018 ([efbd228](https://github.com/samuelcsantana/pyxis-api/commit/efbd228a890da03af6730aff8a4db0fd0c3073c5))
+* describe the end of an account and add ADR 0022 ([5f040d4](https://github.com/samuelcsantana/pyxis-api/commit/5f040d4db806cac985ff5c7bad946a4087059ddc))
+* describe the monthly quota and add ADR 0017 ([e0f9ce1](https://github.com/samuelcsantana/pyxis-api/commit/e0f9ce1cc5d8ac7ac964aae7984b06cffddec953))
+* describe the people of a project and add ADR 0021 ([85e1342](https://github.com/samuelcsantana/pyxis-api/commit/85e1342ed4d4eab26cab90b41e0d253b5e13313c))
+* describe the quota notices in the README ([d0bde5c](https://github.com/samuelcsantana/pyxis-api/commit/d0bde5c449866f87ff7ae8306f8be78cf48810bc))
+* describe the welcome e-mail and add ADR 0023 ([9ce75a6](https://github.com/samuelcsantana/pyxis-api/commit/9ce75a696842f0f6003c7f7f380a4ba91a06d344))
+* document read-only access tokens and add ADR 0015 ([e32f125](https://github.com/samuelcsantana/pyxis-api/commit/e32f1256f47e07de723d4d7fdc0be2bdc0b0fa54))
+* **iam:** publish the provisioning role and the deployer's policy ([9a20850](https://github.com/samuelcsantana/pyxis-api/commit/9a2085006ec534c5f9fcf5a9407fdc7b8300b320))
+* **runbook:** list the alarms and what they do not cover ([daeb61b](https://github.com/samuelcsantana/pyxis-api/commit/daeb61bcd86160bd9853fa994e4e648ad54ca753))
+* **runbook:** walk the first-time setup through on a new account ([093d449](https://github.com/samuelcsantana/pyxis-api/commit/093d449adbb0deb4c93f7ad93a107bf31f774c02))
+
 ## [0.14.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.13.0...v0.14.0) (2026-10-13)
 
 
