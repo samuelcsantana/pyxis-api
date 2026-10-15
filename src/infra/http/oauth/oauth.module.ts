@@ -66,5 +66,6 @@ import { remoteMcpSettingsFromEnv } from './remote-mcp-settings-from-env';
         }),
     },
   ],
+  exports: [REMOTE_MCP_SETTINGS],
 })
 export class OAuthModule {}

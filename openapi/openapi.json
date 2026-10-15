@@ -3104,6 +3104,54 @@
         ],
         "type": "object"
       },
+      "ProtectedResourceMetadata": {
+        "additionalProperties": false,
+        "description": "RFC 9728 metadata of the MCP endpoint, the same at both addresses.",
+        "properties": {
+          "authorization_servers": {
+            "description": "This API itself",
+            "items": {
+              "format": "uri",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "bearer_methods_supported": {
+            "items": {
+              "enum": [
+                "header"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "resource": {
+            "description": "The MCP endpoint of this API, the audience of every token",
+            "format": "uri",
+            "type": "string"
+          },
+          "resource_name": {
+            "type": "string"
+          },
+          "scopes_supported": {
+            "items": {
+              "enum": [
+                "read"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "resource",
+          "authorization_servers",
+          "scopes_supported",
+          "bearer_methods_supported",
+          "resource_name"
+        ],
+        "type": "object"
+      },
       "RequestCodeRequest": {
         "additionalProperties": false,
         "description": "The email to send a sign-in code to, and the language to write it in.",
@@ -4171,6 +4219,72 @@
         "summary": "The authorization server metadata (RFC 8414)",
         "tags": [
           "oauth"
+        ]
+      }
+    },
+    "/.well-known/oauth-protected-resource": {
+      "get": {
+        "description": "Points a client of the MCP endpoint at this API as its authorization server. 404 while the remote MCP is switched off.",
+        "operationId": "ProtectedResourceController_atRoot",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedResourceMetadata"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "The same metadata at the root address, for clients that look there first",
+        "tags": [
+          "mcp"
+        ]
+      }
+    },
+    "/.well-known/oauth-protected-resource/mcp": {
+      "get": {
+        "description": "Points a client of the MCP endpoint at this API as its authorization server. 404 while the remote MCP is switched off.",
+        "operationId": "ProtectedResourceController_forMcp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProtectedResourceMetadata"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "The protected resource metadata of the MCP endpoint (RFC 9728)",
+        "tags": [
+          "mcp"
         ]
       }
     },
