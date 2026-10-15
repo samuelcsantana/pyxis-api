@@ -2,6 +2,7 @@ export * from './accounts';
 export * from './admins';
 export * from './digest';
 export * from './events';
+export * from './exports';
 export * from './project-icons';
 export * from './project-keys';
 export * from './projects';
