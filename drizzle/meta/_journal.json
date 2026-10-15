@@ -127,6 +127,13 @@
       "when": 1792025913639,
       "tag": "0017_project-exports",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792062514842,
+      "tag": "0018_trial-cards",
+      "breakpoints": true
     }
   ]
 }

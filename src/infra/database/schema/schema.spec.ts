@@ -14,6 +14,7 @@ import {
   projectKeys,
   projects,
   termsAcceptances,
+  trialCards,
 } from '.';
 
 function foreignKeyTargets(
@@ -163,6 +164,16 @@ describe('database schema', () => {
       'project_exports_one_pending_idx',
     ]);
     expect(config.checks.map((check) => check.name)).toEqual(['project_exports_status_check']);
+  });
+
+  it('keeps the cards that started a trial apart from the accounts, so they outlive them', () => {
+    const config = getTableConfig(trialCards);
+
+    expect(config.foreignKeys).toEqual([]);
+    expect(config.primaryKeys.map((key) => key.getName())).toEqual(['trial_cards_pkey']);
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'trial_cards_trial_started_at_idx',
+    ]);
   });
 
   it('allows only the known purposes of an e-mailed code', () => {

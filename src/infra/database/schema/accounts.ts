@@ -79,6 +79,19 @@ export const billingEvents = pgTable('billing_events', {
   processedAt: timestamp('processed_at', { withTimezone: true }),
 });
 
+export const trialCards = pgTable(
+  'trial_cards',
+  {
+    fingerprint: varchar('fingerprint', { length: STRIPE_ID_LENGTH }).notNull(),
+    accountId: uuid('account_id').notNull(),
+    trialStartedAt: timestamp('trial_started_at', { withTimezone: true }).notNull(),
+  },
+  (table) => [
+    primaryKey({ name: 'trial_cards_pkey', columns: [table.fingerprint, table.accountId] }),
+    index('trial_cards_trial_started_at_idx').on(table.trialStartedAt),
+  ],
+);
+
 export const termsAcceptances = pgTable(
   'terms_acceptances',
   {
