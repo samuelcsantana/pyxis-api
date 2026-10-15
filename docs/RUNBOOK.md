@@ -325,6 +325,18 @@ owner, or close the new account). `billing.repeated_trial_check_failed` means th
 failed for an event; the event was applied anyway. The cards are deleted twelve months after
 their trial started.
 
+### A larger plan for one account
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:limits -- --account <id> --events 1000000 --projects 10 --people 10
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:limits -- --account <id> --reset
+```
+
+For a customer who asked for more than the hosted plan: agree on the limits and the price by
+e-mail, create the price in Stripe, link the subscription with `account:link`, then set the limits.
+The output lists anything already over a lowered limit (`over_projects=4/3`); nothing is deleted,
+the account just cannot add more until it is under. Reset the limits when the larger plan ends.
+
 ### Exempting an account from the pause
 
 ```bash
