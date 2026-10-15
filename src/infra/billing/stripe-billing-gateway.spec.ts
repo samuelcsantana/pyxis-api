@@ -90,6 +90,9 @@ describe('StripeBillingGateway.createCheckout', () => {
       billing_address_collection: 'required',
       'tax_id_collection[enabled]': 'true',
       'consent_collection[terms_of_service]': 'required',
+      'custom_text[submit][message]':
+        'Um teste grátis por cliente. Depois dos 14 dias, a cobrança é automática; cancele ' +
+        'quando quiser.',
       locale: 'pt-BR',
       success_url: CHECKOUT.successUrl,
       cancel_url: CHECKOUT.cancelUrl,
@@ -120,6 +123,10 @@ describe('StripeBillingGateway.createCheckout', () => {
     expect(requests[1]?.form.has('customer_email')).toBe(false);
     expect(requests[1]?.form.get('locale')).toBe('es');
     expect(requests[1]?.form.has('subscription_data[trial_period_days]')).toBe(false);
+    expect(requests[1]?.form.has('custom_text[submit][message]')).toBe(false);
+    expect(requests[2]?.form.get('custom_text[submit][message]')).toContain(
+      'One free trial per customer',
+    );
     expect(requests[2]?.form.get('locale')).toBe('en');
   });
 
