@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.16.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.15.0...v0.16.0) (2026-10-15)
+
+
+### Features
+
+* **accounts:** close an account at once when its owner asks ([7d606f3](https://github.com/samuelcsantana/pyxis-api/commit/7d606f35b62e45302f7bbe264086aa1434adfc92))
+* **billing:** cancel a subscription and refund its first payment inside a window ([331cc07](https://github.com/samuelcsantana/pyxis-api/commit/331cc0713c89a739bc1843f41eb52958811c30d5))
+* **exports:** ask for an export from the dashboard and run it in the jobs function ([9574f9f](https://github.com/samuelcsantana/pyxis-api/commit/9574f9f6ce7e2da0ebfe7aebf08f91e0b644870a))
+* **exports:** export a project's events to a compressed file ([6acc403](https://github.com/samuelcsantana/pyxis-api/commit/6acc403f1b0ff28e43056c6b336fbc995097daa5))
+* **exports:** write a project's events as CSV lines ([367a63b](https://github.com/samuelcsantana/pyxis-api/commit/367a63bc75cc69d874014508aa7bd2763eddabcf))
+* **http:** let the owner close an account from the dashboard ([f908c5f](https://github.com/samuelcsantana/pyxis-api/commit/f908c5f11a6ac5a4d21e341904a28e5716682772))
+* **infra:** keep the exports in a private bucket that forgets them after a week ([09567d3](https://github.com/samuelcsantana/pyxis-api/commit/09567d31098138e2cf92aed9209eb71d35e6499f))
+* **mail:** write the export-ready e-mail ([3c30984](https://github.com/samuelcsantana/pyxis-api/commit/3c30984a6dc86c7e03f5472cdd3cf8b92380dc0c))
+
+
+### Documentation
+
+* describe exports and add ADR 0024 ([f88363f](https://github.com/samuelcsantana/pyxis-api/commit/f88363f51d461c4eccee88d1e626389f5de84785))
+* describe the closure of an account and add ADR 0025 ([27a89df](https://github.com/samuelcsantana/pyxis-api/commit/27a89df66b70086b1aebb8d5a3645782de73ab7c))
+
 ## [0.15.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.14.0...v0.15.0) (2026-10-15)
 
 
