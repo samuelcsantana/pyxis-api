@@ -253,6 +253,10 @@ Shipping now:
   `account:release`): the daily job neither reminds nor deletes it, its owner cannot delete its
   projects (`409 deletion_on_hold`) and sees the hold, not the reason
   ([ADR 0029](docs/adr/0029-a-deletion-can-be-held.md))
+- Holding the deletion of one project (`project:hold`, `project:release`): its owner cannot delete
+  it, the deletion of its account keeps it and the account, and the retention keeps its events,
+  as it now does for a held account too; the project settings show `deletion_held_at`
+  ([ADR 0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md))
 - Stopping one person or one token from the command line: `admin:suspend` ends every session and
   token of the person and keeps them from signing in again until `admin:resume` (no code is sent,
   and a session that survived is refused), and `token:revoke` revokes any read-only token by its
@@ -370,6 +374,8 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s account:resume -- --account <id>`                                                                                                                   | Lifts the suspension; keys and tokens revoked meanwhile stay revoked                                                                                                                            |
 | `npm run -s project:suspend -- --project <id> --reason "<why>"`                                                                                                 | Suspends only the event reception of the project, keeping the reason the owner was told (500 characters at most); within a minute its batches are refused while its screens stay open           |
 | `npm run -s project:resume -- --project <id>`                                                                                                                   | Lifts the suspension of the reception; the project takes events again within a minute                                                                                                           |
+| `npm run -s project:hold -- --project <id> --reason "<why>"`                                                                                                    | Holds the deletion of the project alone, keeping the reason (500 characters at most): its owner cannot delete it, the retention keeps its events, and the deletion of its account keeps it      |
+| `npm run -s project:release -- --project <id>`                                                                                                                  | Lets the retention and the deletion of the project go ahead again, with the next daily job                                                                                                      |
 | `npm run -s account:close -- --account <id> --reason "<why>" --refund <full\|prorata\|none>`                                                                    | Ends the account at once as the operator: cancels the subscription, refunds as asked, revokes the keys; the daily job e-mails the owner; needs `STRIPE_SECRET_KEY` when there is a subscription |
 | `npm run -s account:hold -- --account <id> --reason "<why>"`                                                                                                    | Holds the deletion of the account and of its projects, keeping the reason (500 characters at most); the owner sees the hold, not the reason                                                     |
 | `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                       |
@@ -628,6 +634,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md)          | The operator can stop a person and a token                                 |
 | [0031](docs/adr/0031-people-without-a-project-are-deleted.md)                | People left without a project are deleted after thirty days                |
 | [0032](docs/adr/0032-a-project-reception-can-be-suspended-alone.md)          | A project's reception can be suspended on its own                          |
+| [0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md)                   | A hold keeps everything it covers, a single project included               |
 
 ## Roadmap
 

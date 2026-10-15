@@ -5,7 +5,9 @@ Date: 2026-10-15
 ## Status
 
 Accepted. Builds on [ADR 0022](0022-an-account-ends-in-steps.md) (an account ends in steps) and
-[ADR 0027](0027-a-suspension-is-a-mark-not-a-status.md) (marks on the account).
+[ADR 0027](0027-a-suspension-is-a-mark-not-a-status.md) (marks on the account). Amended by
+[ADR 0033](0033-a-hold-keeps-everything-it-covers.md): a hold now also keeps events past the
+retention, and a single project can be held.
 
 ## Context
 
