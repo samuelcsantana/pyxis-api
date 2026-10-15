@@ -47,6 +47,9 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['people_limit_reached', HttpStatus.CONFLICT],
   ['owner_stays', HttpStatus.CONFLICT],
   ['person_not_found', HttpStatus.NOT_FOUND],
+  ['export_limit_reached', HttpStatus.TOO_MANY_REQUESTS],
+  ['export_not_found', HttpStatus.NOT_FOUND],
+  ['exports_unavailable', HttpStatus.SERVICE_UNAVAILABLE],
 ]);
 
 const HTTP_ERRORS: ReadonlyMap<number, { readonly error: string; readonly message: string }> =

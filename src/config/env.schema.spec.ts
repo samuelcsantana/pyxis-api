@@ -32,6 +32,21 @@ describe('validateEnv', () => {
     });
   });
 
+  it('reads the exports bucket and the jobs function, and refuses names AWS would refuse', () => {
+    expect(
+      validateEnv({ EXPORT_BUCKET: 'pyxis-api-exports-123', JOBS_FUNCTION_NAME: 'pyxis-api-jobs' }),
+    ).toMatchObject({
+      EXPORT_BUCKET: 'pyxis-api-exports-123',
+      JOBS_FUNCTION_NAME: 'pyxis-api-jobs',
+    });
+    expect(() => validateEnv({ EXPORT_BUCKET: 'Bad_Bucket' })).toThrow(
+      'Invalid environment configuration',
+    );
+    expect(() => validateEnv({ JOBS_FUNCTION_NAME: 'bad name' })).toThrow(
+      'Invalid environment configuration',
+    );
+  });
+
   it('rejects a terms address that is not a web address', () => {
     expect(() => validateEnv({ TERMS_URL: 'ftp://example.com/terms' })).toThrow(
       'Invalid environment configuration',

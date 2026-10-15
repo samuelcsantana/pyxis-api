@@ -13,6 +13,11 @@ import {
 } from '../../../domain/errors/ingest.errors';
 import { InvalidSignInCodeError, UnauthenticatedError } from '../../../domain/errors/auth.errors';
 import {
+  ExportLimitReachedError,
+  ExportNotFoundError,
+  ExportsUnavailableError,
+} from '../../../domain/errors/export.errors';
+import {
   OwnerStaysError,
   PeopleLimitReachedError,
   PersonNotFoundError,
@@ -81,6 +86,9 @@ describe('toErrorAnswer', () => {
     [new PeopleLimitReachedError(3), 409, 'people_limit_reached'],
     [new OwnerStaysError(), 409, 'owner_stays'],
     [new PersonNotFoundError(), 404, 'person_not_found'],
+    [new ExportLimitReachedError(3), 429, 'export_limit_reached'],
+    [new ExportNotFoundError(), 404, 'export_not_found'],
+    [new ExportsUnavailableError('EXPORT_BUCKET is not set'), 503, 'exports_unavailable'],
   ])('maps %s to its status and code', (error, status, code) => {
     expect(toErrorAnswer(error)).toEqual({
       body: { status_code: status, error: code, message: error.message },
