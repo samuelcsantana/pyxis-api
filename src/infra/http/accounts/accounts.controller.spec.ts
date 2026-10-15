@@ -38,6 +38,8 @@ const ACCOUNT: Account = {
   accessEndsAt: new Date('2027-11-15T00:00:00.000Z'),
   suspendedAt: null,
   suspensionReason: null,
+  deletionHeldAt: null,
+  deletionHoldReason: null,
   createdAt: new Date('2026-11-01T00:00:00.000Z'),
 };
 const MEASURED_AT = new Date('2026-11-02T03:00:00.000Z');

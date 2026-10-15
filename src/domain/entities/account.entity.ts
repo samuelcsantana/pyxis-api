@@ -13,5 +13,7 @@ export interface Account {
   readonly accessEndsAt: Date | null;
   readonly suspendedAt: Date | null;
   readonly suspensionReason: string | null;
+  readonly deletionHeldAt: Date | null;
+  readonly deletionHoldReason: string | null;
   readonly createdAt: Date;
 }
