@@ -72,6 +72,14 @@ export class ConfirmationMismatchError extends DomainError {
   }
 }
 
+export class DeletionOnHoldError extends DomainError {
+  readonly code = 'deletion_on_hold';
+
+  constructor() {
+    super("The account's data is held, so nothing of it can be deleted until the hold ends.");
+  }
+}
+
 export class AccountSuspendedError extends DomainError {
   readonly code = 'account_suspended';
 

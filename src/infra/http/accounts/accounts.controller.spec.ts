@@ -101,6 +101,7 @@ describe('myAccountBody', () => {
       ingestion_paused_until: '2026-12-01T00:00:00.000Z',
       suspended_at: null,
       suspension_reason: null,
+      deletion_held_at: null,
       month: '2026-11',
       events_this_month: 4200,
       measured_at: MEASURED_AT.toISOString(),
@@ -158,6 +159,21 @@ describe('myAccountBody', () => {
         suspension_reason: null,
       }),
     );
+  });
+
+  it('shows the owner, and only the owner, that the deletion is held', () => {
+    const held = { ...ACCOUNT, deletionHeldAt: new Date('2026-11-21T10:00:00.000Z') };
+    const body = (role: 'owner' | 'member') =>
+      myAccountBody({
+        account: held,
+        role,
+        month: '2026-11',
+        usage: null,
+        limits: HOSTED_PLAN_LIMITS,
+      });
+
+    expect(body('owner').deletion_held_at).toBe('2026-11-21T10:00:00.000Z');
+    expect(body('member').deletion_held_at).toBeNull();
   });
 
   it('shows an owner without billing dates yet as null', () => {

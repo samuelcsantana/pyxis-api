@@ -1,4 +1,3 @@
-import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import {
   BillingUnavailableError,
@@ -25,7 +24,9 @@ import {
 } from '../../../domain/errors/people.errors';
 import {
   AccountEndedError,
+  AccountSuspendedError,
   ConfirmationMismatchError,
+  DeletionOnHoldError,
   ProjectLimitReachedError,
   SubscriptionRequiredError,
 } from '../../../domain/errors/account.errors';
@@ -92,6 +93,7 @@ describe('toErrorAnswer', () => {
     [new ExportLimitReachedError(3), 429, 'export_limit_reached'],
     [new ExportNotFoundError(), 404, 'export_not_found'],
     [new AccountEndedError(), 409, 'account_ended'],
+    [new DeletionOnHoldError(), 409, 'deletion_on_hold'],
     [new ConfirmationMismatchError(), 409, 'confirmation_mismatch'],
     [new ExportsUnavailableError('EXPORT_BUCKET is not set'), 503, 'exports_unavailable'],
   ])('maps %s to its status and code', (error, status, code) => {

@@ -26,6 +26,7 @@ export interface LifecycleAccount {
   readonly keysRevokedAt: Date | null;
   readonly endedNotifiedAt: Date | null;
   readonly deletionRemindedAt: Date | null;
+  readonly deletionHeldAt: Date | null;
 }
 
 const CREATED_AT = new Date('2026-10-01T00:00:00.000Z');
@@ -55,6 +56,7 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
       keysRevokedAt: null,
       endedNotifiedAt: null,
       deletionRemindedAt: null,
+      deletionHeldAt: null,
       ...account,
     });
   }
@@ -137,7 +139,8 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
         (account, accessEndsAt) =>
           accessEndsAt <= remindBefore &&
           accessEndsAt > deleteBefore &&
-          account.deletionRemindedAt === null,
+          account.deletionRemindedAt === null &&
+          account.deletionHeldAt === null,
       ),
     );
   }
@@ -148,7 +151,11 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
   }
 
   dueForDeletion(deleteBefore: Date): Promise<readonly EndedAccount[]> {
-    return Promise.resolve(this.endedWhere((_, accessEndsAt) => accessEndsAt <= deleteBefore));
+    return Promise.resolve(
+      this.endedWhere(
+        (account, accessEndsAt) => accessEndsAt <= deleteBefore && account.deletionHeldAt === null,
+      ),
+    );
   }
 
   staleIncomplete(createdBefore: Date): Promise<readonly StaleAccount[]> {
@@ -160,6 +167,7 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
             account.status === 'incomplete' &&
             account.subscriptionId === null &&
             account.createdAt < createdBefore &&
+            account.deletionHeldAt === null &&
             !holding.has(account.accountId),
         )
         .map(({ accountId, ownerAdminId }) => ({ accountId, ownerAdminId })),
