@@ -1,0 +1,1 @@
+ALTER TABLE "admin_users" ADD COLUMN "projectless_since" timestamp with time zone;
