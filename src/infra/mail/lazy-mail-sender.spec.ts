@@ -28,6 +28,17 @@ describe('LazyMailSender', () => {
     );
     await sender.sendAccountNotice('ana@example.com', { kind: 'account_deleted' }, 'en');
     await sender.sendWelcome('ana@example.com', { trialEndsAt: null, terms: null }, 'en');
+    await sender.sendExportReady(
+      'ana@example.com',
+      {
+        projectId: 'p-1',
+        exportId: 'e-1',
+        projectName: 'Shop',
+        eventCount: 3,
+        availableUntil: new Date('2026-11-09T00:00:00.000Z'),
+      },
+      'en',
+    );
     await sender.sendQuotaNotice('ana@example.com', NOTICE, 'pt-BR');
     await sender.sendWeeklyDigest('ana@example.com', { projectId: 'p' } as WeeklyDigest, 'es');
 
@@ -40,6 +51,7 @@ describe('LazyMailSender', () => {
     expect(recording.invitations).toHaveLength(1);
     expect(recording.accountNotices).toHaveLength(1);
     expect(recording.welcomes).toHaveLength(1);
+    expect(recording.exportsReady).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
   });
 

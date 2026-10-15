@@ -3,6 +3,7 @@ import type { QuotaNotice } from '../domain/accounts/quota-notice';
 import type { Welcome } from '../domain/accounts/welcome';
 import type { EmailLanguage } from '../domain/auth/email-language';
 import type { WeeklyDigest } from '../domain/digest/weekly-digest';
+import type { ExportReady } from '../domain/exports/export-ready';
 import type { Invitation } from '../domain/people/invitation';
 import type { MailSender } from '../domain/services/mail-sender';
 
@@ -42,6 +43,12 @@ export interface SentWelcome {
   readonly language: EmailLanguage;
 }
 
+export interface SentExportReady {
+  readonly email: string;
+  readonly ready: ExportReady;
+  readonly language: EmailLanguage;
+}
+
 export class RecordingMailSender implements MailSender {
   readonly sent: SentSignInCode[] = [];
   readonly signUpCodes: SentSignInCode[] = [];
@@ -50,6 +57,7 @@ export class RecordingMailSender implements MailSender {
   readonly invitations: SentInvitation[] = [];
   readonly accountNotices: SentAccountNotice[] = [];
   readonly welcomes: SentWelcome[] = [];
+  readonly exportsReady: SentExportReady[] = [];
   private failure: Error | null = null;
   private readonly failingAddresses = new Map<string, Error>();
 
@@ -119,6 +127,15 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(failure);
     }
     this.welcomes.push({ email, welcome, language });
+    return Promise.resolve();
+  }
+
+  sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {
+    const failure = this.failingAddresses.get(email);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
+    }
+    this.exportsReady.push({ email, ready, language });
     return Promise.resolve();
   }
 }

@@ -3,6 +3,7 @@ import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
+import type { ExportReady } from '../../domain/exports/export-ready';
 import type { Invitation } from '../../domain/people/invitation';
 import type { MailSender } from '../../domain/services/mail-sender';
 
@@ -53,6 +54,10 @@ export class LazyMailSender implements MailSender {
 
   async sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
     await this.resolved().sendWelcome(email, welcome, language);
+  }
+
+  async sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {
+    await this.resolved().sendExportReady(email, ready, language);
   }
 
   private resolved(): MailSender {
