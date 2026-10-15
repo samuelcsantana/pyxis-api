@@ -161,6 +161,14 @@ export class DrizzleAccountLifecycleRepository implements AccountLifecycleReposi
     return rows.map((row) => row.id);
   }
 
+  async heldProjectIdsOf(accountId: string): Promise<readonly string[]> {
+    const rows = await this.db
+      .select({ id: projects.id })
+      .from(projects)
+      .where(and(eq(projects.accountId, accountId), isNotNull(projects.deletionHeldAt)));
+    return rows.map((row) => row.id);
+  }
+
   async deleteEventsOf(projectId: string, limit: number): Promise<number> {
     const deleted = await this.db.execute<{ id: string }>(sql`
       DELETE FROM ${events}

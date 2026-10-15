@@ -14,6 +14,7 @@ const LIFECYCLE = {
   endedNotices: 1,
   reminders: 0,
   deleted: 0,
+  partlyHeld: 0,
   incompleteRemoved: 2,
   peopleRemoved: 2,
   projectlessMarked: 1,

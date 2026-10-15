@@ -89,6 +89,7 @@ describe('RunAccountLifecycleUseCase', () => {
       endedNotices: 0,
       reminders: 0,
       deleted: 0,
+      partlyHeld: 0,
       incompleteRemoved: 0,
       peopleRemoved: 0,
       projectlessMarked: 0,
@@ -278,6 +279,43 @@ describe('RunAccountLifecycleUseCase', () => {
     expect(lifecycle.hasAdmin('bia')).toBe(false);
     expect(lifecycle.hasAdmin('dora')).toBe(true);
     expect(lifecycle.hasProject('elsewhere')).toBe(true);
+    expect(mail.accountNotices).toEqual([
+      { email: 'ana@example.com', notice: { kind: 'account_deleted' }, language: 'en' },
+    ]);
+  });
+
+  it('keeps a held project and its account, deleting the rest, until the hold is released', async () => {
+    const { lifecycle, mail, useCase } = setup();
+    lifecycle.add({
+      accountId: 'partly-held',
+      ownerAdminId: 'ana',
+      status: 'ended',
+      accessEndsAt: daysAgo(31),
+      endedNotifiedAt: daysAgo(31),
+      deletionRemindedAt: daysAgo(7),
+    });
+    lifecycle.addProject('kept', 'partly-held', 4);
+    lifecycle.addProject('gone', 'partly-held', 2);
+    lifecycle.holdProject('kept');
+    lifecycle.grant('ana', 'kept');
+    lifecycle.grant('bia', 'gone');
+    lifecycle.grant('carla', 'kept');
+
+    const held = await useCase.execute();
+
+    expect(held).toMatchObject({ deleted: 0, partlyHeld: 1, peopleRemoved: 1 });
+    expect(lifecycle.hasProject('kept')).toBe(true);
+    expect(lifecycle.hasProject('gone')).toBe(false);
+    expect(lifecycle.account('partly-held')).toBeDefined();
+    expect(lifecycle.hasAdmin('bia')).toBe(false);
+    expect(lifecycle.hasAdmin('carla')).toBe(true);
+    expect(mail.accountNotices).toEqual([]);
+
+    lifecycle.releaseProject('kept');
+    const released = await useCase.execute();
+
+    expect(released).toMatchObject({ deleted: 1, partlyHeld: 0 });
+    expect(lifecycle.account('partly-held')).toBeUndefined();
     expect(mail.accountNotices).toEqual([
       { email: 'ana@example.com', notice: { kind: 'account_deleted' }, language: 'en' },
     ]);

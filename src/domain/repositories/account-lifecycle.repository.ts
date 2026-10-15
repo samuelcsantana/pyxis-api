@@ -29,6 +29,7 @@ export interface AccountLifecycleRepository {
   staleIncomplete(createdBefore: Date): Promise<readonly StaleAccount[]>;
   peopleOf(accountId: string): Promise<readonly string[]>;
   projectIdsOf(accountId: string): Promise<readonly string[]>;
+  heldProjectIdsOf(accountId: string): Promise<readonly string[]>;
   deleteEventsOf(projectId: string, limit: number): Promise<number>;
   deleteProject(projectId: string): Promise<void>;
   deleteAccount(accountId: string): Promise<void>;

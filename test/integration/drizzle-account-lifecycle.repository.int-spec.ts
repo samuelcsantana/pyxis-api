@@ -176,6 +176,14 @@ describe('the account lifecycle against a real Postgres', () => {
     expect([...(await lifecycle.projectIdsOf(ENDED_ID))].sort()).toEqual([SHOP_ID, BLOG_ID].sort());
   });
 
+  it('lists the projects of an account whose own deletion is held', async () => {
+    expect(await lifecycle.heldProjectIdsOf(ENDED_ID)).toEqual([]);
+
+    await owner`UPDATE projects SET deletion_held_at = ${NOW} WHERE id IN (${BLOG_ID}, ${OTHER_ID})`;
+
+    expect(await lifecycle.heldProjectIdsOf(ENDED_ID)).toEqual([BLOG_ID]);
+  });
+
   it('deletes events in batches, then the projects, the account and the people left with nothing', async () => {
     await seedEvents(SHOP_ID, 7);
     await seedEvents(OTHER_ID, 2);

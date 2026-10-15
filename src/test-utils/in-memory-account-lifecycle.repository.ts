@@ -38,6 +38,7 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
   private readonly liveKeys = new Map<string, number>();
   private access: readonly { readonly adminUserId: string; readonly projectId: string }[] = [];
   private readonly admins = new Set<string>();
+  private readonly heldProjects = new Set<string>();
   readonly failingProjects = new Set<string>();
   readonly failingAccounts = new Set<string>();
   readonly eventBatches: number[] = [];
@@ -65,6 +66,14 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
     this.projects.set(projectId, accountId);
     this.events.set(projectId, events);
     this.liveKeys.set(projectId, keys);
+  }
+
+  holdProject(projectId: string): void {
+    this.heldProjects.add(projectId);
+  }
+
+  releaseProject(projectId: string): void {
+    this.heldProjects.delete(projectId);
   }
 
   grant(adminUserId: string, projectId: string): void {
@@ -187,6 +196,14 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
   projectIdsOf(accountId: string): Promise<readonly string[]> {
     return Promise.resolve(
       [...this.projects].filter(([, owner]) => owner === accountId).map(([projectId]) => projectId),
+    );
+  }
+
+  heldProjectIdsOf(accountId: string): Promise<readonly string[]> {
+    return Promise.resolve(
+      [...this.projects]
+        .filter(([projectId, owner]) => owner === accountId && this.heldProjects.has(projectId))
+        .map(([projectId]) => projectId),
     );
   }
 
