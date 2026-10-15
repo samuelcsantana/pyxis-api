@@ -2,6 +2,8 @@ import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import type { DateRange } from '../../domain/queries/date-range';
 import {
+  ACCENT,
+  actionButton,
   brandHeader,
   cardRow,
   DARK,
@@ -39,7 +41,6 @@ const RIGHT_TILE_GUTTER = '0 0 12px 6px';
 const TEXT_INDENT = '  ';
 const TEXT_COLUMN_GAP = 2;
 
-const ACCENT = '#f5b83d';
 const NOTICE = { light: '#fff4dc', dark: '#2b2412' } as const;
 
 const DIGEST_DARK_RULES = [
@@ -431,22 +432,6 @@ function routeRows({ digest, messages, formats }: Wording): readonly ListRow[] {
   }));
 }
 
-function button(href: string, label: string): readonly string[] {
-  const cellStyle = `background-color:${ACCENT};border-radius:8px;`;
-  const linkStyle =
-    `display:inline-block;padding:12px 20px;font-family:${SANS_FONTS};font-size:15px;` +
-    `line-height:20px;font-weight:600;color:${LIGHT.ink};text-decoration:none;`;
-  return [
-    `<table ${LAYOUT_TABLE} style="margin:28px 0 0 0;">`,
-    '<tr>',
-    `<td style="${cellStyle}">`,
-    `<a href="${escapeHtml(href)}" style="${linkStyle}">${escapeHtml(label)}</a>`,
-    '</td>',
-    '</tr>',
-    '</table>',
-  ];
-}
-
 function card(wording: Wording, links: EmailLinks): readonly string[] {
   const { digest, messages } = wording;
   return cardRow([
@@ -459,7 +444,7 @@ function card(wording: Wording, links: EmailLinks): readonly string[] {
     ...listBlock(messages.topPages, pageRows(wording), messages.noPageViews),
     ...listBlock(messages.topEvents, eventRows(wording), messages.noNamedEvents),
     ...listBlock(messages.failingRoutes, routeRows(wording), messages.noFailedWrites),
-    ...button(overviewUrl(digest, links), messages.openWeek),
+    ...actionButton(overviewUrl(digest, links), messages.openWeek),
   ]);
 }
 
