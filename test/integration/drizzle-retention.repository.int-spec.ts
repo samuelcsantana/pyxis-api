@@ -116,6 +116,24 @@ describe('retention against a real Postgres', () => {
     expect(cards).toEqual([{ fingerprint: 'fp_recent' }]);
   });
 
+  it("keeps the old events of a held project and of a held account's projects", async () => {
+    const accountId = 'c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f';
+    const [admin] = await owner<{ id: string }[]>`SELECT id FROM admin_users LIMIT 1`;
+    await owner`
+      INSERT INTO accounts (id, owner_admin_id, status, deletion_held_at)
+      VALUES (${accountId}, ${admin?.id ?? ''}, 'ended', ${NOW})
+    `;
+    await owner`UPDATE projects SET deletion_held_at = ${NOW} WHERE id = ${SHOP_ID}`;
+    await owner`UPDATE projects SET account_id = ${accountId} WHERE id = ${BLOG_ID}`;
+
+    expect(await retention.projectIdsNotHeld()).toEqual([]);
+    const report = await new RunRetentionUseCase(retention, new FixedClock(NOW)).execute();
+
+    expect(report.events).toBe(0);
+    const [kept] = await owner<{ count: number }[]>`SELECT count(*)::int AS count FROM events`;
+    expect(kept?.count).toBe(5);
+  });
+
   it('deletes events in batches of the size it is given', async () => {
     expect(await retention.deleteEventsBefore(SHOP_ID, CUTOFF, 1)).toBe(1);
     expect(await retention.deleteEventsBefore(SHOP_ID, CUTOFF, 1)).toBe(1);

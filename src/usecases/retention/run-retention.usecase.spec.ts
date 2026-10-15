@@ -18,7 +18,7 @@ class ScriptedRetention implements RetentionRepository {
 
   constructor(private readonly batches: Readonly<Record<string, number[]>>) {}
 
-  projectIds(): Promise<readonly string[]> {
+  projectIdsNotHeld(): Promise<readonly string[]> {
     return Promise.resolve(Object.keys(this.batches));
   }
 

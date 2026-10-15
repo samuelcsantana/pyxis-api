@@ -68,7 +68,7 @@ export class RunRetentionUseCase {
 
   private async deleteOldEvents(cutoff: Date): Promise<number> {
     let total = 0;
-    for (const projectId of await this.retention.projectIds()) {
+    for (const projectId of await this.retention.projectIdsNotHeld()) {
       let deleted: number;
       do {
         deleted = await this.retention.deleteEventsBefore(projectId, cutoff, RETENTION_BATCH_SIZE);
