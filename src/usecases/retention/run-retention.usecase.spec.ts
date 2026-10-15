@@ -3,6 +3,7 @@ import { RETENTION_BATCH_SIZE } from '../../domain/retention/retention-policy';
 import type {
   ExpiredSessionCutoffs,
   RetentionRepository,
+  SpentConnectionTokenCutoffs,
 } from '../../domain/retention/retention.repository';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { RetentionFailedError, RunRetentionUseCase } from './run-retention.usecase';
@@ -14,6 +15,9 @@ class ScriptedRetention implements RetentionRepository {
   readonly sessionCutoffs: ExpiredSessionCutoffs[] = [];
   readonly codeNows: Date[] = [];
   readonly trialCardCutoffs: Date[] = [];
+  readonly connectionCutoffs: Date[] = [];
+  readonly tokenCutoffs: SpentConnectionTokenCutoffs[] = [];
+  readonly requestCutoffs: Date[] = [];
   failing: string | null = null;
 
   constructor(private readonly batches: Readonly<Record<string, number[]>>) {}
@@ -44,6 +48,21 @@ class ScriptedRetention implements RetentionRepository {
   deleteTrialCardsStartedBefore(cutoff: Date): Promise<number> {
     this.trialCardCutoffs.push(cutoff);
     return Promise.resolve(2);
+  }
+
+  deleteEndedConnections(idleCutoff: Date): Promise<number> {
+    this.connectionCutoffs.push(idleCutoff);
+    return Promise.resolve(4);
+  }
+
+  deleteSpentConnectionTokens(cutoffs: SpentConnectionTokenCutoffs): Promise<number> {
+    this.tokenCutoffs.push(cutoffs);
+    return Promise.resolve(6);
+  }
+
+  deleteFinishedAuthorizationRequests(expiredBefore: Date): Promise<number> {
+    this.requestCutoffs.push(expiredBefore);
+    return Promise.resolve(1);
   }
 }
 
@@ -77,6 +96,9 @@ describe('RunRetentionUseCase', () => {
       sessions: 3,
       signInCodes: 5,
       trialCards: 2,
+      oauthConnections: 4,
+      oauthTokens: 6,
+      oauthRequests: 1,
     });
     expect(retention.eventCalls.map((call) => call.projectId)).toEqual([
       'project-a',
@@ -93,6 +115,11 @@ describe('RunRetentionUseCase', () => {
     ]);
     expect(retention.codeNows).toEqual([NOW]);
     expect(retention.trialCardCutoffs).toEqual([new Date('2025-10-06T06:00:00.000Z')]);
+    expect(retention.connectionCutoffs).toEqual([new Date('2026-07-08T06:00:00.000Z')]);
+    expect(retention.tokenCutoffs).toEqual([
+      { expiredBefore: NOW, rotatedBefore: new Date('2026-09-06T06:00:00.000Z') },
+    ]);
+    expect(retention.requestCutoffs).toEqual([new Date('2026-10-05T06:00:00.000Z')]);
     expect(logs).toContainEqual({
       level: 'log',
       message: { message: 'retention.step_done', step: 'signInCodes', deleted: 5 },
