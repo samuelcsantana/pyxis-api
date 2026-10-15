@@ -4,6 +4,17 @@ const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = { events: 12, sessions: 1, signInCodes: 2 };
 const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
+const LIFECYCLE = {
+  reconciled: 4,
+  statusChanges: 1,
+  reconcileFailures: 0,
+  keysRevoked: 1,
+  endedNotices: 1,
+  reminders: 0,
+  deleted: 0,
+  incompleteRemoved: 2,
+  peopleRemoved: 2,
+};
 const ACCOUNT_USAGE = {
   month: '2026-10',
   accounts: 3,
@@ -30,6 +41,10 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
       order.push('usage');
       return Promise.resolve(ACCOUNT_USAGE);
     },
+    runAccountLifecycle: () => {
+      order.push('lifecycle');
+      return Promise.resolve(LIFECYCLE);
+    },
     sendWeeklyDigests: () => {
       order.push('digest');
       return Promise.resolve(DIGEST);
@@ -49,7 +64,7 @@ describe('createJobsHandler', () => {
     ['an event that is not an object', 'weekly-digest'],
     ['null', null],
   ])(
-    'runs the daily jobs for %s: parameters, size, retention, usage, icons',
+    'runs the daily jobs for %s: parameters, size, retention, usage, lifecycle, icons',
     async (_label, event) => {
       const order: string[] = [];
 
@@ -59,9 +74,10 @@ describe('createJobsHandler', () => {
         databaseSize: SIZE,
         retention: RETENTION,
         accountUsage: ACCOUNT_USAGE,
+        accountLifecycle: LIFECYCLE,
         projectIcons: ICONS,
       });
-      expect(order).toEqual(['parameters', 'size', 'retention', 'usage', 'icons']);
+      expect(order).toEqual(['parameters', 'size', 'retention', 'usage', 'lifecycle', 'icons']);
     },
   );
 
@@ -112,5 +128,17 @@ describe('createJobsHandler', () => {
 
     await expect(handler()).rejects.toThrow('connection lost');
     expect(order).toEqual(['parameters', 'size', 'retention']);
+  });
+
+  it('fails when the account lifecycle fails, after the other accounts were handled', async () => {
+    const order: string[] = [];
+    const handler = createJobsHandler({
+      ...recordingDependencies(order),
+      runAccountLifecycle: () =>
+        Promise.reject(new Error('The account lifecycle failed for 1 account(s).')),
+    });
+
+    await expect(handler()).rejects.toThrow('The account lifecycle failed for 1 account(s).');
+    expect(order).toEqual(['parameters', 'size', 'retention', 'usage']);
   });
 });

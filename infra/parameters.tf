@@ -102,6 +102,17 @@ resource "aws_ssm_parameter" "jobs_resend_api_key" {
   }
 }
 
+resource "aws_ssm_parameter" "jobs_stripe_secret_key" {
+  name        = "/${var.project}/jobs/STRIPE_SECRET_KEY"
+  type        = "SecureString"
+  value       = "placeholder-set-in-the-console"
+  description = "The Stripe key the daily job reconciles the subscriptions with; the same value as /app/STRIPE_SECRET_KEY."
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
 resource "aws_ssm_parameter" "jobs_mail_from" {
   name        = "/${var.project}/jobs/MAIL_FROM"
   type        = "String"
