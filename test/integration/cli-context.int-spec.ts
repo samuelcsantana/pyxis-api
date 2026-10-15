@@ -165,6 +165,37 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('closes an account as the operator, revoking its keys at once', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const account = await context.createCompedAccount.execute({
+        ownerEmail: 'closed@example.com',
+      });
+      const project = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+        accountId: account.accountId,
+      });
+
+      const closed = await context.closeAccountAsOperator.execute({
+        accountId: account.accountId,
+        refund: 'full',
+      });
+
+      expect(closed).toMatchObject({ subscriptionCancelled: false, refundedAmount: 0 });
+      const [row] = await owner<{ status: string; ended_notified_at: Date | null }[]>`
+        SELECT status, ended_notified_at FROM accounts WHERE id = ${account.accountId}
+      `;
+      expect(row).toEqual({ status: 'ended', ended_notified_at: null });
+      const live = await owner`
+        SELECT id FROM project_keys WHERE project_id = ${project.projectId} AND revoked_at IS NULL
+      `;
+      expect(live).toHaveLength(0);
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',

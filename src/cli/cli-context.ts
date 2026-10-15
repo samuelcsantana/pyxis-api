@@ -7,11 +7,13 @@ import { CONNECT_TIMEOUT_SECONDS } from '../infra/database/postgres-options';
 import { DrizzleProjectUsageQuery } from '../infra/queries/drizzle-project-usage.query';
 import { CryptoRandomSource } from '../infra/random/crypto-random-source';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
+import { DrizzleAccountClosureRepository } from '../infra/repositories/drizzle-account-closure.repository';
 import { DrizzleAccountSuspensionRepository } from '../infra/repositories/drizzle-account-suspension.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
+import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
@@ -49,6 +51,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const random = new CryptoRandomSource();
   const clock = new SystemClock();
   const suspensions = new DrizzleAccountSuspensionRepository(db);
+  const billing = createBillingGateway(config);
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -66,12 +69,18 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     createCompedAccount: new CreateCompedAccountUseCase(admins, accounts),
     showAccount: new ShowAccountUseCase(accounts, new DrizzleAccountUsageRepository(db), clock),
     linkSubscription: new LinkSubscriptionUseCase(
-      createBillingGateway(config),
+      billing,
       new DrizzleAccountBillingRepository(db),
       clock,
     ),
     suspendAccount: new SuspendAccountUseCase(accounts, suspensions, clock),
     resumeAccount: new ResumeAccountUseCase(suspensions),
+    closeAccountAsOperator: new CloseAccountAsOperatorUseCase(
+      accounts,
+      new DrizzleAccountClosureRepository(db),
+      billing,
+      clock,
+    ),
     close: () => client.end(),
   };
 }
