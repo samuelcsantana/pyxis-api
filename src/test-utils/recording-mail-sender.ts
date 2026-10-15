@@ -4,6 +4,7 @@ import type { Welcome } from '../domain/accounts/welcome';
 import type { EmailLanguage } from '../domain/auth/email-language';
 import type { WeeklyDigest } from '../domain/digest/weekly-digest';
 import type { ExportReady } from '../domain/exports/export-ready';
+import type { NoticeText } from '../domain/notices/operator-notice';
 import type { Invitation } from '../domain/people/invitation';
 import type { MailSender } from '../domain/services/mail-sender';
 
@@ -49,6 +50,12 @@ export interface SentExportReady {
   readonly language: EmailLanguage;
 }
 
+export interface SentOperatorNotice {
+  readonly email: string;
+  readonly notice: NoticeText;
+  readonly language: EmailLanguage;
+}
+
 export class RecordingMailSender implements MailSender {
   readonly sent: SentSignInCode[] = [];
   readonly signUpCodes: SentSignInCode[] = [];
@@ -58,6 +65,7 @@ export class RecordingMailSender implements MailSender {
   readonly accountNotices: SentAccountNotice[] = [];
   readonly welcomes: SentWelcome[] = [];
   readonly exportsReady: SentExportReady[] = [];
+  readonly operatorNotices: SentOperatorNotice[] = [];
   private failure: Error | null = null;
   private readonly failingAddresses = new Map<string, Error>();
 
@@ -136,6 +144,15 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(failure);
     }
     this.exportsReady.push({ email, ready, language });
+    return Promise.resolve();
+  }
+
+  sendOperatorNotice(email: string, notice: NoticeText, language: EmailLanguage): Promise<void> {
+    const failure = this.failingAddresses.get(email);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
+    }
+    this.operatorNotices.push({ email, notice, language });
     return Promise.resolve();
   }
 }

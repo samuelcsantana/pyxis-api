@@ -1,3 +1,4 @@
+import type { NoticeText } from '../../domain/notices/operator-notice';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { Welcome } from '../../domain/accounts/welcome';
@@ -58,6 +59,14 @@ export class LazyMailSender implements MailSender {
 
   async sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {
     await this.resolved().sendExportReady(email, ready, language);
+  }
+
+  async sendOperatorNotice(
+    email: string,
+    notice: NoticeText,
+    language: EmailLanguage,
+  ): Promise<void> {
+    await this.resolved().sendOperatorNotice(email, notice, language);
   }
 
   private resolved(): MailSender {

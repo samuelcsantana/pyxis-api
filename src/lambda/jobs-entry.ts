@@ -32,6 +32,8 @@ import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
 import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
 import { RunRetentionUseCase } from '../usecases/retention/run-retention.usecase';
+import { DrizzleNoticeRepository } from '../infra/repositories/drizzle-notice.repository';
+import { SendOperatorNoticesUseCase } from '../usecases/notices/send-operator-notices.usecase';
 import { createJobsHandler } from './jobs-handler';
 import { loadParameters, ssmParameterPages } from './load-parameters';
 
@@ -118,6 +120,14 @@ export const handler = createJobsHandler({
           new DrizzleProjectActivityQuery(database),
         ),
         createMailSender(validateEnv(process.env)),
+        new SystemClock(),
+      ).execute(),
+    ),
+  sendOperatorNotices: () =>
+    withDatabase((database) =>
+      new SendOperatorNoticesUseCase(
+        new DrizzleNoticeRepository(database),
+        new LazyMailSender(() => createMailSender(validateEnv(process.env))),
         new SystemClock(),
       ).execute(),
     ),

@@ -4,6 +4,7 @@ import type { Welcome } from '../accounts/welcome';
 import type { EmailLanguage } from '../auth/email-language';
 import type { WeeklyDigest } from '../digest/weekly-digest';
 import type { ExportReady } from '../exports/export-ready';
+import type { NoticeText } from '../notices/operator-notice';
 import type { Invitation } from '../people/invitation';
 
 export interface MailSender {
@@ -15,6 +16,7 @@ export interface MailSender {
   sendAccountNotice(email: string, notice: AccountNotice, language: EmailLanguage): Promise<void>;
   sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void>;
   sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void>;
+  sendOperatorNotice(email: string, notice: NoticeText, language: EmailLanguage): Promise<void>;
 }
 
 export const MAIL_SENDER = Symbol('MailSender');

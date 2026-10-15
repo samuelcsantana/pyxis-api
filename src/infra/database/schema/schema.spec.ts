@@ -8,6 +8,8 @@ import {
   adminUsers,
   digestDeliveries,
   events,
+  noticeDeliveries,
+  notices,
   otpCodes,
   projectExports,
   projectIcons,
@@ -28,6 +30,7 @@ function foreignKeyTargets(
     | typeof adminSessions
     | typeof adminAccessTokens
     | typeof digestDeliveries
+    | typeof noticeDeliveries
     | typeof projectIcons
     | typeof termsAcceptances
     | typeof projectExports,
@@ -202,6 +205,20 @@ describe('database schema', () => {
       'week_start',
     ]);
     expect(foreignKeyTargets(digestDeliveries)).toEqual(['projects.id', 'admin_users.id']);
+  });
+
+  it('keeps one delivery per notice and account, gone with either, and each campaign once', () => {
+    const config = getTableConfig(noticeDeliveries);
+
+    expect(config.primaryKeys[0]?.getName()).toBe('notice_deliveries_pkey');
+    expect(foreignKeyTargets(noticeDeliveries)).toEqual(['notices.id', 'accounts.id']);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual([
+      'cascade',
+      'cascade',
+    ]);
+    expect(
+      getTableConfig(notices).columns.find((column) => column.name === 'campaign')?.isUnique,
+    ).toBe(true);
   });
 
   it('ties sessions to their admin and indexes them by admin', () => {

@@ -1,3 +1,4 @@
+import { buildOperatorNoticeEmail } from './operator-notice-email';
 import { Logger } from '@nestjs/common';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import { createMailSender } from './create-mail-sender';
@@ -154,6 +155,25 @@ describe('ResendMailSender', () => {
     });
   });
 
+  it('sends an operator notice with replies going to the support address', async () => {
+    const send = okResend();
+    const notice = { subject: 'Prices change', paragraphs: ['From December.'] };
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendOperatorNotice(
+      'owner@example.com',
+      notice,
+      'es',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildOperatorNoticeEmail(notice, 'es', LINKS, SUPPORT),
+    });
+  });
+
   it('sends the welcome with replies going to the support address', async () => {
     const send = okResend();
     const welcome = { trialEndsAt: null, terms: null };
@@ -289,6 +309,19 @@ describe('SesMailSender', () => {
       buildSignUpCodeEmail('654321', 'en', LINKS).subject,
     );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
+  });
+
+  it('sends an operator notice through SES too', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendOperatorNotice(
+      'owner@example.com',
+      { subject: 'Prices change', paragraphs: ['From December.'] },
+      'en',
+    );
+
+    expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe('Prices change');
+    expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
   });
 
   it('sends the export notice through SES too', async () => {
@@ -474,6 +507,23 @@ describe('LoggingMailSender', () => {
         events: 150_412,
         language: 'pt-BR',
       },
+    ]);
+  });
+
+  it('logs an operator notice by its subject, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendOperatorNotice(
+      'owner@example.com',
+      { subject: 'Prices change', paragraphs: ['From December.'] },
+      'pt-BR',
+    );
+
+    expect(logs).toEqual([
+      { message: 'mail.operator_notice', subject: 'Prices change', language: 'pt-BR' },
     ]);
   });
 
