@@ -33,6 +33,7 @@ import {
   type VisitsReportBody,
   visitsReportSchema,
 } from './visits.schemas';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function visitFilters(query: VisitsQueryParams): VisitFilters {
   return {
@@ -87,6 +88,7 @@ function visitsBody(report: VisitsReport): VisitsReportBody {
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class VisitsController {

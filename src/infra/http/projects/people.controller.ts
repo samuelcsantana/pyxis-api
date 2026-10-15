@@ -41,6 +41,10 @@ import {
   projectPeopleSchema,
 } from './people.schemas';
 import { idSchema } from './projects.schemas';
+import {
+  ApiAccountSuspended,
+  SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION,
+} from '../errors/account-suspended.response';
 
 export function personBody(person: PersonOfProject): PersonBody {
   return {
@@ -77,6 +81,7 @@ export class PeopleController {
   @Get()
   @UseGuards(SessionGuard, ProjectAccessGuard)
   @ApiOperation({ summary: 'The people who read the project, for anyone who reads it' })
+  @ApiAccountSuspended()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: projectPeopleSchema })
   async people(@Req() request: FastifyRequest): Promise<ProjectPeopleBody> {
     const people = await this.listPeople.execute(projectOf(request).id);
@@ -94,7 +99,7 @@ export class PeopleController {
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: addedPersonSchema })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
-  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiAccountSuspended(SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION)
   @ApiResponse({ status: HttpStatus.CONFLICT, standardSchema: errorResponseSchema })
   async add(
     @Req() request: FastifyRequest,

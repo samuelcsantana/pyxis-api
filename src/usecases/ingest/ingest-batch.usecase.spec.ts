@@ -1,4 +1,5 @@
 import type { Project } from '../../domain/entities/project.entity';
+import { AccountSuspendedError } from '../../domain/errors/account.errors';
 import {
   BatchTooLargeError,
   OriginNotAllowedError,
@@ -293,6 +294,40 @@ describe('IngestBatchUseCase', () => {
       code: 'quota_exceeded',
     });
     expect(events.insertCalls).toBe(0);
+  });
+
+  it('refuses a project whose account is suspended, keeping the origin for the CORS answer', async () => {
+    const { useCase, usage, events, command } = setup();
+    usage.placeProject(PROJECT.id, ACCOUNT_ID);
+    usage.markSuspended(ACCOUNT_ID);
+
+    const failure = useCase.execute(command());
+
+    await expect(failure).rejects.toBeInstanceOf(AccountSuspendedError);
+    await expect(failure).rejects.toMatchObject({
+      allowedOrigin: ORIGIN,
+      code: 'account_suspended',
+    });
+    expect(events.insertCalls).toBe(0);
+  });
+
+  it('names the suspension before the monthly pause when both apply', async () => {
+    const { useCase, usage, command } = setup();
+    usage.placeProject(PROJECT.id, ACCOUNT_ID);
+    usage.markSuspended(ACCOUNT_ID);
+    await usage.record(
+      '2026-10',
+      [
+        {
+          accountId: ACCOUNT_ID,
+          events: 150_000,
+          ingestionPausedUntil: new Date(RECEIVED_AT.getTime() + 60_000),
+        },
+      ],
+      RECEIVED_AT,
+    );
+
+    await expect(useCase.execute(command())).rejects.toBeInstanceOf(AccountSuspendedError);
   });
 
   it('takes events again once the pause has passed', async () => {

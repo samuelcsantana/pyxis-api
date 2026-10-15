@@ -1,7 +1,11 @@
 import { hasAccess } from '../../domain/accounts/account-status';
+import { isSuspended } from '../../domain/accounts/account-suspension';
 import type { Account } from '../../domain/entities/account.entity';
 import type { Project } from '../../domain/entities/project.entity';
-import { SubscriptionRequiredError } from '../../domain/errors/account.errors';
+import {
+  AccountSuspendedError,
+  SubscriptionRequiredError,
+} from '../../domain/errors/account.errors';
 import { ProjectNotFoundError } from '../../domain/errors/project.errors';
 import type { AccountRepository } from '../../domain/repositories/account.repository';
 import type { ProjectSettingsRepository } from '../../domain/repositories/project-settings.repository';
@@ -27,6 +31,9 @@ export async function projectOwnedBy(
 }
 
 export function requireAccess(account: Account): void {
+  if (isSuspended(account)) {
+    throw new AccountSuspendedError();
+  }
   if (!hasAccess(account.status)) {
     throw new SubscriptionRequiredError();
   }

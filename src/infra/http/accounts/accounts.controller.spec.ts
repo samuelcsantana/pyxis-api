@@ -97,6 +97,8 @@ describe('myAccountBody', () => {
       current_period_ends_at: '2026-11-15T00:00:00.000Z',
       access_ends_at: '2027-11-15T00:00:00.000Z',
       ingestion_paused_until: '2026-12-01T00:00:00.000Z',
+      suspended_at: null,
+      suspension_reason: null,
       month: '2026-11',
       events_this_month: 4200,
       measured_at: MEASURED_AT.toISOString(),
@@ -123,6 +125,35 @@ describe('myAccountBody', () => {
         ingestion_paused_until: null,
         events_this_month: null,
         measured_at: null,
+      }),
+    );
+  });
+
+  it('shows everyone that the account is suspended, and only the owner why', () => {
+    const suspended = {
+      ...ACCOUNT,
+      suspendedAt: new Date('2026-11-20T10:00:00.000Z'),
+      suspensionReason: 'Forged traffic',
+    };
+    const body = (role: 'owner' | 'member') =>
+      myAccountBody({
+        account: suspended,
+        role,
+        month: '2026-11',
+        usage: null,
+        limits: HOSTED_PLAN_LIMITS,
+      });
+
+    expect(body('owner')).toEqual(
+      expect.objectContaining({
+        suspended_at: '2026-11-20T10:00:00.000Z',
+        suspension_reason: 'Forged traffic',
+      }),
+    );
+    expect(body('member')).toEqual(
+      expect.objectContaining({
+        suspended_at: '2026-11-20T10:00:00.000Z',
+        suspension_reason: null,
       }),
     );
   });

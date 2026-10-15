@@ -71,3 +71,11 @@ export class ConfirmationMismatchError extends DomainError {
     super("The address typed is not the owner's: nothing was closed.");
   }
 }
+
+export class AccountSuspendedError extends DomainError {
+  readonly code = 'account_suspended';
+
+  constructor(readonly allowedOrigin: string | null = null) {
+    super('The account is suspended: its owner was told why by e-mail and can contest it.');
+  }
+}

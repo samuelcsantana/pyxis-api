@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { isPausedAt } from '../../domain/accounts/account-quota';
 import type { Project } from '../../domain/entities/project.entity';
+import { AccountSuspendedError } from '../../domain/errors/account.errors';
 import type { TrackedEvent } from '../../domain/entities/tracked-event.entity';
 import {
   BatchTooLargeError,
@@ -25,9 +26,9 @@ import {
 } from '../../domain/events/validate-event';
 import { EVENT_REPOSITORY, type EventRepository } from '../../domain/repositories/event.repository';
 import {
-  INGESTION_PAUSE_REPOSITORY,
-  type IngestionPauseRepository,
-} from '../../domain/repositories/ingestion-pause.repository';
+  PROJECT_ACCOUNT_STATE_REPOSITORY,
+  type ProjectAccountStateRepository,
+} from '../../domain/repositories/project-account-state.repository';
 import {
   PROJECT_REPOSITORY,
   type ProjectRepository,
@@ -86,7 +87,8 @@ export class IngestBatchUseCase {
     @Inject(EVENT_REPOSITORY) private readonly events: EventRepository,
     @Inject(PROJECT_RATE_LIMITER) private readonly rateLimiter: ProjectRateLimiter,
     @Inject(CLOCK) private readonly clock: Clock,
-    @Inject(INGESTION_PAUSE_REPOSITORY) private readonly pauses: IngestionPauseRepository,
+    @Inject(PROJECT_ACCOUNT_STATE_REPOSITORY)
+    private readonly accountStates: ProjectAccountStateRepository,
   ) {}
 
   async execute(command: IngestBatchCommand): Promise<IngestBatchResult> {
@@ -103,9 +105,12 @@ export class IngestBatchUseCase {
     if (!decision.allowed) {
       throw new ProjectRateLimitedError(decision.retryAfterSeconds, origin);
     }
-    const pausedUntil = await this.pauses.pausedUntil(project.id);
-    if (isPausedAt(pausedUntil, receivedAt)) {
-      throw new QuotaExceededError(pausedUntil, origin);
+    const state = await this.accountStates.stateOf(project.id);
+    if (state.suspended) {
+      throw new AccountSuspendedError(origin);
+    }
+    if (isPausedAt(state.ingestionPausedUntil, receivedAt)) {
+      throw new QuotaExceededError(state.ingestionPausedUntil, origin);
     }
     if (isBotUserAgent(command.userAgent)) {
       return {

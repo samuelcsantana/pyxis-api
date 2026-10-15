@@ -14,6 +14,7 @@ import { SessionGuard } from '../auth/auth.guards';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 export const PROJECT_ICON_CACHE_CONTROL = 'private, max-age=86400';
 
@@ -27,6 +28,7 @@ export const PROJECT_ICON_CACHE_CONTROL = 'private, max-age=86400';
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @UseGuards(SessionGuard, ProjectAccessGuard)
 export class ProjectIconController {

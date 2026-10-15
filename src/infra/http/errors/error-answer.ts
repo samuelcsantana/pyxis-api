@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
+import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { DomainError } from '../../../domain/errors/domain.error';
 import { ProjectRateLimitedError, QuotaExceededError } from '../../../domain/errors/ingest.errors';
 import type { ErrorResponse } from '../ingest/ingest.schemas';
@@ -21,6 +22,7 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['origin_not_allowed', HttpStatus.FORBIDDEN],
   ['rate_limited', HttpStatus.TOO_MANY_REQUESTS],
   ['quota_exceeded', HttpStatus.FORBIDDEN],
+  ['account_suspended', HttpStatus.FORBIDDEN],
   ['invalid_code', HttpStatus.BAD_REQUEST],
   ['unauthenticated', HttpStatus.UNAUTHORIZED],
   ['session_not_found', HttpStatus.NOT_FOUND],
@@ -100,6 +102,13 @@ function statusOf(exception: unknown): number | undefined {
   return undefined;
 }
 
+function refusedBatchOrigin(exception: DomainError): string | null {
+  if (exception instanceof QuotaExceededError || exception instanceof AccountSuspendedError) {
+    return exception.allowedOrigin;
+  }
+  return null;
+}
+
 function domainAnswer(exception: DomainError): ErrorAnswer {
   const status = DOMAIN_STATUSES.get(exception.code);
   if (status === undefined) {
@@ -112,9 +121,10 @@ function domainAnswer(exception: DomainError): ErrorAnswer {
       vary: 'Origin',
     });
   }
-  if (exception instanceof QuotaExceededError) {
+  const batchOrigin = refusedBatchOrigin(exception);
+  if (batchOrigin !== null) {
     return answer(status, exception.code, exception.message, {
-      'access-control-allow-origin': exception.allowedOrigin,
+      'access-control-allow-origin': batchOrigin,
       vary: 'Origin',
     });
   }

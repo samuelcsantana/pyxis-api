@@ -7,11 +7,16 @@ import {
 } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { isUuid } from '../../../domain/events/text-shapes';
 import {
   ADMIN_USER_REPOSITORY,
   type AdminUserRepository,
 } from '../../../domain/repositories/admin-user.repository';
+import {
+  PROJECT_ACCOUNT_STATE_REPOSITORY,
+  type ProjectAccountStateRepository,
+} from '../../../domain/repositories/project-account-state.repository';
 import { adminOf } from '../auth/auth.guards';
 
 declare module 'fastify' {
@@ -24,7 +29,11 @@ type ProjectRequest = FastifyRequest<{ Params: Partial<Record<'projectId', strin
 
 @Injectable()
 export class ProjectAccessGuard implements CanActivate {
-  constructor(@Inject(ADMIN_USER_REPOSITORY) private readonly admins: AdminUserRepository) {}
+  constructor(
+    @Inject(ADMIN_USER_REPOSITORY) private readonly admins: AdminUserRepository,
+    @Inject(PROJECT_ACCOUNT_STATE_REPOSITORY)
+    private readonly accountStates: ProjectAccountStateRepository,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<ProjectRequest>();
@@ -34,6 +43,9 @@ export class ProjectAccessGuard implements CanActivate {
       : null;
     if (project === null) {
       throw new NotFoundException();
+    }
+    if ((await this.accountStates.stateOf(project.id)).suspended) {
+      throw new AccountSuspendedError();
     }
     request.project = project;
     return true;

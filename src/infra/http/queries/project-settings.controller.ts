@@ -11,6 +11,7 @@ import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { type ProjectSettingsBody, projectSettingsSchema } from './project-settings.schemas';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function isoOrNull(at: Date | null): string | null {
   return at === null ? null : at.toISOString();
@@ -50,6 +51,7 @@ export function projectSettingsBody(settings: ProjectSettings): ProjectSettingsB
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class ProjectSettingsController {

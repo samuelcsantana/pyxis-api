@@ -48,6 +48,10 @@ import {
   type ProjectDeletionBody,
   projectDeletionSchema,
 } from './projects.schemas';
+import {
+  ApiAccountSuspended,
+  SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION,
+} from '../errors/account-suspended.response';
 
 export function managedProjectBody(project: Project): ManagedProjectBody {
   return {
@@ -99,6 +103,7 @@ export class ProjectsController {
   })
   @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
   @ApiResponse({ status: HttpStatus.CREATED, standardSchema: createdProjectSchema })
+  @ApiAccountSuspended(SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION)
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
   async create(
     @Req() request: FastifyRequest,
@@ -124,6 +129,7 @@ export class ProjectsController {
   @ApiOperation({ summary: 'Change the settings of a project the admin owns' })
   @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: managedProjectSchema })
+  @ApiAccountSuspended(SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION)
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
   async update(
     @Req() request: FastifyRequest,
@@ -176,6 +182,7 @@ export class ProjectsController {
   })
   @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
   @ApiResponse({ status: HttpStatus.CREATED, standardSchema: createdKeySchema })
+  @ApiAccountSuspended(SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION)
   async createKey(
     @Req() request: FastifyRequest,
     @Param('projectId', new SchemaPipe(idSchema)) projectId: string,

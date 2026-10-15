@@ -7,7 +7,7 @@ import {
 } from '../../src/infra/database/postgres-client';
 import { DrizzleAccountUsageRepository } from '../../src/infra/repositories/drizzle-account-usage.repository';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
-import { DrizzleIngestionPauseRepository } from '../../src/infra/repositories/drizzle-ingestion-pause.repository';
+import { DrizzleProjectAccountStateRepository } from '../../src/infra/repositories/drizzle-project-account-state.repository';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -47,11 +47,11 @@ function pageView(projectId: string, occurredAt: string): TrackedEvent {
   };
 }
 
-describe('account usage and ingestion pauses against a real Postgres', () => {
+describe('account usage and the state of its projects against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
   let usage: DrizzleAccountUsageRepository;
-  let pauses: DrizzleIngestionPauseRepository;
+  let states: DrizzleProjectAccountStateRepository;
 
   beforeAll(async () => {
     await migrateTestDatabase();
@@ -59,7 +59,7 @@ describe('account usage and ingestion pauses against a real Postgres', () => {
     app = createPostgresClient(testAppUrl());
     const db = createDrizzleDatabase(app);
     usage = new DrizzleAccountUsageRepository(db);
-    pauses = new DrizzleIngestionPauseRepository(db);
+    states = new DrizzleProjectAccountStateRepository(db);
   });
 
   beforeEach(async () => {
@@ -166,7 +166,7 @@ describe('account usage and ingestion pauses against a real Postgres', () => {
       updatedAt: MEASURED_AT,
     });
     expect(await usage.recordedFor(BUSY_ID, '2026-09')).toBeNull();
-    expect(await pauses.pausedUntil(SHOP_ID)).toBeNull();
+    expect((await states.stateOf(SHOP_ID)).ingestionPausedUntil).toBeNull();
   });
 
   it('records nothing when there is no account to record', async () => {
@@ -183,9 +183,25 @@ describe('account usage and ingestion pauses against a real Postgres', () => {
       MEASURED_AT,
     );
 
-    expect(await pauses.pausedUntil(SHOP_ID)).toEqual(NOVEMBER_FIRST);
-    expect(await pauses.pausedUntil(BLOG_ID)).toEqual(NOVEMBER_FIRST);
-    expect(await pauses.pausedUntil(OPERATOR_ID)).toBeNull();
+    expect(await states.stateOf(SHOP_ID)).toEqual({
+      ingestionPausedUntil: NOVEMBER_FIRST,
+      suspended: false,
+    });
+    expect((await states.stateOf(BLOG_ID)).ingestionPausedUntil).toEqual(NOVEMBER_FIRST);
+    expect(await states.stateOf(OPERATOR_ID)).toEqual({
+      ingestionPausedUntil: null,
+      suspended: false,
+    });
+  });
+
+  it("tells a project of a suspended account from the account's mark", async () => {
+    await owner`
+      UPDATE accounts SET suspended_at = ${MEASURED_AT}, suspension_reason = 'Forged traffic'
+      WHERE id = ${BUSY_ID}
+    `;
+
+    expect(await states.stateOf(SHOP_ID)).toEqual({ ingestionPausedUntil: null, suspended: true });
+    expect((await states.stateOf(OPERATOR_ID)).suspended).toBe(false);
   });
 
   it('removes the usage of an account with the account', async () => {

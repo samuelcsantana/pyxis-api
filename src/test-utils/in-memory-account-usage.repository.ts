@@ -4,7 +4,10 @@ import type {
   AccountUsageRepository,
   RecordedUsage,
 } from '../domain/repositories/account-usage.repository';
-import type { IngestionPauseRepository } from '../domain/repositories/ingestion-pause.repository';
+import type {
+  ProjectAccountState,
+  ProjectAccountStateRepository,
+} from '../domain/repositories/project-account-state.repository';
 
 export interface MeasuredWindow {
   readonly month: string;
@@ -13,7 +16,7 @@ export interface MeasuredWindow {
 }
 
 export class InMemoryAccountUsageRepository
-  implements AccountUsageRepository, IngestionPauseRepository
+  implements AccountUsageRepository, ProjectAccountStateRepository
 {
   measured: readonly AccountMonthUsage[] = [];
   readonly windows: MeasuredWindow[] = [];
@@ -21,9 +24,14 @@ export class InMemoryAccountUsageRepository
   private readonly recorded = new Map<string, RecordedUsage>();
   private readonly pauses = new Map<string, Date | null>();
   private readonly projectAccounts = new Map<string, string>();
+  private readonly suspendedAccounts = new Set<string>();
 
   placeProject(projectId: string, accountId: string): void {
     this.projectAccounts.set(projectId, accountId);
+  }
+
+  markSuspended(accountId: string): void {
+    this.suspendedAccounts.add(accountId);
   }
 
   pauseOf(accountId: string): Date | null {
@@ -61,8 +69,11 @@ export class InMemoryAccountUsageRepository
     return Promise.resolve(this.recorded.get(`${accountId}/${month}`) ?? null);
   }
 
-  pausedUntil(projectId: string): Promise<Date | null> {
+  stateOf(projectId: string): Promise<ProjectAccountState> {
     const accountId = this.projectAccounts.get(projectId);
-    return Promise.resolve(accountId === undefined ? null : this.pauseOf(accountId));
+    return Promise.resolve({
+      ingestionPausedUntil: accountId === undefined ? null : this.pauseOf(accountId),
+      suspended: accountId !== undefined && this.suspendedAccounts.has(accountId),
+    });
   }
 }

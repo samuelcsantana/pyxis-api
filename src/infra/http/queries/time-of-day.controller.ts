@@ -10,6 +10,7 @@ import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { type RangeQuery, rangeQuerySchema } from './query.schemas';
 import { type TimeOfDayReportBody, timeOfDayReportSchema } from './time-of-day.schemas';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
@@ -21,6 +22,7 @@ import { type TimeOfDayReportBody, timeOfDayReportSchema } from './time-of-day.s
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class TimeOfDayController {

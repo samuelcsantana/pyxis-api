@@ -10,6 +10,10 @@ import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ProjectAccessGuard, projectOf } from '../queries/project-access.guard';
 import { SchemaPipe } from '../schema-pipe';
 import { type EmailPreferencesBody, emailPreferencesSchema } from './email-preferences.schemas';
+import {
+  ApiAccountSuspended,
+  SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION,
+} from '../errors/account-suspended.response';
 
 function emailPreferencesBody(preferences: EmailPreferences): EmailPreferencesBody {
   return { weekly_digest: preferences.weeklyDigest };
@@ -34,6 +38,7 @@ export class EmailPreferencesController {
   @Get()
   @UseGuards(SessionGuard, ProjectAccessGuard)
   @ApiOperation({ summary: 'The e-mails the signed-in admin receives about the project' })
+  @ApiAccountSuspended()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: emailPreferencesSchema })
   async preferences(@Req() request: FastifyRequest): Promise<EmailPreferencesBody> {
     return emailPreferencesBody(
@@ -49,7 +54,7 @@ export class EmailPreferencesController {
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: emailPreferencesSchema })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
-  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiAccountSuspended(SUSPENDED_OR_FOREIGN_ORIGIN_DESCRIPTION)
   async choose(
     @Req() request: FastifyRequest,
     @Body({ schema: emailPreferencesSchema, pipes: [new SchemaPipe(emailPreferencesSchema)] })

@@ -22,6 +22,7 @@ import {
 } from './funnel-segments.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
@@ -33,6 +34,7 @@ import { ApiRange } from './queries.controller';
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class FunnelSegmentsController {
