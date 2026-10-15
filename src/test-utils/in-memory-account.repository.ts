@@ -1,5 +1,6 @@
 import type { Account } from '../domain/entities/account.entity';
 import type { Project } from '../domain/entities/project.entity';
+import type { AccountDeletionHoldRepository } from '../domain/repositories/account-deletion-hold.repository';
 import type { AccountSuspensionRepository } from '../domain/repositories/account-suspension.repository';
 import type {
   AccountMembership,
@@ -18,7 +19,9 @@ export interface AccountMembers {
 
 const NO_MEMBERS: AccountMembers = { projects: [], people: 0 };
 
-export class InMemoryAccountRepository implements AccountRepository, AccountSuspensionRepository {
+export class InMemoryAccountRepository
+  implements AccountRepository, AccountSuspensionRepository, AccountDeletionHoldRepository
+{
   private readonly accounts = new Map<string, Account>();
   private readonly memberships = new Map<string, AccountMembers>();
   private readonly members: { readonly account: Account; readonly adminUserId: string }[] = [];
@@ -49,6 +52,8 @@ export class InMemoryAccountRepository implements AccountRepository, AccountSusp
       accessEndsAt: null,
       suspendedAt: null,
       suspensionReason: null,
+      deletionHeldAt: null,
+      deletionHoldReason: null,
       id: `acc00000-0000-4000-a000-${String(this.accounts.size + 1).padStart(12, '0')}`,
       createdAt: CREATED_AT,
     };
@@ -62,6 +67,18 @@ export class InMemoryAccountRepository implements AccountRepository, AccountSusp
 
   resume(accountId: string): Promise<Account | null> {
     return Promise.resolve(this.change(accountId, { suspendedAt: null, suspensionReason: null }));
+  }
+
+  hold(accountId: string, reason: string, at: Date): Promise<Account | null> {
+    return Promise.resolve(
+      this.change(accountId, { deletionHeldAt: at, deletionHoldReason: reason }),
+    );
+  }
+
+  release(accountId: string): Promise<Account | null> {
+    return Promise.resolve(
+      this.change(accountId, { deletionHeldAt: null, deletionHoldReason: null }),
+    );
   }
 
   private change(accountId: string, changes: Partial<Account>): Account | null {

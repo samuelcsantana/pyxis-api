@@ -12,6 +12,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import { ACCOUNT_STATUSES, type AccountStatus } from '../../../domain/accounts/account-status';
+import { MAX_DELETION_HOLD_REASON_LENGTH } from '../../../domain/accounts/account-deletion-hold';
 import { MAX_SUSPENSION_REASON_LENGTH } from '../../../domain/accounts/account-suspension';
 import { MAX_TERMS_VERSION_LENGTH } from '../../../domain/accounts/sign-up-policy';
 import type { BillingInterval } from '../../../domain/billing/billing-gateway';
@@ -45,6 +46,10 @@ export const accounts = pgTable(
     welcomedAt: timestamp('welcomed_at', { withTimezone: true }),
     suspendedAt: timestamp('suspended_at', { withTimezone: true }),
     suspensionReason: varchar('suspension_reason', { length: MAX_SUSPENSION_REASON_LENGTH }),
+    deletionHeldAt: timestamp('deletion_held_at', { withTimezone: true }),
+    deletionHoldReason: varchar('deletion_hold_reason', {
+      length: MAX_DELETION_HOLD_REASON_LENGTH,
+    }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

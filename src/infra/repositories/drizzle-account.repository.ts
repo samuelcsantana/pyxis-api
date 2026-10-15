@@ -29,6 +29,8 @@ export function toAccount(row: AccountRow): Account {
     accessEndsAt: row.accessEndsAt,
     suspendedAt: row.suspendedAt,
     suspensionReason: row.suspensionReason,
+    deletionHeldAt: row.deletionHeldAt,
+    deletionHoldReason: row.deletionHoldReason,
     createdAt: row.createdAt,
   };
 }

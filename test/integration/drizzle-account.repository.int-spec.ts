@@ -60,6 +60,8 @@ describe('accounts against a real Postgres', () => {
       accessEndsAt: null,
       suspendedAt: null,
       suspensionReason: null,
+      deletionHeldAt: null,
+      deletionHoldReason: null,
       createdAt: expect.any(Date) as Date,
     });
     expect(await accounts.findById(created.id)).toEqual(created);
