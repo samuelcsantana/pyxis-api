@@ -220,6 +220,40 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('suspends a person and lifts it, and revokes a token, with the migration connection', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const project = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+      });
+      const ana = await context.grantAdminAccess.execute({
+        email: 'ana@example.com',
+        projectId: project.projectId,
+      });
+      const [token] = await owner<{ id: string }[]>`
+        INSERT INTO admin_access_tokens (admin_user_id, name, token_hash, created_at, expires_at)
+        VALUES (${ana.adminUserId}, 'Agent', ${'c'.repeat(64)}, now(), now() + interval '30 days')
+        RETURNING id
+      `;
+
+      const suspended = await context.suspendAdmin.execute({ email: 'ana@example.com' });
+      expect(suspended).toMatchObject({ tokensRevoked: 1, sessionsEnded: 0 });
+      await context.resumeAdmin.execute({ email: 'ana@example.com' });
+      const [admin] = await owner<{ suspended_at: Date | null }[]>`
+        SELECT suspended_at FROM admin_users WHERE id = ${ana.adminUserId}
+      `;
+      expect(admin?.suspended_at).toBeNull();
+      await expect(
+        context.revokeAccessToken.execute({ tokenId: token?.id ?? '' }),
+      ).rejects.toMatchObject({
+        code: 'access_token_not_found',
+      });
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',

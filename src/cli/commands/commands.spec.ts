@@ -10,12 +10,15 @@ import { accountResumeCommand } from './account-resume.command';
 import { accountShowCommand } from './account-show.command';
 import { accountSuspendCommand } from './account-suspend.command';
 import { adminGrantCommand } from './admin-grant.command';
+import { adminResumeCommand } from './admin-resume.command';
 import { adminRevokeCommand } from './admin-revoke.command';
+import { adminSuspendCommand } from './admin-suspend.command';
 import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
 import { projectDeleteCommand } from './project-delete.command';
 import { projectUpdateCommand } from './project-update.command';
+import { tokenRevokeCommand } from './token-revoke.command';
 import { usageReportCommand } from './usage-report.command';
 
 const PROJECT_ID = '9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c';
@@ -317,6 +320,69 @@ describe('account:suspend and account:resume', () => {
 
     expect(resumed.out).toEqual([`account_id=${account.id}`, 'status=active', 'suspended_at=']);
     expect(resumed.err).toEqual([expect.stringContaining('stay revoked')]);
+  });
+});
+
+describe('admin:suspend, admin:resume and token:revoke', () => {
+  it('parse an e-mail address or a token id, refusing anything else', () => {
+    expect(adminSuspendCommand.parse(['--email', 'ana@example.com'])).toEqual({
+      email: 'ana@example.com',
+    });
+    expect(adminResumeCommand.parse(['--email', 'ana@example.com'])).toEqual({
+      email: 'ana@example.com',
+    });
+    expect(() => adminSuspendCommand.parse(['--email', 'ana'])).toThrow(CliUsageError);
+    expect(tokenRevokeCommand.parse(['--token', ACCOUNT_ID])).toEqual({ tokenId: ACCOUNT_ID });
+    expect(() => tokenRevokeCommand.parse(['--token', 'pyxis_at_x'])).toThrow(CliUsageError);
+  });
+
+  it('suspend a person, ending their sessions and tokens, and lift it', async () => {
+    const context = inMemoryCliContext();
+    const ana = await context.admins.findOrCreateByEmail('ana@example.com');
+    await context.sessions.create({
+      adminUserId: ana.id,
+      tokenHash: 'a'.repeat(64),
+      createdAt: new Date('2026-10-06T10:00:00.000Z'),
+    });
+    const suspended = captureOutput();
+
+    await adminSuspendCommand.execute(context, { email: 'ana@example.com' }, suspended);
+
+    expect(suspended.out).toEqual([
+      `admin_user_id=${ana.id}`,
+      'email=ana@example.com',
+      'suspended_at=2026-10-06T14:00:00.000Z',
+      'sessions_ended=1',
+      'tokens_revoked=0',
+    ]);
+    expect(suspended.err).toEqual([expect.stringContaining('admin:resume')]);
+
+    const resumed = captureOutput();
+    await adminResumeCommand.execute(context, { email: 'ana@example.com' }, resumed);
+
+    expect(resumed.out).toEqual([
+      `admin_user_id=${ana.id}`,
+      'email=ana@example.com',
+      'suspended_at=',
+    ]);
+    expect(resumed.err).toEqual([expect.stringContaining('stay ended')]);
+  });
+
+  it("revokes anyone's token by the id the dashboard shows", async () => {
+    const context = inMemoryCliContext();
+    const token = await context.tokens.create({
+      adminUserId: OWNER_ID,
+      name: 'Published by mistake',
+      tokenHash: 'b'.repeat(64),
+      createdAt: new Date('2026-10-06T10:00:00.000Z'),
+      expiresAt: new Date('2026-11-05T10:00:00.000Z'),
+    });
+    const output = captureOutput();
+
+    await tokenRevokeCommand.execute(context, { tokenId: token.id }, output);
+
+    expect(output.out).toEqual([`token_id=${token.id}`, 'revoked=true']);
+    expect(context.tokens.stored[0]?.revokedAt).not.toBeNull();
   });
 });
 

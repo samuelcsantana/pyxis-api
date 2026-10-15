@@ -11,6 +11,9 @@ import { DrizzleAccountClosureRepository } from '../infra/repositories/drizzle-a
 import { DrizzleAccountDeletionHoldRepository } from '../infra/repositories/drizzle-account-deletion-hold.repository';
 import { DrizzleAccountSuspensionRepository } from '../infra/repositories/drizzle-account-suspension.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
+import { DrizzleAccessTokenRepository } from '../infra/repositories/drizzle-access-token.repository';
+import { DrizzleAdminSessionRepository } from '../infra/repositories/drizzle-admin-session.repository';
+import { DrizzleAdminSuspensionRepository } from '../infra/repositories/drizzle-admin-suspension.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
@@ -22,6 +25,9 @@ import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecas
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
+import { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
+import { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import { DrizzleProjectPeopleRepository } from '../infra/repositories/drizzle-project-people.repository';
 import { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
@@ -56,6 +62,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const suspensions = new DrizzleAccountSuspensionRepository(db);
   const billing = createBillingGateway(config);
   const holds = new DrizzleAccountDeletionHoldRepository(db);
+  const adminSuspensions = new DrizzleAdminSuspensionRepository(db);
+  const accessTokens = new DrizzleAccessTokenRepository(db);
   return {
     createProject: new CreateProjectUseCase(settings, random),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -87,6 +95,15 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     ),
     holdAccountDeletion: new HoldAccountDeletionUseCase(accounts, holds, clock),
     releaseAccountDeletion: new ReleaseAccountDeletionUseCase(holds),
+    suspendAdmin: new SuspendAdminUseCase(
+      admins,
+      adminSuspensions,
+      new DrizzleAdminSessionRepository(db),
+      accessTokens,
+      clock,
+    ),
+    resumeAdmin: new ResumeAdminUseCase(admins, adminSuspensions),
+    revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(accessTokens, clock),
     close: () => client.end(),
   };
 }
