@@ -119,6 +119,8 @@ describe('ShowAccountUseCase', () => {
       trialEndsAt: null,
       currentPeriodEndsAt: null,
       accessEndsAt: null,
+      suspendedAt: null,
+      suspensionReason: null,
       createdAt: new Date('2026-10-14T00:00:00.000Z'),
     });
 

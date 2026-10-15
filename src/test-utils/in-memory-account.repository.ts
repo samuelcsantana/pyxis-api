@@ -1,5 +1,6 @@
 import type { Account } from '../domain/entities/account.entity';
 import type { Project } from '../domain/entities/project.entity';
+import type { AccountSuspensionRepository } from '../domain/repositories/account-suspension.repository';
 import type {
   AccountMembership,
   AccountOverview,
@@ -17,7 +18,7 @@ export interface AccountMembers {
 
 const NO_MEMBERS: AccountMembers = { projects: [], people: 0 };
 
-export class InMemoryAccountRepository implements AccountRepository {
+export class InMemoryAccountRepository implements AccountRepository, AccountSuspensionRepository {
   private readonly accounts = new Map<string, Account>();
   private readonly memberships = new Map<string, AccountMembers>();
   private readonly members: { readonly account: Account; readonly adminUserId: string }[] = [];
@@ -46,11 +47,31 @@ export class InMemoryAccountRepository implements AccountRepository {
       trialEndsAt: null,
       currentPeriodEndsAt: null,
       accessEndsAt: null,
+      suspendedAt: null,
+      suspensionReason: null,
       id: `acc00000-0000-4000-a000-${String(this.accounts.size + 1).padStart(12, '0')}`,
       createdAt: CREATED_AT,
     };
     this.add(created);
     return Promise.resolve(created);
+  }
+
+  suspend(accountId: string, reason: string, at: Date): Promise<Account | null> {
+    return Promise.resolve(this.change(accountId, { suspendedAt: at, suspensionReason: reason }));
+  }
+
+  resume(accountId: string): Promise<Account | null> {
+    return Promise.resolve(this.change(accountId, { suspendedAt: null, suspensionReason: null }));
+  }
+
+  private change(accountId: string, changes: Partial<Account>): Account | null {
+    const account = this.accounts.get(accountId);
+    if (account === undefined) {
+      return null;
+    }
+    const changed = { ...account, ...changes };
+    this.accounts.set(accountId, changed);
+    return changed;
   }
 
   findById(accountId: string): Promise<Account | null> {

@@ -11,5 +11,7 @@ export interface Account {
   readonly trialEndsAt: Date | null;
   readonly currentPeriodEndsAt: Date | null;
   readonly accessEndsAt: Date | null;
+  readonly suspendedAt: Date | null;
+  readonly suspensionReason: string | null;
   readonly createdAt: Date;
 }

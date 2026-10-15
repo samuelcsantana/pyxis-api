@@ -134,6 +134,13 @@
       "when": 1792062514842,
       "tag": "0018_trial-cards",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792065267235,
+      "tag": "0019_account-suspension",
+      "breakpoints": true
     }
   ]
 }

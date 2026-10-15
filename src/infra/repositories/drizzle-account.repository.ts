@@ -27,6 +27,8 @@ export function toAccount(row: AccountRow): Account {
     trialEndsAt: row.trialEndsAt,
     currentPeriodEndsAt: row.currentPeriodEndsAt,
     accessEndsAt: row.accessEndsAt,
+    suspendedAt: row.suspendedAt,
+    suspensionReason: row.suspensionReason,
     createdAt: row.createdAt,
   };
 }
