@@ -50,6 +50,7 @@ export const accounts = pgTable(
     deletionHoldReason: varchar('deletion_hold_reason', {
       length: MAX_DELETION_HOLD_REASON_LENGTH,
     }),
+    quotaPauseExemptUntil: timestamp('quota_pause_exempt_until', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

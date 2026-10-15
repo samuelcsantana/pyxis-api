@@ -62,6 +62,7 @@ export function myAccountBody({ account, role, month, usage, limits }: MyAccount
     current_period_ends_at: owner ? isoOrNull(account.currentPeriodEndsAt) : null,
     access_ends_at: isoOrNull(account.accessEndsAt),
     ingestion_paused_until: isoOrNull(account.ingestionPausedUntil),
+    quota_pause_exempt_until: isoOrNull(account.quotaPauseExemptUntil),
     suspended_at: isoOrNull(account.suspendedAt),
     suspension_reason: owner ? account.suspensionReason : null,
     deletion_held_at: owner ? isoOrNull(account.deletionHeldAt) : null,

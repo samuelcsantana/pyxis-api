@@ -1,5 +1,6 @@
 import type { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import type { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import type { ExemptAccountFromQuotaPauseUseCase } from '../usecases/accounts/exempt-account-from-quota-pause.usecase';
 import type { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
 import type { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import type { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
@@ -46,6 +47,7 @@ export interface CliContext {
   readonly resumeProjectIngestion: ResumeProjectIngestionUseCase;
   readonly holdProjectDeletion: HoldProjectDeletionUseCase;
   readonly releaseProjectDeletion: ReleaseProjectDeletionUseCase;
+  readonly exemptAccountFromQuotaPause: ExemptAccountFromQuotaPauseUseCase;
   close(): Promise<void>;
 }
 

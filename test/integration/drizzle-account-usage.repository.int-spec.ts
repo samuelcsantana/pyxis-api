@@ -102,6 +102,7 @@ describe('account usage and the state of its projects against a real Postgres', 
         events: 3,
         owner: { email: 'owner@example.com', language: 'pt-BR' },
         notifiedLevel: 0,
+        pauseExemptUntil: null,
       },
       {
         accountId: QUIET_ID,
@@ -109,6 +110,7 @@ describe('account usage and the state of its projects against a real Postgres', 
         events: 0,
         owner: { email: 'owner@example.com', language: 'pt-BR' },
         notifiedLevel: 0,
+        pauseExemptUntil: null,
       },
     ]);
   });

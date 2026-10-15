@@ -176,6 +176,13 @@
       "when": 1792075451434,
       "tag": "0024_project-deletion-hold",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1792076378845,
+      "tag": "0025_quota-pause-exemption",
+      "breakpoints": true
     }
   ]
 }

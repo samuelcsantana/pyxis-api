@@ -8,7 +8,10 @@ const SUPPORT = 'hello@example.com';
 const MEASURED_AT = new Date('2026-10-14T03:00:00.000Z');
 const NOVEMBER_FIRST = new Date('2026-11-01T00:00:00.000Z');
 
-function warning(percent: 80 | 100, events: number): QuotaNotice {
+function warning(
+  percent: 80 | 100,
+  events: number,
+): Extract<QuotaNotice, { kind: 'quota_warning' }> {
   return {
     kind: 'quota_warning',
     percent,
@@ -16,8 +19,7 @@ function warning(percent: 80 | 100, events: number): QuotaNotice {
     limit: 100_000,
     month: '2026-10',
     measuredAt: MEASURED_AT,
-    pauseAtEvents: 150_000,
-    pauseUntil: NOVEMBER_FIRST,
+    pause: { atEvents: 150_000, until: NOVEMBER_FIRST },
   };
 }
 
@@ -57,6 +59,19 @@ describe('buildQuotaNoticeEmail in English', () => {
 
     expect(email.subject).toBe('Your Pyxis account used 100% of October’s events');
     expect(email.text).toContain('Nothing is cut off');
+  });
+
+  it('says nothing about a pause to an account exempt from it', () => {
+    const email = buildQuotaNoticeEmail(
+      { ...warning(100, 160_000), pause: null },
+      'en',
+      LINKS,
+      SUPPORT,
+    );
+
+    expect(email.text).toContain('Nothing is cut off');
+    expect(flowing(email.text)).not.toContain('150,000 events');
+    expect(email.html).not.toContain('pauses until');
   });
 
   it('says measuring is paused, until when, and that it resumes on its own', () => {

@@ -9,6 +9,7 @@ import { CryptoRandomSource } from '../infra/random/crypto-random-source';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleAccountClosureRepository } from '../infra/repositories/drizzle-account-closure.repository';
 import { DrizzleAccountDeletionHoldRepository } from '../infra/repositories/drizzle-account-deletion-hold.repository';
+import { DrizzleAccountQuotaExemptionRepository } from '../infra/repositories/drizzle-account-quota-exemption.repository';
 import { DrizzleAccountSuspensionRepository } from '../infra/repositories/drizzle-account-suspension.repository';
 import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAccessTokenRepository } from '../infra/repositories/drizzle-access-token.repository';
@@ -21,6 +22,7 @@ import { DrizzleProjectSuspensionRepository } from '../infra/repositories/drizzl
 import { DrizzleProjectDeletionHoldRepository } from '../infra/repositories/drizzle-project-deletion-hold.repository';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
 import { CreateCompedAccountUseCase } from '../usecases/accounts/create-comped-account.usecase';
+import { ExemptAccountFromQuotaPauseUseCase } from '../usecases/accounts/exempt-account-from-quota-pause.usecase';
 import { HoldAccountDeletionUseCase } from '../usecases/accounts/hold-account-deletion.usecase';
 import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-account-deletion.usecase';
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
@@ -116,6 +118,9 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),
     releaseProjectDeletion: new ReleaseProjectDeletionUseCase(projectHolds),
+    exemptAccountFromQuotaPause: new ExemptAccountFromQuotaPauseUseCase(
+      new DrizzleAccountQuotaExemptionRepository(db),
+    ),
     close: () => client.end(),
   };
 }

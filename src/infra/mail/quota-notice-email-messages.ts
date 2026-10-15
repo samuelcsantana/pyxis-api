@@ -8,6 +8,9 @@ export interface QuotaWarningWords {
   readonly limit: string;
   readonly month: string;
   readonly measuredOn: string;
+}
+
+export interface QuotaPauseWords {
   readonly pauseAtEvents: string;
   readonly pauseUntil: string;
 }
@@ -26,7 +29,7 @@ export interface QuotaNoticeEmailMessages {
   readonly warningHeading: (words: QuotaWarningWords) => string;
   readonly warningCount: (words: QuotaWarningWords) => string;
   readonly warningCarriesOn: Readonly<Record<QuotaWarningPercent, string>>;
-  readonly warningPause: (words: QuotaWarningWords) => string;
+  readonly warningPause: (words: QuotaPauseWords) => string;
   readonly pausedSubject: (words: QuotaPausedWords) => string;
   readonly pausedPreheader: (words: QuotaPausedWords) => string;
   readonly pausedHeading: string;

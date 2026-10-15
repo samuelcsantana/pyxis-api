@@ -31,6 +31,7 @@ export function toAccount(row: AccountRow): Account {
     suspensionReason: row.suspensionReason,
     deletionHeldAt: row.deletionHeldAt,
     deletionHoldReason: row.deletionHoldReason,
+    quotaPauseExemptUntil: row.quotaPauseExemptUntil,
     createdAt: row.createdAt,
   };
 }

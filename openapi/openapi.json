@@ -1574,6 +1574,19 @@
                   "description": "The calendar month in UTC the usage is counted in, YYYY-MM.",
                   "type": "string"
                 },
+                "quota_pause_exempt_until": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Until when the operator exempts the account from the pause at 150% of the plan (a customer of an earlier version of the terms, until its renewal); null when it is not."
+                },
                 "role": {
                   "enum": [
                     "owner",
@@ -1635,6 +1648,7 @@
                 "current_period_ends_at",
                 "access_ends_at",
                 "ingestion_paused_until",
+                "quota_pause_exempt_until",
                 "suspended_at",
                 "suspension_reason",
                 "deletion_held_at",

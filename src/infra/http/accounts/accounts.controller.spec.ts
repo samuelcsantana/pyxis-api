@@ -41,6 +41,7 @@ const ACCOUNT: Account = {
   suspensionReason: null,
   deletionHeldAt: null,
   deletionHoldReason: null,
+  quotaPauseExemptUntil: null,
   createdAt: new Date('2026-11-01T00:00:00.000Z'),
 };
 const MEASURED_AT = new Date('2026-11-02T03:00:00.000Z');
@@ -100,6 +101,7 @@ describe('myAccountBody', () => {
       current_period_ends_at: '2026-11-15T00:00:00.000Z',
       access_ends_at: '2027-11-15T00:00:00.000Z',
       ingestion_paused_until: '2026-12-01T00:00:00.000Z',
+      quota_pause_exempt_until: null,
       suspended_at: null,
       suspension_reason: null,
       deletion_held_at: null,
@@ -160,6 +162,20 @@ describe('myAccountBody', () => {
         suspension_reason: null,
       }),
     );
+  });
+
+  it('shows anyone in the account until when it is exempt from the pause', () => {
+    const exempt = { ...ACCOUNT, quotaPauseExemptUntil: new Date('2027-01-15T00:00:00.000Z') };
+
+    expect(
+      myAccountBody({
+        account: exempt,
+        role: 'member',
+        month: '2026-11',
+        usage: null,
+        limits: HOSTED_PLAN_LIMITS,
+      }).quota_pause_exempt_until,
+    ).toBe('2027-01-15T00:00:00.000Z');
   });
 
   it('shows the owner, and only the owner, that the deletion is held', () => {

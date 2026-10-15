@@ -300,6 +300,43 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('exempts an account from the pause and ends it with the migration connection', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const comped = await context.createCompedAccount.execute({
+        ownerEmail: 'exempt@example.com',
+      });
+      await owner`
+        UPDATE accounts SET status = 'active', ingestion_paused_until = '2026-11-01T00:00:00Z'
+        WHERE id = ${comped.accountId}
+      `;
+
+      const exempted = await context.exemptAccountFromQuotaPause.execute({
+        accountId: comped.accountId,
+        until: new Date('2027-01-15T00:00:00.000Z'),
+      });
+      expect(exempted).toMatchObject({
+        quotaPauseExemptUntil: new Date('2027-01-15T00:00:00.000Z'),
+        ingestionPausedUntil: null,
+      });
+      const cleared = await context.exemptAccountFromQuotaPause.execute({
+        accountId: comped.accountId,
+        until: null,
+      });
+      expect(cleared.quotaPauseExemptUntil).toBeNull();
+      for (const until of [null, new Date('2027-01-15T00:00:00.000Z')]) {
+        await expect(
+          context.exemptAccountFromQuotaPause.execute({
+            accountId: 'ffffffff-ffff-4fff-bfff-ffffffffffff',
+            until,
+          }),
+        ).rejects.toMatchObject({ code: 'account_not_found' });
+      }
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',
