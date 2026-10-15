@@ -6,6 +6,8 @@ export const DEFAULT_MAIL_FROM = 'Pyxis <noreply@pyxis-analytics.dev>';
 
 export const POSTGRES_ROLE_NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 export const HTTP_HEADER_NAME = /^[a-z0-9-]+$/;
+export const S3_BUCKET_NAME = /^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/;
+export const LAMBDA_FUNCTION_NAME = /^[A-Za-z0-9_-]{1,64}$/;
 
 const emptyAsUnset = (value: unknown): unknown => (value === '' ? undefined : value);
 
@@ -34,6 +36,8 @@ export const envSchema = z.object({
   SIGNUP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
   TERMS_VERSION: z.preprocess(emptyAsUnset, z.string().max(MAX_TERMS_VERSION_LENGTH).optional()),
   TERMS_URL: z.preprocess(emptyAsUnset, z.url({ protocol: /^https?$/ }).optional()),
+  EXPORT_BUCKET: z.preprocess(emptyAsUnset, z.string().regex(S3_BUCKET_NAME).optional()),
+  JOBS_FUNCTION_NAME: z.preprocess(emptyAsUnset, z.string().regex(LAMBDA_FUNCTION_NAME).optional()),
   STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   STRIPE_WEBHOOK_SECRET: z.preprocess(emptyAsUnset, z.string().optional()),
   DASHBOARD_ORIGIN: z.preprocess(

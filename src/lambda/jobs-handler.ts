@@ -1,10 +1,15 @@
 import { Logger } from '@nestjs/common';
 import type { DatabaseSizeReport } from '../domain/monitoring/database-size';
+import { EXPORT_JOB } from '../infra/exports/lambda-export-dispatcher';
 import type { AccountUsageReport } from '../usecases/accounts/measure-account-usage.usecase';
 import type { AccountLifecycleReport } from '../usecases/accounts/run-account-lifecycle.usecase';
 import type { DigestReport } from '../usecases/digest/send-weekly-digests.usecase';
 import type { ProjectIconsReport } from '../usecases/projects/refresh-project-icons.usecase';
 import type { RetentionReport } from '../usecases/retention/run-retention.usecase';
+import type {
+  ExportOutcome,
+  StalledExportsReport,
+} from '../usecases/exports/process-project-export.usecase';
 
 export const WEEKLY_DIGEST_JOB = 'weekly-digest';
 
@@ -16,6 +21,8 @@ export interface JobsHandlerDependencies {
   readonly runAccountLifecycle: () => Promise<AccountLifecycleReport>;
   readonly sendWeeklyDigests: () => Promise<DigestReport>;
   readonly refreshProjectIcons: () => Promise<ProjectIconsReport>;
+  readonly processExport: (exportId: string) => Promise<ExportOutcome>;
+  readonly processStalledExports: () => Promise<StalledExportsReport>;
 }
 
 export type JobsOutcome =
@@ -26,13 +33,31 @@ export type JobsOutcome =
       readonly retention: RetentionReport;
       readonly accountUsage: AccountUsageReport;
       readonly accountLifecycle: AccountLifecycleReport;
+      readonly exports: StalledExportsReport;
       readonly projectIcons: ProjectIconsReport | null;
     }
   | {
       readonly ok: true;
       readonly job: typeof WEEKLY_DIGEST_JOB;
       readonly digest: DigestReport;
+    }
+  | {
+      readonly ok: true;
+      readonly job: typeof EXPORT_JOB;
+      readonly exportId: string;
+      readonly outcome: ExportOutcome;
     };
+
+function exportAskedBy(event: unknown): string | null {
+  return typeof event === 'object' &&
+    event !== null &&
+    'job' in event &&
+    event.job === EXPORT_JOB &&
+    'exportId' in event &&
+    typeof event.exportId === 'string'
+    ? event.exportId
+    : null;
+}
 
 function asksForWeeklyDigest(event: unknown): boolean {
   return (
@@ -64,10 +89,16 @@ export function createJobsHandler(
     if (asksForWeeklyDigest(event)) {
       return { ok: true, job: WEEKLY_DIGEST_JOB, digest: await dependencies.sendWeeklyDigests() };
     }
+    const exportId = exportAskedBy(event);
+    if (exportId !== null) {
+      const outcome = await dependencies.processExport(exportId);
+      return { ok: true, job: EXPORT_JOB, exportId, outcome };
+    }
     const databaseSize = await dependencies.reportDatabaseSize();
     const retention = await dependencies.runRetention();
     const accountUsage = await dependencies.measureAccountUsage();
     const accountLifecycle = await dependencies.runAccountLifecycle();
+    const stalledExports = await dependencies.processStalledExports();
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
     return {
       ok: true,
@@ -76,6 +107,7 @@ export function createJobsHandler(
       retention,
       accountUsage,
       accountLifecycle,
+      exports: stalledExports,
       projectIcons,
     };
   };

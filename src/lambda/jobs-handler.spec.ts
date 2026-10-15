@@ -4,6 +4,7 @@ const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = { events: 12, sessions: 1, signInCodes: 2 };
 const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
+const EXPORTS = { done: 1, failed: 0 };
 const LIFECYCLE = {
   welcomes: 1,
   reconciled: 4,
@@ -46,6 +47,14 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
       order.push('lifecycle');
       return Promise.resolve(LIFECYCLE);
     },
+    processExport: (exportId) => {
+      order.push(`export ${exportId}`);
+      return Promise.resolve('done');
+    },
+    processStalledExports: () => {
+      order.push('exports');
+      return Promise.resolve(EXPORTS);
+    },
     sendWeeklyDigests: () => {
       order.push('digest');
       return Promise.resolve(DIGEST);
@@ -65,7 +74,7 @@ describe('createJobsHandler', () => {
     ['an event that is not an object', 'weekly-digest'],
     ['null', null],
   ])(
-    'runs the daily jobs for %s: parameters, size, retention, usage, lifecycle, icons',
+    'runs the daily jobs for %s: parameters, size, retention, usage, lifecycle, exports, icons',
     async (_label, event) => {
       const order: string[] = [];
 
@@ -76,9 +85,18 @@ describe('createJobsHandler', () => {
         retention: RETENTION,
         accountUsage: ACCOUNT_USAGE,
         accountLifecycle: LIFECYCLE,
+        exports: EXPORTS,
         projectIcons: ICONS,
       });
-      expect(order).toEqual(['parameters', 'size', 'retention', 'usage', 'lifecycle', 'icons']);
+      expect(order).toEqual([
+        'parameters',
+        'size',
+        'retention',
+        'usage',
+        'lifecycle',
+        'exports',
+        'icons',
+      ]);
     },
   );
 
@@ -89,6 +107,21 @@ describe('createJobsHandler', () => {
       createJobsHandler(recordingDependencies(order))({ job: 'weekly-digest' }),
     ).resolves.toEqual({ ok: true, job: 'weekly-digest', digest: DIGEST });
     expect(order).toEqual(['parameters', 'digest']);
+  });
+
+  it('runs one export, and only it, when the jobs function is handed one', async () => {
+    const order: string[] = [];
+
+    await expect(
+      createJobsHandler(recordingDependencies(order))({ job: 'export', exportId: 'e-1' }),
+    ).resolves.toEqual({ ok: true, job: 'export', exportId: 'e-1', outcome: 'done' });
+    expect(order).toEqual(['parameters', 'export e-1']);
+  });
+
+  it('runs the daily jobs for an export event without an export id', async () => {
+    await expect(
+      createJobsHandler(recordingDependencies([]))({ job: 'export', exportId: 7 }),
+    ).resolves.toMatchObject({ job: 'daily' });
   });
 
   it('finishes the daily jobs when the icons fail, logging what it swallowed', async () => {

@@ -20,6 +20,9 @@ import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher'
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
+import { ProcessProjectExportUseCase } from '../usecases/exports/process-project-export.usecase';
+import { createExportStorage } from '../infra/exports/s3-export-storage';
+import { DrizzleProjectExportRepository } from '../infra/repositories/drizzle-project-export.repository';
 import { WelcomeAccountsUseCase } from '../usecases/accounts/welcome-accounts.usecase';
 import { signUpSettingsFromEnv } from '../infra/http/accounts/sign-up-settings-from-env';
 import { DrizzleAccountWelcomeRepository } from '../infra/repositories/drizzle-account-welcome.repository';
@@ -31,6 +34,20 @@ import { createJobsHandler } from './jobs-handler';
 import { loadParameters, ssmParameterPages } from './load-parameters';
 
 Logger.overrideLogger(new ConsoleLogger({ json: true }));
+
+function exportProcessor(
+  database: ReturnType<typeof createDrizzleDatabase>,
+): ProcessProjectExportUseCase {
+  const env = validateEnv(process.env);
+  const repository = new DrizzleProjectExportRepository(database);
+  return new ProcessProjectExportUseCase(
+    repository,
+    repository,
+    createExportStorage(env.EXPORT_BUCKET),
+    new LazyMailSender(() => createMailSender(env)),
+    new SystemClock(),
+  );
+}
 
 async function withDatabase<Result>(
   work: (database: ReturnType<typeof createDrizzleDatabase>) => Promise<Result>,
@@ -83,6 +100,10 @@ export const handler = createJobsHandler({
         ),
       ).execute();
     }),
+  processExport: (exportId) =>
+    withDatabase((database) => exportProcessor(database).execute(exportId)),
+  processStalledExports: () =>
+    withDatabase((database) => exportProcessor(database).processStalled()),
   sendWeeklyDigests: () =>
     withDatabase((database) =>
       new SendWeeklyDigestsUseCase(
