@@ -28,6 +28,7 @@ import {
   ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
   INGEST_THROTTLER,
+  OAUTH_THROTTLER,
   SUBJECTS_THROTTLER,
 } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
@@ -70,6 +71,7 @@ export function personBody(person: PersonOfProject): PersonBody {
   [AUTH_THROTTLER]: true,
   [SUBJECTS_THROTTLER]: true,
   [ACCESS_TOKENS_THROTTLER]: true,
+  [OAUTH_THROTTLER]: true,
 })
 export class PeopleController {
   constructor(

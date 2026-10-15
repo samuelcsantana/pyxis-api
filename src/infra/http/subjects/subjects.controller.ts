@@ -28,6 +28,7 @@ import {
   ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
   INGEST_THROTTLER,
+  OAUTH_THROTTLER,
 } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
 import { SecretKeyThrottlerGuard } from './secret-key-throttler.guard';
@@ -85,6 +86,7 @@ function subjectEventsBody(page: SubjectEventsPage): SubjectEventsBody {
   [INGEST_THROTTLER]: true,
   [AUTH_THROTTLER]: true,
   [ACCESS_TOKENS_THROTTLER]: true,
+  [OAUTH_THROTTLER]: true,
 })
 export class SubjectsController {
   constructor(

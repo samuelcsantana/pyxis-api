@@ -285,6 +285,216 @@
         ],
         "type": "object"
       },
+      "AuthorizationDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "redirect_to": {
+            "description": "Where the dashboard sends the browser next",
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "redirect_to"
+        ],
+        "type": "object"
+      },
+      "AuthorizationRequest": {
+        "additionalProperties": false,
+        "description": "A connection request waiting for the signed-in admin, as the consent page shows it.",
+        "properties": {
+          "client": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "description": "The host of the client metadata document address",
+                "type": "string"
+              },
+              "name": {
+                "description": "Our name for the client, never the one its document declares",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "host"
+            ],
+            "type": "object"
+          },
+          "connection_limit_reached": {
+            "type": "boolean"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "projects": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "redirect": {
+            "additionalProperties": false,
+            "properties": {
+              "host": {
+                "description": "Where the browser returns with the code",
+                "type": "string"
+              },
+              "loopback": {
+                "description": "True when the code goes to a program on this computer",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "host",
+              "loopback"
+            ],
+            "type": "object"
+          },
+          "scope": {
+            "enum": [
+              "read"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "client",
+          "redirect",
+          "scope",
+          "expires_at",
+          "projects",
+          "connection_limit_reached"
+        ],
+        "type": "object"
+      },
+      "AuthorizationServerMetadata": {
+        "additionalProperties": false,
+        "description": "RFC 8414 metadata of this issuer.",
+        "properties": {
+          "authorization_endpoint": {
+            "format": "uri",
+            "type": "string"
+          },
+          "authorization_response_iss_parameter_supported": {
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "client_id_metadata_document_supported": {
+            "enum": [
+              true
+            ],
+            "type": "boolean"
+          },
+          "code_challenge_methods_supported": {
+            "items": {
+              "enum": [
+                "S256"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "grant_types_supported": {
+            "items": {
+              "enum": [
+                "authorization_code",
+                "refresh_token"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "issuer": {
+            "format": "uri",
+            "type": "string"
+          },
+          "response_types_supported": {
+            "items": {
+              "enum": [
+                "code"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "revocation_endpoint": {
+            "format": "uri",
+            "type": "string"
+          },
+          "revocation_endpoint_auth_methods_supported": {
+            "items": {
+              "enum": [
+                "none"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scopes_supported": {
+            "items": {
+              "enum": [
+                "read"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "token_endpoint": {
+            "format": "uri",
+            "type": "string"
+          },
+          "token_endpoint_auth_methods_supported": {
+            "items": {
+              "enum": [
+                "none"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "issuer",
+          "authorization_endpoint",
+          "token_endpoint",
+          "revocation_endpoint",
+          "response_types_supported",
+          "grant_types_supported",
+          "code_challenge_methods_supported",
+          "token_endpoint_auth_methods_supported",
+          "revocation_endpoint_auth_methods_supported",
+          "scopes_supported",
+          "client_id_metadata_document_supported",
+          "authorization_response_iss_parameter_supported"
+        ],
+        "type": "object"
+      },
       "BatchRequest": {
         "additionalProperties": false,
         "description": "A batch of events from the browser, sent as text/plain or application/json. More than 50 events answer 413.",
@@ -394,6 +604,90 @@
           "access_ends_at",
           "deletion_on",
           "refunded_amount"
+        ],
+        "type": "object"
+      },
+      "Connections": {
+        "additionalProperties": false,
+        "description": "The applications connected by the signed-in admin, the newest first: neither revoked nor idle for ninety days.",
+        "properties": {
+          "connections": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "client": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "host": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "host"
+                  ],
+                  "type": "object"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "last_used_at": {
+                  "description": "Recorded at most every five minutes, and at every token refresh",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "client",
+                "created_at",
+                "last_used_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "connector": {
+            "additionalProperties": false,
+            "properties": {
+              "open": {
+                "description": "Whether applications can connect now",
+                "type": "boolean"
+              },
+              "url": {
+                "anyOf": [
+                  {
+                    "format": "uri",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The address to add as a connector; null while closed"
+              }
+            },
+            "required": [
+              "open",
+              "url"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "connector",
+          "connections"
         ],
         "type": "object"
       },
@@ -1738,6 +2032,177 @@
         },
         "required": [
           "email"
+        ],
+        "type": "object"
+      },
+      "OAuthAuthorizationQuery": {
+        "additionalProperties": {},
+        "properties": {
+          "client_id": {
+            "description": "The address of the client metadata document; only Claude and Claude Code",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "code_challenge": {
+            "description": "The S256 challenge of the PKCE code verifier",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "code_challenge_method": {
+            "description": "Always S256",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "redirect_uri": {
+            "description": "One of the addresses the client metadata document lists",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "resource": {
+            "description": "When sent, the MCP endpoint of this API",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "response_type": {
+            "description": "Always code",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "scope": {
+            "description": "Ignored: a connection always reads, and only reads",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "state": {
+            "description": "Sent back unchanged, at most 512 characters",
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OAuthError": {
+        "additionalProperties": false,
+        "description": "An error in the shape of RFC 6749, section 5.2.",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "error_description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error",
+          "error_description"
+        ],
+        "type": "object"
+      },
+      "OAuthRevocationRequest": {
+        "additionalProperties": {},
+        "properties": {
+          "client_id": {
+            "description": "Ignored: holding the token is enough to end it",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "token": {
+            "description": "An access or refresh token of the connection to end",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "token_type_hint": {
+            "description": "Ignored: either token ends the whole connection",
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OAuthTokenRequest": {
+        "additionalProperties": {},
+        "properties": {
+          "client_id": {
+            "description": "The client that received the code or the refresh token",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "code": {
+            "description": "The code from the authorization response",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "code_verifier": {
+            "description": "The PKCE verifier of the code challenge",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "grant_type": {
+            "description": "authorization_code or refresh_token",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "redirect_uri": {
+            "description": "When sent, the same address as in the authorization request",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "refresh_token": {
+            "description": "A pyxis_ort_ token, traded once",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "resource": {
+            "description": "When sent, the MCP endpoint of this API",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "scope": {
+            "description": "Ignored: a connection always reads, and only reads",
+            "maxLength": 2048,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OAuthTokenResponse": {
+        "additionalProperties": false,
+        "description": "The tokens of a connection, read-only, for the dashboard queries.",
+        "properties": {
+          "access_token": {
+            "pattern": "^pyxis_oat_[A-Za-z0-9_-]{43}$",
+            "type": "string"
+          },
+          "expires_in": {
+            "description": "Seconds the access token lives: one hour",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "refresh_token": {
+            "description": "Traded once for the next pair; presenting it again later ends the connection",
+            "pattern": "^pyxis_ort_[A-Za-z0-9_-]{43}$",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "read"
+            ],
+            "type": "string"
+          },
+          "token_type": {
+            "enum": [
+              "Bearer"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "token_type",
+          "expires_in",
+          "refresh_token",
+          "scope"
         ],
         "type": "object"
       },
@@ -3676,6 +4141,39 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/.well-known/oauth-authorization-server": {
+      "get": {
+        "description": "Clients register by the address of their metadata document, never dynamically; only Claude and Claude Code are allowed. 404 while the remote MCP is switched off.",
+        "operationId": "AuthorizationServerController_metadata",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationServerMetadata"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "The authorization server metadata (RFC 8414)",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -3707,6 +4205,181 @@
         "summary": "Liveness check of the API",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/oauth/authorize": {
+      "get": {
+        "description": "PKCE with S256 is required. An unknown client or a return address its document does not list is answered here, never redirected; any other refusal goes back to the client.",
+        "operationId": "AuthorizationServerController_authorize",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "To the consent page, or back with error."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Start a connection: the browser goes to the consent page of the dashboard",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/oauth/revoke": {
+      "post": {
+        "description": "Answers 200 whether or not the token was known.",
+        "operationId": "AuthorizationServerController_revoke",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthRevocationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The connection no longer works."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "End a connection with either of its tokens (RFC 7009)",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/oauth/token": {
+      "post": {
+        "description": "A refresh token is traded once: a replay within a minute gets another pair, a later one ends the whole connection. Errors follow RFC 6749, section 5.2.",
+        "operationId": "AuthorizationServerController_token",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/OAuthTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthTokenResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuthError"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "Trade a code, or a refresh token, for the tokens of a connection",
+        "tags": [
+          "oauth"
         ]
       }
     },
@@ -4613,6 +5286,113 @@
         ]
       }
     },
+    "/v1/me/connections": {
+      "get": {
+        "operationId": "ConnectionsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Connections"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The applications connected by the signed-in admin, and whether connecting is open",
+        "tags": [
+          "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/me/connections/{connectionId}": {
+      "delete": {
+        "operationId": "ConnectionsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "connectionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Its tokens no longer work."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No live connection of this admin has this id; the answer never says more."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Disconnect one application of the signed-in admin, at once",
+        "tags": [
+          "dashboard sign-in"
+        ]
+      }
+    },
     "/v1/me/sessions": {
       "get": {
         "operationId": "MeController_sessions",
@@ -4900,6 +5680,237 @@
         "summary": "Revoke one access token of the signed-in admin, at once",
         "tags": [
           "dashboard sign-in"
+        ]
+      }
+    },
+    "/v1/oauth/requests/{requestId}": {
+      "get": {
+        "operationId": "AuthorizationRequestsController_describe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationRequest"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unknown, expired or already answered; also while the remote MCP is off."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "A connection request waiting for the signed-in admin, for the consent page",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/v1/oauth/requests/{requestId}/approve": {
+      "post": {
+        "operationId": "AuthorizationRequestsController_approve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationDecision"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The admin already keeps ten connected applications."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Allow the application: answers where to send the browser, with a one-time code",
+        "tags": [
+          "oauth"
+        ]
+      }
+    },
+    "/v1/oauth/requests/{requestId}/deny": {
+      "post": {
+        "operationId": "AuthorizationRequestsController_deny",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "requestId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthorizationDecision"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Decline the application: answers where to send the browser",
+        "tags": [
+          "oauth"
         ]
       }
     },
