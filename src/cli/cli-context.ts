@@ -34,6 +34,8 @@ import { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-acce
 import { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
 import { LinkSubscriptionUseCase } from '../usecases/billing/link-subscription.usecase';
 import { DrizzleProjectPeopleRepository } from '../infra/repositories/drizzle-project-people.repository';
+import { CreateOperatorNoticeUseCase } from '../usecases/notices/create-operator-notice.usecase';
+import { DrizzleNoticeRepository } from '../infra/repositories/drizzle-notice.repository';
 import { RevokeAdminAccessUseCase } from '../usecases/people/revoke-admin-access.usecase';
 import { createBillingGateway } from '../infra/billing/create-billing-gateway';
 import { DrizzleAccountBillingRepository } from '../infra/repositories/drizzle-account-billing.repository';
@@ -121,6 +123,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     exemptAccountFromQuotaPause: new ExemptAccountFromQuotaPauseUseCase(
       new DrizzleAccountQuotaExemptionRepository(db),
     ),
+    createOperatorNotice: new CreateOperatorNoticeUseCase(new DrizzleNoticeRepository(db), clock),
     close: () => client.end(),
   };
 }

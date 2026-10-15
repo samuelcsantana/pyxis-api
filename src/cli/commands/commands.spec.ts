@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { PUBLIC_KEY_PATTERN, SECRET_KEY_PATTERN } from '../../domain/keys/project-keys';
 import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-context';
 import { CliUsageError } from '../cli-args';
@@ -15,6 +18,7 @@ import { adminResumeCommand } from './admin-resume.command';
 import { adminRevokeCommand } from './admin-revoke.command';
 import { adminSuspendCommand } from './admin-suspend.command';
 import { keyCreateCommand } from './key-create.command';
+import { noticeCreateCommand } from './notice-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
 import { projectDeleteCommand } from './project-delete.command';
@@ -335,6 +339,81 @@ describe('account:exempt-quota', () => {
 
     expect(cleared.out).toEqual([`account_id=${account.id}`, 'quota_pause_exempt_until=']);
     expect(cleared.err).toEqual([expect.stringContaining('next daily measurement')]);
+  });
+});
+
+describe('notice:create', () => {
+  let directory: string;
+
+  beforeEach(() => {
+    directory = mkdtempSync(path.join(tmpdir(), 'pyxis-notice-'));
+    writeFileSync(path.join(directory, 'en.txt'), 'Prices change\n\nFrom December.\n');
+    writeFileSync(path.join(directory, 'pt-BR.txt'), 'Os preços mudam\n\nA partir de dezembro.\n');
+    writeFileSync(path.join(directory, 'es.txt'), 'Los precios cambian\n\nDesde diciembre.\n');
+  });
+
+  afterEach(() => {
+    rmSync(directory, { recursive: true, force: true });
+  });
+
+  it('reads the three languages from the folder, with the flags', () => {
+    expect(
+      noticeCreateCommand.parse([
+        '--campaign',
+        'prices-2026-12',
+        '--dir',
+        directory,
+        '--include-ended',
+        '--dry-run',
+      ]),
+    ).toEqual({
+      campaign: 'prices-2026-12',
+      content: {
+        en: { subject: 'Prices change', paragraphs: ['From December.'] },
+        'pt-BR': { subject: 'Os preços mudam', paragraphs: ['A partir de dezembro.'] },
+        es: { subject: 'Los precios cambian', paragraphs: ['Desde diciembre.'] },
+      },
+      includeEnded: true,
+      dryRun: true,
+    });
+  });
+
+  it('refuses a bad campaign name and a folder without one of the languages', () => {
+    expect(() => noticeCreateCommand.parse(['--campaign', 'Prices!', '--dir', directory])).toThrow(
+      CliUsageError,
+    );
+    rmSync(path.join(directory, 'es.txt'));
+    expect(() => noticeCreateCommand.parse(['--campaign', 'prices', '--dir', directory])).toThrow(
+      /es\.txt/,
+    );
+  });
+
+  it('prints the count per language of a dry run, then stores the notice', async () => {
+    const context = inMemoryCliContext();
+    context.notices.addRecipient({
+      accountId: 'acc-1',
+      status: 'active',
+      ownerEmail: 'ana@example.com',
+      ownerLanguage: 'pt-BR',
+    });
+    const args = noticeCreateCommand.parse(['--campaign', 'prices', '--dir', directory]);
+    const dry = captureOutput();
+    const stored = captureOutput();
+
+    await noticeCreateCommand.execute(context, { ...args, dryRun: true }, dry);
+    await noticeCreateCommand.execute(context, args, stored);
+
+    expect(dry.out).toEqual([
+      'campaign=prices',
+      'dry_run=true',
+      'recipients=1',
+      'recipients_en=0',
+      'recipients_pt-BR=1',
+      'recipients_es=0',
+    ]);
+    expect(dry.err).toEqual([expect.stringContaining('without --dry-run')]);
+    expect(stored.out).toContain('dry_run=false');
+    expect(stored.err).toEqual([expect.stringContaining('account-notices')]);
   });
 });
 

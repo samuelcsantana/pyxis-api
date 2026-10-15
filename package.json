@@ -53,6 +53,7 @@
     "account:hold": "node dist/cli/account-hold.main.js",
     "account:release": "node dist/cli/account-release.main.js",
     "account:exempt-quota": "node dist/cli/account-exempt-quota.main.js",
+    "notice:create": "node dist/cli/notice-create.main.js",
     "test:integration": "node --experimental-vm-modules --disable-warning=ExperimentalWarning node_modules/jest/bin/jest.js --selectProjects integration --runInBand",
     "docs:build": "redocly build-docs openapi/openapi.json --output api-reference/index.html --title \"Pyxis API reference\""
   },
