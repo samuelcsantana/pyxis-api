@@ -20,6 +20,11 @@ export class FakeBillingGateway implements BillingGateway {
   readonly checkouts: CheckoutRequest[] = [];
   readonly portals: OpenedPortal[] = [];
   readonly subscriptionReads: string[] = [];
+  readonly cancelled: string[] = [];
+  readonly refunds: { readonly subscriptionId: string; readonly since: Date }[] = [];
+  refundAmount = 0;
+  cancelFailure: Error | null = null;
+  refundFailure: Error | null = null;
   private readonly subscriptions = new Map<string, BillingSubscription>();
   private nextEvent: BillingEvent | null = null;
 
@@ -51,6 +56,22 @@ export class FakeBillingGateway implements BillingGateway {
     return subscription === undefined
       ? Promise.reject(new BillingUnavailableError('subscriptions.retrieve failed'))
       : Promise.resolve(subscription);
+  }
+
+  cancelSubscription(subscriptionId: string): Promise<void> {
+    if (this.cancelFailure !== null) {
+      return Promise.reject(this.cancelFailure);
+    }
+    this.cancelled.push(subscriptionId);
+    return Promise.resolve();
+  }
+
+  refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number> {
+    if (this.refundFailure !== null) {
+      return Promise.reject(this.refundFailure);
+    }
+    this.refunds.push({ subscriptionId, since });
+    return Promise.resolve(this.refundAmount);
   }
 
   parseEvent(): BillingEvent {

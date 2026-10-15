@@ -41,6 +41,8 @@ export interface BillingGateway {
     language: EmailLanguage,
   ): Promise<{ readonly url: string }>;
   subscription(subscriptionId: string): Promise<BillingSubscription>;
+  cancelSubscription(subscriptionId: string): Promise<void>;
+  refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number>;
   parseEvent(rawBody: Buffer, signature: string | null): BillingEvent;
 }
 

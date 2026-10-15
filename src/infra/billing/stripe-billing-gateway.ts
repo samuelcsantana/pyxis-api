@@ -97,6 +97,33 @@ function firstLine(error: unknown): string {
   return String(error).split('\n', 1).join('');
 }
 
+const INVOICE_PAGE = 100;
+const SECOND_MS = 1000;
+
+interface PaidInvoice {
+  readonly id: string;
+  readonly paidAt: Date;
+  readonly amountPaid: number;
+}
+
+export function firstPaidInvoice(invoices: readonly Stripe.Invoice[]): PaidInvoice | null {
+  const paid = invoices.flatMap((invoice) => {
+    const paidAt = invoice.status_transitions.paid_at;
+    return invoice.amount_paid > 0 && paidAt !== null
+      ? [{ id: invoice.id, paidAt: new Date(paidAt * SECOND_MS), amountPaid: invoice.amount_paid }]
+      : [];
+  });
+  return paid.sort((left, right) => left.paidAt.getTime() - right.paidAt.getTime())[0] ?? null;
+}
+
+export function paymentIntentOf(payment: Stripe.InvoicePayment): string[] {
+  const intent = payment.payment.payment_intent;
+  if (payment.payment.type !== 'payment_intent' || intent === undefined) {
+    return [];
+  }
+  return [typeof intent === 'string' ? intent : intent.id];
+}
+
 export class StripeBillingGateway implements BillingGateway {
   private readonly logger = new Logger(StripeBillingGateway.name);
   private readonly prices = new Map<BillingInterval, string>();
@@ -155,6 +182,33 @@ export class StripeBillingGateway implements BillingGateway {
       this.stripe.subscriptions.retrieve(subscriptionId),
     );
     return toBillingSubscription(subscription);
+  }
+
+  async cancelSubscription(subscriptionId: string): Promise<void> {
+    await this.call('subscriptions.cancel', () => this.stripe.subscriptions.cancel(subscriptionId));
+  }
+
+  async refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number> {
+    const invoices = await this.call('invoices.list', () =>
+      this.stripe.invoices.list({
+        subscription: subscriptionId,
+        status: 'paid',
+        limit: INVOICE_PAGE,
+      }),
+    );
+    const first = firstPaidInvoice(invoices.data);
+    if (first === null || first.paidAt < since) {
+      return 0;
+    }
+    const payments = await this.call('invoicePayments.list', () =>
+      this.stripe.invoicePayments.list({ invoice: first.id, status: 'paid' }),
+    );
+    for (const paymentIntent of payments.data.flatMap(paymentIntentOf)) {
+      await this.call('refunds.create', () =>
+        this.stripe.refunds.create({ payment_intent: paymentIntent }),
+      );
+    }
+    return first.amountPaid;
   }
 
   parseEvent(rawBody: Buffer, signature: string | null): BillingEvent {
