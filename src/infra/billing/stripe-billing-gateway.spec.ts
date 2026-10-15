@@ -7,6 +7,8 @@ import {
 } from '../../domain/errors/billing.errors';
 import { fakeStripe } from '../../test-utils/stripe-fake-http';
 import {
+  firstPaidInvoice,
+  paymentIntentOf,
   StripeBillingGateway,
   toBillingEvent,
   toBillingSubscription,
@@ -209,6 +211,107 @@ describe('StripeBillingGateway.createPortal and subscription', () => {
       currentPeriodEndsAt: new Date(1_762_000_000_000),
       cancelAtPeriodEnd: false,
     });
+  });
+});
+
+describe('StripeBillingGateway when an account is closed', () => {
+  const PAID_AT = 1_762_000_000;
+  const SINCE = new Date((PAID_AT - 3600) * 1000);
+
+  function invoice(id: string, paidAt: number | null, amountPaid = 3900): object {
+    return {
+      id,
+      object: 'invoice',
+      amount_paid: amountPaid,
+      status_transitions: { paid_at: paidAt },
+    };
+  }
+
+  it('cancels the subscription at once', async () => {
+    const { gateway, answer, requests } = setup();
+    answer('DELETE', '/v1/subscriptions/sub_1', { body: subscription({ status: 'canceled' }) });
+
+    await gateway.cancelSubscription('sub_1');
+
+    expect(requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
+      'DELETE /v1/subscriptions/sub_1',
+    ]);
+  });
+
+  it('refunds the first payment in full when it was made inside the window', async () => {
+    const { gateway, answer, requests } = setup();
+    answer('GET', '/v1/invoices', {
+      body: {
+        object: 'list',
+        data: [
+          invoice('in_2', PAID_AT + 2_600_000),
+          invoice('in_1', PAID_AT),
+          invoice('in_0', null, 0),
+        ],
+      },
+    });
+    answer('GET', '/v1/invoice_payments', {
+      body: {
+        object: 'list',
+        data: [
+          {
+            id: 'inpay_1',
+            object: 'invoice_payment',
+            payment: { type: 'payment_intent', payment_intent: 'pi_1' },
+          },
+        ],
+      },
+    });
+    answer('POST', '/v1/refunds', { body: { id: 're_1', object: 'refund' } });
+
+    expect(await gateway.refundFirstPaymentSince('sub_1', SINCE)).toBe(3900);
+
+    expect(requests[0]?.query.get('subscription')).toBe('sub_1');
+    expect(requests[0]?.query.get('status')).toBe('paid');
+    expect(requests[1]?.query.get('invoice')).toBe('in_1');
+    expect(requests[2]?.form.get('payment_intent')).toBe('pi_1');
+  });
+
+  it('refunds nothing when the first payment is older than the window, or there is none', async () => {
+    const old = setup();
+    old.answer('GET', '/v1/invoices', {
+      body: { object: 'list', data: [invoice('in_1', PAID_AT)] },
+    });
+    const none = setup();
+    none.answer('GET', '/v1/invoices', { body: { object: 'list', data: [] } });
+
+    expect(await old.gateway.refundFirstPaymentSince('sub_1', new Date((PAID_AT + 1) * 1000))).toBe(
+      0,
+    );
+    expect(await none.gateway.refundFirstPaymentSince('sub_1', SINCE)).toBe(0);
+    expect(old.requests).toHaveLength(1);
+  });
+});
+
+describe('the payments of an invoice', () => {
+  it('finds the earliest paid invoice with money in it', () => {
+    expect(
+      firstPaidInvoice([
+        { id: 'in_2', amount_paid: 3900, status_transitions: { paid_at: 20 } },
+        { id: 'in_1', amount_paid: 3900, status_transitions: { paid_at: 10 } },
+        { id: 'in_0', amount_paid: 0, status_transitions: { paid_at: 5 } },
+        { id: 'in_open', amount_paid: 3900, status_transitions: { paid_at: null } },
+      ] as unknown as Stripe.Invoice[]),
+    ).toEqual({ id: 'in_1', paidAt: new Date(10_000), amountPaid: 3900 });
+    expect(firstPaidInvoice([])).toBeNull();
+  });
+
+  it('reads the payment intent of a card payment, given as an id or as an object', () => {
+    const payment = (value: object) => ({ payment: value }) as unknown as Stripe.InvoicePayment;
+
+    expect(paymentIntentOf(payment({ type: 'payment_intent', payment_intent: 'pi_1' }))).toEqual([
+      'pi_1',
+    ]);
+    expect(
+      paymentIntentOf(payment({ type: 'payment_intent', payment_intent: { id: 'pi_2' } })),
+    ).toEqual(['pi_2']);
+    expect(paymentIntentOf(payment({ type: 'payment_intent' }))).toEqual([]);
+    expect(paymentIntentOf(payment({ type: 'charge', charge: 'ch_1' }))).toEqual([]);
   });
 });
 
