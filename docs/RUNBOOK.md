@@ -318,6 +318,29 @@ owner, or close the new account). `billing.repeated_trial_check_failed` means th
 failed for an event; the event was applied anyway. The cards are deleted twelve months after
 their trial started.
 
+## Abuse
+
+The terms let the operator act on an account that abuses the service, from the mildest measure up.
+Each command runs from the operator's machine with the owner's connection, like the project
+scripts, and prints `key=value` lines.
+
+### Suspending an account
+
+```bash
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:suspend -- --account <id> --reason '<what was seen, as written to the owner>'
+MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s account:resume -- --account <id>
+```
+
+Within a minute (each instance caches the state for 60 seconds), the account's batches are
+answered `403 account_suspended`, which the tracker drops, and its project screens, its read-only
+tokens and the owner's changes to projects, keys and people answer `403 account_suspended` too.
+Sign-in, the account and its reason in the dashboard, the billing portal, closing the account,
+exports and the secret-key erasure and export of a person's events stay open. The subscription,
+the daily job and the thirteen-month retention are not touched. Nothing is e-mailed: write to
+the owner with the reason, what was suspended, what to do and how to contest. Writing the reason
+again keeps the moment of the first suspension; keys and tokens revoked meanwhile stay revoked
+after `account:resume`.
+
 ## Exports
 
 Owners export a project's events to a compressed CSV. Terraform creates the private bucket
