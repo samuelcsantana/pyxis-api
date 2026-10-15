@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.18.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.17.0...v0.18.0) (2026-10-15)
+
+
+### Features
+
+* **accounts:** close an account as the operator with a chosen refund ([1f8994d](https://github.com/samuelcsantana/pyxis-api/commit/1f8994d82c1750774d8b08bd7283189df886fde9))
+* **accounts:** hold the deletion of an account, with the reason ([dd239f7](https://github.com/samuelcsantana/pyxis-api/commit/dd239f733b7677792c52c5de46ee975e423ed3c7))
+* **accounts:** keep a held account and its projects from deletion ([d00fa7a](https://github.com/samuelcsantana/pyxis-api/commit/d00fa7a623d5e1b6cbb4b33f17d9433be285b175))
+* **accounts:** mark an account suspended, with the reason ([2f47b5e](https://github.com/samuelcsantana/pyxis-api/commit/2f47b5e7391448ab70047b6161e1373540464a00))
+* **auth:** keep a suspended person from signing in and from their sessions ([67f396c](https://github.com/samuelcsantana/pyxis-api/commit/67f396c7c3eea8b15c9a0d00c684760dd88b5a9c))
+* **auth:** suspend a person and revoke any token as the operator ([5c84fdd](https://github.com/samuelcsantana/pyxis-api/commit/5c84fddf4b0afb999d8c6d63a413b4044fef0857))
+* **billing:** read the latest paid invoice and refund part of it ([f6bbeb0](https://github.com/samuelcsantana/pyxis-api/commit/f6bbeb04081c355a180e8732efa3dac1526a47d3))
+* **billing:** tell the customer at Checkout the trial is one per customer ([0d330ae](https://github.com/samuelcsantana/pyxis-api/commit/0d330ae53e459c27ff437305f8c26c898c45ebb3))
+* **cli:** close an account from the command line ([c8d4d9c](https://github.com/samuelcsantana/pyxis-api/commit/c8d4d9c3b8947c9c4926d09ad87b8cd0dd2800d2))
+* **cli:** hold and release the deletion of an account ([04fdbb5](https://github.com/samuelcsantana/pyxis-api/commit/04fdbb5767f8b776f380f49ed732a3b6a2dcd85c))
+* **cli:** suspend and resume a person, and revoke a token ([0735bfa](https://github.com/samuelcsantana/pyxis-api/commit/0735bfad3918cfeea7df336501062ebcf47ba91f))
+* **cli:** suspend and resume an account from the command line ([b08a808](https://github.com/samuelcsantana/pyxis-api/commit/b08a808025e36dea9303d21b94973af02b6a3f4d))
+* **http:** refuse a suspended account's batches and project screens ([7b29730](https://github.com/samuelcsantana/pyxis-api/commit/7b29730ea73d9372e2084e0c52991383a6c223e8))
+* **infra:** alarm when a refund or an account e-mail fails ([31d25c2](https://github.com/samuelcsantana/pyxis-api/commit/31d25c2015cbdd46074272c6c66f3045484856ea))
+
+
+### Refactoring
+
+* **accounts:** name the statuses that have a subscription to cancel ([4b6dbbd](https://github.com/samuelcsantana/pyxis-api/commit/4b6dbbd82b928ba5789b4c0e518931a60611b4e0))
+
+
+### Documentation
+
+* describe account suspension and add ADR 0027 ([9dabd01](https://github.com/samuelcsantana/pyxis-api/commit/9dabd015cf2db6b721f96e589035584336b38b24))
+* describe closing an account as the operator and add ADR 0028 ([a83db11](https://github.com/samuelcsantana/pyxis-api/commit/a83db11775775bc0b8bd7af98ca250eb1ac1dffb))
+* describe holding a deletion and add ADR 0029 ([c1aac81](https://github.com/samuelcsantana/pyxis-api/commit/c1aac8154a7b4ce56285437f6d63cb0d6f7ee6b1))
+* describe stopping a person or a token and add ADR 0030 ([3276ec2](https://github.com/samuelcsantana/pyxis-api/commit/3276ec2de42cd60bddd550c50fddb7369f8cd36d))
+* describe the failure alarms and the trial line at Checkout ([428c26e](https://github.com/samuelcsantana/pyxis-api/commit/428c26e01a207b1bfe862c06e9688347b8530704))
+
 ## [0.17.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.16.0...v0.17.0) (2026-10-15)
 
 
