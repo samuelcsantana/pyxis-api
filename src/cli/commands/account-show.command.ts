@@ -33,6 +33,8 @@ export const accountShowCommand: CliCommand<AccountShowArgs> = {
     output.stdout(
       `ingestion_paused_until=${pausedUntil === null ? '' : pausedUntil.toISOString()}`,
     );
+    output.stdout(`suspended_at=${summary.account.suspendedAt?.toISOString() ?? ''}`);
+    output.stdout(`suspension_reason=${summary.account.suspensionReason ?? ''}`);
     for (const project of summary.projects) {
       output.stdout(`project=${project.id}\t${project.name}`);
     }

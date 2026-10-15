@@ -139,6 +139,32 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('suspends an account and lifts the suspension with the migration connection', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const account = await context.createCompedAccount.execute({
+        ownerEmail: 'suspended@example.com',
+      });
+
+      await context.suspendAccount.execute({
+        accountId: account.accountId,
+        reason: 'Forged traffic',
+      });
+      const [suspended] = await owner<{ suspension_reason: string | null }[]>`
+        SELECT suspension_reason FROM accounts WHERE id = ${account.accountId}
+      `;
+      expect(suspended?.suspension_reason).toBe('Forged traffic');
+
+      await context.resumeAccount.execute({ accountId: account.accountId });
+      const [resumed] = await owner<{ suspended_at: Date | null }[]>`
+        SELECT suspended_at FROM accounts WHERE id = ${account.accountId}
+      `;
+      expect(resumed?.suspended_at).toBeNull();
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',
