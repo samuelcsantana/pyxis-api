@@ -6,14 +6,17 @@ import { FixedClock } from '../../../test-utils/fixed-clock';
 import { InMemoryAccessTokenRepository } from '../../../test-utils/in-memory-access-token.repository';
 import { InMemoryAdminSessionRepository } from '../../../test-utils/in-memory-admin-session.repository';
 import { InMemoryAdminUserRepository } from '../../../test-utils/in-memory-admin-user.repository';
+import { InMemoryOAuthConnectionRepository } from '../../../test-utils/in-memory-oauth-connection.repository';
 import { AuthenticateAccessTokenUseCase } from '../../../usecases/auth/authenticate-access-token.usecase';
 import { AuthenticateSessionUseCase } from '../../../usecases/auth/authenticate-session.usecase';
+import { AuthenticateConnectionTokenUseCase } from '../../../usecases/oauth/authenticate-connection-token.usecase';
 import { ReadAccessGuard } from './read-access.guard';
 import { SESSION_COOKIE_NAME } from './session-cookie';
 
 const NOW = new Date('2026-10-14T12:00:00.000Z');
 const SESSION_TOKEN = 'session-token';
 const ACCESS_TOKEN = `pyxis_at_${'A'.repeat(32)}`;
+const CONNECTION_TOKEN = `pyxis_oat_${'B'.repeat(43)}`;
 const DAY = 86_400_000;
 
 function requestWith(headers: Record<string, string>): FastifyRequest {
@@ -42,11 +45,27 @@ async function setup() {
     createdAt: NOW,
     expiresAt: new Date(NOW.getTime() + 30 * DAY),
   });
+  const connections = new InMemoryOAuthConnectionRepository();
+  const connection = await connections.create(
+    {
+      adminUserId: admin.id,
+      clientId: 'https://claude.ai/oauth/mcp-oauth-client-metadata',
+      createdAt: NOW,
+    },
+    [
+      {
+        kind: 'access',
+        tokenHash: sha256Hex(CONNECTION_TOKEN),
+        expiresAt: new Date(NOW.getTime() + DAY),
+      },
+    ],
+  );
   const guard = new ReadAccessGuard(
     new AuthenticateSessionUseCase(sessions, admins, clock),
     new AuthenticateAccessTokenUseCase(tokens, admins, clock),
+    new AuthenticateConnectionTokenUseCase(connections, admins, clock),
   );
-  return { guard, admin, session, token, tokens };
+  return { guard, admin, session, token, tokens, connection, connections };
 }
 
 describe('ReadAccessGuard', () => {
@@ -78,6 +97,29 @@ describe('ReadAccessGuard', () => {
     expect(request.admin).toEqual(admin);
     expect(request.accessToken).toEqual(token);
     expect(request.session).toBeUndefined();
+  });
+
+  it('reads the access token of a connected application, leaving the rest empty', async () => {
+    const { guard, admin, connection } = await setup();
+    const request = requestWith({ authorization: `Bearer ${CONNECTION_TOKEN}` });
+
+    await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
+
+    expect(request.admin).toEqual(admin);
+    expect(request.oauthConnection).toEqual(connection);
+    expect(request.accessToken).toBeUndefined();
+    expect(request.session).toBeUndefined();
+  });
+
+  it('refuses the access token of a revoked connection and any refresh token', async () => {
+    const { guard, connection, connections } = await setup();
+    await connections.revoke(connection.id, NOW);
+
+    for (const token of [CONNECTION_TOKEN, `pyxis_ort_${'B'.repeat(43)}`]) {
+      await expect(
+        guard.canActivate(contextOf(requestWith({ authorization: `Bearer ${token}` }))),
+      ).rejects.toBeInstanceOf(UnauthenticatedError);
+    }
   });
 
   it('prefers the bearer header over a session cookie sent with it', async () => {

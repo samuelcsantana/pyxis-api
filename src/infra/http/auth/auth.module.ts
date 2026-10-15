@@ -6,6 +6,7 @@ import { PROJECT_RESTRICTIONS_QUERY } from '../../../domain/queries/project-rest
 import { ACCESS_TOKEN_REPOSITORY } from '../../../domain/repositories/access-token.repository';
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
 import { ADMIN_USER_REPOSITORY } from '../../../domain/repositories/admin-user.repository';
+import { OAUTH_CONNECTION_REPOSITORY } from '../../../domain/repositories/oauth-connection.repository';
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
 import { PROJECT_ACCOUNT_STATE_REPOSITORY } from '../../../domain/repositories/project-account-state.repository';
 import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
@@ -24,6 +25,7 @@ import { RevokeAccessTokenUseCase } from '../../../usecases/auth/revoke-access-t
 import { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everywhere.usecase';
 import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
+import { AuthenticateConnectionTokenUseCase } from '../../../usecases/oauth/authenticate-connection-token.usecase';
 import { SystemClock } from '../../clock/system-clock';
 import { DRIZZLE_CLIENT } from '../../database/drizzle.constants';
 import type { DrizzleDatabase } from '../../database/drizzle.types';
@@ -34,6 +36,7 @@ import { CryptoRandomSource } from '../../random/crypto-random-source';
 import { DrizzleAccessTokenRepository } from '../../repositories/drizzle-access-token.repository';
 import { DrizzleAdminSessionRepository } from '../../repositories/drizzle-admin-session.repository';
 import { DrizzleAdminUserRepository } from '../../repositories/drizzle-admin-user.repository';
+import { DrizzleOAuthConnectionRepository } from '../../repositories/drizzle-oauth-connection.repository';
 import { DrizzleOtpCodeRepository } from '../../repositories/drizzle-otp-code.repository';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
 import {
@@ -61,6 +64,7 @@ import { ReadAccessGuard } from './read-access.guard';
     ListAccessTokensUseCase,
     RevokeAccessTokenUseCase,
     AuthenticateAccessTokenUseCase,
+    AuthenticateConnectionTokenUseCase,
     DashboardOriginGuard,
     SessionGuard,
     ReadAccessGuard,
@@ -71,6 +75,7 @@ import { ReadAccessGuard } from './read-access.guard';
     { provide: OTP_CODE_REPOSITORY, useClass: DrizzleOtpCodeRepository },
     { provide: ADMIN_SESSION_REPOSITORY, useClass: DrizzleAdminSessionRepository },
     { provide: ACCESS_TOKEN_REPOSITORY, useClass: DrizzleAccessTokenRepository },
+    { provide: OAUTH_CONNECTION_REPOSITORY, useClass: DrizzleOAuthConnectionRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
     { provide: PROJECT_RESTRICTIONS_QUERY, useClass: DrizzleProjectRestrictionsQuery },
@@ -100,6 +105,7 @@ import { ReadAccessGuard } from './read-access.guard';
   exports: [
     AuthenticateSessionUseCase,
     AuthenticateAccessTokenUseCase,
+    AuthenticateConnectionTokenUseCase,
     ADMIN_USER_REPOSITORY,
     PROJECT_ACCOUNT_STATE_REPOSITORY,
     CLOCK,

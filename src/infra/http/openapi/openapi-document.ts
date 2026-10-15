@@ -1,6 +1,6 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
-import { ACCESS_TOKEN_SECURITY } from '../auth/read-access.decorator';
+import { ACCESS_TOKEN_SECURITY, CONNECTION_TOKEN_SECURITY } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { jsonSchemaConverter } from './json-schema-converter';
 
@@ -20,6 +20,15 @@ const ACCESS_TOKEN_BEARER = {
   bearerFormat: 'opaque',
   description:
     'A read-only access token for the dashboard queries: pyxis_at_ followed by 32 letters and digits',
+} as const;
+
+const CONNECTION_TOKEN_BEARER = {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'opaque',
+  description:
+    'The access token of an application connected through OAuth, read-only, valid one hour: ' +
+    'pyxis_oat_ followed by 43 letters, digits, - or _',
 } as const;
 
 const SESSION_COOKIE_SCHEME = {
@@ -42,6 +51,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addCookieAuth(SESSION_COOKIE_NAME, SESSION_COOKIE_SCHEME, SESSION_COOKIE_NAME)
     .addBearerAuth(SECRET_KEY_BEARER, 'secret_key')
     .addBearerAuth(ACCESS_TOKEN_BEARER, ACCESS_TOKEN_SECURITY)
+    .addBearerAuth(CONNECTION_TOKEN_BEARER, CONNECTION_TOKEN_SECURITY)
     .build();
   return SwaggerModule.createDocument(app, config, { standardSchemaConverter: jsonSchemaConverter });
 }

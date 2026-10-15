@@ -31,7 +31,7 @@ describe('buildOpenApiDocument', () => {
     expect(document.info.license?.name).toBe('MIT');
   });
 
-  it('declares the session cookie, the secret key and the access token as security schemes', () => {
+  it('declares the session cookie, the secret key and both read tokens as security schemes', () => {
     expect(buildOpenApiDocument(app).components?.securitySchemes).toEqual({
       pyxis_session: { type: 'apiKey', in: 'cookie', name: 'pyxis_session' },
       secret_key: {
@@ -46,6 +46,14 @@ describe('buildOpenApiDocument', () => {
         bearerFormat: 'opaque',
         description:
           'A read-only access token for the dashboard queries: pyxis_at_ followed by 32 letters and digits',
+      },
+      connection_token: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'opaque',
+        description:
+          'The access token of an application connected through OAuth, read-only, valid one hour: ' +
+          'pyxis_oat_ followed by 43 letters, digits, - or _',
       },
     });
   });
