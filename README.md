@@ -195,7 +195,8 @@ Shipping now:
   accepted (`409 terms_outdated` if it is not the current one), records the acceptance and answers
   a session and an `incomplete` account. `GET /v1/me/accounts` lists the admin's accounts with
   their billing state and the month measured; `POST /v1/accounts/{accountId}/checkout` opens
-  Stripe Checkout (with the 14-day trial the first time) and `.../portal` the billing portal, for
+  Stripe Checkout (with the 14-day trial the first time, and a line above the button saying it is
+  one per customer) and `.../portal` the billing portal, for
   the owner only ([ADR 0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
   required): `POST /v1/accounts/{accountId}/projects` (the plan's three), `PATCH
@@ -514,8 +515,8 @@ provisioned by the Terraform in `infra/` and shipped by `scripts/deploy-lambda.s
 migrations before updating the HTTP function. Every request must carry the secret header
 CloudFront adds; the function's own URL answers 403 without it. CloudWatch alarms e-mail the
 operator when requests end in unexpected errors, when the function fails, times out or is
-throttled, when the database grows, when sign-in codes are being guessed, and when a card
-starts a second free trial. Provisioning, deploys, checks, alarms and rollbacks are in the
+throttled, when the database grows, when sign-in codes are being guessed, when a card
+starts a second free trial, and when a refund or an account e-mail fails. Provisioning, deploys, checks, alarms and rollbacks are in the
 [runbook](docs/RUNBOOK.md). Merging a pull request never deploys.
 
 ## Privacy and security
@@ -648,6 +649,8 @@ starts a second free trial. Provisioning, deploys, checks, alarms and rollbacks 
 - [x] Exports of a project, by e-mail, for a week
 - [x] Repeated free trials with the same card detected, with an alarm
 - [x] Account closed by its owner: cancelled at once, refunded inside seven days, deleted later
+- [x] Abuse tools for the operator: suspend an account or a person, close with a chosen refund,
+      hold a deletion, revoke a token; alarms on failed refunds and account e-mails
 
 ## Contributing and license
 

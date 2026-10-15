@@ -174,17 +174,21 @@ from a browser outside AWS: CloudFront sets no region for requests from AWS's ow
 Every alarm e-mails `alert_email` through the SNS topic `pyxis-api-alerts`, once when it fires
 and once when it clears.
 
-| Alarm                                     | Fires when                                                           |
-| ----------------------------------------- | -------------------------------------------------------------------- |
-| `pyxis-api-unhandled-errors`              | 5 or more requests end in an unexpected 500 within five minutes      |
-| `pyxis-api-function-errors`               | 3 or more HTTP function invocations fail or time out in five minutes |
-| `pyxis-api-function-throttles`            | Any request is throttled in five minutes (reserved concurrency full) |
-| `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch            |
-| `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                             |
-| `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                               |
-| `pyxis-api-repeated-trials`               | A card starts a free trial already started by another account        |
+| Alarm                                     | Fires when                                                                 |
+| ----------------------------------------- | -------------------------------------------------------------------------- |
+| `pyxis-api-unhandled-errors`              | 5 or more requests end in an unexpected 500 within five minutes            |
+| `pyxis-api-function-errors`               | 3 or more HTTP function invocations fail or time out in five minutes       |
+| `pyxis-api-function-throttles`            | Any request is throttled in five minutes (reserved concurrency full)       |
+| `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch                  |
+| `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                                   |
+| `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                                     |
+| `pyxis-api-repeated-trials`               | A card starts a free trial already started by another account              |
+| `pyxis-api-refund-failures`               | A refund fails when an account is closed (refund by hand in Stripe)        |
+| `pyxis-api-account-notice-failures`       | An end-of-access, reminder or deletion e-mail fails (tried again tomorrow) |
 
-The thresholds are Terraform variables. All of them watch sa-east-1, so an outage before the
+The refund and account e-mail alarms count `accounts.refund_failed` and `accounts.notice_failed`
+in both functions' logs; `account:close` runs on the operator's machine, so its failures show in
+its own output instead. The thresholds are Terraform variables. All of them watch sa-east-1, so an outage before the
 function (DNS, the certificate, CloudFront itself) raises none; an external uptime check of
 `/health` would cover it. To see an alert e-mail arrive without breaking anything:
 
