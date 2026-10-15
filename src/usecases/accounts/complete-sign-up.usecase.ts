@@ -1,6 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { isSuspended } from '../../domain/accounts/account-suspension';
 import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../domain/accounts/sign-up-settings';
 import { normalizeEmail } from '../../domain/auth/email';
+import { InvalidSignInCodeError } from '../../domain/errors/auth.errors';
 import { sha256Hex } from '../../domain/auth/hashing';
 import { generateSessionToken } from '../../domain/auth/session-policy';
 import type { Account } from '../../domain/entities/account.entity';
@@ -72,6 +74,9 @@ export class CompleteSignUpUseCase {
       this.logger,
     );
     const admin = await this.admins.findOrCreateByEmail(email);
+    if (isSuspended(admin)) {
+      throw new InvalidSignInCodeError();
+    }
     await this.admins.setEmailLanguage(admin.id, code.emailLanguage);
     const account = await this.accountFor(admin.id);
     await this.terms.record({

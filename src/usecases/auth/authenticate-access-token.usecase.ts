@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { isSuspended } from '../../domain/accounts/account-suspension';
 import { accessTokenNeedsTouch, isAccessTokenActive } from '../../domain/auth/access-token-policy';
 import { sha256Hex } from '../../domain/auth/hashing';
 import type { AccessToken } from '../../domain/entities/access-token.entity';
@@ -37,7 +38,7 @@ export class AuthenticateAccessTokenUseCase {
       await this.tokens.touch(token.id, now);
     }
     const admin = await this.admins.findById(token.adminUserId);
-    if (admin === null) {
+    if (admin === null || isSuspended(admin)) {
       throw new UnauthenticatedError();
     }
     return { admin, token };

@@ -1,4 +1,5 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
+import { isSuspended } from '../../domain/accounts/account-suspension';
 import { normalizeEmail } from '../../domain/auth/email';
 import { sha256Hex } from '../../domain/auth/hashing';
 import { generateSessionToken } from '../../domain/auth/session-policy';
@@ -51,7 +52,7 @@ export class VerifySignInCodeUseCase {
       this.logger,
     );
     const admin = await this.admins.findByEmail(email);
-    if (admin === null) {
+    if (admin === null || isSuspended(admin)) {
       throw new InvalidSignInCodeError();
     }
     await this.admins.setEmailLanguage(admin.id, latest.emailLanguage);
