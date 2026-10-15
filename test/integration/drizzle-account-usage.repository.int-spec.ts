@@ -1,6 +1,7 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import { usageMonth } from '../../src/domain/queries/project-usage';
+import { UNRESTRICTED_PROJECT } from '../../src/domain/repositories/project-account-state.repository';
 import {
   createDrizzleDatabase,
   createPostgresClient,
@@ -186,11 +187,13 @@ describe('account usage and the state of its projects against a real Postgres', 
     expect(await states.stateOf(SHOP_ID)).toEqual({
       ingestionPausedUntil: NOVEMBER_FIRST,
       suspended: false,
+      ingestionSuspended: false,
     });
     expect((await states.stateOf(BLOG_ID)).ingestionPausedUntil).toEqual(NOVEMBER_FIRST);
     expect(await states.stateOf(OPERATOR_ID)).toEqual({
       ingestionPausedUntil: null,
       suspended: false,
+      ingestionSuspended: false,
     });
   });
 
@@ -200,8 +203,35 @@ describe('account usage and the state of its projects against a real Postgres', 
       WHERE id = ${BUSY_ID}
     `;
 
-    expect(await states.stateOf(SHOP_ID)).toEqual({ ingestionPausedUntil: null, suspended: true });
+    expect(await states.stateOf(SHOP_ID)).toEqual({
+      ingestionPausedUntil: null,
+      suspended: true,
+      ingestionSuspended: false,
+    });
     expect((await states.stateOf(OPERATOR_ID)).suspended).toBe(false);
+  });
+
+  it("tells a project's own suspended reception apart, on the operator's projects too", async () => {
+    await owner`
+      UPDATE projects SET ingestion_suspended_at = ${MEASURED_AT},
+        ingestion_suspension_reason = 'Forged traffic'
+      WHERE id IN (${SHOP_ID}, ${OPERATOR_ID})
+    `;
+
+    expect(await states.stateOf(SHOP_ID)).toEqual({
+      ingestionPausedUntil: null,
+      suspended: false,
+      ingestionSuspended: true,
+    });
+    expect(await states.stateOf(OPERATOR_ID)).toEqual({
+      ingestionPausedUntil: null,
+      suspended: false,
+      ingestionSuspended: true,
+    });
+    expect((await states.stateOf(BLOG_ID)).ingestionSuspended).toBe(false);
+    expect(await states.stateOf('00000000-0000-4000-8000-0000000000ff')).toEqual(
+      UNRESTRICTED_PROJECT,
+    );
   });
 
   it('removes the usage of an account with the account', async () => {

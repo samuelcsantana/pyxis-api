@@ -162,6 +162,13 @@
       "when": 1792074000907,
       "tag": "0022_projectless-since",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1792074635171,
+      "tag": "0023_project-ingestion-suspension",
+      "breakpoints": true
     }
   ]
 }

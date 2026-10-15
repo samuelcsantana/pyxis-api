@@ -8,6 +8,12 @@ import {
   type ProjectActivityQuery,
 } from '../../domain/queries/project-activity';
 import {
+  NO_RESTRICTIONS,
+  PROJECT_RESTRICTIONS_QUERY,
+  type ProjectRestrictions,
+  type ProjectRestrictionsQuery,
+} from '../../domain/queries/project-restrictions';
+import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
   type AccountRole,
@@ -40,7 +46,8 @@ export interface ProjectOwnership {
 
 const OPERATORS_PROJECT: ProjectOwnership = { accountId: null, role: null };
 
-export interface ProjectSettings extends Project, ProjectActivity, ProjectOwnership {
+export interface ProjectSettings
+  extends Project, ProjectActivity, ProjectOwnership, ProjectRestrictions {
   readonly publicKeys: readonly PublicKeySummary[];
   readonly secretKeys: readonly SecretKeySummary[];
   readonly eventRetentionMonths: number;
@@ -67,18 +74,21 @@ export class GetProjectSettingsUseCase {
     @Inject(PROJECT_ACTIVITY_QUERY) private readonly activity: ProjectActivityQuery,
     @Inject(PROJECT_SETTINGS_REPOSITORY) private readonly projects: ProjectSettingsRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
+    @Inject(PROJECT_RESTRICTIONS_QUERY) private readonly restrictions: ProjectRestrictionsQuery,
   ) {}
 
   async execute(project: Project, adminUserId: string): Promise<ProjectSettings> {
-    const [keys, activity, ownership] = await Promise.all([
+    const [keys, activity, ownership, restrictions] = await Promise.all([
       this.keys.liveKeysOf(project.id),
       this.activity.activityOf([project.id]),
       this.ownershipOf(project.id, adminUserId),
+      this.restrictions.restrictionsOf(adminUserId, [project.id]),
     ]);
     return {
       ...project,
       ...(activity.get(project.id) ?? NO_ACTIVITY),
       ...ownership,
+      ...(restrictions.get(project.id) ?? NO_RESTRICTIONS),
       publicKeys: publicKeysAmong(keys),
       secretKeys: secretKeysAmong(keys),
       eventRetentionMonths: EVENT_RETENTION_MONTHS,

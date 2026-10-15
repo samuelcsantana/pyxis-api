@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { EnvConfig } from '../../../config/env.schema';
 import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
+import { PROJECT_RESTRICTIONS_QUERY } from '../../../domain/queries/project-restrictions';
 import { ACCESS_TOKEN_REPOSITORY } from '../../../domain/repositories/access-token.repository';
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
 import { ADMIN_USER_REPOSITORY } from '../../../domain/repositories/admin-user.repository';
@@ -28,6 +29,7 @@ import { DRIZZLE_CLIENT } from '../../database/drizzle.constants';
 import type { DrizzleDatabase } from '../../database/drizzle.types';
 import { createMailSender } from '../../mail/create-mail-sender';
 import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
+import { DrizzleProjectRestrictionsQuery } from '../../queries/drizzle-project-restrictions.query';
 import { CryptoRandomSource } from '../../random/crypto-random-source';
 import { DrizzleAccessTokenRepository } from '../../repositories/drizzle-access-token.repository';
 import { DrizzleAdminSessionRepository } from '../../repositories/drizzle-admin-session.repository';
@@ -71,6 +73,7 @@ import { ReadAccessGuard } from './read-access.guard';
     { provide: ACCESS_TOKEN_REPOSITORY, useClass: DrizzleAccessTokenRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
+    { provide: PROJECT_RESTRICTIONS_QUERY, useClass: DrizzleProjectRestrictionsQuery },
     {
       provide: PROJECT_ACCOUNT_STATE_REPOSITORY,
       inject: [DRIZZLE_CLIENT, CLOCK],

@@ -25,6 +25,7 @@ export class InMemoryAccountUsageRepository
   private readonly pauses = new Map<string, Date | null>();
   private readonly projectAccounts = new Map<string, string>();
   private readonly suspendedAccounts = new Set<string>();
+  private readonly suspendedIngestion = new Set<string>();
 
   placeProject(projectId: string, accountId: string): void {
     this.projectAccounts.set(projectId, accountId);
@@ -32,6 +33,10 @@ export class InMemoryAccountUsageRepository
 
   markSuspended(accountId: string): void {
     this.suspendedAccounts.add(accountId);
+  }
+
+  suspendIngestionOf(projectId: string): void {
+    this.suspendedIngestion.add(projectId);
   }
 
   pauseOf(accountId: string): Date | null {
@@ -74,6 +79,7 @@ export class InMemoryAccountUsageRepository
     return Promise.resolve({
       ingestionPausedUntil: accountId === undefined ? null : this.pauseOf(accountId),
       suspended: accountId !== undefined && this.suspendedAccounts.has(accountId),
+      ingestionSuspended: this.suspendedIngestion.has(projectId),
     });
   }
 }

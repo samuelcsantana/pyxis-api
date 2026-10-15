@@ -61,3 +61,14 @@ export class KeyLimitReachedError extends DomainError {
     super(`The project already has ${String(limit)} live keys of this kind: revoke one first.`);
   }
 }
+
+export class ProjectSuspendedError extends DomainError {
+  readonly code = 'project_suspended';
+
+  constructor(readonly allowedOrigin: string | null) {
+    super(
+      "The project's event reception is suspended: its owner was told why by e-mail and can " +
+        'contest it.',
+    );
+  }
+}

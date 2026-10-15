@@ -10,6 +10,7 @@ import { TIMELINE_QUERY } from '../../../domain/queries/timeline';
 import { TIME_OF_DAY_QUERY } from '../../../domain/queries/time-of-day';
 import { OVERVIEW_QUERY } from '../../../domain/queries/overview';
 import { PROJECT_ACTIVITY_QUERY } from '../../../domain/queries/project-activity';
+import { PROJECT_RESTRICTIONS_QUERY } from '../../../domain/queries/project-restrictions';
 import { VISITS_QUERY } from '../../../domain/queries/visits';
 import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
 import { ACCOUNT_REPOSITORY } from '../../../domain/repositories/account.repository';
@@ -41,6 +42,7 @@ import { DrizzleTimelineQuery } from '../../queries/drizzle-timeline.query';
 import { DrizzleTimeOfDayQuery } from '../../queries/drizzle-time-of-day.query';
 import { DrizzleOverviewQuery } from '../../queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
+import { DrizzleProjectRestrictionsQuery } from '../../queries/drizzle-project-restrictions.query';
 import { DrizzleVisitsQuery } from '../../queries/drizzle-visits.query';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
 import { DrizzleAccountRepository } from '../../repositories/drizzle-account.repository';
@@ -106,6 +108,7 @@ import { VisitsController } from './visits.controller';
     { provide: PROJECT_SETTINGS_REPOSITORY, useClass: DrizzleProjectSettingsRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
+    { provide: PROJECT_RESTRICTIONS_QUERY, useClass: DrizzleProjectRestrictionsQuery },
     SessionGuard,
     ReadAccessGuard,
     AccessTokenThrottlerGuard,

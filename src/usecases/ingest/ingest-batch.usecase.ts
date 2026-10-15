@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { isPausedAt } from '../../domain/accounts/account-quota';
 import type { Project } from '../../domain/entities/project.entity';
 import { AccountSuspendedError } from '../../domain/errors/account.errors';
+import { ProjectSuspendedError } from '../../domain/errors/project.errors';
 import type { TrackedEvent } from '../../domain/entities/tracked-event.entity';
 import {
   BatchTooLargeError,
@@ -108,6 +109,9 @@ export class IngestBatchUseCase {
     const state = await this.accountStates.stateOf(project.id);
     if (state.suspended) {
       throw new AccountSuspendedError(origin);
+    }
+    if (state.ingestionSuspended) {
+      throw new ProjectSuspendedError(origin);
     }
     if (isPausedAt(state.ingestionPausedUntil, receivedAt)) {
       throw new QuotaExceededError(state.ingestionPausedUntil, origin);

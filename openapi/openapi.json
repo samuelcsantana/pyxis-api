@@ -1381,6 +1381,26 @@
                   "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
                   "type": "string"
                 },
+                "ingestion_suspended_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Since when the operator suspended the project's event reception (its batches answer 403 project_suspended while its screens stay open); null when it takes events"
+                },
+                "ingestion_suspension_reason": {
+                  "description": "Why the reception is suspended, as told to the owner of the account; null for everyone else and when it is not suspended",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "last_event_at": {
                   "anyOf": [
                     {
@@ -1408,7 +1428,9 @@
                 "conversion_event",
                 "first_event_at",
                 "last_event_at",
-                "icon_version"
+                "icon_version",
+                "ingestion_suspended_at",
+                "ingestion_suspension_reason"
               ],
               "type": "object"
             },
@@ -2385,6 +2407,26 @@
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
           },
+          "ingestion_suspended_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Since when the operator suspended the project's event reception (its batches answer 403 project_suspended while its screens stay open); null when it takes events"
+          },
+          "ingestion_suspension_reason": {
+            "description": "Why the reception is suspended, as told to the owner of the account; null for everyone else and when it is not suspended",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "last_event_at": {
             "anyOf": [
               {
@@ -2488,7 +2530,9 @@
           "last_event_at",
           "event_retention_months",
           "public_keys",
-          "secret_keys"
+          "secret_keys",
+          "ingestion_suspended_at",
+          "ingestion_suspension_reason"
         ],
         "type": "object"
       },
@@ -4426,7 +4470,7 @@
                 }
               }
             },
-            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account used 150% of its monthly events and is paused until the next month (quota_exceeded), or the account is suspended for abuse (account_suspended); both come with a CORS grant so the tracker drops the batch."
+            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account used 150% of its monthly events and is paused until the next month (quota_exceeded), or the account is suspended for abuse (account_suspended), or the project's own reception is suspended (project_suspended); the last three come with a CORS grant so the tracker drops the batch."
           },
           "413": {
             "content": {

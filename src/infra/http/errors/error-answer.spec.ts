@@ -37,6 +37,7 @@ import {
   ProjectIconNotFoundError,
   ProjectKeyNotFoundError,
   ProjectNameMismatchError,
+  ProjectSuspendedError,
   ProjectNotFoundError,
 } from '../../../domain/errors/project.errors';
 import { InvalidRangeError } from '../../../domain/errors/query.errors';
@@ -131,6 +132,14 @@ describe('toErrorAnswer', () => {
   it('answers a suspended account with 403 and a CORS grant when a batch was refused', () => {
     expect(toErrorAnswer(new AccountSuspendedError('https://shop.example.com'))).toEqual({
       body: { status_code: 403, error: 'account_suspended', message: expect.any(String) as string },
+      headers: { 'access-control-allow-origin': 'https://shop.example.com', vary: 'Origin' },
+      unexpected: false,
+    });
+  });
+
+  it('answers a project whose reception is suspended with 403 and a CORS grant', () => {
+    expect(toErrorAnswer(new ProjectSuspendedError('https://shop.example.com'))).toEqual({
+      body: { status_code: 403, error: 'project_suspended', message: expect.any(String) as string },
       headers: { 'access-control-allow-origin': 'https://shop.example.com', vary: 'Origin' },
       unexpected: false,
     });

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SESSION_TOKEN_PATTERN } from '../../../domain/auth/session-policy';
 import { MAX_EMAIL_LENGTH } from '../../database/schema/admins';
+import { projectRestrictionFields } from '../queries/project-restrictions.schemas';
 
 const SIGN_IN_CODE_PATTERN = /^\d{6}$/;
 const LANGUAGE_TAG_PATTERN = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$/;
@@ -72,6 +73,7 @@ export const meSchema = z
             'A short hash of the icon taken from the project site, which changes only when the ' +
               'icon does (add it to the icon URL to cache it); null when the site shows none',
           ),
+        ...projectRestrictionFields,
       }),
     ),
   })

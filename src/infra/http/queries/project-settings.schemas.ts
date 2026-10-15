@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { projectRestrictionFields } from './project-restrictions.schemas';
 
 const keyCreatedAtSchema = z.iso.datetime().describe('When the key was created');
 
@@ -46,6 +47,7 @@ export const projectSettingsSchema = z
         'The live secret keys, oldest first, by id and creation time only: a secret key is ' +
           'stored as a hash and never shown',
       ),
+    ...projectRestrictionFields,
   })
   .meta({
     id: 'ProjectSettings',
