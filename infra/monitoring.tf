@@ -219,7 +219,7 @@ resource "aws_cloudwatch_log_metric_filter" "account_notice_failures" {
   for_each       = local.account_log_groups
   name           = "${var.project}-account-notice-failures-${each.key}"
   log_group_name = each.value
-  pattern        = "{ $.message.message = \"accounts.notice_failed\" }"
+  pattern        = "{ $.message.message = \"accounts.notice_failed\" || $.message.message = \"notices.delivery_failed\" }"
 
   metric_transformation {
     name          = "AccountNoticeFailures"
@@ -231,7 +231,7 @@ resource "aws_cloudwatch_log_metric_filter" "account_notice_failures" {
 
 resource "aws_cloudwatch_metric_alarm" "account_notice_failures" {
   alarm_name          = "${var.project}-account-notice-failures"
-  alarm_description   = "${var.account_notice_failures_alarm_threshold} or more account e-mails (end of access, deletion reminder, deletion) failed within an hour: the daily job tries again tomorrow; check the e-mail provider."
+  alarm_description   = "${var.account_notice_failures_alarm_threshold} or more account e-mails (end of access, deletion reminder, deletion) failed within an hour, or notices sent to every owner (notices.delivery_failed): the daily job tries again tomorrow; check the e-mail provider."
   namespace           = var.metrics_namespace
   metric_name         = "AccountNoticeFailures"
   statistic           = "Sum"
