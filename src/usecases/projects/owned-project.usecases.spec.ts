@@ -1,6 +1,7 @@
 import type { AccountStatus } from '../../domain/accounts/account-status';
 import {
   AccountNotFoundError,
+  AccountSuspendedError,
   ProjectLimitReachedError,
   SubscriptionRequiredError,
 } from '../../domain/errors/account.errors';
@@ -87,6 +88,14 @@ async function setStatus(
     throw new Error('no such account');
   }
   accounts.add({ ...account, status });
+}
+
+async function suspend(accounts: InMemoryAccountRepository, accountId: string): Promise<void> {
+  const account = await accounts.findById(accountId);
+  if (account === null) {
+    throw new Error('no such account');
+  }
+  accounts.add({ ...account, suspendedAt: NOW, suspensionReason: 'Forged traffic' });
 }
 
 describe('CreateOwnedProjectUseCase', () => {
@@ -194,6 +203,16 @@ describe('UpdateOwnedProjectUseCase', () => {
     await expect(
       updateOwnedProject.execute({ adminUserId: OWNER_ID, projectId, name: 'Store' }),
     ).rejects.toBeInstanceOf(SubscriptionRequiredError);
+    expect((await store.findById(projectId))?.name).toBe('Shop');
+  });
+
+  it('refuses changes while the account is suspended, whatever its subscription', async () => {
+    const { updateOwnedProject, projectId, accounts, account, store } = await withProject();
+    await suspend(accounts, account.id);
+
+    await expect(
+      updateOwnedProject.execute({ adminUserId: OWNER_ID, projectId, name: 'Store' }),
+    ).rejects.toBeInstanceOf(AccountSuspendedError);
     expect((await store.findById(projectId))?.name).toBe('Shop');
   });
 });

@@ -11,6 +11,7 @@ import { type EngagementReportBody, engagementReportSchema } from './engagement.
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { type RangeQuery, rangeQuerySchema } from './query.schemas';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 export function engagementBody(report: EngagementReport): EngagementReportBody {
   return {
@@ -40,6 +41,7 @@ export function engagementBody(report: EngagementReport): EngagementReportBody {
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class EngagementController {

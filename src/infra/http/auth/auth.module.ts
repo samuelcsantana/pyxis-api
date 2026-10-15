@@ -6,8 +6,9 @@ import { ACCESS_TOKEN_REPOSITORY } from '../../../domain/repositories/access-tok
 import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-session.repository';
 import { ADMIN_USER_REPOSITORY } from '../../../domain/repositories/admin-user.repository';
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
+import { PROJECT_ACCOUNT_STATE_REPOSITORY } from '../../../domain/repositories/project-account-state.repository';
 import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
-import { CLOCK } from '../../../domain/services/clock';
+import { CLOCK, type Clock } from '../../../domain/services/clock';
 import { MAIL_SENDER } from '../../../domain/services/mail-sender';
 import { RANDOM_SOURCE } from '../../../domain/services/random-source';
 import { AuthenticateAccessTokenUseCase } from '../../../usecases/auth/authenticate-access-token.usecase';
@@ -23,6 +24,8 @@ import { SignOutEverywhereUseCase } from '../../../usecases/auth/sign-out-everyw
 import { SignOutUseCase } from '../../../usecases/auth/sign-out.usecase';
 import { VerifySignInCodeUseCase } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { SystemClock } from '../../clock/system-clock';
+import { DRIZZLE_CLIENT } from '../../database/drizzle.constants';
+import type { DrizzleDatabase } from '../../database/drizzle.types';
 import { createMailSender } from '../../mail/create-mail-sender';
 import { DrizzleProjectActivityQuery } from '../../queries/drizzle-project-activity.query';
 import { CryptoRandomSource } from '../../random/crypto-random-source';
@@ -31,6 +34,10 @@ import { DrizzleAdminSessionRepository } from '../../repositories/drizzle-admin-
 import { DrizzleAdminUserRepository } from '../../repositories/drizzle-admin-user.repository';
 import { DrizzleOtpCodeRepository } from '../../repositories/drizzle-otp-code.repository';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
+import {
+  CachingProjectAccountStateRepository,
+  DrizzleProjectAccountStateRepository,
+} from '../../repositories/drizzle-project-account-state.repository';
 import { AccessTokenThrottlerGuard } from './access-token-throttler.guard';
 import { AccessTokensController } from './access-tokens.controller';
 import { AuthController, MeController } from './auth.controller';
@@ -65,6 +72,15 @@ import { ReadAccessGuard } from './read-access.guard';
     { provide: PROJECT_ACTIVITY_QUERY, useClass: DrizzleProjectActivityQuery },
     { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
     {
+      provide: PROJECT_ACCOUNT_STATE_REPOSITORY,
+      inject: [DRIZZLE_CLIENT, CLOCK],
+      useFactory: (db: DrizzleDatabase, clock: Clock) =>
+        new CachingProjectAccountStateRepository(
+          new DrizzleProjectAccountStateRepository(db),
+          clock,
+        ),
+    },
+    {
       provide: MAIL_SENDER,
       inject: [ConfigService],
       useFactory: (config: ConfigService<EnvConfig, true>) =>
@@ -82,6 +98,7 @@ import { ReadAccessGuard } from './read-access.guard';
     AuthenticateSessionUseCase,
     AuthenticateAccessTokenUseCase,
     ADMIN_USER_REPOSITORY,
+    PROJECT_ACCOUNT_STATE_REPOSITORY,
     CLOCK,
     MAIL_SENDER,
   ],

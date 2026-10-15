@@ -1558,6 +1558,26 @@
                   ],
                   "type": "string"
                 },
+                "suspended_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Set while the operator suspended the account for abuse: its projects take no events and answer account_suspended in the dashboard until it is lifted."
+                },
+                "suspension_reason": {
+                  "description": "Why the account is suspended, as told to the owner; null for members.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "trial_ends_at": {
                   "anyOf": [
                     {
@@ -1580,6 +1600,8 @@
                 "current_period_ends_at",
                 "access_ends_at",
                 "ingestion_paused_until",
+                "suspended_at",
+                "suspension_reason",
                 "month",
                 "events_this_month",
                 "measured_at",
@@ -3923,7 +3945,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -4390,7 +4412,7 @@
                 }
               }
             },
-            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account used 150% of its monthly events and is paused until the next month (quota_exceeded, with a CORS grant so the tracker drops the batch)."
+            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account used 150% of its monthly events and is paused until the next month (quota_exceeded), or the account is suspended for abuse (account_suspended); both come with a CORS grant so the tracker drops the batch."
           },
           "413": {
             "content": {
@@ -4849,7 +4871,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -4947,6 +4969,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -5126,6 +5158,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -5185,6 +5227,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -5270,7 +5322,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -5358,6 +5410,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -5615,6 +5677,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -5715,6 +5787,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -5827,6 +5909,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -5937,6 +6029,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -6080,6 +6182,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -6166,6 +6278,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -6242,7 +6364,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -6421,6 +6543,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -6480,6 +6612,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -6565,7 +6707,7 @@
                 }
               }
             },
-            "description": ""
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -6775,6 +6917,16 @@
             },
             "description": ""
           },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -6834,6 +6986,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -6924,6 +7086,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -7021,6 +7193,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {
@@ -7256,6 +7438,16 @@
               }
             },
             "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
           },
           "404": {
             "content": {

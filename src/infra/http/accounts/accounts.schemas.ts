@@ -80,6 +80,14 @@ export const myAccountsSchema = z
         current_period_ends_at: isoDate,
         access_ends_at: isoDate,
         ingestion_paused_until: isoDate,
+        suspended_at: isoDate.describe(
+          'Set while the operator suspended the account for abuse: its projects take no events ' +
+            'and answer account_suspended in the dashboard until it is lifted.',
+        ),
+        suspension_reason: z
+          .string()
+          .nullable()
+          .describe('Why the account is suspended, as told to the owner; null for members.'),
         month: z.string().describe('The calendar month in UTC the usage is counted in, YYYY-MM.'),
         events_this_month: z
           .number()

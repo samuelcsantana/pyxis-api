@@ -2,6 +2,8 @@ import { type ExecutionContext, NotFoundException } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type { Project } from '../../../domain/entities/project.entity';
+import { AccountSuspendedError } from '../../../domain/errors/account.errors';
+import { InMemoryAccountUsageRepository } from '../../../test-utils/in-memory-account-usage.repository';
 import { InMemoryAdminUserRepository } from '../../../test-utils/in-memory-admin-user.repository';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 
@@ -14,6 +16,8 @@ const PROJECT: Project = {
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 
+const ACCOUNT_ID = 'acc00000-0000-4000-a000-000000000001';
+
 function contextOf(request: FastifyRequest): ExecutionContext {
   return { switchToHttp: () => ({ getRequest: () => request }) } as unknown as ExecutionContext;
 }
@@ -25,7 +29,14 @@ async function setup() {
   const stranger = await admins.grantAccess('bruno@example.com', 'another-project');
   const request = (who: AdminUser, projectId: string | undefined) =>
     ({ admin: who, params: projectId === undefined ? {} : { projectId } }) as FastifyRequest;
-  return { guard: new ProjectAccessGuard(admins), admin, stranger, request };
+  const accountStates = new InMemoryAccountUsageRepository();
+  return {
+    guard: new ProjectAccessGuard(admins, accountStates),
+    accountStates,
+    admin,
+    stranger,
+    request,
+  };
 }
 
 describe('ProjectAccessGuard', () => {
@@ -35,6 +46,16 @@ describe('ProjectAccessGuard', () => {
 
     await expect(guard.canActivate(contextOf(allowed))).resolves.toBe(true);
     expect(projectOf(allowed)).toEqual(PROJECT);
+  });
+
+  it('refuses a project whose account is suspended, without putting it on the request', async () => {
+    const { guard, accountStates, admin, request } = await setup();
+    accountStates.placeProject(PROJECT.id, ACCOUNT_ID);
+    accountStates.markSuspended(ACCOUNT_ID);
+    const refused = request(admin, PROJECT.id);
+
+    await expect(guard.canActivate(contextOf(refused))).rejects.toThrow(AccountSuspendedError);
+    expect(refused.project).toBeUndefined();
   });
 
   it('answers not found for a project the admin was not granted', async () => {

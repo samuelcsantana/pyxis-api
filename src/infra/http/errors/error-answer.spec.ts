@@ -1,3 +1,4 @@
+import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import {
   BillingUnavailableError,
@@ -121,6 +122,22 @@ describe('toErrorAnswer', () => {
     ).toEqual({
       body: { status_code: 403, error: 'quota_exceeded', message: expect.any(String) as string },
       headers: { 'access-control-allow-origin': 'https://shop.example.com', vary: 'Origin' },
+      unexpected: false,
+    });
+  });
+
+  it('answers a suspended account with 403 and a CORS grant when a batch was refused', () => {
+    expect(toErrorAnswer(new AccountSuspendedError('https://shop.example.com'))).toEqual({
+      body: { status_code: 403, error: 'account_suspended', message: expect.any(String) as string },
+      headers: { 'access-control-allow-origin': 'https://shop.example.com', vary: 'Origin' },
+      unexpected: false,
+    });
+  });
+
+  it('answers a suspended account in the dashboard with a plain 403', () => {
+    expect(toErrorAnswer(new AccountSuspendedError())).toEqual({
+      body: { status_code: 403, error: 'account_suspended', message: expect.any(String) as string },
+      headers: {},
       unexpected: false,
     });
   });

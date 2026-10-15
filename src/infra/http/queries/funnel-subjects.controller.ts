@@ -27,6 +27,7 @@ import {
 } from './funnel-subjects.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function funnelSubjectsBody(report: FunnelSubjectsReport): FunnelSubjectsReportBody {
   return {
@@ -48,6 +49,7 @@ function funnelSubjectsBody(report: FunnelSubjectsReport): FunnelSubjectsReportB
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class FunnelSubjectsController {

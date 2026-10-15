@@ -15,6 +15,7 @@ import {
   propertyBreakdownReportSchema,
 } from './property-breakdown.schemas';
 import { ApiRange } from './queries.controller';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function propertyBreakdownBody(report: PropertyBreakdownReport): PropertyBreakdownReportBody {
   return {
@@ -39,6 +40,7 @@ function propertyBreakdownBody(report: PropertyBreakdownReport): PropertyBreakdo
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class PropertyBreakdownController {

@@ -52,6 +52,7 @@ import {
   type TimelineReportBody,
   timelineReportSchema,
 } from './query.schemas';
+import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function kpiBody(kpi: Kpi) {
   return { current: kpi.current, previous: kpi.previous, daily: [...kpi.daily] };
@@ -228,6 +229,7 @@ function timelineBody(report: TimelineReport): TimelineReportBody {
   standardSchema: errorResponseSchema,
 })
 @ApiParam({ name: 'projectId', schema: { type: 'string', format: 'uuid' } })
+@ApiAccountSuspended()
 @Controller('v1/projects/:projectId')
 @ReadAccess(ProjectAccessGuard)
 export class QueriesController {
