@@ -254,6 +254,29 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it("suspends a project's reception and lifts it with the migration connection", async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const project = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+      });
+
+      const suspended = await context.suspendProjectIngestion.execute({
+        projectId: project.projectId,
+        reason: 'Forged traffic',
+      });
+      expect(suspended).toMatchObject({ projectName: 'Shop', reason: 'Forged traffic' });
+      await context.resumeProjectIngestion.execute({ projectId: project.projectId });
+      const [row] = await owner<{ ingestion_suspended_at: Date | null }[]>`
+        SELECT ingestion_suspended_at FROM projects WHERE id = ${project.projectId}
+      `;
+      expect(row?.ingestion_suspended_at).toBeNull();
+    } finally {
+      await context.close();
+    }
+  });
+
   it('refuses to start without a database URL', () => {
     expect(() => openCliContext({})).toThrow(
       'MIGRATION_DATABASE_URL (or DATABASE_URL) is required',

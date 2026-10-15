@@ -9,6 +9,7 @@ import { InMemoryAccountRepository } from './in-memory-account.repository';
 import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
 import { InMemoryProjectPeopleRepository } from './in-memory-project-people.repository';
 import { InMemoryProjectRepository } from './in-memory-project.repository';
+import { InMemoryProjectSuspensionRepository } from './in-memory-project-suspension.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
@@ -28,7 +29,9 @@ import { CreateProjectKeyUseCase } from '../usecases/projects/create-project-key
 import { CreateProjectUseCase } from '../usecases/projects/create-project.usecase';
 import { DeleteProjectUseCase } from '../usecases/projects/delete-project.usecase';
 import { ReportProjectUsageUseCase } from '../usecases/projects/report-project-usage.usecase';
+import { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
+import { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext, CommandOutput } from '../cli/cli-command';
 
@@ -55,6 +58,7 @@ export function inMemoryCliContext(): CliContext & {
   readonly tokens: InMemoryAccessTokenRepository;
   readonly people: InMemoryProjectPeopleRepository;
   readonly usage: StubProjectUsageQuery;
+  readonly projectSuspensions: InMemoryProjectSuspensionRepository;
   closed: boolean;
 } {
   const store = new InMemoryProjectRepository();
@@ -68,6 +72,7 @@ export function inMemoryCliContext(): CliContext & {
   const tokens = new InMemoryAccessTokenRepository();
   const people = new InMemoryProjectPeopleRepository();
   const usage = new StubProjectUsageQuery();
+  const projectSuspensions = new InMemoryProjectSuspensionRepository();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   const context = {
@@ -82,6 +87,7 @@ export function inMemoryCliContext(): CliContext & {
     tokens,
     people,
     usage,
+    projectSuspensions,
     closed: false,
     createProject: new CreateProjectUseCase(store, random),
     createProjectKey: new CreateProjectKeyUseCase(store, store, random),
@@ -102,6 +108,8 @@ export function inMemoryCliContext(): CliContext & {
     suspendAdmin: new SuspendAdminUseCase(admins, admins, sessions, tokens, clock),
     resumeAdmin: new ResumeAdminUseCase(admins, admins),
     revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(tokens, clock),
+    suspendProjectIngestion: new SuspendProjectIngestionUseCase(projectSuspensions, clock),
+    resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     close: () => {
       context.closed = true;
       return Promise.resolve();

@@ -17,6 +17,8 @@ import { keyCreateCommand } from './key-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
 import { projectDeleteCommand } from './project-delete.command';
+import { projectResumeCommand } from './project-resume.command';
+import { projectSuspendCommand } from './project-suspend.command';
 import { projectUpdateCommand } from './project-update.command';
 import { tokenRevokeCommand } from './token-revoke.command';
 import { usageReportCommand } from './usage-report.command';
@@ -320,6 +322,51 @@ describe('account:suspend and account:resume', () => {
 
     expect(resumed.out).toEqual([`account_id=${account.id}`, 'status=active', 'suspended_at=']);
     expect(resumed.err).toEqual([expect.stringContaining('stay revoked')]);
+  });
+});
+
+describe('project:suspend and project:resume', () => {
+  it('parse the project and a trimmed reason, refusing none or one too long', () => {
+    expect(
+      projectSuspendCommand.parse(['--project', PROJECT_ID, '--reason', '  Forged traffic  ']),
+    ).toEqual({ projectId: PROJECT_ID, reason: 'Forged traffic' });
+    expect(() => projectSuspendCommand.parse(['--project', PROJECT_ID])).toThrow(CliUsageError);
+    expect(() =>
+      projectSuspendCommand.parse(['--project', PROJECT_ID, '--reason', 'x'.repeat(501)]),
+    ).toThrow(CliUsageError);
+    expect(projectResumeCommand.parse(['--project', PROJECT_ID])).toEqual({
+      projectId: PROJECT_ID,
+    });
+  });
+
+  it('suspend the reception of a project and lift it, saying it takes up to a minute', async () => {
+    const context = inMemoryCliContext();
+    context.projectSuspensions.add(PROJECT_ID, 'My Shop');
+    const suspended = captureOutput();
+
+    await projectSuspendCommand.execute(
+      context,
+      { projectId: PROJECT_ID, reason: 'Forged traffic' },
+      suspended,
+    );
+
+    expect(suspended.out).toEqual([
+      `project_id=${PROJECT_ID}`,
+      'name=My Shop',
+      'ingestion_suspended_at=2026-10-06T14:00:00.000Z',
+      'ingestion_suspension_reason=Forged traffic',
+    ]);
+    expect(suspended.err).toEqual([expect.stringContaining('Within a minute')]);
+
+    const resumed = captureOutput();
+    await projectResumeCommand.execute(context, { projectId: PROJECT_ID }, resumed);
+
+    expect(resumed.out).toEqual([
+      `project_id=${PROJECT_ID}`,
+      'name=My Shop',
+      'ingestion_suspended_at=',
+    ]);
+    expect(resumed.err).toEqual([expect.stringContaining('Within a minute')]);
   });
 });
 
