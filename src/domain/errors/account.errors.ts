@@ -55,3 +55,19 @@ export class SubscriptionRequiredError extends DomainError {
     super('The account has no running subscription: subscribe to change its projects.');
   }
 }
+
+export class AccountEndedError extends DomainError {
+  readonly code = 'account_ended';
+
+  constructor() {
+    super('The account has already ended; its data is deleted thirty days after the end.');
+  }
+}
+
+export class ConfirmationMismatchError extends DomainError {
+  readonly code = 'confirmation_mismatch';
+
+  constructor() {
+    super("The address typed is not the owner's: nothing was closed.");
+  }
+}
