@@ -8,6 +8,7 @@ import {
 import { fakeStripe } from '../../test-utils/stripe-fake-http';
 import {
   firstPaidInvoice,
+  latestPaidInvoiceOf,
   paymentIntentOf,
   StripeBillingGateway,
   toBillingEvent,
@@ -298,6 +299,67 @@ describe('StripeBillingGateway when an account is closed', () => {
   });
 });
 
+describe('StripeBillingGateway when the operator closes an account', () => {
+  const START = 1_762_000_000;
+  const END = START + 30 * 24 * 60 * 60;
+
+  function paidInvoice(id: string, paidAt: number, amountPaid = 3900): object {
+    return {
+      id,
+      object: 'invoice',
+      amount_paid: amountPaid,
+      status_transitions: { paid_at: paidAt },
+      lines: { object: 'list', data: [{ period: { start: START, end: END } }] },
+    };
+  }
+
+  function payment(intent: string, amountPaid: number | null): object {
+    return {
+      id: `inpay_${intent}`,
+      object: 'invoice_payment',
+      amount_paid: amountPaid,
+      payment: { type: 'payment_intent', payment_intent: intent },
+    };
+  }
+
+  it("reads the subscription's latest paid invoice with its period", async () => {
+    const { gateway, answer, requests } = setup();
+    answer('GET', '/v1/invoices', {
+      body: { object: 'list', data: [paidInvoice('in_1', START), paidInvoice('in_2', END)] },
+    });
+
+    await expect(gateway.latestPaidInvoice('sub_1')).resolves.toEqual({
+      invoiceId: 'in_2',
+      amountPaid: 3900,
+      periodStart: new Date(START * 1000),
+      periodEnd: new Date(END * 1000),
+    });
+    expect(requests[0]?.query.get('subscription')).toBe('sub_1');
+    expect(requests[0]?.query.get('status')).toBe('paid');
+  });
+
+  it('refunds an amount from the payments of an invoice, never more than each one paid', async () => {
+    const { gateway, answer, requests } = setup();
+    answer('GET', '/v1/invoice_payments', {
+      body: {
+        object: 'list',
+        data: [payment('pi_1', 1000), payment('pi_2', 3900), payment('pi_3', null)],
+      },
+    });
+    answer('POST', '/v1/refunds', { body: { id: 're_1', object: 'refund' } });
+
+    expect(await gateway.refundInvoice('in_2', 2600)).toBe(2600);
+
+    expect(requests[0]?.query.get('invoice')).toBe('in_2');
+    expect(
+      requests.slice(1).map(({ form }) => [form.get('payment_intent'), form.get('amount')]),
+    ).toEqual([
+      ['pi_1', '1000'],
+      ['pi_2', '1600'],
+    ]);
+  });
+});
+
 describe('the payments of an invoice', () => {
   it('finds the earliest paid invoice with money in it', () => {
     expect(
@@ -309,6 +371,27 @@ describe('the payments of an invoice', () => {
       ] as unknown as Stripe.Invoice[]),
     ).toEqual({ id: 'in_1', paidAt: new Date(10_000), amountPaid: 3900 });
     expect(firstPaidInvoice([])).toBeNull();
+  });
+
+  it('finds the latest paid invoice with money and a period in it', () => {
+    const line = { lines: { data: [{ period: { start: 1, end: 2 } }] } };
+    const noLine = { lines: { data: [] } };
+
+    expect(
+      latestPaidInvoiceOf([
+        { id: 'in_1', amount_paid: 3900, status_transitions: { paid_at: 10 }, ...line },
+        { id: 'in_2', amount_paid: 3900, status_transitions: { paid_at: 20 }, ...line },
+        { id: 'in_free', amount_paid: 0, status_transitions: { paid_at: 30 }, ...line },
+        { id: 'in_open', amount_paid: 3900, status_transitions: { paid_at: null }, ...line },
+        { id: 'in_bare', amount_paid: 3900, status_transitions: { paid_at: 40 }, ...noLine },
+      ] as unknown as Stripe.Invoice[]),
+    ).toEqual({
+      invoiceId: 'in_2',
+      amountPaid: 3900,
+      periodStart: new Date(1000),
+      periodEnd: new Date(2000),
+    });
+    expect(latestPaidInvoiceOf([])).toBeNull();
   });
 
   it('reads the payment intent of a card payment, given as an id or as an object', () => {

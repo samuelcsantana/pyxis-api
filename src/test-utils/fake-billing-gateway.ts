@@ -4,6 +4,7 @@ import type {
   BillingGateway,
   BillingSubscription,
   CheckoutRequest,
+  PaidInvoice,
 } from '../domain/billing/billing-gateway';
 import {
   BillingUnavailableError,
@@ -23,6 +24,8 @@ export class FakeBillingGateway implements BillingGateway {
   readonly cancelled: string[] = [];
   readonly refunds: { readonly subscriptionId: string; readonly since: Date }[] = [];
   refundAmount = 0;
+  latestInvoice: PaidInvoice | null = null;
+  readonly invoiceRefunds: { readonly invoiceId: string; readonly amount: number }[] = [];
   cancelFailure: Error | null = null;
   refundFailure: Error | null = null;
   private readonly subscriptions = new Map<string, BillingSubscription>();
@@ -72,6 +75,18 @@ export class FakeBillingGateway implements BillingGateway {
     }
     this.refunds.push({ subscriptionId, since });
     return Promise.resolve(this.refundAmount);
+  }
+
+  latestPaidInvoice(): Promise<PaidInvoice | null> {
+    return Promise.resolve(this.latestInvoice);
+  }
+
+  refundInvoice(invoiceId: string, amount: number): Promise<number> {
+    if (this.refundFailure !== null) {
+      return Promise.reject(this.refundFailure);
+    }
+    this.invoiceRefunds.push({ invoiceId, amount });
+    return Promise.resolve(amount);
   }
 
   parseEvent(): BillingEvent {

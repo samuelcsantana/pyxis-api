@@ -9,6 +9,7 @@ import {
   type BillingInterval,
   type BillingSubscription,
   type CheckoutRequest,
+  type PaidInvoice,
 } from '../../domain/billing/billing-gateway';
 import {
   BillingUnavailableError,
@@ -107,13 +108,13 @@ function firstLine(error: unknown): string {
 const INVOICE_PAGE = 100;
 const SECOND_MS = 1000;
 
-interface PaidInvoice {
+interface FirstPaidInvoice {
   readonly id: string;
   readonly paidAt: Date;
   readonly amountPaid: number;
 }
 
-export function firstPaidInvoice(invoices: readonly Stripe.Invoice[]): PaidInvoice | null {
+export function firstPaidInvoice(invoices: readonly Stripe.Invoice[]): FirstPaidInvoice | null {
   const paid = invoices.flatMap((invoice) => {
     const paidAt = invoice.status_transitions.paid_at;
     return invoice.amount_paid > 0 && paidAt !== null
@@ -121,6 +122,27 @@ export function firstPaidInvoice(invoices: readonly Stripe.Invoice[]): PaidInvoi
       : [];
   });
   return paid.sort((left, right) => left.paidAt.getTime() - right.paidAt.getTime())[0] ?? null;
+}
+
+export function latestPaidInvoiceOf(invoices: readonly Stripe.Invoice[]): PaidInvoice | null {
+  const paid = invoices.flatMap((invoice) => {
+    const paidAt = invoice.status_transitions.paid_at;
+    const period = invoice.lines.data[0]?.period;
+    return invoice.amount_paid > 0 && paidAt !== null && period !== undefined
+      ? [
+          {
+            paidAt,
+            invoice: {
+              invoiceId: invoice.id,
+              amountPaid: invoice.amount_paid,
+              periodStart: new Date(period.start * SECOND_MS),
+              periodEnd: new Date(period.end * SECOND_MS),
+            },
+          },
+        ]
+      : [];
+  });
+  return paid.sort((left, right) => right.paidAt - left.paidAt)[0]?.invoice ?? null;
 }
 
 export function paymentIntentOf(payment: Stripe.InvoicePayment): string[] {
@@ -216,6 +238,34 @@ export class StripeBillingGateway implements BillingGateway {
       );
     }
     return first.amountPaid;
+  }
+
+  async latestPaidInvoice(subscriptionId: string): Promise<PaidInvoice | null> {
+    const invoices = await this.call('invoices.list', () =>
+      this.stripe.invoices.list({
+        subscription: subscriptionId,
+        status: 'paid',
+        limit: INVOICE_PAGE,
+      }),
+    );
+    return latestPaidInvoiceOf(invoices.data);
+  }
+
+  async refundInvoice(invoiceId: string, amount: number): Promise<number> {
+    const payments = await this.call('invoicePayments.list', () =>
+      this.stripe.invoicePayments.list({ invoice: invoiceId, status: 'paid' }),
+    );
+    let refunded = 0;
+    for (const payment of payments.data) {
+      const share = Math.min(amount - refunded, payment.amount_paid ?? 0);
+      for (const paymentIntent of share > 0 ? paymentIntentOf(payment) : []) {
+        await this.call('refunds.create', () =>
+          this.stripe.refunds.create({ payment_intent: paymentIntent, amount: share }),
+        );
+        refunded += share;
+      }
+    }
+    return refunded;
   }
 
   parseEvent(rawBody: Buffer, signature: string | null): BillingEvent {
