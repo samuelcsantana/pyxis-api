@@ -9,6 +9,7 @@ import {
   digestDeliveries,
   events,
   otpCodes,
+  projectExports,
   projectIcons,
   projectKeys,
   projects,
@@ -27,7 +28,8 @@ function foreignKeyTargets(
     | typeof adminAccessTokens
     | typeof digestDeliveries
     | typeof projectIcons
-    | typeof termsAcceptances,
+    | typeof termsAcceptances
+    | typeof projectExports,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -146,6 +148,21 @@ describe('database schema', () => {
     expect(config.indexes.map((index) => index.config.name)).toEqual([
       'terms_acceptances_account_id_idx',
     ]);
+  });
+
+  it('keeps exports with their project, outliving the admin who asked for them', () => {
+    const config = getTableConfig(projectExports);
+
+    expect(foreignKeyTargets(projectExports)).toEqual(['projects.id', 'admin_users.id']);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual([
+      'cascade',
+      'set null',
+    ]);
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'project_exports_project_requested_at_idx',
+      'project_exports_one_pending_idx',
+    ]);
+    expect(config.checks.map((check) => check.name)).toEqual(['project_exports_status_check']);
   });
 
   it('allows only the known purposes of an e-mailed code', () => {
