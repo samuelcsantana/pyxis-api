@@ -200,6 +200,11 @@ Shipping now:
   stays). Anyone else gets 404; an account without a running subscription gets
   `409 subscription_required`. The project settings say the admin's `role`
   ([ADR 0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md))
+- People of a project: `GET /v1/projects/{projectId}/people` for anyone who reads it; the owner
+  adds an address (`POST`, with an invitation e-mail in the language of the page) and takes
+  someone off (`DELETE .../people/{adminUserId}`). The plan's three people are counted across the
+  account's projects, the owner included, under the account lock; the owner always stays
+  ([ADR 0021](docs/adr/0021-people-are-counted-across-the-account.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -300,6 +305,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash                                                                                |
 | `npm run -s key:revoke -- --key-id <id>`                                                                                                                        | Revokes a key; running instances may accept it for up to 60 seconds from their cache                                                                                    |
 | `npm run -s admin:grant -- --email <email> --project <id>`                                                                                                      | Creates the admin when needed and lets them sign in to the dashboard and read the project                                                                               |
+| `npm run -s admin:revoke -- --email <email> --project <id>`                                                                                                     | Takes the person off that project; the owner of the project's account always stays                                                                                      |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first               |
 | `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                          |
 | `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project        |
@@ -544,6 +550,7 @@ request never deploys.
 | [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)      | Billing follows Stripe through its webhook, re-reading the subscription |
 | [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)   | Sign-up behind a switch, tied to the version of the terms accepted      |
 | [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md) | Owners manage their projects; the operator's stay in the command line   |
+| [0021](docs/adr/0021-people-are-counted-across-the-account.md)           | People are added per project and counted across the account             |
 
 ## Roadmap
 
@@ -571,7 +578,8 @@ request never deploys.
 - [x] Billing through Stripe: Checkout, portal and the webhook that keeps each account's status
 - [x] Sign-up behind a switch, with the terms version accepted and Checkout for the owner
 - [x] Projects and keys managed by the owner of their account
-- [ ] Hosted plan: people managed by the owner; the account's lifecycle, export and deletion
+- [x] People added and removed by the owner, with an invitation e-mail
+- [ ] Hosted plan: the account's lifecycle, export and deletion
 
 ## Contributing and license
 
