@@ -23,7 +23,8 @@ resource "aws_cloudfront_origin_request_policy" "api" {
 }
 
 locals {
-  connector_path_patterns = ["/mcp", "/oauth/*", "/.well-known/oauth-*"]
+  mcp_path_pattern        = "/mcp"
+  connector_path_patterns = [local.mcp_path_pattern, "/oauth/*", "/.well-known/oauth-*"]
   not_found_body          = jsonencode({ status_code = 404, error = "not_found", message = "Nothing lives at this address." })
 }
 
@@ -47,6 +48,19 @@ resource "aws_cloudfront_function" "connector_host" {
       };
     }
   EOT
+}
+
+resource "aws_cloudfront_response_headers_policy" "mcp_challenge" {
+  name    = "${var.project}-mcp-challenge"
+  comment = "WWW-Authenticate on /mcp: Lambda function URLs rename the challenge the API sends."
+
+  custom_headers_config {
+    items {
+      header   = "WWW-Authenticate"
+      value    = "Bearer resource_metadata=\"https://${var.api_domain}/.well-known/oauth-protected-resource/mcp\", scope=\"read\""
+      override = false
+    }
+  }
 }
 
 resource "aws_cloudfront_distribution" "api" {
@@ -96,6 +110,11 @@ resource "aws_cloudfront_distribution" "api" {
       compress                 = true
       cache_policy_id          = data.aws_cloudfront_cache_policy.caching_disabled.id
       origin_request_policy_id = aws_cloudfront_origin_request_policy.api.id
+      response_headers_policy_id = (
+        ordered_cache_behavior.value == local.mcp_path_pattern
+        ? aws_cloudfront_response_headers_policy.mcp_challenge.id
+        : null
+      )
 
       function_association {
         event_type   = "viewer-request"
