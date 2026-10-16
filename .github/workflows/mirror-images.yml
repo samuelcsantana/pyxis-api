@@ -1,0 +1,53 @@
+name: Mirror CI images
+
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/mirror-images.yml]
+  pull_request:
+    branches: [main]
+    paths: [.github/workflows/mirror-images.yml]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: postgres:18-alpine
+            source: public.ecr.aws/docker/library/postgres:18-alpine
+            fallback: docker.io/library/postgres:18-alpine
+          - name: node:24-alpine
+            source: public.ecr.aws/docker/library/node:24-alpine
+            fallback: docker.io/library/node:24-alpine
+          - name: lambda-nodejs:24
+            source: public.ecr.aws/lambda/nodejs:24
+            fallback: docker.io/amazon/aws-lambda-nodejs:24
+    env:
+      TARGET: ghcr.io/${{ github.repository_owner }}/pyxis-ci/${{ matrix.name }}
+      SOURCE: ${{ matrix.source }}
+      FALLBACK: ${{ matrix.fallback }}
+    steps:
+      - name: Sign in to the GitHub Container Registry
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+        run: echo "$TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+      - name: Copy every platform of the image, retrying with a second source
+        run: |
+          for attempt in 1 2 3 4 5; do
+            docker buildx imagetools create --tag "$TARGET" "$SOURCE" && exit 0
+            docker buildx imagetools create --tag "$TARGET" "$FALLBACK" && exit 0
+            sleep $((attempt * 30))
+          done
+          exit 1
+      - name: Show what the mirror now serves
+        run: docker buildx imagetools inspect "$TARGET"
