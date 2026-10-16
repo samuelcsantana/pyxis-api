@@ -32,6 +32,11 @@ describe('isPublicAddress', () => {
     ['an IPv6 documentation address', '2001:db8::1'],
     ['a mapped private IPv4 address', '::ffff:10.0.0.1'],
     ['a mapped loopback address', '::FFFF:127.0.0.1'],
+    ['a hex-normalized mapped loopback address', '::ffff:7f00:1'],
+    ['a hex-normalized mapped metadata address', '::ffff:a9fe:a9fe'],
+    ['an IPv4-compatible loopback address', '::7f00:1'],
+    ['a well-known NAT64 loopback address', '64:ff9b::7f00:1'],
+    ['a 6to4 loopback address', '2002:7f00:1::'],
     ['a name instead of an address', 'localhost'],
     ['nothing', ''],
   ])('refuses %s', (_, address) => {
