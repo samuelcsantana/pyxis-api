@@ -31,7 +31,7 @@ const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
   name: 'Shop',
   allowedOrigins: ['https://shop.example.com'],
-  timezone: 'UTC',
+  timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
@@ -369,6 +369,7 @@ describe('QueriesController', () => {
       { date: '2026-10-05', total: 4, failed: 1, median_duration_ms: 80, p95_duration_ms: 300 },
     ]);
     expect(requestsReportSchema.parse(body).kind).toBe('writes');
+    expect(requestsReportSchema.parse(body).timezone).toBe('America/Sao_Paulo');
     expect(requestsReportSchema.parse(body).routes[0]).toEqual({
       method: 'POST',
       route: '/v1/plans',
@@ -484,6 +485,7 @@ describe('QueriesController', () => {
         },
       ],
       next_before: '2026-10-04T12:00:00.000Z',
+      timezone: 'America/Sao_Paulo',
     });
   });
 
@@ -499,7 +501,7 @@ describe('QueriesController', () => {
     );
 
     expect(calls).toEqual([[PROJECT, { sessionId: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e' }, null]]);
-    expect(body).toEqual({ visits: [], next_before: null });
+    expect(body).toEqual({ visits: [], next_before: null, timezone: 'America/Sao_Paulo' });
   });
 });
 

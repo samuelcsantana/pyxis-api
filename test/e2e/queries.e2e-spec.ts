@@ -228,6 +228,7 @@ describe('dashboard queries', () => {
       route_days: [
         { date: '2026-10-05', total: 1, failed: 1, median_duration_ms: 80, p95_duration_ms: 80 },
       ],
+      timezone: 'UTC',
     });
     expect(elsewhere.json()).toEqual({
       kind: 'writes',
@@ -239,6 +240,7 @@ describe('dashboard queries', () => {
         },
       ],
       route_days: null,
+      timezone: 'UTC',
     });
   });
 
@@ -298,6 +300,7 @@ describe('dashboard queries', () => {
     expect(reached.json()).toEqual({
       subjects: [{ id: SESSION_ID, last_step_at: '2026-10-05T10:01:00.000Z' }],
       next_cursor: null,
+      timezone: 'UTC',
     });
     expect(droppedFirst.statusCode).toBe(400);
   });
@@ -339,7 +342,7 @@ describe('dashboard queries', () => {
   it('answers an empty timeline for someone the project never saw', async () => {
     const response = await get(`/v1/projects/${SHOP_ID}/timeline?user_id=nobody`);
 
-    expect(response.json()).toEqual({ visits: [], next_before: null });
+    expect(response.json()).toEqual({ visits: [], next_before: null, timezone: 'UTC' });
   });
 
   it('answers the visits of the range, filtered by page and event, with their summary', async () => {
@@ -380,6 +383,7 @@ describe('dashboard queries', () => {
       ],
       next_cursor: null,
       total: 1,
+      timezone: 'UTC',
     });
     expect(
       paid.json<{ visits: { session_id: string }[] }>().visits.map((visit) => visit.session_id),
