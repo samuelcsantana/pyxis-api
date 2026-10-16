@@ -306,6 +306,17 @@ already created keep working, and an ended account not yet deleted can still sub
 Account and billing (a Checkout with no trial; coming back is not a new sign-up). A new version of the terms is the same change with a new
 `terms_version`: a page still showing the old one is refused with `409 terms_outdated`.
 
+### Promotion codes
+
+Checkout takes no promotion code until `promotion_codes_open = true`. To give one:
+
+1. In the Stripe dashboard, create the coupon (for a tester, 100% off, `repeating` for the months
+   given) and a promotion code for it, limited to one redemption and with an expiry date.
+2. Set `promotion_codes_open = true` in `terraform.tfvars`, apply, and recycle the HTTP function
+   (or deploy) so it reads `/<project>/app/PROMOTION_CODES_OPEN` at cold start.
+3. Once the code is used, check the subscription's next invoice in Stripe, then set it back to
+   `false`, apply and recycle. Hiding the field leaves every discount already applied in place.
+
 ### Repeated free trials
 
 When a card that already started a free trial in another account starts one again, the HTTP
