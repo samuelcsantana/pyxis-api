@@ -63,7 +63,7 @@ const JSON_RPC_BODY = {
 @Throttle({
   [ACCESS_TOKENS_THROTTLER]: { limit: MCP_MESSAGES_PER_WINDOW, ttl: ACCESS_TOKEN_RATE_WINDOW_MS },
 })
-@UseGuards(AccessTokenThrottlerGuard, McpAccessGuard)
+@UseGuards(McpAccessGuard, AccessTokenThrottlerGuard)
 @UseFilters(McpUnauthorizedFilter)
 export class McpController {
   constructor(
