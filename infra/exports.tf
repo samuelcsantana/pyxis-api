@@ -33,6 +33,29 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "exports" {
   }
 }
 
+data "aws_iam_policy_document" "exports_tls_only" {
+  statement {
+    sid       = "DenyNonTlsTransport"
+    effect    = "Deny"
+    actions   = ["s3:*"]
+    resources = [aws_s3_bucket.exports.arn, "${aws_s3_bucket.exports.arn}/*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["*"]
+    }
+    condition {
+      test     = "Bool"
+      variable = "aws:SecureTransport"
+      values   = ["false"]
+    }
+  }
+}
+
+resource "aws_s3_bucket_policy" "exports" {
+  bucket = aws_s3_bucket.exports.id
+  policy = data.aws_iam_policy_document.exports_tls_only.json
+}
+
 resource "aws_s3_bucket_lifecycle_configuration" "exports" {
   bucket = aws_s3_bucket.exports.id
 
