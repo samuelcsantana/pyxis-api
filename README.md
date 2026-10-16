@@ -138,7 +138,10 @@ Shipping now:
   `/time-of-day` (for each weekday, Monday first, and each local hour, the visits whose first page
   view happened then; the grid adds up to the visits of the range) and
   `/engagement` (the top entry and exit pages, the visits that viewed a single page, and the visit
-  length from the first to the last event: the median and seven buckets). A project
+  length from the first to the last event: the median and seven buckets). Times are UTC
+  instants; the answers that list them (`/requests`, `/funnel/subjects`, `/timeline` and
+  `/visits`) also carry the project's `timezone`, so a client shows them in local time without
+  asking for the settings first. A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
