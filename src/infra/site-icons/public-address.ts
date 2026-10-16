@@ -22,31 +22,36 @@ const REFUSED_IPV4: readonly (readonly [string, number])[] = [
 ];
 
 const REFUSED_IPV6: readonly (readonly [string, number])[] = [
-  ['::', 127],
+  ['::', 96],
+  ['::ffff:0:0', 96],
+  ['64:ff9b::', 96],
   ['64:ff9b:1::', 48],
   ['100::', 64],
   ['2001:db8::', 32],
+  ['2002::', 16],
   ['fc00::', 7],
   ['fe80::', 10],
   ['ff00::', 8],
 ];
 
-const refused = new BlockList();
+const refusedIpv4 = new BlockList();
 for (const [network, prefix] of REFUSED_IPV4) {
-  refused.addSubnet(network, prefix, 'ipv4');
+  refusedIpv4.addSubnet(network, prefix, 'ipv4');
 }
+
+const refusedIpv6 = new BlockList();
 for (const [network, prefix] of REFUSED_IPV6) {
-  refused.addSubnet(network, prefix, 'ipv6');
+  refusedIpv6.addSubnet(network, prefix, 'ipv6');
 }
 
 export function isPublicAddress(address: string): boolean {
   const version = isIP(address);
   if (version === IPV4) {
-    return !refused.check(address, 'ipv4');
+    return !refusedIpv4.check(address, 'ipv4');
   }
   if (version !== IPV6) {
     return false;
   }
   const mapped = MAPPED_IPV4.exec(address)?.[1];
-  return mapped === undefined ? !refused.check(address, 'ipv6') : isPublicAddress(mapped);
+  return mapped === undefined ? !refusedIpv6.check(address, 'ipv6') : isPublicAddress(mapped);
 }
