@@ -1,6 +1,6 @@
 import { type SQL, sql } from 'drizzle-orm';
 import { API_REQUEST, IDENTIFY, PAGE_VIEW } from '../../domain/events/reserved-event-names';
-import { DIRECT_SOURCE } from '../../domain/queries/acquisition';
+import { AD_CLICK_SOURCE, DIRECT_SOURCE } from '../../domain/queries/acquisition';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { events } from '../database/schema/events';
 
@@ -25,7 +25,8 @@ export const isPageView = sql`${events.name} = ${PAGE_VIEW}`;
 
 export const isEntryPageView = sql`${isPageView} AND ${events.channel} IS NOT NULL`;
 
-export const entrySource = sql`coalesce(${events.utmSource}, ${events.referrerHost}, ${DIRECT_SOURCE})`;
+export const entrySource = sql`coalesce(${events.utmSource}, ${events.referrerHost},
+  CASE WHEN ${events.fromAdClick} THEN ${AD_CLICK_SOURCE} ELSE ${DIRECT_SOURCE} END)`;
 
 export const isNamedEvent = sql`${events.name} NOT IN (${PAGE_VIEW}, ${IDENTIFY}, ${API_REQUEST})`;
 

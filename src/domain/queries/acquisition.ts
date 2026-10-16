@@ -4,6 +4,7 @@ import type { QueryScope } from './query-scope';
 export const TOP_SOURCES = 20;
 export const TOP_CAMPAIGNS = 20;
 export const DIRECT_SOURCE = '(direct)';
+export const AD_CLICK_SOURCE = '(ad click)';
 
 export interface ChannelDayCount {
   readonly date: string;

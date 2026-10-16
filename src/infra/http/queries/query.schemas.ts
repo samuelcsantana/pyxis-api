@@ -165,9 +165,10 @@ export const acquisitionReportSchema = z
     id: 'AcquisitionReport',
     description:
       'Visits per day and channel, every channel named, the top sources and the top campaigns: ' +
-      'the source is the campaign source, else the referring host, else "(direct)", and the ' +
-      'campaign is utm_campaign, both taken from the first page view of the visit that carries ' +
-      'a channel. Visits without a campaign are left out of campaigns.',
+      'the source is the campaign source, else the referring host, else "(ad click)" when the ' +
+      'visit came from an ad click, else "(direct)", and the campaign is utm_campaign, both ' +
+      'taken from the first page view of the visit that carries a channel. Visits without a ' +
+      'campaign are left out of campaigns.',
   });
 
 export const featuresQuerySchema = rangeQuerySchema.extend({ kind: z.enum(FEATURE_KINDS) });
