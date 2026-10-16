@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.22.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.21.0...v0.22.0) (2026-10-16)
+
+
+### Features
+
+* **billing:** let Checkout take a promotion code behind a switch ([fda1e4b](https://github.com/samuelcsantana/pyxis-api/commit/fda1e4b54411a7da0a1bde61515c84d91bb8e189))
+* **infra:** add the promotion codes switch to the app parameters ([fa4b7c6](https://github.com/samuelcsantana/pyxis-api/commit/fa4b7c631617bbe502ea4a82a97e2a09d3dbef93))
+* **queries:** name an ad click that came with no source "(ad click)" ([702f52c](https://github.com/samuelcsantana/pyxis-api/commit/702f52c1d53451f0a79b4da8945d1569317c2ffb))
+* **queries:** name the project time zone in the answers that list times ([053ff7f](https://github.com/samuelcsantana/pyxis-api/commit/053ff7f9b75486bf90f4a65f6cf106e5d07e8ba9))
+
+
+### Documentation
+
+* **readme:** say how Acquisition names the source of a visit ([4661cc4](https://github.com/samuelcsantana/pyxis-api/commit/4661cc41476534d7a827f5a07845350c894cae99))
+* **readme:** say which query answers carry the project time zone ([11810cb](https://github.com/samuelcsantana/pyxis-api/commit/11810cb76659e06bd7d020149152591726ee05e9))
+
 ## [0.21.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.20.0...v0.21.0) (2026-10-16)
 
 
