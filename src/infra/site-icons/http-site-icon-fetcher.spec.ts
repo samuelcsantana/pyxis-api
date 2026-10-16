@@ -211,10 +211,20 @@ describe('HttpSiteIconFetcher', () => {
   });
 
   it('refuses a redirect to an internal host or to plain http', async () => {
-    const resolve: ResolveHost = (hostname) =>
-      Promise.resolve(hostname === 'metadata.internal' ? ['169.254.169.254'] : [PUBLIC]);
+    const resolve: ResolveHost = (hostname) => {
+      if (hostname === 'metadata.internal') {
+        return Promise.resolve(['169.254.169.254']);
+      }
+      if (hostname === '::ffff:7f00:1') {
+        return Promise.resolve(['::ffff:7f00:1']);
+      }
+      return Promise.resolve([PUBLIC]);
+    };
     const toInternal = site({
       'https://shop.example.com/': () => redirect('https://metadata.internal/latest'),
+    });
+    const toMappedLoopback = site({
+      'https://shop.example.com/': () => redirect('https://[::ffff:127.0.0.1]/'),
     });
     const toHttp = site({
       'https://shop.example.com/': () => redirect('http://shop.example.com/'),
@@ -224,6 +234,12 @@ describe('HttpSiteIconFetcher', () => {
       kind: 'unreachable',
       reason: 'metadata.internal is not a public address',
     });
+    expect(await new HttpSiteIconFetcher(toMappedLoopback.send, resolve).fetchIcon(ORIGIN)).toEqual(
+      {
+        kind: 'unreachable',
+        reason: '[::ffff:7f00:1] is not a public address',
+      },
+    );
     expect(await new HttpSiteIconFetcher(toHttp.send, resolve).fetchIcon(ORIGIN)).toEqual({
       kind: 'unreachable',
       reason: 'not https: http:',

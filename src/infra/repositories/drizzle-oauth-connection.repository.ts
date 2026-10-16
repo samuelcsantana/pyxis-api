@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, desc, eq, getTableColumns, gt, isNull, type SQL } from 'drizzle-orm';
+import { and, desc, eq, getTableColumns, gt, isNull, or, type SQL } from 'drizzle-orm';
 import type { OAuthConnection } from '../../domain/entities/oauth-connection.entity';
 import type {
   NewConnection,
@@ -63,7 +63,19 @@ export class DrizzleOAuthConnectionRepository implements OAuthConnectionReposito
     issuedAt: Date,
     tokens: readonly NewConnectionToken[],
   ): Promise<void> {
-    await this.db.insert(oauthConnectionTokens).values(tokenRows(connectionId, issuedAt, tokens));
+    await this.db.transaction(async (transaction) => {
+      await transaction
+        .delete(oauthConnectionTokens)
+        .where(
+          and(
+            eq(oauthConnectionTokens.connectionId, connectionId),
+            or(eq(oauthConnectionTokens.kind, 'access'), isNull(oauthConnectionTokens.rotatedAt)),
+          ),
+        );
+      await transaction
+        .insert(oauthConnectionTokens)
+        .values(tokenRows(connectionId, issuedAt, tokens));
+    });
   }
 
   async findLive(connectionId: string): Promise<OAuthConnection | null> {

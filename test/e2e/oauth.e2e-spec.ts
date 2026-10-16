@@ -230,6 +230,7 @@ describe('OAuth server for the Claude connector', () => {
     expect(refreshed.statusCode).toBe(200);
     const next = refreshed.json<TokenAnswer>();
     expect(next.refresh_token).not.toBe(tokens.refresh_token);
+    expect((await withBearer(tokens.access_token, 'GET', '/v1/me')).statusCode).toBe(401);
     expect((await withBearer(next.access_token, 'GET', '/v1/me')).statusCode).toBe(200);
   });
 

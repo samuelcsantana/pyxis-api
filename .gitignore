@@ -12,6 +12,9 @@ coverage/
 infra/.terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+*.tfvars
+!*.tfvars.example
 infra/backend.hcl
 infra/terraform.tfvars
 api-reference/

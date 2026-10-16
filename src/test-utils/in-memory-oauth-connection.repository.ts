@@ -44,6 +44,12 @@ export class InMemoryOAuthConnectionRepository implements OAuthConnectionReposit
     issuedAt: Date,
     tokens: readonly NewConnectionToken[],
   ): Promise<void> {
+    const kept = this.tokens.filter(
+      (token) =>
+        token.connectionId !== connectionId ||
+        (token.kind === 'refresh' && token.rotatedAt !== null),
+    );
+    this.tokens.splice(0, this.tokens.length, ...kept);
     this.store(connectionId, issuedAt, tokens);
     return Promise.resolve();
   }
