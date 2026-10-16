@@ -103,7 +103,8 @@ Shipping now:
   `/devices` (device type, browser, system and country, top five and "other", plus the top ten
   regions, "other" and the visits without a region) and
   `/acquisition` (visits per day and channel, sources and campaigns with conversions and ad
-  clicks); wherever
+  clicks; a visit's source is its campaign source, else its referring host, else `(ad click)`
+  when it came from an ad click, else `(direct)`); wherever
   conversions are counted, both the conversion events and the converting visits (visits that
   sent the conversion event at least once) are given, so a conversion rate never passes 100 %,
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
