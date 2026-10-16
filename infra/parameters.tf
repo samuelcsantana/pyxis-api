@@ -24,6 +24,10 @@ locals {
       value       = var.mail_provider
       description = "Which service sends the sign-in code e-mails: resend or ses."
     }
+    PROMOTION_CODES_OPEN = {
+      value       = tostring(var.promotion_codes_open)
+      description = "Whether Stripe Checkout shows the promotion code field."
+    }
     REMOTE_MCP_OPEN = {
       value       = tostring(var.remote_mcp_open)
       description = "Whether applications can connect through OAuth; while false the OAuth addresses answer 404."

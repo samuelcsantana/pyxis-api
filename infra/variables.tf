@@ -94,6 +94,12 @@ variable "signup_open" {
   default     = false
 }
 
+variable "promotion_codes_open" {
+  description = "Show the promotion code field in Stripe Checkout, for codes made in the Stripe dashboard. Turning it off keeps the discounts already applied."
+  type        = bool
+  default     = false
+}
+
 variable "remote_mcp_open" {
   description = "Let Claude and Claude Code connect through OAuth. Keep false until the terms that describe the connector are published."
   type        = bool
