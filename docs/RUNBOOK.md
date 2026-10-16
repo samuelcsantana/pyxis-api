@@ -497,6 +497,12 @@ curl -s -o /dev/null -w '%{http_code}
 ' -X POST https://<older name>/mcp   # 404, from CloudFront
 ```
 
+The `WWW-Authenticate` on the first one comes from CloudFront: a Lambda function URL renames the
+challenge the API sends to `x-amzn-Remapped-www-authenticate`, so the response headers policy
+`<project>-mcp-challenge` adds the same challenge to every `/mcp` response. It is fixed text: the
+`error="invalid_token"` of a refused token stays only in the renamed header, and clients renew the
+token on the 401 either way.
+
 The last one answers from the CloudFront Function `<project>-connector-host`, which turns away
 `/mcp`, `/oauth/*` and `/.well-known/oauth-*` on every host but `api_domain`, before the function
 is reached; `aws cloudfront test-function` runs it against a sample event without a request.
