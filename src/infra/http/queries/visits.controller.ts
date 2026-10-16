@@ -147,7 +147,8 @@ export class VisitsController {
     name: 'source',
     required: false,
     description:
-      'The source of the visit as Acquisition names it: campaign source, referring host or (direct)',
+      'The source of the visit as Acquisition names it: campaign source, referring host, ' +
+      '(ad click) or (direct)',
     schema: { type: 'string', maxLength: MAX_REFERRER_HOST_LENGTH },
   })
   @ApiQuery({

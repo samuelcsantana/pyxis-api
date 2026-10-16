@@ -133,6 +133,18 @@ const SEEDED: readonly TrackedEvent[] = [
     path: '/checkout',
     properties: { method: 'GET', route: '/v1/fees', status: 500, duration_ms: 40 },
   }),
+  event(9, '2026-10-03T13:00:00.000Z', 'page_view', {
+    channel: 'paid',
+    attribution: { ...NO_ATTRIBUTION, fromAdClick: true },
+  }),
+  event(10, '2026-10-03T14:00:00.000Z', 'page_view', {
+    channel: 'paid',
+    attribution: { ...NO_ATTRIBUTION, referrerHost: 'www.google.com', fromAdClick: true },
+  }),
+  event(11, '2026-10-03T15:00:00.000Z', 'page_view', {
+    channel: 'direct',
+    attribution: NO_ATTRIBUTION,
+  }),
   event(5, '2026-10-06T08:00:00.000Z', 'page_view', { path: '/calculadora-taxa-ifood' }),
   event(6, '2026-10-05T11:00:00.000Z', 'page_view', {
     path: '/calculadora-taxa-ifood',
@@ -312,6 +324,23 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
     expect(await sessions({ source: '(direct)' })).toEqual([visitId(3)]);
     expect(await sessions({ campaign: 'spring_sale' })).toEqual([visitId(1)]);
     expect(await sessions({ campaign: 'autumn' })).toEqual([]);
+  });
+
+  it('names the source of an ad click that came with no source or referrer "(ad click)", and filters by it', async () => {
+    const october3 = { ...SCOPE, range: { from: '2026-10-03', to: '2026-10-03' } };
+    const { items } = await query.list(october3, NO_VISIT_FILTERS, null, ALL);
+
+    expect(items.map(({ sessionId, channel, source }) => ({ sessionId, channel, source }))).toEqual(
+      [
+        { sessionId: visitId(11), channel: 'direct', source: '(direct)' },
+        { sessionId: visitId(10), channel: 'paid', source: 'www.google.com' },
+        { sessionId: visitId(9), channel: 'paid', source: '(ad click)' },
+        { sessionId: visitId(8), channel: null, source: null },
+      ],
+    );
+    expect(await sessions({ source: '(ad click)' }, october3)).toEqual([visitId(9)]);
+    expect(await sessions({ source: '(direct)' }, october3)).toEqual([visitId(11)]);
+    expect(await sessions({ channel: 'paid' }, october3)).toEqual([visitId(10), visitId(9)]);
   });
 
   it('keeps the visits with a failed request, or with a request to one route', async () => {

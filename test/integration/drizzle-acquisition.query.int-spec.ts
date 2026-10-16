@@ -58,6 +58,13 @@ function attribution(overrides: Partial<Attribution>): Attribution {
 const AD = attribution({ utmSource: 'google', utmMedium: 'cpc', fromAdClick: true });
 const SPRING_AD = { ...AD, utmCampaign: 'spring_sale' };
 const SEARCH = attribution({ referrerHost: 'duckduckgo.com', utmCampaign: 'autumn' });
+const BARE_AD_CLICK = attribution({ fromAdClick: true });
+const AD_CLICK_FROM_GOOGLE = attribution({ fromAdClick: true, referrerHost: 'www.google.com' });
+const TAGGED_AD_CLICK = attribution({
+  fromAdClick: true,
+  referrerHost: 'www.google.com',
+  utmSource: 'google',
+});
 
 const SEEDED: readonly TrackedEvent[] = [
   event(1, '2026-10-05T12:00:00.000Z', 'page_view', { channel: 'paid', attribution: SPRING_AD }),
@@ -70,6 +77,23 @@ const SEEDED: readonly TrackedEvent[] = [
   event(4, '2026-10-05T16:05:00.000Z', 'page_view', { channel: 'organic', attribution: SEARCH }),
   event(5, '2026-10-05T17:00:00.000Z', 'page_view'),
   event(6, '2026-10-05T12:00:00.000Z', 'page_view', { channel: 'direct', projectId: BLOG_ID }),
+  event(7, '2026-10-03T13:00:00.000Z', 'page_view', {
+    channel: 'paid',
+    attribution: BARE_AD_CLICK,
+  }),
+  event(8, '2026-10-03T13:30:00.000Z', 'page_view', {
+    channel: 'paid',
+    attribution: BARE_AD_CLICK,
+  }),
+  event(9, '2026-10-03T14:00:00.000Z', 'page_view', {
+    channel: 'paid',
+    attribution: AD_CLICK_FROM_GOOGLE,
+  }),
+  event(10, '2026-10-03T14:30:00.000Z', 'page_view', {
+    channel: 'paid',
+    attribution: TAGGED_AD_CLICK,
+  }),
+  event(11, '2026-10-03T15:00:00.000Z', 'page_view', { channel: 'direct' }),
 ];
 
 const SCOPE: QueryScope = {
@@ -78,6 +102,8 @@ const SCOPE: QueryScope = {
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-04', to: '2026-10-05' },
 };
+
+const OCTOBER_3: QueryScope = { ...SCOPE, range: { from: '2026-10-03', to: '2026-10-03' } };
 
 describe('DrizzleAcquisitionQuery against a real Postgres', () => {
   let owner: postgres.Sql;
@@ -164,6 +190,54 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         convertingVisits: 1,
         fromAdClickVisits: 1,
       },
+    ]);
+  });
+
+  it('names an ad click that came with no source or referrer "(ad click)", else by its source or referring host', async () => {
+    expect(await query.sources(OCTOBER_3, 20)).toEqual([
+      {
+        source: '(ad click)',
+        medium: null,
+        channel: 'paid',
+        visits: 2,
+        conversions: 0,
+        convertingVisits: 0,
+        fromAdClickVisits: 2,
+      },
+      {
+        source: '(direct)',
+        medium: null,
+        channel: 'direct',
+        visits: 1,
+        conversions: 0,
+        convertingVisits: 0,
+        fromAdClickVisits: 0,
+      },
+      {
+        source: 'google',
+        medium: null,
+        channel: 'paid',
+        visits: 1,
+        conversions: 0,
+        convertingVisits: 0,
+        fromAdClickVisits: 1,
+      },
+      {
+        source: 'www.google.com',
+        medium: null,
+        channel: 'paid',
+        visits: 1,
+        conversions: 0,
+        convertingVisits: 0,
+        fromAdClickVisits: 1,
+      },
+    ]);
+  });
+
+  it('keeps an ad click with no source in the paid channel', async () => {
+    expect(await query.visitsByDayAndChannel(OCTOBER_3)).toEqual([
+      { date: '2026-10-03', channel: 'direct', visits: 1 },
+      { date: '2026-10-03', channel: 'paid', visits: 4 },
     ]);
   });
 
