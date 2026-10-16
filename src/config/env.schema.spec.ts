@@ -15,8 +15,15 @@ describe('validateEnv', () => {
       MAIL_PROVIDER: 'resend',
       MAIL_FROM: DEFAULT_MAIL_FROM,
       SIGNUP_OPEN: 'false',
+      PROMOTION_CODES_OPEN: 'false',
       REMOTE_MCP_OPEN: 'false',
     });
+  });
+
+  it('reads the switch that lets Checkout take a promotion code', () => {
+    expect(validateEnv({ PROMOTION_CODES_OPEN: 'true' }).PROMOTION_CODES_OPEN).toBe('true');
+    expect(validateEnv({ PROMOTION_CODES_OPEN: '' }).PROMOTION_CODES_OPEN).toBe('false');
+    expect(() => validateEnv({ PROMOTION_CODES_OPEN: 'yes' })).toThrow(/PROMOTION_CODES_OPEN/);
   });
 
   it("reads the remote MCP switch and the API's own origin", () => {

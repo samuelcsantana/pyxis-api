@@ -43,6 +43,7 @@ services:
       DASHBOARD_ORIGIN: http://localhost:3000
       API_ORIGIN: http://localhost:3040
       REMOTE_MCP_OPEN: ${REMOTE_MCP_OPEN:-false}
+      PROMOTION_CODES_OPEN: ${PROMOTION_CODES_OPEN:-false}
     ports:
       - '3040:3040'
 

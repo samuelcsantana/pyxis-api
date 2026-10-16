@@ -6,7 +6,7 @@ import type {
   PaidInvoice,
 } from '../../domain/billing/billing-gateway';
 import { BillingUnavailableError } from '../../domain/errors/billing.errors';
-import { StripeBillingGateway } from './stripe-billing-gateway';
+import { type CheckoutOptions, StripeBillingGateway } from './stripe-billing-gateway';
 
 const SECRET_KEY_SHAPE = /^(sk|rk)_(live|test)_[A-Za-z0-9]+$/;
 const WEBHOOK_SECRET_SHAPE = /^whsec_[A-Za-z0-9]+$/;
@@ -16,6 +16,11 @@ const NOT_CONFIGURED = 'STRIPE_SECRET_KEY is not set to a Stripe secret or restr
 export interface BillingSettings {
   readonly STRIPE_SECRET_KEY?: string | undefined;
   readonly STRIPE_WEBHOOK_SECRET?: string | undefined;
+  readonly PROMOTION_CODES_OPEN?: 'true' | 'false' | undefined;
+}
+
+export function checkoutOptionsOf(settings: BillingSettings): CheckoutOptions {
+  return { promotionCodes: settings.PROMOTION_CODES_OPEN === 'true' };
 }
 
 export class UnconfiguredBillingGateway implements BillingGateway {
@@ -61,5 +66,6 @@ export function createBillingGateway(settings: BillingSettings): BillingGateway 
   return new StripeBillingGateway(
     new Stripe(secretKey, { maxNetworkRetries: STRIPE_NETWORK_RETRIES }),
     webhookSecret !== undefined && WEBHOOK_SECRET_SHAPE.test(webhookSecret) ? webhookSecret : null,
+    checkoutOptionsOf(settings),
   );
 }

@@ -230,8 +230,9 @@ Shipping now:
   accepted (`409 terms_outdated` if it is not the current one), records the acceptance and answers
   a session and an `incomplete` account. `GET /v1/me/accounts` lists the admin's accounts with
   their billing state and the month measured; `POST /v1/accounts/{accountId}/checkout` opens
-  Stripe Checkout (with the 14-day trial the first time, and a line above the button saying it is
-  one per customer) and `.../portal` the billing portal, for
+  Stripe Checkout (with the 14-day trial the first time, a line above the button saying it is
+  one per customer, and a field for a promotion code made in Stripe while `PROMOTION_CODES_OPEN`
+  is `true`) and `.../portal` the billing portal, for
   the owner only. An ended account not yet deleted subscribes again through the same Checkout, with
   no trial, even while sign-up is closed, and leaving that Checkout goes back to `/account`
   ([ADR 0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
@@ -477,6 +478,7 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `SUPPORT_EMAIL`          | unset                                                         | Named in the account e-mails (quota notices), which send replies to it                                                                                                                                                                                                                                    |
 | `STRIPE_SECRET_KEY`      | unset                                                         | Stripe secret or restricted key of the hosted plan's billing (Checkout with the prices whose lookup keys are `pyxis_monthly_brl` and `pyxis_yearly_brl`, the customer portal, cancelling and refunding when an owner closes the account); unset, or anything that is not a Stripe key, leaves billing off |
 | `STRIPE_WEBHOOK_SECRET`  | unset                                                         | Signing secret of the Stripe webhook endpoint; without it no billing event is accepted                                                                                                                                                                                                                    |
+| `PROMOTION_CODES_OPEN`   | `false`                                                       | `true` shows Checkout's promotion code field, for the codes made in Stripe; turning it off again hides the field, and a discount already applied stays on its subscription until it ends                                                                                                                  |
 | `SIGNUP_OPEN`            | `false`                                                       | `true` lets anyone create an account and subscribe, once `TERMS_VERSION` and `TERMS_URL` are set too                                                                                                                                                                                                      |
 | `TERMS_VERSION`          | unset                                                         | The version of the published terms a new owner accepts (at most 32 characters); sign-up stays closed without it                                                                                                                                                                                           |
 | `TERMS_URL`              | unset                                                         | Where the published terms are (http or https); sign-up stays closed without it, and the welcome e-mail links to it                                                                                                                                                                                        |

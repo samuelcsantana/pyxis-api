@@ -1,5 +1,9 @@
 import { BillingUnavailableError } from '../../domain/errors/billing.errors';
-import { createBillingGateway, UnconfiguredBillingGateway } from './create-billing-gateway';
+import {
+  checkoutOptionsOf,
+  createBillingGateway,
+  UnconfiguredBillingGateway,
+} from './create-billing-gateway';
 import { StripeBillingGateway } from './stripe-billing-gateway';
 
 describe('createBillingGateway', () => {
@@ -31,6 +35,14 @@ describe('createBillingGateway', () => {
     expect(() => gateway.parseEvent(Buffer.from('{}'), 't=1,v1=x')).toThrow(
       BillingUnavailableError,
     );
+  });
+});
+
+describe('checkoutOptionsOf', () => {
+  it('takes promotion codes only while the switch is on', () => {
+    expect(checkoutOptionsOf({ PROMOTION_CODES_OPEN: 'true' })).toEqual({ promotionCodes: true });
+    expect(checkoutOptionsOf({ PROMOTION_CODES_OPEN: 'false' })).toEqual({ promotionCodes: false });
+    expect(checkoutOptionsOf({})).toEqual({ promotionCodes: false });
   });
 });
 
