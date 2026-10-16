@@ -27,15 +27,18 @@ queries and erases a person's events on request, without cookies or personal dat
 
 > **Status:** in production since 2026-10-06 at `api.pyxis-analytics.dev` (AWS Lambda behind
 > CloudFront, sa-east-1): ingestion, dashboard sign-in and queries, erasure, retention and the
-> weekly digest. `main` is deployed by the deploy script on request (see [Roadmap](#roadmap)).
+> weekly digest. Since 2026-10-16 it is also the remote MCP server that Claude connects to, at
+> `https://api.pyxis-analytics.dev/mcp`. `main` is deployed by the deploy script on request (see
+> [Roadmap](#roadmap)).
 
 ## Ecosystem
 
-| Repository                                               | Role                                                            |
-| -------------------------------------------------------- | --------------------------------------------------------------- |
-| **pyxis-api** (this one)                                 | Ingestion, dashboard sign-in and queries, erasure, retention    |
-| [pyxis-sdk](https://github.com/samuelcsantana/pyxis-sdk) | Browser tracker published to npm as `pyxis-analytics`           |
-| [pyxis-web](https://github.com/samuelcsantana/pyxis-web) | The dashboard: overview, funnels, features, requests, timelines |
+| Repository                                               | Role                                                             |
+| -------------------------------------------------------- | ---------------------------------------------------------------- |
+| **pyxis-api** (this one)                                 | Ingestion, dashboard sign-in and queries, erasure, retention     |
+| [pyxis-sdk](https://github.com/samuelcsantana/pyxis-sdk) | Browser tracker published to npm as `pyxis-analytics`            |
+| [pyxis-web](https://github.com/samuelcsantana/pyxis-web) | The dashboard: overview, funnels, features, requests, timelines  |
+| [pyxis-mcp](https://github.com/samuelcsantana/pyxis-mcp) | MCP server: Claude and other agents read the dashboard's numbers |
 
 ## Why it exists
 
