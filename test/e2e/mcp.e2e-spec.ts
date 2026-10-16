@@ -239,6 +239,24 @@ describe('the remote MCP endpoint', () => {
     expect(toolText(projects.json<ToolAnswer>())).toContain(SHOP_ID);
   });
 
+  it('answers times in the project time zone, the same instants the API answers in UTC', async () => {
+    const token = await personalToken('Times');
+    const fromApi = await withSession('GET', `/v1/projects/${SHOP_ID}/settings`);
+
+    const settings = await post(
+      toolCall('project_settings', { project_id: SHOP_ID }),
+      withBearer(token),
+    );
+
+    const utc = fromApi.json<{ created_at: string }>().created_at;
+    const { report } = JSON.parse(toolText(settings.json<ToolAnswer>())) as {
+      report: { timezone: string; created_at: string };
+    };
+    expect(report.timezone).toBe('America/Sao_Paulo');
+    expect(report.created_at.endsWith('-03:00')).toBe(true);
+    expect(new Date(report.created_at).toISOString()).toBe(utc);
+  });
+
   it('tells a client whose connection was revoked that its token is invalid', async () => {
     const token = await connect();
     const listed = await withSession('GET', '/v1/me/connections');
