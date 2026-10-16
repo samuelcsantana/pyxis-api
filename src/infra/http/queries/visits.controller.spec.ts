@@ -9,7 +9,7 @@ const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
   name: 'Shop',
   allowedOrigins: ['https://shop.example.com'],
-  timezone: 'UTC',
+  timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
@@ -125,6 +125,7 @@ describe('VisitsController', () => {
       ],
       next_cursor: `2026-10-05T12:00:00.000Z~${SESSION_ID}`,
       total: 51,
+      timezone: 'America/Sao_Paulo',
     });
   });
 
@@ -137,7 +138,12 @@ describe('VisitsController', () => {
     );
 
     expect(calls).toEqual([[PROJECT, RANGE, NO_VISIT_FILTERS, null]]);
-    expect(body).toEqual({ visits: [], next_cursor: null, total: 0 });
+    expect(body).toEqual({
+      visits: [],
+      next_cursor: null,
+      total: 0,
+      timezone: 'America/Sao_Paulo',
+    });
   });
 
   it('takes an event without a property, and one page as a single text', async () => {

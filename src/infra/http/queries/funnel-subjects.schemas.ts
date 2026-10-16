@@ -5,7 +5,7 @@ import {
   type FunnelSubjectCursor,
   MAX_FUNNEL_STEPS,
 } from '../../../domain/queries/funnel';
-import { funnelQuerySchema } from './query.schemas';
+import { funnelQuerySchema, reportTimezoneSchema } from './query.schemas';
 
 const CURSOR_SEPARATOR = '~';
 const FIRST_STEP = 1;
@@ -44,6 +44,7 @@ export const funnelSubjectsReportSchema = z
   .strictObject({
     subjects: z.array(z.strictObject({ id: z.string(), last_step_at: z.iso.datetime() })),
     next_cursor: z.string().nullable(),
+    timezone: reportTimezoneSchema,
   })
   .meta({
     id: 'FunnelSubjectsReport',
@@ -52,7 +53,8 @@ export const funnelSubjectsReportSchema = z
       'one step of a funnel: outcome=reached those who reached step n (1 is the first), ' +
       'outcome=dropped those who reached step n - 1 and never step n. last_step_at is when they ' +
       `reached the last step they did; newest first, ${String(FUNNEL_SUBJECTS_PAGE_SIZE)} per ` +
-      'page. next_cursor goes back as cursor for the older page, null on the last one.',
+      'page. next_cursor goes back as cursor for the older page, null on the last one. Times ' +
+      'are UTC; timezone names the project zone to show them in.',
   });
 
 export type FunnelSubjectsQuery = z.infer<typeof funnelSubjectsQuerySchema>;

@@ -145,7 +145,7 @@ function featuresBody(report: FeaturesReport): FeaturesReportBody {
   return { items: report.items.map((item) => ({ ...item, daily: [...item.daily] })) };
 }
 
-function requestsBody(report: RequestsReport): RequestsReportBody {
+function requestsBody(report: RequestsReport, timezone: string): RequestsReportBody {
   return {
     kind: report.kind,
     routes: report.routes.map((route) => ({
@@ -175,6 +175,7 @@ function requestsBody(report: RequestsReport): RequestsReportBody {
             median_duration_ms: day.medianDurationMs,
             p95_duration_ms: day.p95DurationMs,
           })),
+    timezone,
   };
 }
 
@@ -193,7 +194,7 @@ export function ApiRange() {
   );
 }
 
-function timelineBody(report: TimelineReport): TimelineReportBody {
+function timelineBody(report: TimelineReport, timezone: string): TimelineReportBody {
   return {
     visits: report.visits.map((visit) => ({
       session_id: visit.sessionId,
@@ -216,6 +217,7 @@ function timelineBody(report: TimelineReport): TimelineReportBody {
       })),
     })),
     next_before: report.nextBefore === null ? null : report.nextBefore.toISOString(),
+    timezone,
   };
 }
 
@@ -324,15 +326,16 @@ export class QueriesController {
     @Query({ schema: requestsQuerySchema, pipes: [new SchemaPipe(requestsQuerySchema)] })
     query: RequestsQuery,
   ): Promise<RequestsReportBody> {
+    const project = projectOf(request);
     const range = { from: query.from, to: query.to };
     const report = await this.getRequests.execute(
-      projectOf(request),
+      project,
       range,
       query.screen ?? null,
       query.kind,
       query.route ?? null,
     );
-    return requestsBody(report);
+    return requestsBody(report, project.timezone);
   }
 
   @Get('funnel')
@@ -381,7 +384,8 @@ export class QueriesController {
   ): Promise<TimelineReportBody> {
     const subject: TimelineSubject =
       'user_id' in query ? { userId: query.user_id } : { sessionId: query.session_id };
+    const project = projectOf(request);
     const before = query.before === undefined ? null : new Date(query.before);
-    return timelineBody(await this.getTimeline.execute(projectOf(request), subject, before));
+    return timelineBody(await this.getTimeline.execute(project, subject, before), project.timezone);
   }
 }

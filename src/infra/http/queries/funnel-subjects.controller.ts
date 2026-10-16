@@ -29,13 +29,17 @@ import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
-function funnelSubjectsBody(report: FunnelSubjectsReport): FunnelSubjectsReportBody {
+function funnelSubjectsBody(
+  report: FunnelSubjectsReport,
+  timezone: string,
+): FunnelSubjectsReportBody {
   return {
     subjects: report.subjects.map((subject) => ({
       id: subject.id,
       last_step_at: subject.lastStepAt.toISOString(),
     })),
     next_cursor: report.nextCursor === null ? null : funnelSubjectCursorText(report.nextCursor),
+    timezone,
   };
 }
 
@@ -85,12 +89,13 @@ export class FunnelSubjectsController {
     })
     query: FunnelSubjectsQuery,
   ): Promise<FunnelSubjectsReportBody> {
+    const project = projectOf(request);
     const report = await this.getFunnelSubjects.execute(
-      projectOf(request),
+      project,
       { from: query.from, to: query.to },
       { mode: query.mode, steps: query.steps, stepIndex: query.step - 1, outcome: query.outcome },
       query.cursor ?? null,
     );
-    return funnelSubjectsBody(report);
+    return funnelSubjectsBody(report, project.timezone);
   }
 }

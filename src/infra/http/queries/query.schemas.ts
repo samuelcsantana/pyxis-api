@@ -37,6 +37,13 @@ export const routeFilterSchema = z.string().transform((text, context): VisitRout
   return parts.data;
 });
 
+export const reportTimezoneSchema = z
+  .string()
+  .describe(
+    'The IANA time zone of the project, such as America/Sao_Paulo: every time in this answer ' +
+      'is a UTC instant, to be shown in this zone',
+  );
+
 export const rangeQuerySchema = z.strictObject({
   from: z.iso.date().describe('First day, inclusive, in the project time zone'),
   to: z.iso.date().describe('Last day, inclusive, at most today in the project time zone'),
@@ -247,6 +254,7 @@ export const timelineReportSchema = z
       }),
     ),
     next_before: z.iso.datetime().nullable(),
+    timezone: reportTimezoneSchema,
   })
   .meta({
     id: 'TimelineReport',
@@ -254,7 +262,8 @@ export const timelineReportSchema = z
       'The visits of a person (every visit with an event carrying the user id, the one they ' +
       'identified in included) or of one visit, newest first, 20 per page, with all their ' +
       'events. user_id is the first id the visit was identified with, null for an anonymous ' +
-      'one. next_before is the cursor for the older page, null on the last one.',
+      'one. next_before is the cursor for the older page, null on the last one. Times are UTC; ' +
+      'timezone names the project zone to show them in.',
   });
 
 export const featuresReportSchema = z
@@ -315,6 +324,7 @@ export const requestsReportSchema = z
         }),
       )
       .nullable(),
+    timezone: reportTimezoneSchema,
   })
   .meta({
     id: 'RequestsReport',
@@ -326,7 +336,8 @@ export const requestsReportSchema = z
       'failures per route, newest first. days counts the calls of every route per day by status ' +
       'class (success below 400, client_error 4xx, server_error 5xx, no_response status 0). ' +
       'route_days, only when a route is asked, gives that route per day: calls, failures, and the ' +
-      'median and 95th percentile duration (null on a day without calls).',
+      'median and 95th percentile duration (null on a day without calls). The days are counted ' +
+      'in the project time zone, named in timezone; the failure times are UTC.',
   });
 
 export type RangeQuery = z.infer<typeof rangeQuerySchema>;

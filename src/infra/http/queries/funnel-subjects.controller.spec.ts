@@ -13,7 +13,7 @@ const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
   name: 'Shop',
   allowedOrigins: ['https://shop.example.com'],
-  timezone: 'UTC',
+  timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
@@ -73,6 +73,7 @@ describe('FunnelSubjectsController', () => {
     expect(funnelSubjectsReportSchema.parse(body)).toEqual({
       subjects: [{ id: SESSION_ID, last_step_at: '2026-10-05T12:00:00.000Z' }],
       next_cursor: `2026-10-05T12:00:00.000Z~${SESSION_ID}`,
+      timezone: 'America/Sao_Paulo',
     });
   });
 
@@ -85,7 +86,7 @@ describe('FunnelSubjectsController', () => {
     );
 
     expect(calls[0]?.[3]).toBeNull();
-    expect(body).toEqual({ subjects: [], next_cursor: null });
+    expect(body).toEqual({ subjects: [], next_cursor: null, timezone: 'America/Sao_Paulo' });
   });
 });
 

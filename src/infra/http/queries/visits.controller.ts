@@ -52,7 +52,7 @@ function visitFilters(query: VisitsQueryParams): VisitFilters {
   };
 }
 
-function visitsBody(report: VisitsReport): VisitsReportBody {
+function visitsBody(report: VisitsReport, timezone: string): VisitsReportBody {
   return {
     visits: report.visits.map((visit) => ({
       session_id: visit.sessionId,
@@ -75,6 +75,7 @@ function visitsBody(report: VisitsReport): VisitsReportBody {
     })),
     next_cursor: report.nextCursor === null ? null : visitCursorText(report.nextCursor),
     total: report.total,
+    timezone,
   };
 }
 
@@ -180,13 +181,14 @@ export class VisitsController {
     @Query({ schema: visitsQuerySchema, pipes: [new SchemaPipe(visitsQuerySchema)] })
     query: VisitsQueryParams,
   ): Promise<VisitsReportBody> {
+    const project = projectOf(request);
     const range = { from: query.from, to: query.to };
     const report = await this.getVisits.execute(
-      projectOf(request),
+      project,
       range,
       visitFilters(query),
       query.cursor ?? null,
     );
-    return visitsBody(report);
+    return visitsBody(report, project.timezone);
   }
 }

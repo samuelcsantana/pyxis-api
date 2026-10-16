@@ -18,7 +18,7 @@ import {
   type VisitCursor,
   type VisitPropertyFilter,
 } from '../../../domain/queries/visits';
-import { rangeQuerySchema, routeFilterSchema } from './query.schemas';
+import { rangeQuerySchema, reportTimezoneSchema, routeFilterSchema } from './query.schemas';
 
 const CURSOR_SEPARATOR = '~';
 const PROPERTY_SEPARATOR = '=';
@@ -111,6 +111,7 @@ export const visitsReportSchema = z
     ),
     next_cursor: z.string().nullable(),
     total: z.int(),
+    timezone: reportTimezoneSchema,
   })
   .meta({
     id: 'VisitsReport',
@@ -121,7 +122,8 @@ export const visitsReportSchema = z
       'with status 0 or 400 and above, source and campaign those of its entry page view (the ' +
       'source as Acquisition names it), user_id the id it was identified with. total counts ' +
       'every visit that matches the filters, on every page. next_cursor goes back as cursor ' +
-      'for the older page, null on the last one.',
+      'for the older page, null on the last one. Times are UTC; timezone names the project ' +
+      'zone to show them in.',
   });
 
 export type VisitsQueryParams = z.infer<typeof visitsQuerySchema>;

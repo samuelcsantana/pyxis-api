@@ -1421,7 +1421,7 @@
       },
       "FunnelSubjectsReport": {
         "additionalProperties": false,
-        "description": "The visits (mode=visit: session ids) or identified people (mode=user: user ids) behind one step of a funnel: outcome=reached those who reached step n (1 is the first), outcome=dropped those who reached step n - 1 and never step n. last_step_at is when they reached the last step they did; newest first, 50 per page. next_cursor goes back as cursor for the older page, null on the last one.",
+        "description": "The visits (mode=visit: session ids) or identified people (mode=user: user ids) behind one step of a funnel: outcome=reached those who reached step n (1 is the first), outcome=dropped those who reached step n - 1 and never step n. last_step_at is when they reached the last step they did; newest first, 50 per page. next_cursor goes back as cursor for the older page, null on the last one. Times are UTC; timezone names the project zone to show them in.",
         "properties": {
           "next_cursor": {
             "type": [
@@ -1449,11 +1449,16 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "timezone": {
+            "description": "The IANA time zone of the project, such as America/Sao_Paulo: every time in this answer is a UTC instant, to be shown in this zone",
+            "type": "string"
           }
         },
         "required": [
           "subjects",
-          "next_cursor"
+          "next_cursor",
+          "timezone"
         ],
         "type": "object"
       },
@@ -3236,7 +3241,7 @@
       },
       "RequestsReport": {
         "additionalProperties": false,
-        "description": "Writes (methods other than GET, kind=writes) or failed reads (GET, kind=reads) per route, the most failing first: a failure is status 0 or 400 and above. Reads count failures only, so total equals failed and no rate can be drawn from them: a site may send a GET only when it fails. Screens are the pages the calls were made from; at most five recent failures per route, newest first. days counts the calls of every route per day by status class (success below 400, client_error 4xx, server_error 5xx, no_response status 0). route_days, only when a route is asked, gives that route per day: calls, failures, and the median and 95th percentile duration (null on a day without calls).",
+        "description": "Writes (methods other than GET, kind=writes) or failed reads (GET, kind=reads) per route, the most failing first: a failure is status 0 or 400 and above. Reads count failures only, so total equals failed and no rate can be drawn from them: a site may send a GET only when it fails. Screens are the pages the calls were made from; at most five recent failures per route, newest first. days counts the calls of every route per day by status class (success below 400, client_error 4xx, server_error 5xx, no_response status 0). route_days, only when a route is asked, gives that route per day: calls, failures, and the median and 95th percentile duration (null on a day without calls). The days are counted in the project time zone, named in timezone; the failure times are UTC.",
         "properties": {
           "days": {
             "items": {
@@ -3473,13 +3478,18 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "timezone": {
+            "description": "The IANA time zone of the project, such as America/Sao_Paulo: every time in this answer is a UTC instant, to be shown in this zone",
+            "type": "string"
           }
         },
         "required": [
           "kind",
           "routes",
           "days",
-          "route_days"
+          "route_days",
+          "timezone"
         ],
         "type": "object"
       },
@@ -3820,7 +3830,7 @@
       },
       "TimelineReport": {
         "additionalProperties": false,
-        "description": "The visits of a person (every visit with an event carrying the user id, the one they identified in included) or of one visit, newest first, 20 per page, with all their events. user_id is the first id the visit was identified with, null for an anonymous one. next_before is the cursor for the older page, null on the last one.",
+        "description": "The visits of a person (every visit with an event carrying the user id, the one they identified in included) or of one visit, newest first, 20 per page, with all their events. user_id is the first id the visit was identified with, null for an anonymous one. next_before is the cursor for the older page, null on the last one. Times are UTC; timezone names the project zone to show them in.",
         "properties": {
           "next_before": {
             "anyOf": [
@@ -3833,6 +3843,10 @@
                 "type": "null"
               }
             ]
+          },
+          "timezone": {
+            "description": "The IANA time zone of the project, such as America/Sao_Paulo: every time in this answer is a UTC instant, to be shown in this zone",
+            "type": "string"
           },
           "visits": {
             "items": {
@@ -3972,7 +3986,8 @@
         },
         "required": [
           "visits",
-          "next_before"
+          "next_before",
+          "timezone"
         ],
         "type": "object"
       },
@@ -4041,13 +4056,17 @@
       },
       "VisitsReport": {
         "additionalProperties": false,
-        "description": "The visits with events in the range, newest first, 50 per page. A visit is one browser tab; nothing links two of them. entry_path is its first page view, highlights its first named events in order, failed_requests its api_request events with status 0 or 400 and above, source and campaign those of its entry page view (the source as Acquisition names it), user_id the id it was identified with. total counts every visit that matches the filters, on every page. next_cursor goes back as cursor for the older page, null on the last one.",
+        "description": "The visits with events in the range, newest first, 50 per page. A visit is one browser tab; nothing links two of them. entry_path is its first page view, highlights its first named events in order, failed_requests its api_request events with status 0 or 400 and above, source and campaign those of its entry page view (the source as Acquisition names it), user_id the id it was identified with. total counts every visit that matches the filters, on every page. next_cursor goes back as cursor for the older page, null on the last one. Times are UTC; timezone names the project zone to show them in.",
         "properties": {
           "next_cursor": {
             "type": [
               "string",
               "null"
             ]
+          },
+          "timezone": {
+            "description": "The IANA time zone of the project, such as America/Sao_Paulo: every time in this answer is a UTC instant, to be shown in this zone",
+            "type": "string"
           },
           "total": {
             "maximum": 9007199254740991,
@@ -4188,7 +4207,8 @@
         "required": [
           "visits",
           "next_cursor",
-          "total"
+          "total",
+          "timezone"
         ],
         "type": "object"
       }
