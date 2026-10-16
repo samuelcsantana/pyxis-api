@@ -254,6 +254,23 @@ describe('ExchangeAuthorizationCodeUseCase', () => {
     }
   });
 
+  it('refuses a code once the admin reaches ten live connections between approval and exchange', async () => {
+    const { connect, exchange, codeFor, ana, list } = await setup();
+    for (let index = 0; index < 9; index += 1) {
+      await connect(ana);
+    }
+    const tenthCode = await codeFor(ana);
+    const eleventhCode = await codeFor(ana);
+
+    await expect(
+      exchange.execute({ code: tenthCode, codeVerifier: VERIFIER, clientId: CLAUDE_CLIENT_ID }),
+    ).resolves.toMatchObject({ scope: 'read' });
+    await expect(
+      exchange.execute({ code: eleventhCode, codeVerifier: VERIFIER, clientId: CLAUDE_CLIENT_ID }),
+    ).rejects.toEqual(oauthError('invalid_grant'));
+    expect(await list.execute(ana)).toHaveLength(10);
+  });
+
   it('logs the new connection with ids only', async () => {
     const logs: unknown[] = [];
     const { codeFor, exchange, ana } = await setup();
@@ -283,8 +300,9 @@ describe('ExchangeAuthorizationCodeUseCase', () => {
 
 describe('RefreshConnectionTokensUseCase', () => {
   it('trades a refresh token once for a new pair and records the use', async () => {
-    const { connect, refresh, connections, clock } = await setup();
+    const { connect, refresh, connections, clock, authenticate, bruno } = await setup();
     const first = await connect();
+    const untouched = await connect(bruno);
     clock.advanceBy(50 * MINUTE_MS);
 
     const second = await refresh.execute({
@@ -301,12 +319,21 @@ describe('RefreshConnectionTokensUseCase', () => {
       connections.tokens.find((token) => token.tokenHash === sha256Hex(first.refreshToken))
         ?.rotatedAt,
     ).toEqual(later);
+    await expect(authenticate.execute(first.accessToken)).rejects.toBeInstanceOf(
+      UnauthenticatedError,
+    );
+    await expect(authenticate.execute(untouched.accessToken)).resolves.toMatchObject({
+      admin: { email: 'bruno@example.com' },
+    });
   });
 
-  it('answers a replay within a minute with another pair, keeping the connection', async () => {
+  it('answers a replay within a minute with another pair, replacing the superseded one', async () => {
     const { connect, refresh, clock, authenticate } = await setup();
     const first = await connect();
-    await refresh.execute({ refreshToken: first.refreshToken, clientId: CLAUDE_CLIENT_ID });
+    const second = await refresh.execute({
+      refreshToken: first.refreshToken,
+      clientId: CLAUDE_CLIENT_ID,
+    });
     clock.advanceBy(60 * SECOND_MS);
 
     const again = await refresh.execute({
@@ -314,6 +341,12 @@ describe('RefreshConnectionTokensUseCase', () => {
       clientId: CLAUDE_CLIENT_ID,
     });
 
+    await expect(authenticate.execute(second.accessToken)).rejects.toBeInstanceOf(
+      UnauthenticatedError,
+    );
+    await expect(
+      refresh.execute({ refreshToken: second.refreshToken, clientId: CLAUDE_CLIENT_ID }),
+    ).rejects.toEqual(oauthError('invalid_grant'));
     await expect(authenticate.execute(again.accessToken)).resolves.toMatchObject({
       admin: { email: 'ana@example.com' },
     });

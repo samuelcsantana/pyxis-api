@@ -182,7 +182,21 @@ describe('OAuth repositories against a real Postgres', () => {
 
     await connections.issueTokens(connection.id, at(HOUR), pair('second', at(HOUR)));
     await connections.touch(connection.id, at(HOUR));
+    expect(await connections.findLiveByAccessToken(sha256Hex('first-access'), NOW)).toBeNull();
     expect(await connections.findLiveByAccessToken(sha256Hex('second-access'), at(HOUR))).toEqual({
+      ...connection,
+      lastUsedAt: at(HOUR),
+    });
+
+    await connections.issueTokens(connection.id, at(HOUR), pair('third', at(HOUR)));
+    expect(
+      await connections.findLiveByAccessToken(sha256Hex('second-access'), at(HOUR)),
+    ).toBeNull();
+    expect(await connections.findRefreshToken(sha256Hex('second-refresh'))).toBeNull();
+    expect((await connections.findRefreshToken(sha256Hex('first-refresh')))?.rotatedAt).toEqual(
+      at(HOUR),
+    );
+    expect(await connections.findLiveByAccessToken(sha256Hex('third-access'), at(HOUR))).toEqual({
       ...connection,
       lastUsedAt: at(HOUR),
     });
