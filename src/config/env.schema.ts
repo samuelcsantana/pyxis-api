@@ -44,6 +44,7 @@ export const envSchema = z.object({
   JOBS_FUNCTION_NAME: z.preprocess(emptyAsUnset, z.string().regex(LAMBDA_FUNCTION_NAME).optional()),
   STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),
   STRIPE_WEBHOOK_SECRET: z.preprocess(emptyAsUnset, z.string().optional()),
+  PROMOTION_CODES_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
   DASHBOARD_ORIGIN: z.preprocess(emptyAsUnset, bareOrigin.optional()),
   API_ORIGIN: z.preprocess(emptyAsUnset, bareOrigin.optional()),
   REMOTE_MCP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),

@@ -87,6 +87,7 @@ describe('StripeBillingGateway.createCheckout', () => {
       'subscription_data[trial_period_days]': '14',
       'subscription_data[metadata][account_id]': ACCOUNT_ID,
       payment_method_collection: 'always',
+      allow_promotion_codes: 'false',
       billing_address_collection: 'required',
       'tax_id_collection[enabled]': 'true',
       'consent_collection[terms_of_service]': 'required',
@@ -97,6 +98,22 @@ describe('StripeBillingGateway.createCheckout', () => {
       success_url: CHECKOUT.successUrl,
       cancel_url: CHECKOUT.cancelUrl,
     });
+  });
+
+  it('lets the customer enter a promotion code when the switch is on', async () => {
+    const fake = fakeStripe();
+    const gateway = new StripeBillingGateway(fake.stripe, WEBHOOK_SECRET, {
+      promotionCodes: true,
+    });
+    fake.answer('GET', '/v1/prices', { body: MONTHLY_PRICE });
+    fake.answer('POST', '/v1/checkout/sessions', {
+      body: { id: 'cs_3', object: 'checkout.session', url: 'https://checkout.stripe.com/c/3' },
+    });
+
+    await gateway.createCheckout(CHECKOUT);
+
+    expect(fake.requests[1]?.form.get('allow_promotion_codes')).toBe('true');
+    expect(fake.requests[1]?.form.get('subscription_data[trial_period_days]')).toBe('14');
   });
 
   it('reuses a known customer and the price it already looked up', async () => {

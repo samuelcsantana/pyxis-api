@@ -54,6 +54,7 @@ import { BillingWebhookController } from './billing-webhook.controller';
         createBillingGateway({
           STRIPE_SECRET_KEY: config.get('STRIPE_SECRET_KEY', { infer: true }),
           STRIPE_WEBHOOK_SECRET: config.get('STRIPE_WEBHOOK_SECRET', { infer: true }),
+          PROMOTION_CODES_OPEN: config.get('PROMOTION_CODES_OPEN', { infer: true }),
         }),
     },
   ],

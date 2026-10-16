@@ -21,6 +21,12 @@ const MILLISECONDS_PER_SECOND = 1000;
 const ACCOUNT_ID_METADATA = 'account_id';
 const SUBSCRIPTION_EXPANSIONS = ['default_payment_method'];
 
+export interface CheckoutOptions {
+  readonly promotionCodes: boolean;
+}
+
+const WITHOUT_PROMOTION_CODES: CheckoutOptions = { promotionCodes: false };
+
 const STRIPE_LOCALES: Readonly<Record<EmailLanguage, Stripe.Checkout.SessionCreateParams.Locale>> =
   {
     en: 'en',
@@ -161,6 +167,7 @@ export class StripeBillingGateway implements BillingGateway {
   constructor(
     private readonly stripe: Stripe,
     private readonly webhookSecret: string | null,
+    private readonly checkoutOptions: CheckoutOptions = WITHOUT_PROMOTION_CODES,
   ) {}
 
   async createCheckout(request: CheckoutRequest): Promise<{ readonly url: string }> {
@@ -178,6 +185,7 @@ export class StripeBillingGateway implements BillingGateway {
           metadata: { [ACCOUNT_ID_METADATA]: request.accountId },
         },
         payment_method_collection: 'always',
+        allow_promotion_codes: this.checkoutOptions.promotionCodes,
         billing_address_collection: 'required',
         tax_id_collection: { enabled: true },
         consent_collection: { terms_of_service: 'required' },
