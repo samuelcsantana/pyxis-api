@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: read
+  packages: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -45,9 +46,13 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      packages: read
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:18-alpine
+        image: ghcr.io/${{ github.repository_owner }}/pyxis-ci/postgres:18-alpine
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_USER: pyxis
           POSTGRES_PASSWORD: pyxis
@@ -82,7 +87,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:18-alpine
+        image: ghcr.io/${{ github.repository_owner }}/pyxis-ci/postgres:18-alpine
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_USER: pyxis
           POSTGRES_PASSWORD: pyxis
@@ -139,7 +147,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:18-alpine
+        image: ghcr.io/${{ github.repository_owner }}/pyxis-ci/postgres:18-alpine
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_USER: pyxis
           POSTGRES_PASSWORD: pyxis
@@ -157,6 +168,15 @@ jobs:
       APP_DB_ROLE: pyxis_app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Take the base image from the mirror
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          MIRROR: ghcr.io/${{ github.repository_owner }}/pyxis-ci/node:24-alpine
+        run: |
+          echo "$TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+          docker pull "$MIRROR"
+          docker tag "$MIRROR" public.ecr.aws/docker/library/node:24-alpine
       - run: docker build --tag pyxis-api:ci .
       - name: Create the application role
         run: psql "$MIGRATION_DATABASE_URL" --command "CREATE ROLE pyxis_app LOGIN PASSWORD 'pyxis_app'"
@@ -186,7 +206,10 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:18-alpine
+        image: ghcr.io/${{ github.repository_owner }}/pyxis-ci/postgres:18-alpine
+        credentials:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
         env:
           POSTGRES_USER: pyxis
           POSTGRES_PASSWORD: pyxis
@@ -203,6 +226,15 @@ jobs:
       EDGE_SHARED_SECRET: ci-edge-secret
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Take the base image from the mirror
+        env:
+          TOKEN: ${{ github.token }}
+          ACTOR: ${{ github.actor }}
+          MIRROR: ghcr.io/${{ github.repository_owner }}/pyxis-ci/lambda-nodejs:24
+        run: |
+          echo "$TOKEN" | docker login ghcr.io --username "$ACTOR" --password-stdin
+          docker pull "$MIRROR"
+          docker tag "$MIRROR" public.ecr.aws/lambda/nodejs:24
       - run: docker build --file Dockerfile.lambda --tag pyxis-api-lambda:ci .
       - name: Create the application role
         run: psql postgres://pyxis:pyxis@localhost:5432/pyxis --command "CREATE ROLE pyxis_app LOGIN PASSWORD 'pyxis_app'"
