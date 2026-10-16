@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.21.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.20.0...v0.21.0) (2026-10-16)
+
+
+### Features
+
+* **auth:** read the dashboard routes with a connection's access token ([3ed7b02](https://github.com/samuelcsantana/pyxis-api/commit/3ed7b022fc2990e480cb76f3ed86647f345c6056))
+* **config:** read the remote MCP switch and the API's own origin ([1bc07e8](https://github.com/samuelcsantana/pyxis-api/commit/1bc07e82712f40f58dc7d35b818b76a95a791cf8))
+* **mcp:** let only bearer tokens into the MCP endpoint, with a challenge ([722d0f2](https://github.com/samuelcsantana/pyxis-api/commit/722d0f2b9f52355240d2611f249c7b7f1374c9fa))
+* **mcp:** publish the protected resource metadata of the MCP endpoint ([44e8830](https://github.com/samuelcsantana/pyxis-api/commit/44e88307ae616c89f1fb444a1226d907f1dfed48))
+* **mcp:** read the API in process for the tools of the MCP endpoint ([60d8aed](https://github.com/samuelcsantana/pyxis-api/commit/60d8aed15b285b264043dcc8e12550f3df1fe2a4))
+* **mcp:** serve the tools of pyxis-mcp at /mcp ([40b574a](https://github.com/samuelcsantana/pyxis-api/commit/40b574ad45b4e23af8fedb32b72ce0ed249c0b68))
+* **oauth:** add the connection policy and the two allowed clients ([49fdc92](https://github.com/samuelcsantana/pyxis-api/commit/49fdc9293998b11b9a4eed30ad538594504ff029))
+* **oauth:** authorize, trade, refresh and revoke connection grants ([5895dc2](https://github.com/samuelcsantana/pyxis-api/commit/5895dc2e1a102ee5f44ba227b418334ef25fedca))
+* **oauth:** fetch the metadata documents of Claude and Claude Code ([22da3e8](https://github.com/samuelcsantana/pyxis-api/commit/22da3e83b0c9fccf22466da382083ec227c2082f))
+* **oauth:** let the operator end connections ([7ea4148](https://github.com/samuelcsantana/pyxis-api/commit/7ea414865ee7fc0f592fce13900342e5a550a8d7))
+* **oauth:** serve the authorization server and the consent routes ([6d34ac9](https://github.com/samuelcsantana/pyxis-api/commit/6d34ac990ca637abb22e68f2b7ae3bfdefec8f24))
+* **oauth:** store authorization requests, connections and their tokens ([ba0fa4b](https://github.com/samuelcsantana/pyxis-api/commit/ba0fa4bdaf8b8f8f8971e28dc572adc97cbddfb1))
+* **retention:** sweep ended connections, spent tokens and finished requests ([b3ccf99](https://github.com/samuelcsantana/pyxis-api/commit/b3ccf9958e497333bdcb48bda7d2de2770da53be))
+
+
+### Bug Fixes
+
+* **infra:** send the MCP challenge from CloudFront ([c67659d](https://github.com/samuelcsantana/pyxis-api/commit/c67659d9560f2f36eafd1c9a3b330edd94e09fb4))
+
+
+### Documentation
+
+* describe the MCP endpoint and add ADR 0038 ([0ae6a74](https://github.com/samuelcsantana/pyxis-api/commit/0ae6a74f560fdb85e3cc70c02f1e6c6ee6f35ada))
+* describe the OAuth server of the Claude connector and add ADR 0037 ([de72755](https://github.com/samuelcsantana/pyxis-api/commit/de7275596dc8a21fd0e0c51707be6a92297cc02e))
+* **readme:** add pyxis-mcp to the ecosystem and the connector to the status ([513f645](https://github.com/samuelcsantana/pyxis-api/commit/513f645f80fa1520e5cf9c22a5ba95e1f30a28ca))
+* **runbook:** say where the MCP challenge header comes from ([50c0672](https://github.com/samuelcsantana/pyxis-api/commit/50c067206cf89edef8ffda72d3dfc5affe0dc3f8))
+
 ## [0.20.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.19.0...v0.20.0) (2026-10-15)
 
 
