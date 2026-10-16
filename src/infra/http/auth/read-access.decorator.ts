@@ -21,7 +21,7 @@ export function ReadAccess(...thenGuards: readonly Type<CanActivate>[]) {
       [SUBJECTS_THROTTLER]: true,
       [OAUTH_THROTTLER]: true,
     }),
-    UseGuards(AccessTokenThrottlerGuard, ReadAccessGuard, ...thenGuards),
+    UseGuards(ReadAccessGuard, AccessTokenThrottlerGuard, ...thenGuards),
     ApiBearerAuth(ACCESS_TOKEN_SECURITY),
     ApiBearerAuth(CONNECTION_TOKEN_SECURITY),
   );
