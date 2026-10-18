@@ -620,7 +620,10 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
   minute), in memory per execution environment: no counter, not even a hash of an address, is
   stored. The function's reserved concurrency bounds the global worst case
 - A resolved project key is cached for 60 seconds per execution environment, so revoking a key
-  takes up to a minute to take effect everywhere
+  takes up to a minute to take effect everywhere. An unknown or revoked key is remembered as
+  unknown for the same 60 seconds (at most 1,000 of them, the oldest forgotten first), so a site
+  that keeps sending one costs a database query a minute per execution environment, not one per
+  batch; keys are random and created by the API, so no key is ever asked for before it exists
 - The ingestion route never answers CORS with credentials. An accepted batch is readable only by
   the project's allowed origin; a batch refused for its key or its origin (`401 unknown_key`,
   `403 origin_not_allowed`) is readable by the origin that sent it, so the tracker drops it
