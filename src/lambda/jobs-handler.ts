@@ -12,6 +12,7 @@ import type {
   StalledExportsReport,
 } from '../usecases/exports/process-project-export.usecase';
 
+export const DAILY_JOB = 'daily';
 export const WEEKLY_DIGEST_JOB = 'weekly-digest';
 export const OPERATOR_NOTICES_JOB = 'account-notices';
 
@@ -31,7 +32,7 @@ export interface JobsHandlerDependencies {
 export type JobsOutcome =
   | {
       readonly ok: true;
-      readonly job: 'daily';
+      readonly job: typeof DAILY_JOB;
       readonly databaseSize: DatabaseSizeReport;
       readonly retention: RetentionReport;
       readonly accountUsage: AccountUsageReport;
@@ -117,7 +118,7 @@ export function createJobsHandler(
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
     return {
       ok: true,
-      job: 'daily',
+      job: DAILY_JOB,
       databaseSize,
       retention,
       accountUsage,

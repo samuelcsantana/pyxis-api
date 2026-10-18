@@ -1,4 +1,4 @@
-import { createJobsHandler, type JobsHandlerDependencies } from './jobs-handler';
+import { createJobsHandler, DAILY_JOB, type JobsHandlerDependencies } from './jobs-handler';
 
 const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = {
@@ -143,6 +143,12 @@ describe('createJobsHandler', () => {
       createJobsHandler(recordingDependencies(order))({ job: 'export', exportId: 'e-1' }),
     ).resolves.toEqual({ ok: true, job: 'export', exportId: 'e-1', outcome: 'done' });
     expect(order).toEqual(['parameters', 'export e-1']);
+  });
+
+  it('runs the daily jobs when they are asked for by name, as jobs:run does', async () => {
+    await expect(
+      createJobsHandler(recordingDependencies([]))({ job: DAILY_JOB }),
+    ).resolves.toMatchObject({ job: DAILY_JOB });
   });
 
   it('runs the daily jobs for an export event without an export id', async () => {
