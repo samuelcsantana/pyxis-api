@@ -24,13 +24,15 @@ const CLAUDE_REDIRECT = 'https://claude.ai/api/mcp/auth_callback';
 const FORM = 'application/x-www-form-urlencoded';
 const RANGE = 'from=2026-10-14&to=2026-10-15';
 
+const OAUTH_E2E_STATE = 'oauth-e2e-state';
+
 const VALID_AUTHORIZATION: Readonly<Record<string, string>> = {
   response_type: 'code',
   client_id: CLAUDE_CLIENT_ID,
   redirect_uri: CLAUDE_REDIRECT,
   code_challenge: CHALLENGE,
   code_challenge_method: 'S256',
-  state: 'claude-state',
+  state: OAUTH_E2E_STATE,
   scope: 'read',
   resource: `${ISSUER}/mcp`,
 };
@@ -136,7 +138,7 @@ describe('OAuth server for the Claude connector', () => {
 
   afterEach(async () => {
     await owner`DELETE FROM oauth_connections WHERE admin_user_id = ${ADMIN_ID}`;
-    await owner`DELETE FROM oauth_authorization_requests`;
+    await owner`DELETE FROM oauth_authorization_requests WHERE state = ${OAUTH_E2E_STATE}`;
   });
 
   afterAll(async () => {
@@ -183,7 +185,7 @@ describe('OAuth server for the Claude connector', () => {
     const approved = await withSession('POST', `/v1/oauth/requests/${requestId}/approve`);
     const redirectTo = approved.json<{ redirect_to: string }>().redirect_to;
     expect(redirectTo.startsWith(`${CLAUDE_REDIRECT}?`)).toBe(true);
-    expect(searchParameter(redirectTo, 'state')).toBe('claude-state');
+    expect(searchParameter(redirectTo, 'state')).toBe(OAUTH_E2E_STATE);
     expect(searchParameter(redirectTo, 'iss')).toBe(ISSUER);
 
     const exchanged = await postForm(
@@ -299,7 +301,7 @@ describe('OAuth server for the Claude connector', () => {
     expect(refused.statusCode).toBe(302);
     expect(location.startsWith(`${CLAUDE_REDIRECT}?`)).toBe(true);
     expect(searchParameter(location, 'error')).toBe('invalid_request');
-    expect(searchParameter(location, 'state')).toBe('claude-state');
+    expect(searchParameter(location, 'state')).toBe(OAUTH_E2E_STATE);
     const requestId = searchParameter(String(loopback.headers.location), 'request');
     const described = await withSession('GET', `/v1/oauth/requests/${requestId}`);
     expect(described.json()).toMatchObject({
