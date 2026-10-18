@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.23.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.22.1...v0.23.0) (2026-10-18)
+
+
+### Features
+
+* **ingest:** log each batch refused for its key or its origin ([0abbf54](https://github.com/samuelcsantana/pyxis-api/commit/0abbf54e04b83faf1c9863acc865d52397dfc0a7))
+
+
+### Bug Fixes
+
+* **ingest:** let the page that sent a refused batch read why ([db6e07d](https://github.com/samuelcsantana/pyxis-api/commit/db6e07dc21683049010f7caa1a00488fedb832e6))
+
+
+### Documentation
+
+* **adr:** record why a refused batch is readable by the page that sent it ([ec44680](https://github.com/samuelcsantana/pyxis-api/commit/ec446804ab687f4a2cc91084f69e7a36e0f4bd4d))
+
 ## [0.22.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.22.0...v0.22.1) (2026-10-18)
 
 
