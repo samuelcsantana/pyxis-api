@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.24.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.23.0...v0.24.0) (2026-10-18)
+
+
+### Features
+
+* **cli:** run the scheduled jobs outside Lambda with jobs:run ([5351f9d](https://github.com/samuelcsantana/pyxis-api/commit/5351f9d7a392148899082faca7c11e884bfe8b25))
+
+
+### Performance
+
+* **ingest:** remember an unknown key for a minute ([8b49946](https://github.com/samuelcsantana/pyxis-api/commit/8b4994607cd22fbd8e3534e4e4628ca14edfdc74))
+
+
+### Documentation
+
+* **readme:** add a self-hosting section ([801c2d9](https://github.com/samuelcsantana/pyxis-api/commit/801c2d90be08a12ecc758d7261c913836d8a7128))
+* **readme:** say how long an unknown key is remembered ([849c46f](https://github.com/samuelcsantana/pyxis-api/commit/849c46fca862fb80912c384a5350926c94c701bd))
+* **readme:** say how the scheduled jobs run outside AWS ([0697300](https://github.com/samuelcsantana/pyxis-api/commit/0697300936ec8327784c3277e00a7ae8b2cf1652))
+
 ## [0.23.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.22.1...v0.23.0) (2026-10-18)
 
 
