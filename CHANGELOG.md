@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.22.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.22.0...v0.22.1) (2026-10-18)
+
+
+### Bug Fixes
+
+* **auth:** authenticate bearer tokens before counting their rate limit ([29491ee](https://github.com/samuelcsantana/pyxis-api/commit/29491ee46b60dfb1f529d38feb06b4952ffbf511))
+* **auth:** compare sign-in code and PKCE hashes in constant time ([420d6ff](https://github.com/samuelcsantana/pyxis-api/commit/420d6ffd2ceada5a5f7101dca917b4d4f3bda71c))
+* **oauth:** check the live connection cap again when a code is exchanged ([4141dad](https://github.com/samuelcsantana/pyxis-api/commit/4141daddc54518beb9bcea7425bbbdd4fa7d0df0))
+* **site-icons:** refuse IPv4-compatible, NAT64 and 6to4 IPv6 addresses ([1fa068a](https://github.com/samuelcsantana/pyxis-api/commit/1fa068ad32efeb57d092b713dd37050be2403a3f))
+
 ## [0.22.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.21.0...v0.22.0) (2026-10-16)
 
 
