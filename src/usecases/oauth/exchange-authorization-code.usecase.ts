@@ -1,6 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sha256Hex } from '../../domain/auth/hashing';
-import { verifierMatches } from '../../domain/oauth/oauth-policy';
+import {
+  idleConnectionCutoff,
+  MAX_LIVE_CONNECTIONS,
+  verifierMatches,
+} from '../../domain/oauth/oauth-policy';
 import {
   REMOTE_MCP_SETTINGS,
   type RemoteMcpSettings,
@@ -74,6 +78,10 @@ export class ExchangeAuthorizationCodeUseCase {
       throw invalidGrant();
     }
     await requireActiveAdmin(this.admins, redeemed.adminUserId);
+    const live = await this.connections.listLiveOf(redeemed.adminUserId, idleConnectionCutoff(now));
+    if (live.length >= MAX_LIVE_CONNECTIONS) {
+      throw invalidGrant();
+    }
     const pair = issueTokenPair(this.random, now);
     const connection = await this.connections.create(
       { adminUserId: redeemed.adminUserId, clientId, createdAt: now },
