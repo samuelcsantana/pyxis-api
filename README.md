@@ -617,6 +617,51 @@ throttled, when the database grows, when sign-in codes are being guessed, when a
 starts a second free trial, and when a refund or an account e-mail fails. Provisioning, deploys, checks, alarms and rollbacks are in the
 [runbook](docs/RUNBOOK.md). Merging a pull request never deploys.
 
+## Self-hosting
+
+Nothing in the API needs AWS: `npm start`, or the image the `Dockerfile` builds, serves the same
+routes from any machine with Node 24 and a Postgres 18 database. Serve it, and the dashboard, over
+HTTPS.
+
+1. **The database.** Create the role the API connects as, without DDL rights
+   (`docker/postgres/init/01-app-role.sql` does it for the compose stack), then migrate as the
+   owner with `MIGRATION_DATABASE_URL=<owner URL> APP_DB_ROLE=<that role> npm run db:migrate`.
+   Migrate again before starting each new version.
+2. **The API**, with `NODE_ENV=production` and at least:
+
+   | Variable                                   | Why                                                                                                                                                                                                                                                                                                                                                                                  |
+   | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+   | `DATABASE_URL`                             | The application role; ends in `sslmode=verify-full` when the database is on another machine                                                                                                                                                                                                                                                                                          |
+   | `DASHBOARD_ORIGIN`                         | The dashboard's exact origin: sign-in calls come from it and every e-mail links to it                                                                                                                                                                                                                                                                                                |
+   | `RESEND_API_KEY`, or `MAIL_PROVIDER=ses`   | Sign-in codes go by e-mail, so production does not start without a sender; SES takes the AWS credentials and region of the environment                                                                                                                                                                                                                                               |
+   | `MAIL_FROM`                                | A sender on a domain verified in Resend or SES                                                                                                                                                                                                                                                                                                                                       |
+   | `CLIENT_IP_HEADER`, behind a reverse proxy | The header the proxy sets to the visitor's address and overwrites on every request, such as `x-real-ip` with nginx's `proxy_set_header X-Real-IP $remote_addr;`. Never a header a client can send or append to, like `X-Forwarded-For`. Unset, the API counts the socket address: behind a proxy every visitor shares it, and the limit of 120 batches a minute refuses real traffic |
+
+   Without `STRIPE_SECRET_KEY` and `SIGNUP_OPEN`, billing and sign-up stay off: nobody can open an
+   account, and the projects the operator creates have no plan and no quota. `REMOTE_MCP_OPEN`
+   with `API_ORIGIN` turns on the Claude connector, as on the hosted service. Every other setting
+   is in [Getting started](#getting-started).
+
+3. **The scheduled jobs.** From cron, `npm run -s jobs:run` every day and
+   `npm run -s jobs:run -- --job weekly-digest` every week ([Scheduled jobs](#scheduled-jobs)).
+4. **A project.** `project:create` prints the public key the site embeds, and `admin:grant` lets
+   someone sign in to read it ([the scripts](#project-key-and-admin-scripts)).
+5. **The tracker.** `init({ key, endpoint: 'https://<your API>' })` in the site, as the
+   [pyxis-sdk](https://github.com/samuelcsantana/pyxis-sdk) README shows.
+6. **The dashboard.** Build [pyxis-web](https://github.com/samuelcsantana/pyxis-web) with
+   `NEXT_PUBLIC_PYXIS_API_URL` set to the API, and serve it at `DASHBOARD_ORIGIN`.
+
+What differs from the hosted service:
+
+- The country and the region of a visit come from CloudFront's viewer headers; without CloudFront
+  in front of the API, visits have neither.
+- Exports are written to S3 (`EXPORT_BUCKET`, with AWS credentials) and answer 503 without it; an
+  export finishes at the next daily run, or at once with `jobs:run -- --job export`.
+- The key cache and the rate limits live in each process: several processes multiply the
+  per-address limit by their number.
+- The alarms are CloudWatch alarms in `infra/`; anywhere else, watch the structured logs
+  (`ingest.*`, `auth.*`, `jobs.*`) and the exit code of `jobs:run`.
+
 ## Privacy and security
 
 - No cookies on ingestion (the only cookie is the dashboard's session), no personal data in
