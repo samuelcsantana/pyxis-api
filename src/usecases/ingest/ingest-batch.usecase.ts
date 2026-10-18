@@ -98,7 +98,7 @@ export class IngestBatchUseCase {
     }
     const project = await this.projects.findByPublicKey(command.key);
     if (project === null) {
-      throw new UnknownProjectKeyError();
+      throw new UnknownProjectKeyError(command.origin ?? null);
     }
     const origin = this.allowedOrigin(project, command.origin);
     const receivedAt = this.clock.now();
@@ -141,7 +141,7 @@ export class IngestBatchUseCase {
 
   private allowedOrigin(project: Project, origin: string | undefined): string {
     if (origin === undefined || !project.allowedOrigins.includes(origin)) {
-      throw new OriginNotAllowedError();
+      throw new OriginNotAllowedError(project.id, origin ?? null);
     }
     return origin;
   }

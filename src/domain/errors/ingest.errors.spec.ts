@@ -13,7 +13,7 @@ describe('ingestion errors', () => {
   it.each([
     [new BatchTooLargeError(), 'batch_too_large', 'BatchTooLargeError'],
     [new UnknownProjectKeyError(), 'unknown_key', 'UnknownProjectKeyError'],
-    [new OriginNotAllowedError(), 'origin_not_allowed', 'OriginNotAllowedError'],
+    [new OriginNotAllowedError('project-1', null), 'origin_not_allowed', 'OriginNotAllowedError'],
     [
       new ProjectRateLimitedError(12, 'https://shop.example.com'),
       'rate_limited',
@@ -44,6 +44,20 @@ describe('ingestion errors', () => {
     expect(error.pausedUntil).toBe(RESUMES_AT);
     expect(error.allowedOrigin).toBe('https://shop.example.com');
     expect(error.message).toContain('2026-11-01T00:00:00.000Z');
+  });
+
+  it('keeps the origin of a batch sent with an unknown key, or none when it is not known', () => {
+    expect(new UnknownProjectKeyError('https://gone.example.com').requestOrigin).toBe(
+      'https://gone.example.com',
+    );
+    expect(new UnknownProjectKeyError().requestOrigin).toBeNull();
+  });
+
+  it('names the project and the origin it refused', () => {
+    const error = new OriginNotAllowedError('project-1', 'https://www.shop.example.com');
+
+    expect(error.projectId).toBe('project-1');
+    expect(error.requestOrigin).toBe('https://www.shop.example.com');
   });
 
   it('states the batch limit in the message', () => {

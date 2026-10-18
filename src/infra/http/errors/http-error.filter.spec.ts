@@ -40,7 +40,7 @@ describe('HttpErrorFilter', () => {
   it('sends the error body with its status, without logging an expected error', () => {
     const { host, reply } = hostFor();
 
-    new HttpErrorFilter().catch(new OriginNotAllowedError(), host);
+    new HttpErrorFilter().catch(new OriginNotAllowedError('project-1', null), host);
 
     expect(reply.statusCode).toBe(403);
     expect(reply.body).toEqual({

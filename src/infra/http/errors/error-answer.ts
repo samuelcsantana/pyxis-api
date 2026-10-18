@@ -1,7 +1,12 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { DomainError } from '../../../domain/errors/domain.error';
-import { ProjectRateLimitedError, QuotaExceededError } from '../../../domain/errors/ingest.errors';
+import {
+  OriginNotAllowedError,
+  ProjectRateLimitedError,
+  QuotaExceededError,
+  UnknownProjectKeyError,
+} from '../../../domain/errors/ingest.errors';
 import { ProjectSuspendedError } from '../../../domain/errors/project.errors';
 import type { ErrorResponse } from '../ingest/ingest.schemas';
 import {
@@ -90,6 +95,7 @@ const INTERNAL_ERROR: ErrorAnswer = {
 };
 
 const RETRY_AFTER_HEADER = 'retry-after';
+const OPAQUE_ORIGIN = 'null';
 
 function answer(
   statusCode: number,
@@ -111,6 +117,10 @@ function statusOf(exception: unknown): number | undefined {
   return undefined;
 }
 
+function readableRequestOrigin(origin: string | null): string | null {
+  return origin === OPAQUE_ORIGIN ? null : origin;
+}
+
 function refusedBatchOrigin(exception: DomainError): string | null {
   if (
     exception instanceof QuotaExceededError ||
@@ -118,6 +128,9 @@ function refusedBatchOrigin(exception: DomainError): string | null {
     exception instanceof ProjectSuspendedError
   ) {
     return exception.allowedOrigin;
+  }
+  if (exception instanceof UnknownProjectKeyError || exception instanceof OriginNotAllowedError) {
+    return readableRequestOrigin(exception.requestOrigin);
   }
   return null;
 }

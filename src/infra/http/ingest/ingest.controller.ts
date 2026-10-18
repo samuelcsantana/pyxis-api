@@ -37,14 +37,19 @@ import {
 
 const ERROR_RESPONSES = [
   [HttpStatus.BAD_REQUEST, 'The body is not JSON or does not match BatchRequest.'],
-  [HttpStatus.UNAUTHORIZED, 'The key is unknown or revoked.'],
+  [
+    HttpStatus.UNAUTHORIZED,
+    'The key is unknown or revoked; readable by the Origin that sent it, so the tracker drops ' +
+      'the batch instead of retrying.',
+  ],
   [
     HttpStatus.FORBIDDEN,
     "The Origin header is missing or not one of the project's origins (origin_not_allowed), " +
       "or the project's account used 150% of its monthly events and is paused until the next " +
       'month (quota_exceeded), or the account is suspended for abuse (account_suspended), or ' +
-      "the project's own reception is suspended (project_suspended); the last three come with a " +
-      'CORS grant so the tracker drops the batch.',
+      "the project's own reception is suspended (project_suspended). Each comes with a CORS " +
+      'grant to the Origin that sent it, so the tracker drops the batch; a missing or opaque ' +
+      'Origin gets none.',
   ],
   [HttpStatus.PAYLOAD_TOO_LARGE, 'The body exceeds 32,768 bytes or holds more than 50 events.'],
   [HttpStatus.TOO_MANY_REQUESTS, 'Too many batches from this address or for this project.'],

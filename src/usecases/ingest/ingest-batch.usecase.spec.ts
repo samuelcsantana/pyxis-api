@@ -248,19 +248,34 @@ describe('IngestBatchUseCase', () => {
   ])('refuses %s', async (_, key) => {
     const { useCase, command } = setup();
 
-    await expect(useCase.execute(command({ key }))).rejects.toBeInstanceOf(UnknownProjectKeyError);
+    const failure = useCase.execute(command({ key, origin: 'https://gone.example.com' }));
+
+    await expect(failure).rejects.toBeInstanceOf(UnknownProjectKeyError);
+    await expect(failure).rejects.toMatchObject({ requestOrigin: 'https://gone.example.com' });
+  });
+
+  it('refuses an unknown key sent without an origin, with no origin to name', async () => {
+    const { useCase, command } = setup();
+
+    await expect(
+      useCase.execute(command({ key: `${PUBLIC_KEY_PREFIX}${'Z'.repeat(32)}`, origin: undefined })),
+    ).rejects.toMatchObject({ requestOrigin: null });
   });
 
   it.each([
     ['a missing origin', undefined],
     ['another site', 'https://evil.example.com'],
     ['the same host on another port', 'https://shop.example.com:8443'],
-  ])('refuses %s', async (_, origin) => {
+  ])('refuses %s, naming the project and the origin', async (_, origin) => {
     const { useCase, events, command } = setup();
 
-    await expect(useCase.execute(command({ origin }))).rejects.toBeInstanceOf(
-      OriginNotAllowedError,
-    );
+    const failure = useCase.execute(command({ origin }));
+
+    await expect(failure).rejects.toBeInstanceOf(OriginNotAllowedError);
+    await expect(failure).rejects.toMatchObject({
+      projectId: PROJECT.id,
+      requestOrigin: origin ?? null,
+    });
     expect(events.insertCalls).toBe(0);
   });
 
