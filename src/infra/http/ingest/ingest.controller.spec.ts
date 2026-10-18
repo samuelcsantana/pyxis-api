@@ -1,5 +1,10 @@
 import { Logger } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import {
+  OriginNotAllowedError,
+  QuotaExceededError,
+  UnknownProjectKeyError,
+} from '../../../domain/errors/ingest.errors';
 import { PUBLIC_KEY_PREFIX } from '../../../domain/keys/project-keys';
 import type {
   IngestBatchCommand,
@@ -24,12 +29,12 @@ const RESULT: IngestBatchResult = {
   dropped: [{ eventName: 'plan_selected', field: 'properties.contact', reason: 'email' }],
 };
 
-function setup() {
+function setup(outcome: () => Promise<IngestBatchResult> = () => Promise.resolve(RESULT)) {
   const commands: IngestBatchCommand[] = [];
   const useCase = {
     execute: (command: IngestBatchCommand) => {
       commands.push(command);
-      return Promise.resolve(RESULT);
+      return outcome();
     },
   } as unknown as IngestBatchUseCase;
   const headers: Record<string, string> = {};
@@ -141,6 +146,53 @@ describe('IngestController', () => {
         },
       ],
     ]);
+  });
+
+  it.each([
+    [
+      'an unknown key',
+      new UnknownProjectKeyError('https://gone.example.com'),
+      { reason: 'unknown_key', origin: 'https://gone.example.com' },
+    ],
+    [
+      'an origin the project does not allow',
+      new OriginNotAllowedError('project-1', 'https://www.shop.example.com'),
+      {
+        reason: 'origin_not_allowed',
+        projectId: 'project-1',
+        origin: 'https://www.shop.example.com',
+      },
+    ],
+  ])('logs a batch refused for %s with the request id, never the key', async (_, error, logged) => {
+    const { controller, reply, request } = setup(() => Promise.reject(error));
+
+    await expect(
+      controller.ingest(
+        { key: KEY, sent_at: '2026-10-06T14:00:06.000Z', events: [] },
+        request,
+        reply,
+      ),
+    ).rejects.toBe(error);
+
+    expect(warnings.mock.calls).toEqual([
+      [{ message: 'ingest.batch_refused', requestId: 'req-7', ...logged }],
+    ]);
+    expect(JSON.stringify(warnings.mock.calls)).not.toContain(KEY);
+  });
+
+  it('lets any other refusal through without logging it here', async () => {
+    const quota = new QuotaExceededError(new Date('2026-11-01T00:00:00.000Z'), ORIGIN);
+    const { controller, reply, request } = setup(() => Promise.reject(quota));
+
+    await expect(
+      controller.ingest(
+        { key: KEY, sent_at: '2026-10-06T14:00:06.000Z', events: [] },
+        request,
+        reply,
+      ),
+    ).rejects.toBe(quota);
+
+    expect(warnings).not.toHaveBeenCalled();
   });
 
   it('answers the preflight with the CORS grant for the asking origin', () => {
