@@ -1,7 +1,11 @@
 import type { Project } from '../../domain/entities/project.entity';
 import type { ProjectRepository } from '../../domain/repositories/project.repository';
 import { FixedClock } from '../../test-utils/fixed-clock';
-import { CachingProjectRepository, PROJECT_KEY_CACHE_TTL_MS } from './caching-project.repository';
+import {
+  CachingProjectRepository,
+  PROJECT_KEY_CACHE_TTL_MS,
+  UNKNOWN_KEY_CACHE_LIMIT,
+} from './caching-project.repository';
 
 const PROJECT: Project = {
   id: 'a3f1c2d4-5b6e-4f70-8192-a3b4c5d6e7f8',
@@ -21,7 +25,7 @@ function setup(answer: Project | null = PROJECT) {
     },
   };
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
-  return { repository: new CachingProjectRepository(delegate, clock), lookups, clock };
+  return { repository: new CachingProjectRepository(delegate, clock), delegate, lookups, clock };
 }
 
 describe('CachingProjectRepository', () => {
@@ -46,11 +50,54 @@ describe('CachingProjectRepository', () => {
     expect(lookups).toEqual(['key', 'key']);
   });
 
-  it('never remembers an unknown key, so random keys cannot fill the memory', async () => {
-    const { repository, lookups } = setup(null);
+  it('remembers an unknown key for 60 seconds, so a revoked key costs one lookup a minute', async () => {
+    const { repository, lookups, clock } = setup(null);
 
-    expect(await repository.findByPublicKey('unknown')).toBeNull();
-    expect(await repository.findByPublicKey('unknown')).toBeNull();
-    expect(lookups).toEqual(['unknown', 'unknown']);
+    expect(await repository.findByPublicKey('revoked')).toBeNull();
+    clock.advanceBy(PROJECT_KEY_CACHE_TTL_MS - 1);
+    expect(await repository.findByPublicKey('revoked')).toBeNull();
+
+    expect(lookups).toEqual(['revoked']);
+  });
+
+  it('asks the database again about an unknown key once 60 seconds have passed', async () => {
+    const { repository, lookups, clock } = setup(null);
+
+    await repository.findByPublicKey('revoked');
+    clock.advanceBy(PROJECT_KEY_CACHE_TTL_MS);
+    expect(await repository.findByPublicKey('revoked')).toBeNull();
+
+    expect(lookups).toEqual(['revoked', 'revoked']);
+  });
+
+  it('keeps a bounded number of unknown keys, forgetting the oldest first, so random keys cannot fill the memory', async () => {
+    const { delegate, lookups, clock } = setup(null);
+    const repository = new CachingProjectRepository(delegate, clock, PROJECT_KEY_CACHE_TTL_MS, 2);
+
+    await repository.findByPublicKey('first');
+    await repository.findByPublicKey('second');
+    await repository.findByPublicKey('third');
+    await repository.findByPublicKey('second');
+    await repository.findByPublicKey('first');
+
+    expect(lookups).toEqual(['first', 'second', 'third', 'first']);
+  });
+
+  it('keeps a thousand unknown keys by default', async () => {
+    const { repository, lookups } = setup(null);
+    const keys = Array.from(
+      { length: UNKNOWN_KEY_CACHE_LIMIT + 1 },
+      (_, index) => `key-${String(index)}`,
+    );
+    for (const key of keys) {
+      await repository.findByPublicKey(key);
+    }
+    lookups.length = 0;
+
+    await repository.findByPublicKey('key-1');
+    await repository.findByPublicKey('key-0');
+
+    expect(UNKNOWN_KEY_CACHE_LIMIT).toBe(1_000);
+    expect(lookups).toEqual(['key-0']);
   });
 });
