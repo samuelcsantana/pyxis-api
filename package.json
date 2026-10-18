@@ -45,6 +45,7 @@
     "token:revoke": "node dist/cli/token-revoke.main.js",
     "connection:revoke": "node dist/cli/connection-revoke.main.js",
     "usage:report": "node dist/cli/usage-report.main.js",
+    "jobs:run": "node dist/cli/jobs-run.main.js",
     "account:create": "node dist/cli/account-create.main.js",
     "account:show": "node dist/cli/account-show.main.js",
     "account:link": "node dist/cli/account-link.main.js",
