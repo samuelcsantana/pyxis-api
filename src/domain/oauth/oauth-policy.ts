@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { equalHashes } from '../auth/hashing';
 import { SESSION_TOUCH_INTERVAL_MS } from '../auth/session-policy';
 import { bearerCredential } from '../keys/project-keys';
 import type { RandomSource } from '../services/random-source';
@@ -57,7 +58,7 @@ export function codeChallengeOf(verifier: string): string {
 }
 
 export function verifierMatches(verifier: string, challenge: string): boolean {
-  return CODE_VERIFIER_PATTERN.test(verifier) && codeChallengeOf(verifier) === challenge;
+  return CODE_VERIFIER_PATTERN.test(verifier) && equalHashes(codeChallengeOf(verifier), challenge);
 }
 
 export function mcpResourceOf(issuer: string): string {

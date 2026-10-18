@@ -41,6 +41,7 @@ describe('oauth policy', () => {
 
   it('refuses a verifier of the wrong challenge or outside the allowed alphabet and length', () => {
     expect(verifierMatches(`${RFC_7636_VERIFIER}x`, RFC_7636_CHALLENGE)).toBe(false);
+    expect(verifierMatches(RFC_7636_VERIFIER, 'short')).toBe(false);
     expect(verifierMatches('short', codeChallengeOf('short'))).toBe(false);
     const withSpace = `${'a'.repeat(42)} `;
     expect(verifierMatches(withSpace, codeChallengeOf(withSpace))).toBe(false);
