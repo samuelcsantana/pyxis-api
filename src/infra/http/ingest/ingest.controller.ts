@@ -14,6 +14,11 @@ import { ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger
 import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import {
+  OriginNotAllowedError,
+  UnknownProjectKeyError,
+} from '../../../domain/errors/ingest.errors';
+import {
+  type IngestBatchCommand,
   type IngestBatchResult,
   IngestBatchUseCase,
 } from '../../../usecases/ingest/ingest-batch.usecase';
@@ -54,6 +59,23 @@ const ERROR_RESPONSES = [
   [HttpStatus.PAYLOAD_TOO_LARGE, 'The body exceeds 32,768 bytes or holds more than 50 events.'],
   [HttpStatus.TOO_MANY_REQUESTS, 'Too many batches from this address or for this project.'],
 ] as const;
+
+function commandOf(batch: BatchEnvelope, request: FastifyRequest): IngestBatchCommand {
+  return {
+    key: batch.key,
+    sentAt: new Date(batch.sent_at),
+    events: batch.events,
+    origin: singleHeader(request, 'origin'),
+    userAgent: singleHeader(request, 'user-agent'),
+    clientHints: {
+      mobile: singleHeader(request, 'sec-ch-ua-mobile'),
+      platform: singleHeader(request, 'sec-ch-ua-platform'),
+    },
+    viewerCountry: singleHeader(request, 'cloudfront-viewer-country'),
+    viewerRegion: singleHeader(request, 'cloudfront-viewer-country-region'),
+    viewerRegionName: singleHeader(request, 'cloudfront-viewer-country-region-name'),
+  };
+}
 
 function ApiErrorResponses(): MethodDecorator {
   return (target, key, descriptor) => {
@@ -102,20 +124,13 @@ export class IngestController {
     @Req() request: FastifyRequest,
     @Res({ passthrough: true }) reply: FastifyReply,
   ): Promise<IngestResult> {
-    const result = await this.ingestBatch.execute({
-      key: batch.key,
-      sentAt: new Date(batch.sent_at),
-      events: batch.events,
-      origin: singleHeader(request, 'origin'),
-      userAgent: singleHeader(request, 'user-agent'),
-      clientHints: {
-        mobile: singleHeader(request, 'sec-ch-ua-mobile'),
-        platform: singleHeader(request, 'sec-ch-ua-platform'),
-      },
-      viewerCountry: singleHeader(request, 'cloudfront-viewer-country'),
-      viewerRegion: singleHeader(request, 'cloudfront-viewer-country-region'),
-      viewerRegionName: singleHeader(request, 'cloudfront-viewer-country-region-name'),
-    });
+    let result: IngestBatchResult;
+    try {
+      result = await this.ingestBatch.execute(commandOf(batch, request));
+    } catch (error) {
+      this.logRefusal(request.requestId, error);
+      throw error;
+    }
     allowOrigin(reply, result.allowedOrigin);
     this.logOutcome(request.requestId, result);
     return { accepted: result.accepted, duplicates: result.duplicates, rejected: result.rejected };
@@ -126,6 +141,27 @@ export class IngestController {
   @ApiOperation({ summary: 'CORS preflight for the batch route' })
   preflight(@Req() request: FastifyRequest, @Res({ passthrough: true }) reply: FastifyReply): void {
     answerPreflight(reply, singleHeader(request, 'origin'));
+  }
+
+  private logRefusal(requestId: string, error: unknown): void {
+    if (error instanceof UnknownProjectKeyError) {
+      this.logger.warn({
+        message: 'ingest.batch_refused',
+        requestId,
+        reason: error.code,
+        origin: error.requestOrigin,
+      });
+      return;
+    }
+    if (error instanceof OriginNotAllowedError) {
+      this.logger.warn({
+        message: 'ingest.batch_refused',
+        requestId,
+        reason: error.code,
+        projectId: error.projectId,
+        origin: error.requestOrigin,
+      });
+    }
   }
 
   private logOutcome(requestId: string, result: IngestBatchResult): void {
