@@ -254,6 +254,23 @@ describe('ExchangeAuthorizationCodeUseCase', () => {
     }
   });
 
+  it('refuses a code once the admin reaches ten live connections between approval and exchange', async () => {
+    const { connect, exchange, codeFor, ana, list } = await setup();
+    for (let index = 0; index < 9; index += 1) {
+      await connect(ana);
+    }
+    const tenthCode = await codeFor(ana);
+    const eleventhCode = await codeFor(ana);
+
+    await expect(
+      exchange.execute({ code: tenthCode, codeVerifier: VERIFIER, clientId: CLAUDE_CLIENT_ID }),
+    ).resolves.toMatchObject({ scope: 'read' });
+    await expect(
+      exchange.execute({ code: eleventhCode, codeVerifier: VERIFIER, clientId: CLAUDE_CLIENT_ID }),
+    ).rejects.toEqual(oauthError('invalid_grant'));
+    expect(await list.execute(ana)).toHaveLength(10);
+  });
+
   it('logs the new connection with ids only', async () => {
     const logs: unknown[] = [];
     const { codeFor, exchange, ana } = await setup();
