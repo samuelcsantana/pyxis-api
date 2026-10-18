@@ -621,8 +621,11 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
   stored. The function's reserved concurrency bounds the global worst case
 - A resolved project key is cached for 60 seconds per execution environment, so revoking a key
   takes up to a minute to take effect everywhere
-- The ingestion route answers CORS with the project's allowed origin only, never with
-  credentials; a request from another origin gets 403 and nothing it can read
+- The ingestion route never answers CORS with credentials. An accepted batch is readable only by
+  the project's allowed origin; a batch refused for its key or its origin (`401 unknown_key`,
+  `403 origin_not_allowed`) is readable by the origin that sent it, so the tracker drops it
+  instead of retrying, and it learns only the error code `curl` gets for the same body
+  ([ADR 0039](docs/adr/0039-a-refused-batch-is-readable-by-its-page.md))
 - A dashboard query for a project the admin was not granted answers exactly like one for a
   project that does not exist (404 `not_found`), so the API never confirms that a project exists
 - The weekly digest carries aggregates, paths, event names and routes only, never a user id or a
@@ -717,6 +720,7 @@ starts a second free trial, and when a refund or an account e-mail fails. Provis
 | [0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md)              | A larger plan is limits on the account, set by the operator                |
 | [0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md)          | The API is its own OAuth server for Claude                                 |
 | [0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md)      | The MCP endpoint runs the tools of pyxis-mcp inside the API                |
+| [0039](docs/adr/0039-a-refused-batch-is-readable-by-its-page.md)             | A refused batch is readable by the page that sent it                       |
 
 ## Roadmap
 
