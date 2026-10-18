@@ -494,6 +494,24 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
 
+### Scheduled jobs
+
+On AWS, EventBridge Scheduler runs the jobs function: the daily jobs at 06:00 UTC and the weekly
+digest on Mondays at 11:00 UTC, and the API hands it each export as soon as it is asked for.
+Anywhere else, `npm run -s jobs:run` (after `npm run build`) runs the same handler with
+`DATABASE_URL` and the rest of the API's environment, and prints the outcome as one JSON line.
+Run it from cron at the same times:
+
+| Command                                                | What it runs                                                                                                                                        |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run -s jobs:run`                                  | The daily jobs: database size, retention, monthly usage and its pause, the account lifecycle, stalled exports, stored notices and the project icons |
+| `npm run -s jobs:run -- --job weekly-digest`           | The weekly digest to every admin who keeps it on                                                                                                    |
+| `npm run -s jobs:run -- --job account-notices`         | The notices stored by `notice:create`, without waiting for the daily run                                                                            |
+| `npm run -s jobs:run -- --job export --export-id <id>` | One export; without `JOBS_FUNCTION_NAME` an export asked for in the dashboard waits for the daily run                                               |
+
+It exits with 0 when the job ran, 1 when it failed and 2 for wrong arguments. If nothing runs it,
+retention never deletes anything, the monthly usage is never measured and exports never finish.
+
 ## Testing
 
 ```bash
@@ -549,7 +567,7 @@ src/
 ├── config/            environment validation (Zod)
 ├── domain/            entities, event validation, the PII barrier, derivations, key formats,
 │                      date ranges and the report shapes of the dashboard queries
-├── cli/               the project, key and admin scripts
+├── cli/               the project, key and admin scripts, and jobs:run
 ├── lambda/            the Lambda handlers (HTTP behind CloudFront, migrations, scheduled jobs)
 ├── usecases/          one class per operation (ingestion, projects, keys, sign-in, queries)
 ├── infra/database/    Drizzle schema, postgres-js, the migration step, the role check
