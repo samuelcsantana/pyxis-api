@@ -72,7 +72,7 @@ describe('toErrorAnswer', () => {
   it.each([
     [new BatchTooLargeError(), 413, 'batch_too_large'],
     [new UnknownProjectKeyError(), 401, 'unknown_key'],
-    [new OriginNotAllowedError(), 403, 'origin_not_allowed'],
+    [new OriginNotAllowedError('project-1', null), 403, 'origin_not_allowed'],
     [new InvalidSignInCodeError(), 400, 'invalid_code'],
     [new UnauthenticatedError(), 401, 'unauthenticated'],
     [new InvalidRangeError(), 400, 'invalid_range'],
@@ -143,6 +143,32 @@ describe('toErrorAnswer', () => {
       headers: { 'access-control-allow-origin': 'https://shop.example.com', vary: 'Origin' },
       unexpected: false,
     });
+  });
+
+  it.each([
+    ['an unknown key', new UnknownProjectKeyError('https://gone.example.com'), 401, 'unknown_key'],
+    [
+      'an origin the project does not allow',
+      new OriginNotAllowedError('project-1', 'https://gone.example.com'),
+      403,
+      'origin_not_allowed',
+    ],
+  ])(
+    'lets the page that sent a batch with %s read the refusal, so the tracker drops it',
+    (_, error, status, code) => {
+      expect(toErrorAnswer(error)).toEqual({
+        body: { status_code: status, error: code, message: error.message },
+        headers: { 'access-control-allow-origin': 'https://gone.example.com', vary: 'Origin' },
+        unexpected: false,
+      });
+    },
+  );
+
+  it.each([
+    ['an unknown key', new UnknownProjectKeyError('null')],
+    ['an origin the project does not allow', new OriginNotAllowedError('project-1', 'null')],
+  ])('grants nothing to an opaque origin refused for %s', (_, error) => {
+    expect(toErrorAnswer(error).headers).toEqual({});
   });
 
   it('answers a suspended account in the dashboard with a plain 403', () => {

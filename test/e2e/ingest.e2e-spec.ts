@@ -186,20 +186,41 @@ describe('POST /v1/batch', () => {
     expect(response.json()).toMatchObject({ status_code: 413, error: 'payload_too_large' });
   });
 
-  it('answers 401 to an unknown key', async () => {
+  it('answers 401 to an unknown key, readable by the page that sent it so the tracker drops it', async () => {
     const response = await send({
       body: batch([event(81)], { key: `${PUBLIC_KEY_PREFIX}${'U'.repeat(32)}` }),
+      origin: 'https://gone.example.com',
     });
 
     expect(response.statusCode).toBe(401);
     expect(response.json()).toMatchObject({ status_code: 401, error: 'unknown_key' });
+    expect(response.headers).toMatchObject({
+      'access-control-allow-origin': 'https://gone.example.com',
+      vary: 'Origin',
+    });
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
+  });
+
+  it('answers 403 to another origin, readable by that origin so the tracker drops the batch', async () => {
+    const response = await send({
+      body: batch([event(91)]),
+      origin: 'https://www.shop.example.com',
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({ status_code: 403, error: 'origin_not_allowed' });
+    expect(response.headers).toMatchObject({
+      'access-control-allow-origin': 'https://www.shop.example.com',
+      vary: 'Origin',
+    });
+    expect(response.headers['access-control-allow-credentials']).toBeUndefined();
   });
 
   it.each([
-    ['another origin', 'https://evil.example.com'],
     ['no origin', null],
-  ])('answers 403 to %s, without letting it read the answer', async (_, origin) => {
-    const response = await send({ body: batch([event(91)]), origin });
+    ['an opaque origin', 'null'],
+  ])('answers 403 to %s with no CORS grant', async (_, origin) => {
+    const response = await send({ body: batch([event(92)]), origin });
 
     expect(response.statusCode).toBe(403);
     expect(response.json()).toMatchObject({ status_code: 403, error: 'origin_not_allowed' });

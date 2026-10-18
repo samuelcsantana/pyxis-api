@@ -12,7 +12,7 @@ export class BatchTooLargeError extends DomainError {
 export class UnknownProjectKeyError extends DomainError {
   readonly code = 'unknown_key';
 
-  constructor() {
+  constructor(readonly requestOrigin: string | null = null) {
     super('The project key is unknown or revoked.');
   }
 }
@@ -20,7 +20,10 @@ export class UnknownProjectKeyError extends DomainError {
 export class OriginNotAllowedError extends DomainError {
   readonly code = 'origin_not_allowed';
 
-  constructor() {
+  constructor(
+    readonly projectId: string,
+    readonly requestOrigin: string | null,
+  ) {
     super('This origin is not allowed to send events for the project.');
   }
 }
