@@ -13,6 +13,7 @@ import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { InMemoryNoticeRepository } from './in-memory-notice.repository';
 import { InMemoryProjectSuspensionRepository } from './in-memory-project-suspension.repository';
 import { InMemoryProjectDeletionHoldRepository } from './in-memory-project-deletion-hold.repository';
+import { InMemoryReviewerCodeRepository } from './in-memory-reviewer-code.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
 import { CloseAccountAsOperatorUseCase } from '../usecases/accounts/close-account-as-operator.usecase';
@@ -24,7 +25,9 @@ import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-acco
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
+import { CloseReviewerCodeUseCase } from '../usecases/auth/close-reviewer-code.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import { OpenReviewerCodeUseCase } from '../usecases/auth/open-reviewer-code.usecase';
 import { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
 import { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
 import { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
@@ -71,6 +74,7 @@ export function inMemoryCliContext(): CliContext & {
   readonly projectSuspensions: InMemoryProjectSuspensionRepository;
   readonly projectHolds: InMemoryProjectDeletionHoldRepository;
   readonly notices: InMemoryNoticeRepository;
+  readonly reviewerCodes: InMemoryReviewerCodeRepository;
   closed: boolean;
 } {
   const store = new InMemoryProjectRepository();
@@ -88,6 +92,7 @@ export function inMemoryCliContext(): CliContext & {
   const projectSuspensions = new InMemoryProjectSuspensionRepository();
   const projectHolds = new InMemoryProjectDeletionHoldRepository();
   const notices = new InMemoryNoticeRepository();
+  const reviewerCodes = new InMemoryReviewerCodeRepository();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   const context = {
@@ -106,6 +111,7 @@ export function inMemoryCliContext(): CliContext & {
     projectSuspensions,
     projectHolds,
     notices,
+    reviewerCodes,
     closed: false,
     createProject: new CreateProjectUseCase(store, random, accounts),
     createProjectKey: new CreateProjectKeyUseCase(store, store, random),
@@ -128,6 +134,8 @@ export function inMemoryCliContext(): CliContext & {
     resumeAdmin: new ResumeAdminUseCase(admins, admins),
     revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(tokens, clock),
     revokeConnection: new RevokeConnectionAsOperatorUseCase(connections, clock),
+    openReviewerCode: new OpenReviewerCodeUseCase(admins, reviewerCodes, clock, random),
+    closeReviewerCode: new CloseReviewerCodeUseCase(admins, reviewerCodes),
     suspendProjectIngestion: new SuspendProjectIngestionUseCase(projectSuspensions, clock),
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),

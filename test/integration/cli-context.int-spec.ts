@@ -1,5 +1,6 @@
 import type postgres from 'postgres';
 import { openCliContext } from '../../src/cli/cli-context';
+import { sha256Hex } from '../../src/domain/auth/hashing';
 import { hashSecretKey } from '../../src/domain/keys/project-keys';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testOwnerUrl } from './test-database';
@@ -364,6 +365,27 @@ describe('openCliContext against a real Postgres', () => {
       });
 
       expect(outcome).toMatchObject({ created: true, recipients: 1 });
+    } finally {
+      await context.close();
+    }
+  });
+
+  it('opens and closes a reviewer code with the migration connection', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      await context.createCompedAccount.execute({ ownerEmail: 'reviewer@example.com' });
+
+      const opened = await context.openReviewerCode.execute({
+        email: 'reviewer@example.com',
+        days: 30,
+      });
+      const [stored] = await owner<{ code_hash: string }[]>`SELECT code_hash FROM reviewer_codes`;
+      const closed = await context.closeReviewerCode.execute({ email: 'reviewer@example.com' });
+
+      expect(opened.code).toMatch(/^\d{6}$/);
+      expect(stored?.code_hash).toBe(sha256Hex(opened.code));
+      expect(closed.closed).toBe(true);
+      expect(await owner`SELECT 1 FROM reviewer_codes`).toHaveLength(0);
     } finally {
       await context.close();
     }

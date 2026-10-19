@@ -1,6 +1,7 @@
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { sha256Hex } from '../../domain/auth/hashing';
 import { PUBLIC_KEY_PATTERN, SECRET_KEY_PATTERN } from '../../domain/keys/project-keys';
 import { captureOutput, inMemoryCliContext } from '../../test-utils/cli-test-context';
 import { CliUsageError } from '../cli-args';
@@ -30,6 +31,8 @@ import { projectReleaseCommand } from './project-release.command';
 import { projectResumeCommand } from './project-resume.command';
 import { projectSuspendCommand } from './project-suspend.command';
 import { projectUpdateCommand } from './project-update.command';
+import { reviewerCloseCommand } from './reviewer-close.command';
+import { reviewerOpenCommand } from './reviewer-open.command';
 import { tokenRevokeCommand } from './token-revoke.command';
 import { usageReportCommand } from './usage-report.command';
 
@@ -1159,5 +1162,57 @@ describe('admin:grant', () => {
     const admin = await context.admins.findByEmail('ana@example.com');
     expect(output.out).toEqual([`admin_user_id=${String(admin?.id)}`, `project_id=${projectId}`]);
     expect(output.err).toEqual([expect.stringContaining('ana@example.com can now ask')]);
+  });
+});
+
+describe('reviewer:open and reviewer:close', () => {
+  it('parse an e-mail address and an optional number of days, a year by default', () => {
+    expect(reviewerOpenCommand.parse(['--email', 'reviewer@example.com'])).toEqual({
+      email: 'reviewer@example.com',
+      days: 365,
+    });
+    expect(reviewerOpenCommand.parse(['--email', 'reviewer@example.com', '--days', '30'])).toEqual({
+      email: 'reviewer@example.com',
+      days: 30,
+    });
+    for (const days of ['0', '366', '7.5', 'month']) {
+      expect(() =>
+        reviewerOpenCommand.parse(['--email', 'reviewer@example.com', '--days', days]),
+      ).toThrow(CliUsageError);
+    }
+    expect(() => reviewerOpenCommand.parse(['--days', '30'])).toThrow(CliUsageError);
+    expect(reviewerCloseCommand.parse(['--email', 'reviewer@example.com'])).toEqual({
+      email: 'reviewer@example.com',
+    });
+    expect(() => reviewerCloseCommand.parse(['--email', 'reviewer'])).toThrow(CliUsageError);
+  });
+
+  it('print the code once, keeping only its hash, then close it', async () => {
+    const context = inMemoryCliContext();
+    const reviewer = await context.admins.findOrCreateByEmail('reviewer@example.com');
+    const opened = captureOutput();
+
+    await reviewerOpenCommand.execute(context, { email: 'reviewer@example.com', days: 30 }, opened);
+
+    const code = opened.out.find((line) => line.startsWith('code='))?.slice('code='.length) ?? '';
+    expect(code).toMatch(/^\d{6}$/);
+    expect(opened.out).toEqual([
+      `admin_user_id=${reviewer.id}`,
+      'email=reviewer@example.com',
+      `code=${code}`,
+      'expires_at=2026-11-05T14:00:00.000Z',
+    ]);
+    expect(opened.err).toEqual([expect.stringContaining('20 wrong codes close it')]);
+    expect(context.reviewerCodes.stored.get(reviewer.id)?.codeHash).toBe(sha256Hex(code));
+
+    const closed = captureOutput();
+    await reviewerCloseCommand.execute(context, { email: 'reviewer@example.com' }, closed);
+    const again = captureOutput();
+    await reviewerCloseCommand.execute(context, { email: 'reviewer@example.com' }, again);
+
+    expect(closed.out).toEqual([`admin_user_id=${reviewer.id}`, 'closed=true']);
+    expect(closed.err).toEqual([expect.stringContaining('e-mailed sign-in codes again')]);
+    expect(again.out).toEqual([`admin_user_id=${reviewer.id}`, 'closed=false']);
+    expect(again.err).toEqual(['This admin had no reviewer code open.']);
   });
 });
