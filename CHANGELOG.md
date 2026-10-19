@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.26.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.25.0...v0.26.0) (2026-10-19)
+
+
+### Features
+
+* **auth:** sign a directory reviewer in with a code that is not e-mailed ([66495f7](https://github.com/samuelcsantana/pyxis-api/commit/66495f790f3794179826ea4dded353d0a0a56fd7))
+* **cli:** mark a project of the operator for demo traffic ([b5c960b](https://github.com/samuelcsantana/pyxis-api/commit/b5c960b6ec27374f28ce626bb87c165538e7d384))
+* **cli:** open and close a reviewer code ([2dbf92f](https://github.com/samuelcsantana/pyxis-api/commit/2dbf92f60668399f91dd408ddbea18214afa5b6a))
+* **demo-traffic:** invent the visits of one day of a demo store ([9fd1ba0](https://github.com/samuelcsantana/pyxis-api/commit/9fd1ba0a8387d51f7a06a41d7265ae681832e2f8))
+* **jobs:** fill the projects marked for demo traffic every day ([9ffa400](https://github.com/samuelcsantana/pyxis-api/commit/9ffa40080fc085398e565f403564a768d377d76e))
+
+
+### Documentation
+
+* **readme:** bring the status and the roadmap up to date ([9a6a182](https://github.com/samuelcsantana/pyxis-api/commit/9a6a182d1cc67b170ee792abc8247469fbae43de))
+* record the demo traffic of a project of the operator ([14db230](https://github.com/samuelcsantana/pyxis-api/commit/14db230841583570c9f1466409ae3df4d776085b))
+* record the reviewer code for connector directories ([2767278](https://github.com/samuelcsantana/pyxis-api/commit/27672787fd41a71a7c485b8677a79c9123e997b2))
+
 ## [0.25.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.24.0...v0.25.0) (2026-10-19)
 
 
