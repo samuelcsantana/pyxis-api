@@ -312,6 +312,11 @@ Shipping now:
   again until `admin:resume` (no code is sent, and a session that survived is refused),
   `token:revoke` revokes any read-only token by its id and `connection:revoke` ends any connected
   application by its id ([ADR 0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md))
+- A reviewer code, for the reviewers of a connector directory, who cannot read a code sent by
+  e-mail: `reviewer:open --email <address>` gives an existing admin six digits, printed once and
+  kept only as a hash, that sign in as an e-mailed code does, as often as needed, for a year by
+  default (365 days at most). While it is open the address is e-mailed no code; 20 wrong codes
+  close it, and `reviewer:close` ends it at once ([ADR 0040](docs/adr/0040-a-directory-reviewer-signs-in-with-a-code-the-operator-opens.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -422,6 +427,8 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s admin:resume -- --email <email>`                                                                                                                    | Lets the person sign in again; their ended sessions and tokens stay ended                                                                                                                                       |
 | `npm run -s token:revoke -- --token <id>`                                                                                                                       | Revokes anyone's read-only access token by the id the dashboard shows, for a token published by mistake                                                                                                         |
 | `npm run -s connection:revoke -- --connection <id>`                                                                                                             | Ends anyone's connected application (Claude, Claude Code) by the id the dashboard shows, its tokens included                                                                                                    |
+| `npm run -s reviewer:open -- --email <email> [--days <n>]`                                                                                                      | Gives an existing admin a reviewer code, printed once (`code=`), valid for a year by default; replaces any code they had and its failed attempts                                                                |
+| `npm run -s reviewer:close -- --email <email>`                                                                                                                  | Ends the admin's reviewer code; the address is e-mailed sign-in codes again                                                                                                                                     |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first                                                       |
 | `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                                                                  |
 | `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project                                                |
@@ -699,7 +706,8 @@ What differs from the hosted service:
   link to a visit, and its logs name projects and admins by id, never by address
 - Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
-  use, and expires in 10 minutes. Sessions end after 7 days, after 24 hours idle, at sign-out,
+  use, and expires in 10 minutes. A reviewer code is stored the same way and counts its wrong
+  guesses, closing at 20; a right one does not count. Sessions end after 7 days, after 24 hours idle, at sign-out,
   one by one from the sessions list (`GET /v1/me/sessions`, `DELETE /v1/me/sessions/:id`), or
   all at once when the admin signs out everywhere (`POST /v1/auth/logout-all`). A session keeps
   only the browser, system and device type classified at sign-in (chrome, windows, desktop…), so
@@ -747,47 +755,48 @@ What differs from the hosted service:
 
 ## Architecture decisions
 
-| ADR                                                                          | Decision                                                                   |
-| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| [0001](docs/adr/0001-record-architecture-decisions.md)                       | Record architecture decisions                                              |
-| [0002](docs/adr/0002-clean-architecture.md)                                  | Clean Architecture with ports and adapters                                 |
-| [0003](docs/adr/0003-openapi-from-zod.md)                                    | Generate the OpenAPI 3.1 contract from Zod                                 |
-| [0004](docs/adr/0004-least-privilege-database-roles.md)                      | Least-privilege database roles                                             |
-| [0005](docs/adr/0005-per-event-validation.md)                                | Validate each event of a batch on its own                                  |
-| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                            | Run on Lambda behind CloudFront, with an edge secret                       |
-| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)             | Sign admins in with an emailed code and an opaque session cookie           |
-| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)                     | Answer dashboard queries from the raw events, without rollups              |
-| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)             | Erase a person together with the visits they identified in                 |
-| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)       | Compare an unfinished day up to the same time of day                       |
-| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)                | Send a weekly digest by e-mail from the jobs function                      |
-| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)                 | Let the dashboard keep the session in a cookie of its own host             |
-| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)                 | Fetch each project's icon from its site, and keep a copy                   |
-| [0014](docs/adr/0014-store-the-region-never-the-city.md)                     | Store the viewer's region, never the city                                  |
-| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)                  | Give agents read-only access tokens, scoped to their admin                 |
-| [0016](docs/adr/0016-accounts-own-projects.md)                               | Accounts own projects; a project without one is the operator's             |
-| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                        | Measure each account's month daily; pause ingestion at 150%                |
-| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)          | Billing follows Stripe through its webhook, re-reading the subscription    |
-| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)       | Sign-up behind a switch, tied to the version of the terms accepted         |
-| [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md)     | Owners manage their projects; the operator's stay in the command line      |
-| [0021](docs/adr/0021-people-are-counted-across-the-account.md)               | People are added per project and counted across the account                |
-| [0022](docs/adr/0022-an-account-ends-in-steps.md)                            | An account ends in steps, each done once by the daily job                  |
-| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)                | The welcome follows the subscription, with the daily job as a fallback     |
-| [0024](docs/adr/0024-exports-are-files-with-short-links.md)                  | Exports are files that live a week, reached through links signed on demand |
-| [0025](docs/adr/0025-the-owner-closes-the-account-at-once.md)                | The owner closes the account at once, with a refund inside seven days      |
-| [0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md)            | Repeated free trials are detected and reported, never blocked              |
-| [0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md)                 | A suspension is a mark on the account, not a status                        |
-| [0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md) | The operator closes an account with a chosen refund                        |
-| [0029](docs/adr/0029-a-deletion-can-be-held.md)                              | A deletion can be held for a dispute or a legal order                      |
-| [0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md)          | The operator can stop a person and a token                                 |
-| [0031](docs/adr/0031-people-without-a-project-are-deleted.md)                | People left without a project are deleted after thirty days                |
-| [0032](docs/adr/0032-a-project-reception-can-be-suspended-alone.md)          | A project's reception can be suspended on its own                          |
-| [0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md)                   | A hold keeps everything it covers, a single project included               |
-| [0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md)           | An account can be exempted from the quota pause until a day                |
-| [0035](docs/adr/0035-notices-to-every-owner-go-through-the-jobs-function.md) | Notices to every owner are stored, then sent by the jobs function          |
-| [0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md)              | A larger plan is limits on the account, set by the operator                |
-| [0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md)          | The API is its own OAuth server for Claude                                 |
-| [0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md)      | The MCP endpoint runs the tools of pyxis-mcp inside the API                |
-| [0039](docs/adr/0039-a-refused-batch-is-readable-by-its-page.md)             | A refused batch is readable by the page that sent it                       |
+| ADR                                                                                   | Decision                                                                   |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| [0001](docs/adr/0001-record-architecture-decisions.md)                                | Record architecture decisions                                              |
+| [0002](docs/adr/0002-clean-architecture.md)                                           | Clean Architecture with ports and adapters                                 |
+| [0003](docs/adr/0003-openapi-from-zod.md)                                             | Generate the OpenAPI 3.1 contract from Zod                                 |
+| [0004](docs/adr/0004-least-privilege-database-roles.md)                               | Least-privilege database roles                                             |
+| [0005](docs/adr/0005-per-event-validation.md)                                         | Validate each event of a batch on its own                                  |
+| [0006](docs/adr/0006-lambda-behind-cloudfront.md)                                     | Run on Lambda behind CloudFront, with an edge secret                       |
+| [0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md)                      | Sign admins in with an emailed code and an opaque session cookie           |
+| [0008](docs/adr/0008-dashboard-queries-on-raw-events.md)                              | Answer dashboard queries from the raw events, without rollups              |
+| [0009](docs/adr/0009-erase-a-person-with-their-linked-visits.md)                      | Erase a person together with the visits they identified in                 |
+| [0010](docs/adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)                | Compare an unfinished day up to the same time of day                       |
+| [0011](docs/adr/0011-weekly-digest-from-the-jobs-function.md)                         | Send a weekly digest by e-mail from the jobs function                      |
+| [0012](docs/adr/0012-session-cookie-set-by-the-dashboard.md)                          | Let the dashboard keep the session in a cookie of its own host             |
+| [0013](docs/adr/0013-project-icons-fetched-from-the-site.md)                          | Fetch each project's icon from its site, and keep a copy                   |
+| [0014](docs/adr/0014-store-the-region-never-the-city.md)                              | Store the viewer's region, never the city                                  |
+| [0015](docs/adr/0015-read-only-access-tokens-for-agents.md)                           | Give agents read-only access tokens, scoped to their admin                 |
+| [0016](docs/adr/0016-accounts-own-projects.md)                                        | Accounts own projects; a project without one is the operator's             |
+| [0017](docs/adr/0017-monthly-quota-measured-daily.md)                                 | Measure each account's month daily; pause ingestion at 150%                |
+| [0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md)                   | Billing follows Stripe through its webhook, re-reading the subscription    |
+| [0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md)                | Sign-up behind a switch, tied to the version of the terms accepted         |
+| [0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md)              | Owners manage their projects; the operator's stay in the command line      |
+| [0021](docs/adr/0021-people-are-counted-across-the-account.md)                        | People are added per project and counted across the account                |
+| [0022](docs/adr/0022-an-account-ends-in-steps.md)                                     | An account ends in steps, each done once by the daily job                  |
+| [0023](docs/adr/0023-the-welcome-follows-the-subscription.md)                         | The welcome follows the subscription, with the daily job as a fallback     |
+| [0024](docs/adr/0024-exports-are-files-with-short-links.md)                           | Exports are files that live a week, reached through links signed on demand |
+| [0025](docs/adr/0025-the-owner-closes-the-account-at-once.md)                         | The owner closes the account at once, with a refund inside seven days      |
+| [0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md)                     | Repeated free trials are detected and reported, never blocked              |
+| [0027](docs/adr/0027-a-suspension-is-a-mark-not-a-status.md)                          | A suspension is a mark on the account, not a status                        |
+| [0028](docs/adr/0028-the-operator-closes-an-account-with-a-chosen-refund.md)          | The operator closes an account with a chosen refund                        |
+| [0029](docs/adr/0029-a-deletion-can-be-held.md)                                       | A deletion can be held for a dispute or a legal order                      |
+| [0030](docs/adr/0030-the-operator-can-stop-a-person-and-a-token.md)                   | The operator can stop a person and a token                                 |
+| [0031](docs/adr/0031-people-without-a-project-are-deleted.md)                         | People left without a project are deleted after thirty days                |
+| [0032](docs/adr/0032-a-project-reception-can-be-suspended-alone.md)                   | A project's reception can be suspended on its own                          |
+| [0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md)                            | A hold keeps everything it covers, a single project included               |
+| [0034](docs/adr/0034-an-account-can-be-exempted-from-the-pause.md)                    | An account can be exempted from the quota pause until a day                |
+| [0035](docs/adr/0035-notices-to-every-owner-go-through-the-jobs-function.md)          | Notices to every owner are stored, then sent by the jobs function          |
+| [0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md)                       | A larger plan is limits on the account, set by the operator                |
+| [0037](docs/adr/0037-the-api-is-its-own-oauth-server-for-claude.md)                   | The API is its own OAuth server for Claude                                 |
+| [0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md)               | The MCP endpoint runs the tools of pyxis-mcp inside the API                |
+| [0039](docs/adr/0039-a-refused-batch-is-readable-by-its-page.md)                      | A refused batch is readable by the page that sent it                       |
+| [0040](docs/adr/0040-a-directory-reviewer-signs-in-with-a-code-the-operator-opens.md) | A directory reviewer signs in with a code the operator opens               |
 
 ## Roadmap
 
@@ -828,6 +837,7 @@ What differs from the hosted service:
 - [x] Promotion codes in Checkout, behind a switch
 - [x] A batch refused for its key or its origin is readable by the page that sent it
 - [x] Every e-mail in seven languages
+- [x] A reviewer code for connector directory reviewers, opened and closed by the operator
 
 ## Contributing and license
 
