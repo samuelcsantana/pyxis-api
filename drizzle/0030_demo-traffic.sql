@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "demo_traffic" boolean DEFAULT false NOT NULL;

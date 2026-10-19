@@ -72,3 +72,14 @@ export class ProjectSuspendedError extends DomainError {
     );
   }
 }
+
+export class DemoTrafficInAccountError extends DomainError {
+  readonly code = 'demo_traffic_in_account';
+
+  constructor() {
+    super(
+      'This project belongs to an account: invented visits go only to a project of the ' +
+        'operator, never next to the real events of a customer.',
+    );
+  }
+}

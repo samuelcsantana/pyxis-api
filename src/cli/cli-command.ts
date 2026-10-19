@@ -25,6 +25,7 @@ import type { HoldProjectDeletionUseCase } from '../usecases/projects/hold-proje
 import type { ReleaseProjectDeletionUseCase } from '../usecases/projects/release-project-deletion.usecase';
 import type { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import type { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
+import type { SetDemoTrafficUseCase } from '../usecases/projects/set-demo-traffic.usecase';
 import type { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
 import type { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 
@@ -56,6 +57,7 @@ export interface CliContext {
   readonly resumeProjectIngestion: ResumeProjectIngestionUseCase;
   readonly holdProjectDeletion: HoldProjectDeletionUseCase;
   readonly releaseProjectDeletion: ReleaseProjectDeletionUseCase;
+  readonly setDemoTraffic: SetDemoTrafficUseCase;
   readonly exemptAccountFromQuotaPause: ExemptAccountFromQuotaPauseUseCase;
   readonly createOperatorNotice: CreateOperatorNoticeUseCase;
   close(): Promise<void>;

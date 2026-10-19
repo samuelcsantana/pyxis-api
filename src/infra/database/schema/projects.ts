@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
+import { boolean, index, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 import { MAX_DELETION_HOLD_REASON_LENGTH } from '../../../domain/accounts/account-deletion-hold';
 import { MAX_SUSPENSION_REASON_LENGTH } from '../../../domain/accounts/account-suspension';
 import { accounts } from './accounts';
@@ -24,6 +24,7 @@ export const projects = pgTable(
     deletionHoldReason: varchar('deletion_hold_reason', {
       length: MAX_DELETION_HOLD_REASON_LENGTH,
     }),
+    demoTraffic: boolean('demo_traffic').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('projects_account_id_idx').on(table.accountId)],
