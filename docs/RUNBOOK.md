@@ -364,8 +364,9 @@ still go, without the sentence about a pause). `account:show` prints the exempti
 ### Notices to every account owner
 
 For a change of prices or terms (30 days before, Terms 21.1 and 22.1), a new subprocessor, or an
-outage longer than a day. Write one folder with `en.txt`, `pt-BR.txt` and `es.txt`: the first line
-is the subject, then paragraphs separated by a blank line, plain text only. Then:
+outage longer than a day. Write one folder with `en.txt`, `pt-BR.txt`, `es.txt`, `de.txt`,
+`fr.txt`, `it.txt` and `nl.txt`: the first line of each is the subject, then paragraphs separated
+by a blank line, plain text only. Then:
 
 ```bash
 MIGRATION_DATABASE_URL='<owner connection, direct host>' npm run -s notice:create -- --campaign prices-2026-12 --dir ./notice --dry-run

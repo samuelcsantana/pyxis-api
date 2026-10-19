@@ -88,12 +88,11 @@ Shipping now:
   `prefers-color-scheme`, `lang` and presentation-only tables for screen readers; every value
   HTML-escaped, no tracking pixel and no tracked links. Its only image is the dashboard's PNG
   logo (`/email/pyxis-logo.png` on `DASHBOARD_ORIGIN`, which every link in the e-mails points
-  at too), and its words live in a typed
-  message table in English, Brazilian Portuguese and Spanish. The dashboard sends its own
-  language as an optional `locale` in `POST /v1/auth/request-code`
-  (`{"email":…,"locale":"pt-BR"}`), matched on the language (`pt-PT` gets pt-BR, `es-MX` gets
-  Spanish); no `locale`, or one the API has no email for, gets English, so sign-in never fails
-  over a language
+  at too), and its words live in a typed message table in English, Brazilian Portuguese,
+  Spanish, German, French, Italian and Dutch. The dashboard sends its own language as an
+  optional `locale` in `POST /v1/auth/request-code` (`{"email":…,"locale":"pt-BR"}`), matched
+  on the language (`pt-PT` gets pt-BR, `es-MX` gets Spanish, `de-AT` gets German); no `locale`,
+  or one the API has no email for, gets English, so sign-in never fails over a language
 - Dashboard queries over any range of up to 400 days in the project's time zone:
   `GET /v1/projects/{projectId}/overview` (visits, identified users, conversions and failed
   writes against the previous period, daily activity of both periods, top pages and events; a
@@ -300,8 +299,9 @@ Shipping now:
   as it now does for a held account too; the project settings show `deletion_held_at`
   ([ADR 0033](docs/adr/0033-a-hold-keeps-everything-it-covers.md))
 - Notices to every account owner (prices, terms, a new subprocessor, a long outage):
-  `notice:create --campaign <name> --dir <folder>` reads `en.txt`, `pt-BR.txt` and `es.txt` (a
-  subject line, then plain paragraphs, never interpreted as HTML or Markdown), counts the owners
+  `notice:create --campaign <name> --dir <folder>` reads one file per e-mail language
+  (`en.txt`, `pt-BR.txt`, `es.txt`, `de.txt`, `fr.txt`, `it.txt`, `nl.txt`: a subject line, then
+  plain paragraphs, never interpreted as HTML or Markdown), counts the owners
   reached with `--dry-run`, and stores one pending delivery per account with access
   (`--include-ended` adds the ended ones not yet deleted). The jobs function sends them in each
   owner's language, once, on its daily run or when invoked with `{"job":"account-notices"}`, and
@@ -436,7 +436,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                                       |
 | `npm run -s account:exempt-quota -- --account <id> --until <YYYY-MM-DD>`                                                                                        | Keeps the account from the pause at 150% of the plan until the start of that day (UTC), lifting a pause in place within a minute; `--clear` instead of `--until` ends the exemption                             |
 | `npm run -s account:limits -- --account <id> [--events <n>] [--projects <n>] [--people <n>]`                                                                    | Gives the account its own limits (any subset) and prints them, with anything already over; `--reset` alone goes back to the hosted plan                                                                         |
-| `npm run -s notice:create -- --campaign <name> --dir <folder> [--include-ended] [--dry-run]`                                                                    | Stores a notice to every account owner from `en.txt`, `pt-BR.txt` and `es.txt` in the folder (subject line, then paragraphs) and prints how many owners of each language it reaches; the jobs function sends it |
+| `npm run -s notice:create -- --campaign <name> --dir <folder> [--include-ended] [--dry-run]`                                                                    | Stores a notice to every account owner from one `<language>.txt` per language in the folder (subject line, then paragraphs), and prints how many owners of each language it reaches; the jobs function sends it |
 
 An origin is written exactly as browsers send it: scheme, host and a non-default port, with no
 path or trailing slash (`https://shop.example.com`, `http://localhost:5173`).
