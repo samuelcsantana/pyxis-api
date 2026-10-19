@@ -15,9 +15,9 @@ export const localeSchema = z
   .max(MAX_LANGUAGE_TAG_LENGTH)
   .regex(LANGUAGE_TAG_PATTERN)
   .describe(
-    'The language of the dashboard asking, as a BCP 47 tag (en, pt-BR, es). The email is written ' +
-      'in it when the API has it (matched on the language, so pt-PT gets pt-BR and es-MX gets ' +
-      'es), else in English.',
+    'The language of the dashboard asking, as a BCP 47 tag (en, pt-BR, es, de, fr, it, nl). ' +
+      'The email is written in it when the API has it (matched on the language, so pt-PT gets ' +
+      'pt-BR, es-MX gets es and de-AT gets de), else in English.',
   );
 
 export const requestCodeSchema = z
