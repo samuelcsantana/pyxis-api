@@ -10,6 +10,7 @@ import { OAUTH_CONNECTION_REPOSITORY } from '../../../domain/repositories/oauth-
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
 import { PROJECT_ACCOUNT_STATE_REPOSITORY } from '../../../domain/repositories/project-account-state.repository';
 import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
+import { REVIEWER_CODE_REPOSITORY } from '../../../domain/repositories/reviewer-code.repository';
 import { CLOCK, type Clock } from '../../../domain/services/clock';
 import { MAIL_SENDER } from '../../../domain/services/mail-sender';
 import { RANDOM_SOURCE } from '../../../domain/services/random-source';
@@ -39,6 +40,7 @@ import { DrizzleAdminUserRepository } from '../../repositories/drizzle-admin-use
 import { DrizzleOAuthConnectionRepository } from '../../repositories/drizzle-oauth-connection.repository';
 import { DrizzleOtpCodeRepository } from '../../repositories/drizzle-otp-code.repository';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
+import { DrizzleReviewerCodeRepository } from '../../repositories/drizzle-reviewer-code.repository';
 import {
   CachingProjectAccountStateRepository,
   DrizzleProjectAccountStateRepository,
@@ -73,6 +75,7 @@ import { ReadAccessGuard } from './read-access.guard';
     { provide: RANDOM_SOURCE, useClass: CryptoRandomSource },
     { provide: ADMIN_USER_REPOSITORY, useClass: DrizzleAdminUserRepository },
     { provide: OTP_CODE_REPOSITORY, useClass: DrizzleOtpCodeRepository },
+    { provide: REVIEWER_CODE_REPOSITORY, useClass: DrizzleReviewerCodeRepository },
     { provide: ADMIN_SESSION_REPOSITORY, useClass: DrizzleAdminSessionRepository },
     { provide: ACCESS_TOKEN_REPOSITORY, useClass: DrizzleAccessTokenRepository },
     { provide: OAUTH_CONNECTION_REPOSITORY, useClass: DrizzleOAuthConnectionRepository },

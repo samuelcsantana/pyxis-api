@@ -17,6 +17,10 @@ import {
   OTP_CODE_REPOSITORY,
   type OtpCodeRepository,
 } from '../../domain/repositories/otp-code.repository';
+import {
+  REVIEWER_CODE_REPOSITORY,
+  type ReviewerCodeRepository,
+} from '../../domain/repositories/reviewer-code.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { MAIL_SENDER, type MailSender } from '../../domain/services/mail-sender';
 import { RANDOM_SOURCE, type RandomSource } from '../../domain/services/random-source';
@@ -28,6 +32,7 @@ export class RequestSignInCodeUseCase {
   constructor(
     @Inject(ADMIN_USER_REPOSITORY) private readonly admins: AdminUserRepository,
     @Inject(OTP_CODE_REPOSITORY) private readonly codes: OtpCodeRepository,
+    @Inject(REVIEWER_CODE_REPOSITORY) private readonly reviewerCodes: ReviewerCodeRepository,
     @Inject(MAIL_SENDER) private readonly mail: MailSender,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(RANDOM_SOURCE) private readonly random: RandomSource,
@@ -40,6 +45,10 @@ export class RequestSignInCodeUseCase {
       return;
     }
     const now = this.clock.now();
+    if ((await this.reviewerCodes.findLive(admin.id, now)) !== null) {
+      this.logger.log({ message: 'auth.code_not_sent_to_reviewer', adminUserId: admin.id });
+      return;
+    }
     const recent = await this.codes.countCreatedSince(
       email,
       new Date(now.getTime() - SIGN_IN_CODE_WINDOW_MS),
