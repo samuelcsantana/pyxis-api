@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { createJobsHandler, DAILY_JOB, type JobsHandlerDependencies } from './jobs-handler';
 
 const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
@@ -14,6 +15,7 @@ const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
 const EXPORTS = { done: 1, failed: 0 };
 const NOTICES = { sent: 3, failed: 0 };
+const DEMO_TRAFFIC = { projects: 1, inserted: 480 };
 const LIFECYCLE = {
   welcomes: 1,
   reconciled: 4,
@@ -79,6 +81,10 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
       order.push('icons');
       return Promise.resolve(ICONS);
     },
+    generateDemoTraffic: () => {
+      order.push('demo traffic');
+      return Promise.resolve(DEMO_TRAFFIC);
+    },
   };
 }
 
@@ -90,7 +96,7 @@ describe('createJobsHandler', () => {
     ['an event that is not an object', 'weekly-digest'],
     ['null', null],
   ])(
-    'runs the daily jobs for %s: parameters to icons, notices before the icons',
+    'runs the daily jobs for %s: parameters to demo traffic, notices before the icons',
     async (_label, event) => {
       const order: string[] = [];
 
@@ -104,6 +110,7 @@ describe('createJobsHandler', () => {
         exports: EXPORTS,
         operatorNotices: NOTICES,
         projectIcons: ICONS,
+        demoTraffic: DEMO_TRAFFIC,
       });
       expect(order).toEqual([
         'parameters',
@@ -114,6 +121,7 @@ describe('createJobsHandler', () => {
         'exports',
         'notices',
         'icons',
+        'demo traffic',
       ]);
     },
   );
@@ -166,6 +174,36 @@ describe('createJobsHandler', () => {
 
     await expect(handler()).resolves.toMatchObject({ job: 'daily', projectIcons: null });
     error.mockRestore();
+  });
+
+  it('finishes the daily jobs when the demo traffic fails, logging what it swallowed', async () => {
+    const error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      generateDemoTraffic: () => Promise.reject(new Error('insert timed out')),
+    });
+
+    await expect(handler()).resolves.toMatchObject({
+      job: 'daily',
+      projectIcons: ICONS,
+      demoTraffic: null,
+    });
+    expect(error).toHaveBeenCalledWith({
+      message: 'jobs.demo_traffic_failed',
+      reason: 'insert timed out',
+    });
+    error.mockRestore();
+  });
+
+  it('logs a demo traffic failure that is not an Error too', async () => {
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      generateDemoTraffic: jest
+        .fn<Promise<typeof DEMO_TRAFFIC>, []>()
+        .mockRejectedValue('connection reset'),
+    });
+
+    await expect(handler()).resolves.toMatchObject({ demoTraffic: null });
   });
 
   it('logs a failure that is not an Error too', async () => {

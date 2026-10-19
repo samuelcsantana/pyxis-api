@@ -4,6 +4,7 @@ import type { DatabaseSizeReport } from '../domain/monitoring/database-size';
 import { EXPORT_JOB } from '../infra/exports/lambda-export-dispatcher';
 import type { AccountUsageReport } from '../usecases/accounts/measure-account-usage.usecase';
 import type { AccountLifecycleReport } from '../usecases/accounts/run-account-lifecycle.usecase';
+import type { DemoTrafficReport } from '../usecases/demo-traffic/generate-demo-traffic.usecase';
 import type { DigestReport } from '../usecases/digest/send-weekly-digests.usecase';
 import type { ProjectIconsReport } from '../usecases/projects/refresh-project-icons.usecase';
 import type { RetentionReport } from '../usecases/retention/run-retention.usecase';
@@ -27,6 +28,7 @@ export interface JobsHandlerDependencies {
   readonly processExport: (exportId: string) => Promise<ExportOutcome>;
   readonly processStalledExports: () => Promise<StalledExportsReport>;
   readonly sendOperatorNotices: () => Promise<OperatorNoticesReport>;
+  readonly generateDemoTraffic: () => Promise<DemoTrafficReport>;
 }
 
 export type JobsOutcome =
@@ -40,6 +42,7 @@ export type JobsOutcome =
       readonly exports: StalledExportsReport;
       readonly operatorNotices: OperatorNoticesReport;
       readonly projectIcons: ProjectIconsReport | null;
+      readonly demoTraffic: DemoTrafficReport | null;
     }
   | {
       readonly ok: true;
@@ -89,6 +92,20 @@ async function bestEffortRefreshProjectIcons(
   }
 }
 
+async function bestEffortGenerateDemoTraffic(
+  generate: () => Promise<DemoTrafficReport>,
+): Promise<DemoTrafficReport | null> {
+  try {
+    return await generate();
+  } catch (error) {
+    logger.error({
+      message: 'jobs.demo_traffic_failed',
+      reason: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 export function createJobsHandler(
   dependencies: JobsHandlerDependencies,
 ): (event?: unknown) => Promise<JobsOutcome> {
@@ -116,6 +133,7 @@ export function createJobsHandler(
     const stalledExports = await dependencies.processStalledExports();
     const operatorNotices = await dependencies.sendOperatorNotices();
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
+    const demoTraffic = await bestEffortGenerateDemoTraffic(dependencies.generateDemoTraffic);
     return {
       ok: true,
       job: DAILY_JOB,
@@ -126,6 +144,7 @@ export function createJobsHandler(
       exports: stalledExports,
       operatorNotices,
       projectIcons,
+      demoTraffic,
     };
   };
 }
