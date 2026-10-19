@@ -1,6 +1,7 @@
 import type { Project } from '../domain/entities/project.entity';
 import { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
 import { InMemoryOtpCodeRepository } from './in-memory-otp-code.repository';
+import { InMemoryReviewerCodeRepository } from './in-memory-reviewer-code.repository';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -94,5 +95,37 @@ describe('InMemoryOtpCodeRepository', () => {
       expect.objectContaining({ id: signUp.id }),
     );
     expect(await codes.findLatestValid('ana@example.com', now, 'sign_in')).toBeNull();
+  });
+});
+
+describe('InMemoryReviewerCodeRepository', () => {
+  const now = new Date('2026-10-20T12:00:00.000Z');
+  const later = new Date('2027-10-20T12:00:00.000Z');
+
+  it('reserves attempts while the code lives and is under the cap, never releasing below zero', async () => {
+    const codes = new InMemoryReviewerCodeRepository();
+    await codes.open({ adminUserId: 'ana', codeHash: 'a', createdAt: now, expiresAt: later });
+
+    await codes.releaseAttempt('ana');
+    const first = await codes.reserveAttempt('ana', now, 1);
+    const overTheCap = await codes.reserveAttempt('ana', now, 1);
+
+    expect((await codes.findLive('ana', now))?.failedAttempts).toBe(1);
+    expect(first?.failedAttempts).toBe(1);
+    expect(overTheCap).toBeNull();
+    expect(await codes.reserveAttempt('ana', later, 5)).toBeNull();
+    expect(await codes.findLive('ana', later)).toBeNull();
+  });
+
+  it('ignores an unknown admin and closes a code once', async () => {
+    const codes = new InMemoryReviewerCodeRepository();
+    await codes.open({ adminUserId: 'ana', codeHash: 'a', createdAt: now, expiresAt: later });
+
+    await codes.releaseAttempt('nobody');
+
+    expect(await codes.reserveAttempt('nobody', now, 5)).toBeNull();
+    expect(await codes.findLive('nobody', now)).toBeNull();
+    expect(await codes.close('ana')).toBe(true);
+    expect(await codes.close('ana')).toBe(false);
   });
 });

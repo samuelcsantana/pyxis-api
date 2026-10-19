@@ -18,6 +18,7 @@ import {
   projectIcons,
   projectKeys,
   projects,
+  reviewerCodes,
   termsAcceptances,
   trialCards,
 } from '.';
@@ -39,7 +40,8 @@ function foreignKeyTargets(
     | typeof projectExports
     | typeof oauthConnections
     | typeof oauthAuthorizationRequests
-    | typeof oauthConnectionTokens,
+    | typeof oauthConnectionTokens
+    | typeof reviewerCodes,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -183,6 +185,14 @@ describe('database schema', () => {
     expect(config.indexes.map((index) => index.config.name)).toEqual([
       'trial_cards_trial_started_at_idx',
     ]);
+  });
+
+  it('keeps one reviewer code per admin, gone with its admin', () => {
+    const config = getTableConfig(reviewerCodes);
+
+    expect(config.columns.find((column) => column.primary)?.name).toBe('admin_user_id');
+    expect(foreignKeyTargets(reviewerCodes)).toEqual(['admin_users.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
   });
 
   it('allows only the known purposes of an e-mailed code', () => {

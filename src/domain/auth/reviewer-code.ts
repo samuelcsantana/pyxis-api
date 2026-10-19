@@ -1,0 +1,1 @@
+export const MAX_REVIEWER_CODE_FAILURES = 20;

@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { sha256Hex } from '../../domain/auth/hashing';
 import { SESSION_IDLE_TTL_MS, SESSION_TOUCH_INTERVAL_MS } from '../../domain/auth/session-policy';
+import { MAX_REVIEWER_CODE_FAILURES } from '../../domain/auth/reviewer-code';
 import {
   MAX_SIGN_IN_CODE_ATTEMPTS,
   MAX_SIGN_IN_CODES_PER_WINDOW,
@@ -16,6 +17,7 @@ import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAdminSessionRepository } from '../../test-utils/in-memory-admin-session.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryOtpCodeRepository } from '../../test-utils/in-memory-otp-code.repository';
+import { InMemoryReviewerCodeRepository } from '../../test-utils/in-memory-reviewer-code.repository';
 import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { AuthenticateSessionUseCase } from './authenticate-session.usecase';
@@ -52,6 +54,7 @@ async function setup() {
   admins.addProject(PROJECT);
   const admin = await admins.grantAccess(ADMIN_EMAIL, PROJECT.id);
   const codes = new InMemoryOtpCodeRepository();
+  const reviewerCodes = new InMemoryReviewerCodeRepository();
   const sessions = new InMemoryAdminSessionRepository();
   const mail = new RecordingMailSender();
   return {
@@ -59,10 +62,11 @@ async function setup() {
     admin,
     admins,
     codes,
+    reviewerCodes,
     sessions,
     mail,
-    requestCode: new RequestSignInCodeUseCase(admins, codes, mail, clock, random),
-    verifyCode: new VerifySignInCodeUseCase(admins, codes, sessions, clock, random),
+    requestCode: new RequestSignInCodeUseCase(admins, codes, reviewerCodes, mail, clock, random),
+    verifyCode: new VerifySignInCodeUseCase(admins, codes, reviewerCodes, sessions, clock, random),
     authenticate: new AuthenticateSessionUseCase(sessions, admins, clock),
     signOut: new SignOutUseCase(sessions, clock),
     signOutEverywhere: new SignOutEverywhereUseCase(sessions, clock),
@@ -522,5 +526,145 @@ describe('dashboard sign-in', () => {
         await expect(signOut.execute(token)).resolves.toBeUndefined();
       },
     );
+  });
+});
+
+describe('signing a reviewer in with a code the operator opened', () => {
+  const REVIEWER_CODE = '424242';
+  const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+  let logs: { level: string; message: unknown }[];
+
+  beforeEach(() => {
+    logs = [];
+    const record = (level: string) => (message: unknown) => {
+      logs.push({ level, message });
+    };
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(record('log'));
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation(record('warn'));
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  async function withReviewerCode(lifetimeMs = YEAR_MS) {
+    const context = await setup();
+    const now = context.clock.now();
+    await context.reviewerCodes.open({
+      adminUserId: context.admin.id,
+      codeHash: sha256Hex(REVIEWER_CODE),
+      createdAt: now,
+      expiresAt: new Date(now.getTime() + lifetimeMs),
+    });
+    return context;
+  }
+
+  it('sends no code to the address while its reviewer code is open, answering the same', async () => {
+    const { requestCode, mail, codes, admin } = await withReviewerCode();
+
+    await expect(requestCode.execute(ADMIN_EMAIL)).resolves.toBeUndefined();
+
+    expect(mail.sent).toEqual([]);
+    expect(codes.stored).toEqual([]);
+    expect(logs).toContainEqual({
+      level: 'log',
+      message: { message: 'auth.code_not_sent_to_reviewer', adminUserId: admin.id },
+    });
+  });
+
+  it('signs the reviewer in with the same code as often as needed, keeping their language', async () => {
+    const { verifyCode, sessions, admins, admin, reviewerCodes, clock } = await withReviewerCode();
+    await admins.setEmailLanguage(admin.id, 'de');
+
+    const first = await verifyCode.execute(ADMIN_EMAIL, REVIEWER_CODE, CLIENT);
+    const second = await verifyCode.execute(
+      ` ${ADMIN_EMAIL.toUpperCase()} `,
+      REVIEWER_CODE,
+      CLIENT,
+    );
+
+    expect([first.email, second.email]).toEqual([ADMIN_EMAIL, ADMIN_EMAIL]);
+    expect(sessions.stored).toHaveLength(2);
+    expect((await admins.findById(admin.id))?.emailLanguage).toBe('de');
+    expect((await reviewerCodes.findLive(admin.id, clock.now()))?.failedAttempts).toBe(0);
+    expect(logs).toContainEqual({
+      level: 'log',
+      message: { message: 'auth.reviewer_code_accepted', adminUserId: admin.id },
+    });
+  });
+
+  it('refuses a wrong code, counts it and logs it as any rejected code', async () => {
+    const { verifyCode, sessions, reviewerCodes, admin, clock } = await withReviewerCode();
+
+    await expect(verifyCode.execute(ADMIN_EMAIL, '000000', CLIENT)).rejects.toBeInstanceOf(
+      InvalidSignInCodeError,
+    );
+
+    expect(sessions.stored).toEqual([]);
+    expect((await reviewerCodes.findLive(admin.id, clock.now()))?.failedAttempts).toBe(1);
+    expect(logs).toContainEqual({
+      level: 'warn',
+      message: { message: 'auth.invalid_code_attempt', purpose: 'reviewer' },
+    });
+  });
+
+  it(`closes the code after ${String(MAX_REVIEWER_CODE_FAILURES)} wrong codes, so the right one no longer works`, async () => {
+    const { verifyCode, reviewerCodes, admin } = await withReviewerCode();
+
+    for (let guess = 0; guess < MAX_REVIEWER_CODE_FAILURES; guess += 1) {
+      await expect(verifyCode.execute(ADMIN_EMAIL, '000000', CLIENT)).rejects.toBeInstanceOf(
+        InvalidSignInCodeError,
+      );
+    }
+
+    expect(reviewerCodes.stored.has(admin.id)).toBe(false);
+    expect(logs).toContainEqual({
+      level: 'warn',
+      message: { message: 'auth.reviewer_code_locked', adminUserId: admin.id },
+    });
+    await expect(verifyCode.execute(ADMIN_EMAIL, REVIEWER_CODE, CLIENT)).rejects.toBeInstanceOf(
+      InvalidSignInCodeError,
+    );
+  });
+
+  it('refuses a code that reached the cap before this attempt, even the right one', async () => {
+    const { verifyCode, reviewerCodes, admin, sessions } = await withReviewerCode();
+    const open = reviewerCodes.stored.get(admin.id);
+    if (open === undefined) {
+      throw new Error('The reviewer code was not opened.');
+    }
+    reviewerCodes.stored.set(admin.id, { ...open, failedAttempts: MAX_REVIEWER_CODE_FAILURES });
+
+    await expect(verifyCode.execute(ADMIN_EMAIL, REVIEWER_CODE, CLIENT)).rejects.toBeInstanceOf(
+      InvalidSignInCodeError,
+    );
+    expect(sessions.stored).toEqual([]);
+  });
+
+  it('refuses a suspended reviewer without counting the attempt', async () => {
+    const { verifyCode, admins, admin, reviewerCodes, sessions, clock } = await withReviewerCode();
+    await admins.suspend(admin.id, clock.now());
+
+    await expect(verifyCode.execute(ADMIN_EMAIL, REVIEWER_CODE, CLIENT)).rejects.toBeInstanceOf(
+      InvalidSignInCodeError,
+    );
+
+    expect(sessions.stored).toEqual([]);
+    expect((await reviewerCodes.findLive(admin.id, clock.now()))?.failedAttempts).toBe(0);
+  });
+
+  it('goes back to e-mailed codes once the reviewer code expired', async () => {
+    const { requestCode, verifyCode, mail, clock } = await withReviewerCode(60_000);
+    clock.advanceBy(60_000);
+
+    await requestCode.execute(ADMIN_EMAIL);
+
+    expect(mail.sent).toHaveLength(1);
+    await expect(verifyCode.execute(ADMIN_EMAIL, REVIEWER_CODE, CLIENT)).rejects.toBeInstanceOf(
+      InvalidSignInCodeError,
+    );
+    await expect(verifyCode.execute(ADMIN_EMAIL, '123456', CLIENT)).resolves.toMatchObject({
+      email: ADMIN_EMAIL,
+    });
   });
 });

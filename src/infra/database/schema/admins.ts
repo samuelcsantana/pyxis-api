@@ -119,3 +119,13 @@ export const otpCodes = pgTable(
     check('otp_codes_purpose_check', sql`${table.purpose} in (${PURPOSE_VALUES})`),
   ],
 );
+
+export const reviewerCodes = pgTable('reviewer_codes', {
+  adminUserId: uuid('admin_user_id')
+    .primaryKey()
+    .references(() => adminUsers.id, { onDelete: 'cascade' }),
+  codeHash: char('code_hash', { length: 64 }).notNull(),
+  failedAttempts: integer('failed_attempts').notNull().default(0),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+});
