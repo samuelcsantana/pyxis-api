@@ -317,6 +317,12 @@ Shipping now:
   kept only as a hash, that sign in as an e-mailed code does, as often as needed, for a year by
   default (365 days at most). While it is open the address is e-mailed no code; 20 wrong codes
   close it, and `reviewer:close` ends it at once ([ADR 0040](docs/adr/0040-a-directory-reviewer-signs-in-with-a-code-the-operator-opens.md))
+- Demo traffic for a project of the operator, so a reviewer reads a populated project without
+  anyone's real numbers: `project:demo-traffic --project <id>` marks it (never a project of an
+  account), and the daily job fills it with the invented visits of a store, 25 to 62 a day,
+  from 90 days back the first time, then each new day up to the moment it runs. The same day
+  always gives the same events and ids, so a run never adds a day twice; `--off` stops it
+  ([ADR 0041](docs/adr/0041-a-demo-project-is-filled-with-invented-visits-every-day.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
   visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
@@ -439,6 +445,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s project:resume -- --project <id>`                                                                                                                   | Lifts the suspension of the reception; the project takes events again within a minute                                                                                                                           |
 | `npm run -s project:hold -- --project <id> --reason "<why>"`                                                                                                    | Holds the deletion of the project alone, keeping the reason (500 characters at most): its owner cannot delete it, the retention keeps its events, and the deletion of its account keeps it                      |
 | `npm run -s project:release -- --project <id>`                                                                                                                  | Lets the retention and the deletion of the project go ahead again, with the next daily job                                                                                                                      |
+| `npm run -s project:demo-traffic -- --project <id> [--off]`                                                                                                     | Marks a project without an account for the invented visits the daily job adds; `--off` stops them, keeping what was added                                                                                       |
 | `npm run -s account:close -- --account <id> --reason "<why>" --refund <full\|prorata\|none>`                                                                    | Ends the account at once as the operator: cancels the subscription, refunds as asked, revokes the keys; the daily job e-mails the owner; needs `STRIPE_SECRET_KEY` when there is a subscription                 |
 | `npm run -s account:hold -- --account <id> --reason "<why>"`                                                                                                    | Holds the deletion of the account and of its projects, keeping the reason (500 characters at most); the owner sees the hold, not the reason                                                                     |
 | `npm run -s account:release -- --account <id>`                                                                                                                  | Lets the deletion go ahead again; an account ended more than thirty days ago goes with the next daily job                                                                                                       |
@@ -510,12 +517,12 @@ Anywhere else, `npm run -s jobs:run` (after `npm run build`) runs the same handl
 `DATABASE_URL` and the rest of the API's environment, and prints the outcome as one JSON line.
 Run it from cron at the same times:
 
-| Command                                                | What it runs                                                                                                                                        |
-| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run -s jobs:run`                                  | The daily jobs: database size, retention, monthly usage and its pause, the account lifecycle, stalled exports, stored notices and the project icons |
-| `npm run -s jobs:run -- --job weekly-digest`           | The weekly digest to every admin who keeps it on                                                                                                    |
-| `npm run -s jobs:run -- --job account-notices`         | The notices stored by `notice:create`, without waiting for the daily run                                                                            |
-| `npm run -s jobs:run -- --job export --export-id <id>` | One export; without `JOBS_FUNCTION_NAME` an export asked for in the dashboard waits for the daily run                                               |
+| Command                                                | What it runs                                                                                                                                                          |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run -s jobs:run`                                  | The daily jobs: database size, retention, monthly usage and its pause, the account lifecycle, stalled exports, stored notices, the project icons and the demo traffic |
+| `npm run -s jobs:run -- --job weekly-digest`           | The weekly digest to every admin who keeps it on                                                                                                                      |
+| `npm run -s jobs:run -- --job account-notices`         | The notices stored by `notice:create`, without waiting for the daily run                                                                                              |
+| `npm run -s jobs:run -- --job export --export-id <id>` | One export; without `JOBS_FUNCTION_NAME` an export asked for in the dashboard waits for the daily run                                                                 |
 
 It exits with 0 when the job ran, 1 when it failed and 2 for wrong arguments. If nothing runs it,
 retention never deletes anything, the monthly usage is never measured and exports never finish.
@@ -797,6 +804,7 @@ What differs from the hosted service:
 | [0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md)               | The MCP endpoint runs the tools of pyxis-mcp inside the API                |
 | [0039](docs/adr/0039-a-refused-batch-is-readable-by-its-page.md)                      | A refused batch is readable by the page that sent it                       |
 | [0040](docs/adr/0040-a-directory-reviewer-signs-in-with-a-code-the-operator-opens.md) | A directory reviewer signs in with a code the operator opens               |
+| [0041](docs/adr/0041-a-demo-project-is-filled-with-invented-visits-every-day.md)      | A demo project is filled with invented visits every day                    |
 
 ## Roadmap
 
@@ -838,6 +846,7 @@ What differs from the hosted service:
 - [x] A batch refused for its key or its origin is readable by the page that sent it
 - [x] Every e-mail in seven languages
 - [x] A reviewer code for connector directory reviewers, opened and closed by the operator
+- [x] Demo traffic: invented visits added every day to a project of the operator
 
 ## Contributing and license
 
