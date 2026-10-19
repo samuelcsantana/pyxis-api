@@ -75,4 +75,92 @@ export const SIGN_IN_CODE_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, SignInC
       dashboard: 'Panel',
       logoAlt: 'Pyxis',
     },
+    de: {
+      language: 'de',
+      subject: (code) => `${code} ist dein Code für die Anmeldung bei Pyxis`,
+      preheader: (code, minutes) =>
+        `Dein Code ist ${code}. Er läuft in ${String(minutes)} Minuten ab und gilt nur einmal.`,
+      heading: 'Dein Code für die Anmeldung',
+      instruction:
+        'Gib diesen Code auf der Seite „Bei Pyxis anmelden“ ein, um dein Dashboard zu öffnen.',
+      expiry: (minutes) => `Er läuft in ${String(minutes)} Minuten ab und gilt nur einmal.`,
+      neverShare:
+        'Gib diesen Code niemals weiter. Niemand von Pyxis wird dich jemals danach fragen.',
+      notRequested:
+        'Du wolltest dich nicht anmelden? Dann kannst du diese E-Mail ignorieren: Ohne diesen ' +
+        'Code kann sich niemand anmelden.',
+      about:
+        'Pyxis ist datenschutzfreundliche Produktanalyse: ' +
+        'keine Cookies, keine personenbezogenen Daten in den Ereignissen.',
+      reason:
+        'Du hast diese E-Mail bekommen, weil für diese Adresse eine Anmeldung im Pyxis-Dashboard ' +
+        'angefordert wurde.',
+      dashboard: 'Dashboard',
+      logoAlt: 'Pyxis',
+    },
+    fr: {
+      language: 'fr',
+      subject: (code) => `${code} est votre code de connexion à Pyxis`,
+      preheader: (code, minutes) =>
+        `Votre code est ${code}. Il expire dans ${String(minutes)} minutes et ne sert qu’une fois.`,
+      heading: 'Votre code de connexion',
+      instruction:
+        'Saisissez ce code sur la page de connexion de Pyxis pour ouvrir votre tableau de bord.',
+      expiry: (minutes) => `Il expire dans ${String(minutes)} minutes et ne sert qu’une fois.`,
+      neverShare: 'Ne communiquez jamais ce code. Personne chez Pyxis ne vous le demandera.',
+      notRequested:
+        'Vous n’avez pas demandé à vous connecter ? Vous pouvez ignorer cet e-mail : ' +
+        'personne ne peut se connecter sans ce code.',
+      about:
+        'Pyxis est un outil d’analytique produit respectueux de la vie privée : ' +
+        'aucun cookie, aucune donnée personnelle dans les événements.',
+      reason:
+        'Vous recevez cet e-mail parce qu’une connexion au tableau de bord Pyxis a été demandée ' +
+        'pour cette adresse.',
+      dashboard: 'Tableau de bord',
+      logoAlt: 'Pyxis',
+    },
+    it: {
+      language: 'it',
+      subject: (code) => `${code} è il tuo codice di accesso a Pyxis`,
+      preheader: (code, minutes) =>
+        `Il tuo codice è ${code}. Scade tra ${String(minutes)} minuti e vale una sola volta.`,
+      heading: 'Il tuo codice di accesso',
+      instruction:
+        'Scrivi questo codice nella pagina “Accedi a Pyxis” per aprire la tua dashboard.',
+      expiry: (minutes) => `Scade tra ${String(minutes)} minuti e vale una sola volta.`,
+      neverShare: 'Non condividere mai questo codice. Nessuno di Pyxis te lo chiederà mai.',
+      notRequested:
+        'Non hai chiesto di accedere? Puoi ignorare questa email: nessuno può accedere senza ' +
+        'questo codice.',
+      about:
+        'Pyxis è uno strumento di analisi di prodotto attento alla privacy: ' +
+        'nessun cookie e nessun dato personale negli eventi.',
+      reason:
+        'Hai ricevuto questa email perché è stato richiesto un accesso alla dashboard di Pyxis ' +
+        'con questo indirizzo.',
+      dashboard: 'Dashboard',
+      logoAlt: 'Pyxis',
+    },
+    nl: {
+      language: 'nl',
+      subject: (code) => `${code} is je inlogcode voor Pyxis`,
+      preheader: (code, minutes) =>
+        `Je code is ${code}. Hij verloopt over ${String(minutes)} minuten en werkt één keer.`,
+      heading: 'Je inlogcode',
+      instruction: 'Vul deze code in op de inlogpagina van Pyxis om je dashboard te openen.',
+      expiry: (minutes) => `Hij verloopt over ${String(minutes)} minuten en werkt één keer.`,
+      neverShare: 'Deel deze code nooit. Niemand van Pyxis zal je er ooit om vragen.',
+      notRequested:
+        'Niet geprobeerd in te loggen? Dan kun je deze e-mail negeren: niemand kan inloggen ' +
+        'zonder deze code.',
+      about:
+        'Pyxis is productanalyse die privacy vooropstelt: ' +
+        'geen cookies en geen persoonsgegevens in events.',
+      reason:
+        'Je ontvangt deze e-mail omdat er voor dit adres is gevraagd om in te loggen op het ' +
+        'Pyxis-dashboard.',
+      dashboard: 'Dashboard',
+      logoAlt: 'Pyxis',
+    },
   };

@@ -50,7 +50,15 @@ describe('isCampaign', () => {
 
 describe('countByLanguage', () => {
   it('counts the owners of each language, zero included', () => {
-    expect(countByLanguage(['pt-BR', 'en', 'pt-BR'])).toEqual({ en: 1, 'pt-BR': 2, es: 0 });
+    expect(countByLanguage(['pt-BR', 'en', 'pt-BR', 'de', 'nl'])).toEqual({
+      en: 1,
+      'pt-BR': 2,
+      es: 0,
+      de: 1,
+      fr: 0,
+      it: 0,
+      nl: 1,
+    });
   });
 });
 

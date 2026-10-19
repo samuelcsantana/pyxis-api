@@ -21,6 +21,10 @@ const CONTENT: NoticeContent = {
   en: { subject: 'Prices change', paragraphs: ['From December.'] },
   'pt-BR': { subject: 'Os preços mudam', paragraphs: ['A partir de dezembro.'] },
   es: { subject: 'Los precios cambian', paragraphs: ['Desde diciembre.'] },
+  de: { subject: 'Die Preise ändern sich', paragraphs: ['Ab Dezember.'] },
+  fr: { subject: 'Les prix changent', paragraphs: ['À partir de décembre.'] },
+  it: { subject: 'I prezzi cambiano', paragraphs: ['Da dicembre.'] },
+  nl: { subject: 'De prijzen veranderen', paragraphs: ['Vanaf december.'] },
 };
 
 describe('operator notices against a real Postgres', () => {

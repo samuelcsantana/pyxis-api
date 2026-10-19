@@ -147,6 +147,18 @@ describe('StripeBillingGateway.createCheckout', () => {
     expect(requests[2]?.form.get('locale')).toBe('en');
   });
 
+  it.each(['de', 'fr', 'it', 'nl'] as const)('opens Checkout in %s', async (language) => {
+    const { gateway, answer, requests } = setup();
+    answer('GET', '/v1/prices', { body: MONTHLY_PRICE });
+    answer('POST', '/v1/checkout/sessions', {
+      body: { id: 'cs_3', object: 'checkout.session', url: 'https://checkout.stripe.com/c/3' },
+    });
+
+    await gateway.createCheckout({ ...CHECKOUT, language });
+
+    expect(requests[1]?.form.get('locale')).toBe(language);
+  });
+
   it('is unavailable without an active price for the period', async () => {
     const { gateway, answer } = setup();
     answer('GET', '/v1/prices', { body: { object: 'list', data: [] } });

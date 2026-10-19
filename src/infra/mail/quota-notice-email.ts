@@ -25,6 +25,10 @@ const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   en: 'en-US',
   'pt-BR': 'pt-BR',
   es: 'es',
+  de: 'de',
+  fr: 'fr',
+  it: 'it',
+  nl: 'nl',
 };
 const PERCENT = 100;
 

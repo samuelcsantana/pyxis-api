@@ -88,4 +88,94 @@ export const INVITATION_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, Invitatio
     dashboard: 'Panel',
     logoAlt: 'Pyxis',
   },
+  de: {
+    language: 'de',
+    subject: (w) => `${w.inviter} hat dich bei Pyxis zu ${w.project} hinzugefügt`,
+    preheader: (w) =>
+      `Melde dich mit dieser Adresse an, um die Berichte von ${w.project} zu sehen.`,
+    heading: (w) => `Du hast jetzt Zugriff auf ${w.project}`,
+    added: (w) =>
+      `${w.inviter} hat dich bei Pyxis zum Projekt ${w.project} hinzugefügt. Du kannst seine ` +
+      'Berichte lesen; nur der Inhaber des Kontos ändert die Einstellungen.',
+    howToSignIn:
+      'Es gibt kein Passwort: Öffne das Dashboard, gib diese Adresse ein, und ein Anmeldecode ' +
+      'kommt per E-Mail.',
+    openDashboard: 'Dashboard öffnen',
+    notExpected:
+      'Du weißt nicht, wer das geschickt hat? Dann kannst du diese E-Mail ignorieren: Ohne den ' +
+      'Code, der an diese Adresse geht, kann sich niemand anmelden.',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
+    reason:
+      'Du hast diese E-Mail bekommen, weil der Inhaber eines Pyxis-Kontos diese Adresse zu ' +
+      'einem seiner Projekte hinzugefügt hat.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  fr: {
+    language: 'fr',
+    subject: (w) => `${w.inviter} vous a ajouté au projet ${w.project} sur Pyxis`,
+    preheader: (w) => `Connectez-vous avec cette adresse pour voir les rapports de ${w.project}.`,
+    heading: (w) => `Vous avez maintenant accès à ${w.project}`,
+    added: (w) =>
+      `${w.inviter} vous a ajouté au projet ${w.project} sur Pyxis. Vous pouvez consulter ses ` +
+      'rapports ; seul le propriétaire du compte modifie ses paramètres.',
+    howToSignIn:
+      'Il n’y a pas de mot de passe : ouvrez le tableau de bord, saisissez cette adresse et un ' +
+      'code de connexion vous parvient par e-mail.',
+    openDashboard: 'Ouvrir le tableau de bord',
+    notExpected:
+      'Vous ne savez pas qui vous l’a envoyé ? Vous pouvez ignorer cet e-mail : personne ne ' +
+      'peut se connecter sans le code envoyé à cette adresse.',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
+    reason:
+      'Vous recevez cet e-mail parce que le propriétaire d’un compte Pyxis a ajouté cette ' +
+      'adresse ' +
+      'à l’un de ses projets.',
+    dashboard: 'Tableau de bord',
+    logoAlt: 'Pyxis',
+  },
+  it: {
+    language: 'it',
+    subject: (w) => `${w.inviter} ti ha aggiunto al progetto ${w.project} su Pyxis`,
+    preheader: (w) => `Accedi con questo indirizzo per vedere i report di ${w.project}.`,
+    heading: (w) => `Ora hai accesso a ${w.project}`,
+    added: (w) =>
+      `${w.inviter} ti ha aggiunto al progetto ${w.project} su Pyxis. Puoi leggerne i report; ` +
+      'solo il proprietario dell’account ne modifica le impostazioni.',
+    howToSignIn:
+      'Non c’è nessuna password: apri la dashboard, scrivi questo indirizzo e ti arriverà un ' +
+      'codice di accesso via email.',
+    openDashboard: 'Apri la dashboard',
+    notExpected:
+      'Non sai chi l’ha inviata? Puoi ignorare questa email: nessuno può accedere senza il ' +
+      'codice inviato a questo indirizzo.',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
+    reason:
+      'Hai ricevuto questa email perché il proprietario di un account Pyxis ha aggiunto questo ' +
+      'indirizzo a uno dei suoi progetti.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  nl: {
+    language: 'nl',
+    subject: (w) => `${w.inviter} heeft je toegevoegd aan ${w.project} in Pyxis`,
+    preheader: (w) => `Log in met dit adres om de rapporten van ${w.project} te bekijken.`,
+    heading: (w) => `Je hebt nu toegang tot ${w.project}`,
+    added: (w) =>
+      `${w.inviter} heeft je toegevoegd aan het project ${w.project} in Pyxis. Je kunt de ` +
+      'rapporten lezen; alleen de eigenaar van het account wijzigt de instellingen.',
+    howToSignIn:
+      'Er is geen wachtwoord: open het dashboard, typ dit adres en je krijgt een inlogcode ' +
+      'per e-mail.',
+    openDashboard: 'Dashboard openen',
+    notExpected:
+      'Weet je niet wie dit heeft gestuurd? Dan kun je deze e-mail negeren: niemand kan inloggen ' +
+      'zonder de code die naar dit adres wordt gestuurd.',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
+    reason:
+      'Je ontvangt deze e-mail omdat de eigenaar van een Pyxis-account dit adres heeft ' +
+      'toegevoegd aan een van zijn projecten.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
 };

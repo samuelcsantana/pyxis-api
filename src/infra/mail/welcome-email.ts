@@ -20,6 +20,10 @@ const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   en: 'en-US',
   'pt-BR': 'pt-BR',
   es: 'es',
+  de: 'de',
+  fr: 'fr',
+  it: 'it',
+  nl: 'nl',
 };
 const BODY: TextBlock = { tone: 'ink', size: 'body', margin: '16px 0 0 0' };
 const FOOTNOTE: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };

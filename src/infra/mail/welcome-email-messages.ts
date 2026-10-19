@@ -92,4 +92,110 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     dashboard: 'Panel',
     logoAlt: 'Pyxis',
   },
+  de: {
+    language: 'de',
+    subject: 'Willkommen bei Pyxis',
+    heading: 'Willkommen bei Pyxis',
+    trialPreheader: (day) => `Deine kostenlose Testphase läuft bis zum ${day}.`,
+    activePreheader: 'Dein Abo ist aktiv.',
+    trialConfirmed: (day) =>
+      `Dein Abo ist bestätigt. Die kostenlose Testphase läuft bis zum ${day}; dann bucht Stripe ` +
+      `die ` +
+      'erste Zahlung ab, und du kannst vorher im Abrechnungsportal kündigen.',
+    activeConfirmed:
+      'Dein Abo ist bestätigt und aktiv. Du kannst es jederzeit im Abrechnungsportal ändern ' +
+      'oder kündigen.',
+    nextStep:
+      'Lege als Nächstes dein erstes Projekt im Dashboard an: Gib die Adresse deiner Website an ' +
+      'und füge das Snippet mit seinem Schlüssel in deine Seiten ein. Der erste Besuch erscheint ' +
+      'innerhalb von Sekunden.',
+    terms: (terms) =>
+      'Du hast die Nutzungsbedingungen, den Auftragsverarbeitungsvertrag und die ' +
+      `Datenschutzerklärung in Version ${terms.version} akzeptiert, verfasst auf brasilianischem ` +
+      `Portugiesisch: ${terms.url}`,
+    openDashboard: 'Dashboard öffnen',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
+    reason: 'Du hast diese E-Mail bekommen, weil du Pyxis abonniert hast.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  fr: {
+    language: 'fr',
+    subject: 'Bienvenue dans Pyxis',
+    heading: 'Bienvenue dans Pyxis',
+    trialPreheader: (day) => `Votre essai gratuit dure jusqu’au ${day}.`,
+    activePreheader: 'Votre abonnement est actif.',
+    trialConfirmed: (day) =>
+      `Votre abonnement est confirmé. L’essai gratuit dure jusqu’au ${day}\u202f; Stripe prélève ` +
+      'alors le premier paiement, et vous pouvez résilier avant dans le portail de facturation.',
+    activeConfirmed:
+      'Votre abonnement est confirmé et actif. Vous pouvez le modifier ou le résilier à tout ' +
+      'moment dans le portail de facturation.',
+    nextStep:
+      'Ensuite, créez votre premier projet dans le tableau de bord : indiquez l’adresse de ' +
+      'votre site et ajoutez à vos pages l’extrait de code avec sa clé. La première visite ' +
+      'apparaît en quelques secondes.',
+    terms: (terms) =>
+      'Vous avez accepté les Conditions d’utilisation, l’Accord de traitement des données et la ' +
+      `Politique de confidentialité, version ${terms.version}, rédigés en portugais du ` +
+      `Brésil\u00a0: ` +
+      terms.url,
+    openDashboard: 'Ouvrir le tableau de bord',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
+    reason: 'Vous recevez cet e-mail parce que vous vous êtes abonné à Pyxis.',
+    dashboard: 'Tableau de bord',
+    logoAlt: 'Pyxis',
+  },
+  it: {
+    language: 'it',
+    subject: 'Ti diamo il benvenuto in Pyxis',
+    heading: 'Ti diamo il benvenuto in Pyxis',
+    trialPreheader: (day) => `La tua prova gratuita dura fino al giorno ${day}.`,
+    activePreheader: 'Il tuo abbonamento è attivo.',
+    trialConfirmed: (day) =>
+      `Il tuo abbonamento è confermato. La prova gratuita dura fino al giorno ${day}; quel ` +
+      `giorno ` +
+      'Stripe addebita il primo pagamento, e puoi annullare prima nel portale di fatturazione.',
+    activeConfirmed:
+      'Il tuo abbonamento è confermato e attivo. Puoi modificarlo o annullarlo in qualsiasi ' +
+      'momento nel portale di fatturazione.',
+    nextStep:
+      'Ora crea il tuo primo progetto nella dashboard: indica l’indirizzo del tuo sito e ' +
+      'aggiungi ' +
+      'alle tue pagine lo snippet con la sua chiave. La prima visita compare in pochi secondi.',
+    terms: (terms) =>
+      'Hai accettato i Termini di utilizzo, l’Accordo sul trattamento dei dati e l’Informativa ' +
+      `sulla privacy, versione ${terms.version}, redatti in portoghese brasiliano: ${terms.url}`,
+    openDashboard: 'Apri la dashboard',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
+    reason: 'Hai ricevuto questa email perché hai sottoscritto un abbonamento a Pyxis.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  nl: {
+    language: 'nl',
+    subject: 'Welkom bij Pyxis',
+    heading: 'Welkom bij Pyxis',
+    trialPreheader: (day) => `Je gratis proefperiode loopt tot ${day}.`,
+    activePreheader: 'Je abonnement is actief.',
+    trialConfirmed: (day) =>
+      `Je abonnement is bevestigd. De gratis proefperiode loopt tot ${day}; dan schrijft Stripe ` +
+      'de eerste betaling af, en je kunt vóór die dag opzeggen in het facturatieportaal.',
+    activeConfirmed:
+      'Je abonnement is bevestigd en actief. Je kunt het op elk moment wijzigen of opzeggen in ' +
+      'het facturatieportaal.',
+    nextStep:
+      'Maak nu je eerste project aan in het dashboard: geef het adres van je site op en zet het ' +
+      'fragment met de sleutel in je pagina’s. Het eerste bezoek verschijnt binnen enkele ' +
+      'seconden.',
+    terms: (terms) =>
+      'Je bent akkoord gegaan met de Gebruiksvoorwaarden, de Verwerkersovereenkomst en het ' +
+      `Privacybeleid, versie ${terms.version}, opgesteld in het Braziliaans-Portugees: ` +
+      terms.url,
+    openDashboard: 'Dashboard openen',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
+    reason: 'Je ontvangt deze e-mail omdat je je hebt geabonneerd op Pyxis.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
 };

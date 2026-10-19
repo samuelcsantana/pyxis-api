@@ -15,6 +15,7 @@ const HOSTILE = `<i>&"'`;
 const RANGE_DASH = ' – ';
 const COMPACT_RANGE_DASH = '\u2013';
 const NO_BREAK_SPACE = '\u00a0';
+const NARROW_NO_BREAK_SPACE = '\u202f';
 const ESCAPED_HOSTILE = '&lt;i&gt;&amp;&quot;&#39;';
 
 const BUSY_WEEK: WeeklyDigest = {
@@ -425,6 +426,72 @@ describe('a week with one visit and none the week before', () => {
       `Acme Store · Oct 5${RANGE_DASH}11 · 1,001 visits`,
     );
   });
+});
+
+describe('the weekly digest subject in German, French, Italian and Dutch', () => {
+  const thousandVisits = { ...BUSY_WEEK, visits: { current: 1001, previous: 725 } };
+
+  it.each([
+    ['de', `5.${COMPACT_RANGE_DASH}11. Okt. · 1.001 Besuche (+38${NO_BREAK_SPACE}%)`],
+    [
+      'fr',
+      `5${COMPACT_RANGE_DASH}11 oct. · 1${NARROW_NO_BREAK_SPACE}001 visites (+38${NO_BREAK_SPACE}%)`,
+    ],
+    ['it', `05${COMPACT_RANGE_DASH}11 ott · 1001 visite (+38%)`],
+    ['nl', `5${COMPACT_RANGE_DASH}11 okt · 1.001 bezoeken (+38%)`],
+  ] as const)('writes the week, the visits and the change the way %s does', (language, rest) => {
+    expect(buildWeeklyDigestEmail(thousandVisits, language, LINKS).subject).toBe(
+      `Acme Store · ${rest}`,
+    );
+  });
+});
+
+describe('a quiet week and a week of ones in German, French, Italian and Dutch', () => {
+  const ones: WeeklyDigest = {
+    ...BUSY_WEEK,
+    visits: { current: 1, previous: 0 },
+    identifiedUsers: { current: 1, previous: 0 },
+    convertingVisits: { current: 1, previous: 0 },
+    failedWrites: { current: { failed: 1, total: 9 }, previous: { failed: 0, total: 0 } },
+  };
+
+  it.each([
+    [
+      'de',
+      'Letzte Woche kamen keine Besuche. Das letzte Ereignis ging am 2. Oktober 2026 um 11:31 ein.',
+      '1 identifizierter Nutzer · 1 Besuch mit Conversion · 1 fehlgeschlagener Schreibzugriff',
+      '1 Besuch',
+    ],
+    [
+      'fr',
+      'Aucune visite la semaine dernière. Le dernier événement a été reçu le 2 octobre 2026 à 11:31.',
+      '1 utilisateur identifié · 1 visite avec conversion · 1 écriture en échec',
+      '1 visite',
+    ],
+    [
+      'it',
+      'Nessuna visita è arrivata la settimana scorsa. L’ultimo evento è stato ricevuto il giorno ' +
+        '2 ottobre 2026 alle ore 11:31.',
+      '1 utente identificato · 1 visita con conversione · 1 scrittura fallita',
+      '1 visita',
+    ],
+    [
+      'nl',
+      'Er kwamen vorige week geen bezoeken binnen. Het laatste event is ontvangen op 2 oktober ' +
+        '2026 om 11:31.',
+      '1 geïdentificeerde gebruiker · 1 bezoek met conversie · 1 mislukt schrijfverzoek',
+      '1 bezoek',
+    ],
+  ] as const)(
+    'previews a quiet week by its last event and counts ones in the singular in %s',
+    (language, quiet, singular, oneVisit) => {
+      const single = buildWeeklyDigestEmail(ones, language, LINKS);
+
+      expect(preheaderOf(buildWeeklyDigestEmail(QUIET_WEEK, language, LINKS).html)).toBe(quiet);
+      expect(preheaderOf(single.html)).toBe(singular);
+      expect(single.subject.endsWith(` · ${oneVisit}`)).toBe(true);
+    },
+  );
 });
 
 describe.each(EMAIL_LANGUAGES)('the %s weekly digest', (language) => {

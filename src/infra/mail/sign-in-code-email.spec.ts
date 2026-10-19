@@ -147,6 +147,24 @@ describe('buildSignInCodeEmail in Spanish', () => {
   });
 });
 
+describe('buildSignInCodeEmail in German, French, Italian and Dutch', () => {
+  it.each([
+    ['de', '123456 ist dein Code für die Anmeldung bei Pyxis', 'Gib diesen Code auf der Seite'],
+    ['fr', '123456 est votre code de connexion à Pyxis', 'Saisissez ce code sur la page'],
+    ['it', '123456 è il tuo codice di accesso a Pyxis', 'Scrivi questo codice nella pagina'],
+    ['nl', '123456 is je inlogcode voor Pyxis', 'Vul deze code in op de inlogpagina'],
+  ] as const)(
+    'writes the %s e-mail in its language, the code first in the subject',
+    (language, subject, instruction) => {
+      const email = buildSignInCodeEmail(CODE, language, LINKS);
+
+      expect(email.subject).toBe(subject);
+      expect(email.html).toContain(`<html lang="${language}" dir="ltr">`);
+      expect(email.text).toContain(instruction);
+    },
+  );
+});
+
 describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
   const email = buildSignInCodeEmail(CODE, language, LINKS);
 
@@ -241,6 +259,18 @@ describe('buildSignUpCodeEmail', () => {
     );
     expect(buildSignUpCodeEmail(CODE, 'es', LINKS).subject).toBe(
       '123456 es tu código para crear una cuenta de Pyxis',
+    );
+    expect(buildSignUpCodeEmail(CODE, 'de', LINKS).subject).toBe(
+      '123456 ist dein Code, um ein Pyxis-Konto anzulegen',
+    );
+    expect(buildSignUpCodeEmail(CODE, 'fr', LINKS).subject).toBe(
+      '123456 est votre code pour créer un compte Pyxis',
+    );
+    expect(buildSignUpCodeEmail(CODE, 'it', LINKS).subject).toBe(
+      '123456 è il tuo codice per creare un account Pyxis',
+    );
+    expect(buildSignUpCodeEmail(CODE, 'nl', LINKS).subject).toBe(
+      '123456 is je code om een Pyxis-account aan te maken',
     );
   });
 

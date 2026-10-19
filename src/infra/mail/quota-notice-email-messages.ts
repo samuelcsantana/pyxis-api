@@ -134,4 +134,151 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
     dashboard: 'Panel',
     logoAlt: 'Pyxis',
   },
+  de: {
+    language: 'de',
+    warningSubject: (w) =>
+      `Dein Pyxis-Konto hat ${w.percent} der Ereignisse für ${w.month} verbraucht`,
+    warningPreheader: (w) =>
+      `Bisher ${w.events} von ${w.limit} Ereignissen. Es wird nichts abgeschaltet.`,
+    warningHeading: (w) => `${w.percent} der Ereignisse dieses Monats`,
+    warningCount: (w) =>
+      `Dein Konto hat im ${w.month} ${w.events} seiner ${w.limit} Ereignisse empfangen, Stand ` +
+      `${w.measuredOn}.`,
+    warningCarriesOn: {
+      80: 'Noch ändert sich nichts: Deine Websites senden wie gewohnt Ereignisse.',
+      100: 'Es wird nichts abgeschaltet: Deine Websites senden wie gewohnt Ereignisse.',
+    },
+    warningPause: (w) =>
+      `Erreicht das Konto in diesem Monat ${w.pauseAtEvents} Ereignisse (150\u00a0% des Plans), ` +
+      `wird ` +
+      `die Messung bis zum ${w.pauseUntil} pausiert, und die in der Zwischenzeit gesendeten ` +
+      'Ereignisse werden verworfen.',
+    pausedSubject: (w) => `Pyxis hat die Messung deiner Websites bis zum ${w.resumesOn} pausiert`,
+    pausedPreheader: (w) =>
+      `Dein Konto hat im ${w.month} ${w.events} Ereignisse empfangen, 150\u00a0% des Plans.`,
+    pausedHeading: 'Die Messung ist pausiert',
+    pausedCount: (w) =>
+      `Dein Konto hat im ${w.month} ${w.events} Ereignisse empfangen, 150\u00a0% der ${w.limit} ` +
+      'in seinem Plan.',
+    pausedEffect: (w) =>
+      `Bis zum ${w.resumesOn} werden die Ereignisse, die deine Websites senden, verworfen und ` +
+      'erscheinen nicht im Dashboard. Danach läuft die Messung von selbst wieder an.',
+    support: (address) =>
+      `Um über einen größeren Plan zu sprechen, antworte auf diese E-Mail oder schreib an ` +
+      `${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
+    reason: 'Du hast diese E-Mail bekommen, weil du Inhaber eines Pyxis-Kontos bist.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  fr: {
+    language: 'fr',
+    warningSubject: (w) =>
+      `Votre compte Pyxis a utilisé ${w.percent} de ses événements mensuels ` + `en ${w.month}`,
+    warningPreheader: (w) =>
+      `${w.events} événements sur ${w.limit} jusqu’ici. Rien n’est interrompu.`,
+    warningHeading: (w) => `${w.percent} des événements de ce mois-ci`,
+    warningCount: (w) =>
+      `Votre compte a reçu ${w.events} de ses ${w.limit} événements en ${w.month}, comptés le ` +
+      `${w.measuredOn}.`,
+    warningCarriesOn: {
+      80:
+        'Rien ne change pour l’instant : vos sites continuent d’envoyer des événements ' +
+        'normalement.',
+      100: 'Rien n’est interrompu : vos sites continuent d’envoyer des événements normalement.',
+    },
+    warningPause: (w) =>
+      `Si le compte atteint ${w.pauseAtEvents} événements ce mois-ci (150\u202f% de la formule), ` +
+      `la mesure est mise en pause jusqu’au ${w.pauseUntil} et les événements envoyés ` +
+      `entre-temps ` +
+      'sont perdus.',
+    pausedSubject: (w) => `Pyxis a mis en pause la mesure de vos sites jusqu’au ${w.resumesOn}`,
+    pausedPreheader: (w) =>
+      `Votre compte a reçu ${w.events} événements en ${w.month}, soit 150\u202f% de la formule.`,
+    pausedHeading: 'La mesure est en pause',
+    pausedCount: (w) =>
+      `Votre compte a reçu ${w.events} événements en ${w.month}, soit 150\u202f% des ${w.limit} ` +
+      'prévus par sa formule.',
+    pausedEffect: (w) =>
+      `Jusqu’au ${w.resumesOn}, les événements envoyés par vos sites sont perdus et ` +
+      `n’apparaîtront ` +
+      'pas dans le tableau de bord. La mesure reprendra ensuite d’elle-même.',
+    support: (address) =>
+      `Pour parler d’une formule supérieure, répondez à cet e-mail ou écrivez à ${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
+    reason: 'Vous recevez cet e-mail parce que vous êtes propriétaire d’un compte Pyxis.',
+    dashboard: 'Tableau de bord',
+    logoAlt: 'Pyxis',
+  },
+  it: {
+    language: 'it',
+    warningSubject: (w) =>
+      `Il tuo account Pyxis ha raggiunto quota ${w.percent} degli eventi di ${w.month}`,
+    warningPreheader: (w) => `${w.events} eventi su ${w.limit} finora. Non viene bloccato nulla.`,
+    warningHeading: (w) => `${w.percent} degli eventi di questo mese`,
+    warningCount: (w) =>
+      `Il tuo account ha ricevuto ${w.events} dei suoi ${w.limit} eventi di ${w.month}, ` +
+      `conteggio del giorno ${w.measuredOn}.`,
+    warningCarriesOn: {
+      80: 'Per ora non cambia nulla: i tuoi siti continuano a inviare eventi come sempre.',
+      100: 'Non viene bloccato nulla: i tuoi siti continuano a inviare eventi come sempre.',
+    },
+    warningPause: (w) =>
+      `Se l’account arriva a ${w.pauseAtEvents} eventi questo mese (il 150% del piano), la ` +
+      `misurazione va in pausa fino al giorno ${w.pauseUntil} e gli eventi inviati nel frattempo ` +
+      'vengono scartati.',
+    pausedSubject: (w) =>
+      `Pyxis ha messo in pausa la misurazione dei tuoi siti fino al giorno ${w.resumesOn}`,
+    pausedPreheader: (w) =>
+      `Il tuo account ha ricevuto ${w.events} eventi a ${w.month}, il 150% del piano.`,
+    pausedHeading: 'Misurazione in pausa',
+    pausedCount: (w) =>
+      `Il tuo account ha ricevuto ${w.events} eventi a ${w.month}, il 150% dei ${w.limit} ` +
+      `previsti dal piano.`,
+    pausedEffect: (w) =>
+      `Fino al giorno ${w.resumesOn}, gli eventi inviati dai tuoi siti vengono scartati e non ` +
+      'compariranno nella dashboard. Da quel giorno la misurazione riprende da sola.',
+    support: (address) =>
+      `Per parlare di un piano più grande, rispondi a questa email o scrivi a ${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
+    reason: 'Hai ricevuto questa email perché possiedi un account Pyxis.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  nl: {
+    language: 'nl',
+    warningSubject: (w) =>
+      `Je Pyxis-account heeft ${w.percent} van de events van ${w.month} gebruikt`,
+    warningPreheader: (w) =>
+      `${w.events} van ${w.limit} events tot nu toe. Er wordt niets afgesloten.`,
+    warningHeading: (w) => `${w.percent} van de events van deze maand`,
+    warningCount: (w) =>
+      `Je account heeft in ${w.month} ${w.events} van de ${w.limit} events ontvangen, geteld op ` +
+      `${w.measuredOn}.`,
+    warningCarriesOn: {
+      80: 'Er verandert nog niets: je sites blijven gewoon events versturen.',
+      100: 'Er wordt niets afgesloten: je sites blijven gewoon events versturen.',
+    },
+    warningPause: (w) =>
+      `Bereikt het account deze maand ${w.pauseAtEvents} events (150% van het abonnement), dan ` +
+      `wordt het meten gepauzeerd tot ${w.pauseUntil} en worden de events die in de tussentijd ` +
+      'worden verstuurd weggegooid.',
+    pausedSubject: (w) => `Pyxis heeft het meten van je sites gepauzeerd tot ${w.resumesOn}`,
+    pausedPreheader: (w) =>
+      `Je account heeft in ${w.month} ${w.events} events ontvangen, 150% van het abonnement.`,
+    pausedHeading: 'Het meten is gepauzeerd',
+    pausedCount: (w) =>
+      `Je account heeft in ${w.month} ${w.events} events ontvangen, 150% van de ${w.limit} in ` +
+      `het abonnement.`,
+    pausedEffect: (w) =>
+      `Tot ${w.resumesOn} worden de events die je sites versturen weggegooid en verschijnen ze ` +
+      'niet in het dashboard. Daarna wordt het meten vanzelf hervat.',
+    support: (address) =>
+      `Wil je het over een groter abonnement hebben? Beantwoord deze e-mail of mail naar ` +
+      `${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
+    reason: 'Je ontvangt deze e-mail omdat je eigenaar bent van een Pyxis-account.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
 };

@@ -12,6 +12,16 @@ const CONTENT: NoticeContent = {
   en: { subject: 'Prices change', paragraphs: ['From December the plan costs more.'] },
   'pt-BR': { subject: 'Os preços mudam', paragraphs: ['A partir de dezembro o plano custa mais.'] },
   es: { subject: 'Los precios cambian', paragraphs: ['Desde diciembre el plan cuesta más.'] },
+  de: { subject: 'Die Preise ändern sich', paragraphs: ['Ab Dezember kostet der Plan mehr.'] },
+  fr: {
+    subject: 'Les prix changent',
+    paragraphs: ['À partir de décembre, le forfait coûte plus cher.'],
+  },
+  it: { subject: 'I prezzi cambiano', paragraphs: ['Da dicembre il piano costa di più.'] },
+  nl: {
+    subject: 'De prijzen veranderen',
+    paragraphs: ['Vanaf december kost het abonnement meer.'],
+  },
 };
 
 function setup() {
@@ -60,7 +70,7 @@ describe('CreateOperatorNoticeUseCase', () => {
       campaign: 'prices',
       created: false,
       recipients: 2,
-      byLanguage: { en: 1, 'pt-BR': 1, es: 0 },
+      byLanguage: { en: 1, 'pt-BR': 1, es: 0, de: 0, fr: 0, it: 0, nl: 0 },
     });
     await send.execute();
     expect(mail.operatorNotices).toEqual([]);
