@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.25.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.24.0...v0.25.0) (2026-10-19)
+
+
+### Features
+
+* **mail:** write every e-mail in German, French, Italian and Dutch ([743d5ac](https://github.com/samuelcsantana/pyxis-api/commit/743d5aceda7baee80b561ba0ef4cd98f1495597e))
+
+
+### Documentation
+
+* **api:** name German, French, Italian and Dutch among the e-mail languages ([c9a021e](https://github.com/samuelcsantana/pyxis-api/commit/c9a021ef341a9dfd5fc104e603cac1d8ed24d579))
+
 ## [0.24.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.23.0...v0.24.0) (2026-10-18)
 
 
