@@ -44,6 +44,8 @@
     "admin:resume": "node dist/cli/admin-resume.main.js",
     "token:revoke": "node dist/cli/token-revoke.main.js",
     "connection:revoke": "node dist/cli/connection-revoke.main.js",
+    "reviewer:open": "node dist/cli/reviewer-open.main.js",
+    "reviewer:close": "node dist/cli/reviewer-close.main.js",
     "usage:report": "node dist/cli/usage-report.main.js",
     "jobs:run": "node dist/cli/jobs-run.main.js",
     "account:create": "node dist/cli/account-create.main.js",

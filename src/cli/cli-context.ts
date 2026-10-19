@@ -19,6 +19,7 @@ import { DrizzleAdminSuspensionRepository } from '../infra/repositories/drizzle-
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleOAuthConnectionRepository } from '../infra/repositories/drizzle-oauth-connection.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
+import { DrizzleReviewerCodeRepository } from '../infra/repositories/drizzle-reviewer-code.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
 import { DrizzleProjectSuspensionRepository } from '../infra/repositories/drizzle-project-suspension.repository';
 import { DrizzleProjectDeletionHoldRepository } from '../infra/repositories/drizzle-project-deletion-hold.repository';
@@ -31,7 +32,9 @@ import { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release-acco
 import { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
+import { CloseReviewerCodeUseCase } from '../usecases/auth/close-reviewer-code.usecase';
 import { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import { OpenReviewerCodeUseCase } from '../usecases/auth/open-reviewer-code.usecase';
 import { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
 import { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
 import { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
@@ -81,6 +84,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
   const connections = new DrizzleOAuthConnectionRepository(db);
   const projectSuspensions = new DrizzleProjectSuspensionRepository(db);
   const projectHolds = new DrizzleProjectDeletionHoldRepository(db);
+  const reviewerCodes = new DrizzleReviewerCodeRepository(db);
   return {
     createProject: new CreateProjectUseCase(settings, random, accounts),
     createProjectKey: new CreateProjectKeyUseCase(settings, keys, random),
@@ -126,6 +130,8 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     resumeAdmin: new ResumeAdminUseCase(admins, adminSuspensions),
     revokeAccessToken: new RevokeAccessTokenAsOperatorUseCase(accessTokens, clock),
     revokeConnection: new RevokeConnectionAsOperatorUseCase(connections, clock),
+    openReviewerCode: new OpenReviewerCodeUseCase(admins, reviewerCodes, clock, random),
+    closeReviewerCode: new CloseReviewerCodeUseCase(admins, reviewerCodes),
     suspendProjectIngestion: new SuspendProjectIngestionUseCase(projectSuspensions, clock),
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),

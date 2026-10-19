@@ -7,7 +7,9 @@ import type { ReleaseAccountDeletionUseCase } from '../usecases/accounts/release
 import type { ResumeAccountUseCase } from '../usecases/accounts/resume-account.usecase';
 import type { ShowAccountUseCase } from '../usecases/accounts/show-account.usecase';
 import type { SuspendAccountUseCase } from '../usecases/accounts/suspend-account.usecase';
+import type { CloseReviewerCodeUseCase } from '../usecases/auth/close-reviewer-code.usecase';
 import type { GrantAdminAccessUseCase } from '../usecases/auth/grant-admin-access.usecase';
+import type { OpenReviewerCodeUseCase } from '../usecases/auth/open-reviewer-code.usecase';
 import type { ResumeAdminUseCase } from '../usecases/auth/resume-admin.usecase';
 import type { RevokeAccessTokenAsOperatorUseCase } from '../usecases/auth/revoke-access-token-as-operator.usecase';
 import type { SuspendAdminUseCase } from '../usecases/auth/suspend-admin.usecase';
@@ -48,6 +50,8 @@ export interface CliContext {
   readonly resumeAdmin: ResumeAdminUseCase;
   readonly revokeAccessToken: RevokeAccessTokenAsOperatorUseCase;
   readonly revokeConnection: RevokeConnectionAsOperatorUseCase;
+  readonly openReviewerCode: OpenReviewerCodeUseCase;
+  readonly closeReviewerCode: CloseReviewerCodeUseCase;
   readonly suspendProjectIngestion: SuspendProjectIngestionUseCase;
   readonly resumeProjectIngestion: ResumeProjectIngestionUseCase;
   readonly holdProjectDeletion: HoldProjectDeletionUseCase;
