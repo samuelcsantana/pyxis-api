@@ -25,6 +25,7 @@ import { keyCreateCommand } from './key-create.command';
 import { noticeCreateCommand } from './notice-create.command';
 import { keyRevokeCommand } from './key-revoke.command';
 import { projectCreateCommand } from './project-create.command';
+import { projectDemoTrafficCommand } from './project-demo-traffic.command';
 import { projectDeleteCommand } from './project-delete.command';
 import { projectHoldCommand } from './project-hold.command';
 import { projectReleaseCommand } from './project-release.command';
@@ -1214,5 +1215,50 @@ describe('reviewer:open and reviewer:close', () => {
     expect(closed.err).toEqual([expect.stringContaining('e-mailed sign-in codes again')]);
     expect(again.out).toEqual([`admin_user_id=${reviewer.id}`, 'closed=false']);
     expect(again.err).toEqual(['This admin had no reviewer code open.']);
+  });
+});
+
+describe('project:demo-traffic', () => {
+  it('parses the project and an optional --off, refusing an id that is not a UUID', () => {
+    expect(projectDemoTrafficCommand.parse(['--project', PROJECT_ID])).toEqual({
+      projectId: PROJECT_ID,
+      demoTraffic: true,
+    });
+    expect(projectDemoTrafficCommand.parse(['--project', PROJECT_ID, '--off'])).toEqual({
+      projectId: PROJECT_ID,
+      demoTraffic: false,
+    });
+    expect(() => projectDemoTrafficCommand.parse(['--project', 'demo'])).toThrow(CliUsageError);
+  });
+
+  it('marks a project of the operator, says when the visits come, and unmarks it', async () => {
+    const context = inMemoryCliContext();
+    context.demoTraffic.add({ projectId: PROJECT_ID, projectName: 'Demo store', accountId: null });
+    const marked = captureOutput();
+    const unmarked = captureOutput();
+
+    await projectDemoTrafficCommand.execute(
+      context,
+      { projectId: PROJECT_ID, demoTraffic: true },
+      marked,
+    );
+    await projectDemoTrafficCommand.execute(
+      context,
+      { projectId: PROJECT_ID, demoTraffic: false },
+      unmarked,
+    );
+
+    expect(marked.out).toEqual([
+      `project_id=${PROJECT_ID}`,
+      'name=Demo store',
+      'demo_traffic=true',
+    ]);
+    expect(marked.err).toEqual([expect.stringContaining('the 90 days before today')]);
+    expect(unmarked.out).toEqual([
+      `project_id=${PROJECT_ID}`,
+      'name=Demo store',
+      'demo_traffic=false',
+    ]);
+    expect(unmarked.err).toEqual([expect.stringContaining('adds nothing more')]);
   });
 });

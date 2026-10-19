@@ -18,6 +18,7 @@ import { DrizzleAdminSessionRepository } from '../infra/repositories/drizzle-adm
 import { DrizzleAdminSuspensionRepository } from '../infra/repositories/drizzle-admin-suspension.repository';
 import { DrizzleAdminUserRepository } from '../infra/repositories/drizzle-admin-user.repository';
 import { DrizzleOAuthConnectionRepository } from '../infra/repositories/drizzle-oauth-connection.repository';
+import { DrizzleDemoTrafficRepository } from '../infra/repositories/drizzle-demo-traffic.repository';
 import { DrizzleProjectKeyRepository } from '../infra/repositories/drizzle-project-key.repository';
 import { DrizzleReviewerCodeRepository } from '../infra/repositories/drizzle-reviewer-code.repository';
 import { DrizzleProjectSettingsRepository } from '../infra/repositories/drizzle-project-settings.repository';
@@ -54,6 +55,7 @@ import { HoldProjectDeletionUseCase } from '../usecases/projects/hold-project-de
 import { ReleaseProjectDeletionUseCase } from '../usecases/projects/release-project-deletion.usecase';
 import { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
+import { SetDemoTrafficUseCase } from '../usecases/projects/set-demo-traffic.usecase';
 import { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext } from './cli-command';
@@ -136,6 +138,7 @@ export function openCliContext(env: Record<string, string | undefined>): CliCont
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),
     releaseProjectDeletion: new ReleaseProjectDeletionUseCase(projectHolds),
+    setDemoTraffic: new SetDemoTrafficUseCase(new DrizzleDemoTrafficRepository(db)),
     exemptAccountFromQuotaPause: new ExemptAccountFromQuotaPauseUseCase(
       new DrizzleAccountQuotaExemptionRepository(db),
     ),

@@ -13,6 +13,7 @@ import { InMemoryProjectRepository } from './in-memory-project.repository';
 import { InMemoryNoticeRepository } from './in-memory-notice.repository';
 import { InMemoryProjectSuspensionRepository } from './in-memory-project-suspension.repository';
 import { InMemoryProjectDeletionHoldRepository } from './in-memory-project-deletion-hold.repository';
+import { InMemoryDemoTrafficRepository } from './in-memory-demo-traffic.repository';
 import { InMemoryReviewerCodeRepository } from './in-memory-reviewer-code.repository';
 import { SequenceRandomSource } from './sequence-random-source';
 import { StubProjectUsageQuery } from './stub-project-usage.query';
@@ -43,6 +44,7 @@ import { HoldProjectDeletionUseCase } from '../usecases/projects/hold-project-de
 import { ReleaseProjectDeletionUseCase } from '../usecases/projects/release-project-deletion.usecase';
 import { ResumeProjectIngestionUseCase } from '../usecases/projects/resume-project-ingestion.usecase';
 import { RevokeProjectKeyUseCase } from '../usecases/projects/revoke-project-key.usecase';
+import { SetDemoTrafficUseCase } from '../usecases/projects/set-demo-traffic.usecase';
 import { SuspendProjectIngestionUseCase } from '../usecases/projects/suspend-project-ingestion.usecase';
 import { UpdateProjectUseCase } from '../usecases/projects/update-project.usecase';
 import type { CliContext, CommandOutput } from '../cli/cli-command';
@@ -75,6 +77,7 @@ export function inMemoryCliContext(): CliContext & {
   readonly projectHolds: InMemoryProjectDeletionHoldRepository;
   readonly notices: InMemoryNoticeRepository;
   readonly reviewerCodes: InMemoryReviewerCodeRepository;
+  readonly demoTraffic: InMemoryDemoTrafficRepository;
   closed: boolean;
 } {
   const store = new InMemoryProjectRepository();
@@ -93,6 +96,7 @@ export function inMemoryCliContext(): CliContext & {
   const projectHolds = new InMemoryProjectDeletionHoldRepository();
   const notices = new InMemoryNoticeRepository();
   const reviewerCodes = new InMemoryReviewerCodeRepository();
+  const demoTraffic = new InMemoryDemoTrafficRepository();
   const clock = new FixedClock(new Date('2026-10-06T14:00:00.000Z'));
   const random = new SequenceRandomSource(Array.from({ length: 62 }, (_, index) => index));
   const context = {
@@ -112,6 +116,7 @@ export function inMemoryCliContext(): CliContext & {
     projectHolds,
     notices,
     reviewerCodes,
+    demoTraffic,
     closed: false,
     createProject: new CreateProjectUseCase(store, random, accounts),
     createProjectKey: new CreateProjectKeyUseCase(store, store, random),
@@ -140,6 +145,7 @@ export function inMemoryCliContext(): CliContext & {
     resumeProjectIngestion: new ResumeProjectIngestionUseCase(projectSuspensions),
     holdProjectDeletion: new HoldProjectDeletionUseCase(projectHolds, clock),
     releaseProjectDeletion: new ReleaseProjectDeletionUseCase(projectHolds),
+    setDemoTraffic: new SetDemoTrafficUseCase(demoTraffic),
     exemptAccountFromQuotaPause: new ExemptAccountFromQuotaPauseUseCase(accounts),
     createOperatorNotice: new CreateOperatorNoticeUseCase(notices, clock),
     close: () => {

@@ -370,6 +370,43 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
+  it('marks a project of the operator for demo traffic, never one in an account', async () => {
+    const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
+    try {
+      const operators = await context.createProject.execute({
+        name: 'Demo store',
+        allowedOrigins: ['https://store.example.com'],
+      });
+      const account = await context.createCompedAccount.execute({
+        ownerEmail: 'owner@example.com',
+      });
+      const customers = await context.createProject.execute({
+        name: 'Shop',
+        allowedOrigins: ['https://shop.example.com'],
+        accountId: account.accountId,
+      });
+
+      const marked = await context.setDemoTraffic.execute({
+        projectId: operators.projectId,
+        demoTraffic: true,
+      });
+
+      expect(marked.demoTraffic).toBe(true);
+      await expect(
+        context.setDemoTraffic.execute({ projectId: customers.projectId, demoTraffic: true }),
+      ).rejects.toThrow('belongs to an account');
+      const rows = await owner<{ name: string; demo_traffic: boolean }[]>`
+        SELECT name, demo_traffic FROM projects ORDER BY name
+      `;
+      expect(rows).toEqual([
+        { name: 'Demo store', demo_traffic: true },
+        { name: 'Shop', demo_traffic: false },
+      ]);
+    } finally {
+      await context.close();
+    }
+  });
+
   it('opens and closes a reviewer code with the migration connection', async () => {
     const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
     try {

@@ -36,6 +36,7 @@
     "project:resume": "node dist/cli/project-resume.main.js",
     "project:hold": "node dist/cli/project-hold.main.js",
     "project:release": "node dist/cli/project-release.main.js",
+    "project:demo-traffic": "node dist/cli/project-demo-traffic.main.js",
     "key:create": "node dist/cli/key-create.main.js",
     "key:revoke": "node dist/cli/key-revoke.main.js",
     "admin:grant": "node dist/cli/admin-grant.main.js",
