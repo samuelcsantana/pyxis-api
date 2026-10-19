@@ -27,7 +27,8 @@ queries and erases a person's events on request, without cookies or personal dat
 
 > **Status:** in production since 2026-10-06 at `api.pyxis-analytics.dev` (AWS Lambda behind
 > CloudFront, sa-east-1): ingestion, dashboard sign-in and queries, erasure, retention and the
-> weekly digest. Since 2026-10-16 it is also the remote MCP server that Claude connects to, at
+> weekly digest. Since 2026-10-15 it opens sign-up for the hosted plan, billed through Stripe, and
+> since 2026-10-16 it is also the remote MCP server that Claude connects to, at
 > `https://api.pyxis-analytics.dev/mcp`. `main` is deployed by the deploy script on request (see
 > [Roadmap](#roadmap)).
 
@@ -808,7 +809,7 @@ What differs from the hosted service:
 - [x] E-mail preferences: the weekly digest switch and the admin's language
 - [x] Weekly digest e-mail on Mondays
 - [x] Sign-in abuse alarms: rejected codes and refused code requests, read from the logs
-- [x] Read-only access tokens for agents (an MCP server that uses them comes next)
+- [x] Read-only access tokens for agents, the ones `pyxis-mcp` reads with
 - [x] Accounts that own projects, with the hosted plan's project limit
 - [x] Monthly quota per account, measured daily, ingestion paused at 150%
 - [x] Billing through Stripe: Checkout, portal and the webhook that keeps each account's status
@@ -824,6 +825,9 @@ What differs from the hosted service:
       hold a deletion, revoke a token; alarms on failed refunds and account e-mails
 - [x] OAuth server for the Claude connector, behind a switch
 - [x] The remote MCP endpoint, `/mcp`, with the tools of `pyxis-mcp`
+- [x] Promotion codes in Checkout, behind a switch
+- [x] A batch refused for its key or its origin is readable by the page that sent it
+- [x] Every e-mail in seven languages
 
 ## Contributing and license
 
