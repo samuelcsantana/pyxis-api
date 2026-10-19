@@ -460,13 +460,17 @@ describe('notice:create', () => {
     writeFileSync(path.join(directory, 'en.txt'), 'Prices change\n\nFrom December.\n');
     writeFileSync(path.join(directory, 'pt-BR.txt'), 'Os preços mudam\n\nA partir de dezembro.\n');
     writeFileSync(path.join(directory, 'es.txt'), 'Los precios cambian\n\nDesde diciembre.\n');
+    writeFileSync(path.join(directory, 'de.txt'), 'Die Preise ändern sich\n\nAb Dezember.\n');
+    writeFileSync(path.join(directory, 'fr.txt'), 'Les prix changent\n\nÀ partir de décembre.\n');
+    writeFileSync(path.join(directory, 'it.txt'), 'I prezzi cambiano\n\nDa dicembre.\n');
+    writeFileSync(path.join(directory, 'nl.txt'), 'De prijzen veranderen\n\nVanaf december.\n');
   });
 
   afterEach(() => {
     rmSync(directory, { recursive: true, force: true });
   });
 
-  it('reads the three languages from the folder, with the flags', () => {
+  it('reads the seven languages from the folder, with the flags', () => {
     expect(
       noticeCreateCommand.parse([
         '--campaign',
@@ -482,6 +486,10 @@ describe('notice:create', () => {
         en: { subject: 'Prices change', paragraphs: ['From December.'] },
         'pt-BR': { subject: 'Os preços mudam', paragraphs: ['A partir de dezembro.'] },
         es: { subject: 'Los precios cambian', paragraphs: ['Desde diciembre.'] },
+        de: { subject: 'Die Preise ändern sich', paragraphs: ['Ab Dezember.'] },
+        fr: { subject: 'Les prix changent', paragraphs: ['À partir de décembre.'] },
+        it: { subject: 'I prezzi cambiano', paragraphs: ['Da dicembre.'] },
+        nl: { subject: 'De prijzen veranderen', paragraphs: ['Vanaf december.'] },
       },
       includeEnded: true,
       dryRun: true,
@@ -492,9 +500,9 @@ describe('notice:create', () => {
     expect(() => noticeCreateCommand.parse(['--campaign', 'Prices!', '--dir', directory])).toThrow(
       CliUsageError,
     );
-    rmSync(path.join(directory, 'es.txt'));
+    rmSync(path.join(directory, 'nl.txt'));
     expect(() => noticeCreateCommand.parse(['--campaign', 'prices', '--dir', directory])).toThrow(
-      /es\.txt/,
+      /nl\.txt/,
     );
   });
 
@@ -520,6 +528,10 @@ describe('notice:create', () => {
       'recipients_en=0',
       'recipients_pt-BR=1',
       'recipients_es=0',
+      'recipients_de=0',
+      'recipients_fr=0',
+      'recipients_it=0',
+      'recipients_nl=0',
     ]);
     expect(dry.err).toEqual([expect.stringContaining('without --dry-run')]);
     expect(stored.out).toContain('dry_run=false');

@@ -32,6 +32,10 @@ const STRIPE_LOCALES: Readonly<Record<EmailLanguage, Stripe.Checkout.SessionCrea
     en: 'en',
     'pt-BR': 'pt-BR',
     es: 'es',
+    de: 'de',
+    fr: 'fr',
+    it: 'it',
+    nl: 'nl',
   };
 
 type ExpandableId = string | { readonly id: string } | null;

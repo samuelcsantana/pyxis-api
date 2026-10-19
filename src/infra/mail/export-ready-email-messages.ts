@@ -74,4 +74,76 @@ export const EXPORT_READY_EMAIL_MESSAGES: Readonly<
     dashboard: 'Panel',
     logoAlt: 'Pyxis',
   },
+  de: {
+    language: 'de',
+    subject: (w) => `Dein Export von ${w.project} ist fertig`,
+    preheader: (w) => `${w.events} Ereignisse, herunterladbar bis zum ${w.until}.`,
+    heading: 'Export fertig',
+    contents: (w) =>
+      `Die Ereignisse von ${w.project} liegen in einer komprimierten CSV-Datei: ${w.events} ` +
+      'Ereignisse, eines pro Zeile.',
+    availability: (w) =>
+      `Die Datei kann bis zum ${w.until} heruntergeladen werden; danach wird sie gelöscht. Lade ` +
+      `sie ` +
+      'im Dashboard herunter, angemeldet als Inhaber des Kontos.',
+    download: 'Datei herunterladen',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
+    reason:
+      'Du hast diese E-Mail bekommen, weil du einen Export eines Pyxis-Projekts angefordert hast.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  fr: {
+    language: 'fr',
+    subject: (w) => `Votre export de ${w.project} est prêt`,
+    preheader: (w) => `${w.events} événements, à télécharger jusqu’au ${w.until}.`,
+    heading: 'Export prêt',
+    contents: (w) =>
+      `Les événements de ${w.project} sont dans un fichier CSV compressé\u00a0: ${w.events} ` +
+      'événements, un par ligne.',
+    availability: (w) =>
+      `Le fichier peut être téléchargé jusqu’au ${w.until}\u202f; il est ensuite supprimé. ` +
+      'Téléchargez-le depuis le tableau de bord, en vous connectant en tant que propriétaire du ' +
+      'compte.',
+    download: 'Télécharger le fichier',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
+    reason: 'Vous recevez cet e-mail parce que vous avez demandé l’export d’un projet Pyxis.',
+    dashboard: 'Tableau de bord',
+    logoAlt: 'Pyxis',
+  },
+  it: {
+    language: 'it',
+    subject: (w) => `L’esportazione di ${w.project} è pronta`,
+    preheader: (w) => `${w.events} eventi, da scaricare entro il giorno ${w.until}.`,
+    heading: 'Esportazione pronta',
+    contents: (w) =>
+      `Gli eventi di ${w.project} sono in un file CSV compresso: ${w.events} eventi, uno per ` +
+      'riga.',
+    availability: (w) =>
+      `Il file si può scaricare fino al giorno ${w.until}; dopo viene eliminato. Scaricalo dalla ` +
+      'dashboard, con l’accesso del proprietario dell’account.',
+    download: 'Scarica il file',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
+    reason: 'Hai ricevuto questa email perché hai richiesto l’esportazione di un progetto Pyxis.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  nl: {
+    language: 'nl',
+    subject: (w) => `Je export van ${w.project} is klaar`,
+    preheader: (w) => `${w.events} events, te downloaden tot ${w.until}.`,
+    heading: 'Export klaar',
+    contents: (w) =>
+      `De events van ${w.project} staan in een gecomprimeerd CSV-bestand: ${w.events} events, ` +
+      'één per regel.',
+    availability: (w) =>
+      `Het bestand is te downloaden tot ${w.until}; daarna wordt het verwijderd. Download het ` +
+      `via ` +
+      'het dashboard, ingelogd als eigenaar van het account.',
+    download: 'Bestand downloaden',
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
+    reason: 'Je ontvangt deze e-mail omdat je een export van een Pyxis-project hebt aangevraagd.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
 };

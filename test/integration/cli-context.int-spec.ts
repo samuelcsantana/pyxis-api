@@ -358,7 +358,7 @@ describe('openCliContext against a real Postgres', () => {
 
       const outcome = await context.createOperatorNotice.execute({
         campaign: 'prices',
-        content: { en: text, 'pt-BR': text, es: text },
+        content: { en: text, 'pt-BR': text, es: text, de: text, fr: text, it: text, nl: text },
         includeEnded: false,
         dryRun: false,
       });

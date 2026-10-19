@@ -159,4 +159,191 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
     dashboard: 'Panel',
     logoAlt: 'Pyxis',
   },
+  de: {
+    language: 'de',
+    notices: {
+      access_ended: {
+        subject: () => 'Dein Pyxis-Abo ist beendet',
+        preheader: (w) =>
+          `Deine Websites senden keine Ereignisse mehr. Die Daten bleiben bis zum ${w.deletionOn}.`,
+        heading: () => 'Abo beendet',
+        paragraphs: (w) => [
+          'Das Abo deines Kontos ist beendet: Seine Schlüssel wurden widerrufen, und deine ' +
+            'Websites senden keine Ereignisse mehr an Pyxis.',
+          `Die Berichte bleiben bis zum ${w.deletionOn} lesbar. An diesem Tag werden die ` +
+            `Projekte, ` +
+            'ihre Ereignisse und ihre Schlüssel endgültig gelöscht.',
+          'Um die Daten zu behalten, exportiere sie vorher auf der Kontoseite oder schließ ' +
+            'erneut ein Abo ab, um weiter zu messen.',
+        ],
+      },
+      deletion_reminder: {
+        subject: (w) => `Deine Pyxis-Daten werden am ${w.deletionOn} gelöscht`,
+        preheader: () =>
+          'Exportiere sie oder schließ vorher erneut ein Abo ab, um sie zu behalten.',
+        heading: (w) => `Löschung am ${w.deletionOn}`,
+        paragraphs: (w) => [
+          `Am ${w.deletionOn} werden die Projekte deines Pyxis-Kontos mit ihren Ereignissen und ` +
+            'ihren Schlüsseln endgültig gelöscht.',
+          'Um die Daten zu behalten, exportiere sie auf der Kontoseite oder schließ vorher ' +
+            'erneut ein Abo ab.',
+        ],
+      },
+      account_deleted: {
+        subject: () => 'Dein Pyxis-Konto wurde gelöscht',
+        preheader: () => 'Seine Projekte, ihre Ereignisse und ihre Schlüssel gibt es nicht mehr.',
+        heading: () => 'Konto gelöscht',
+        paragraphs: () => [
+          'Wie angekündigt wurde dein Pyxis-Konto mit seinen Projekten, ihren Ereignissen und ' +
+            'ihren Schlüsseln gelöscht. Davon ist nichts mehr bei Pyxis gespeichert.',
+          'Um deine Websites wieder zu messen, kannst du jederzeit ein neues Konto anlegen.',
+        ],
+      },
+    },
+    support: (address) =>
+      `Wenn du Fragen hast, antworte auf diese E-Mail oder schreib an ${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
+    reason: 'Du hast diese E-Mail bekommen, weil du Inhaber eines Pyxis-Kontos bist.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  fr: {
+    language: 'fr',
+    notices: {
+      access_ended: {
+        subject: () => 'Votre abonnement à Pyxis est terminé',
+        preheader: (w) =>
+          `Vos sites n’envoient plus d’événements. Les données sont conservées jusqu’au ` +
+          `${w.deletionOn}.`,
+        heading: () => 'Abonnement terminé',
+        paragraphs: (w) => [
+          'L’abonnement de votre compte est terminé : ses clés ont été révoquées et vos sites ' +
+            'n’envoient plus d’événements à Pyxis.',
+          `Les rapports restent consultables jusqu’au ${w.deletionOn}. Ce jour-là, les projets, ` +
+            'leurs événements et leurs clés seront définitivement supprimés.',
+          'Pour garder les données, exportez-les depuis la page du compte d’ici là, ou ' +
+            'abonnez-vous à nouveau pour continuer la mesure.',
+        ],
+      },
+      deletion_reminder: {
+        subject: (w) => `Vos données Pyxis seront supprimées le ${w.deletionOn}`,
+        preheader: () => 'Exportez-les ou abonnez-vous à nouveau d’ici là pour les garder.',
+        heading: (w) => `Suppression le ${w.deletionOn}`,
+        paragraphs: (w) => [
+          `Le ${w.deletionOn}, les projets de votre compte Pyxis, avec leurs événements et leurs ` +
+            'clés, seront définitivement supprimés.',
+          'Pour garder les données, exportez-les depuis la page du compte ou abonnez-vous à ' +
+            'nouveau d’ici là.',
+        ],
+      },
+      account_deleted: {
+        subject: () => 'Votre compte Pyxis a été supprimé',
+        preheader: () => 'Ses projets, leurs événements et leurs clés n’existent plus.',
+        heading: () => 'Compte supprimé',
+        paragraphs: () => [
+          'Comme annoncé, votre compte Pyxis a été supprimé avec ses projets, leurs événements ' +
+            'et ' +
+            'leurs clés. Il n’en reste rien dans Pyxis.',
+          'Pour mesurer à nouveau vos sites, vous pouvez créer un nouveau compte à tout moment.',
+        ],
+      },
+    },
+    support: (address) => `Pour toute question, répondez à cet e-mail ou écrivez à ${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
+    reason: 'Vous recevez cet e-mail parce que vous êtes propriétaire d’un compte Pyxis.',
+    dashboard: 'Tableau de bord',
+    logoAlt: 'Pyxis',
+  },
+  it: {
+    language: 'it',
+    notices: {
+      access_ended: {
+        subject: () => 'Il tuo abbonamento a Pyxis è terminato',
+        preheader: (w) =>
+          `I tuoi siti non inviano più eventi. I dati restano fino al giorno ${w.deletionOn}.`,
+        heading: () => 'Abbonamento terminato',
+        paragraphs: (w) => [
+          'L’abbonamento del tuo account è terminato: le sue chiavi sono state revocate e i tuoi ' +
+            'siti non inviano più eventi a Pyxis.',
+          `I report restano consultabili fino al giorno ${w.deletionOn}. Quel giorno i progetti, ` +
+            'i loro eventi e le loro chiavi vengono eliminati per sempre.',
+          'Per conservare i dati, esportali dalla pagina dell’account prima di quella data, ' +
+            'oppure ' +
+            'abbonati di nuovo per continuare a misurare.',
+        ],
+      },
+      deletion_reminder: {
+        subject: (w) => `I tuoi dati su Pyxis verranno eliminati il giorno ${w.deletionOn}`,
+        preheader: () => 'Esportali o abbonati di nuovo prima di quella data per conservarli.',
+        heading: (w) => `Eliminazione il giorno ${w.deletionOn}`,
+        paragraphs: (w) => [
+          `Il giorno ${w.deletionOn} i progetti del tuo account Pyxis, con i loro eventi e le ` +
+            'loro chiavi, verranno eliminati per sempre.',
+          'Per conservare i dati, esportali dalla pagina dell’account o abbonati di nuovo prima ' +
+            'di quella data.',
+        ],
+      },
+      account_deleted: {
+        subject: () => 'Il tuo account Pyxis è stato eliminato',
+        preheader: () => 'I suoi progetti, i loro eventi e le loro chiavi non esistono più.',
+        heading: () => 'Account eliminato',
+        paragraphs: () => [
+          'Come annunciato, il tuo account Pyxis è stato eliminato insieme ai suoi progetti, ai ' +
+            'loro eventi e alle loro chiavi. In Pyxis non ne resta nulla.',
+          'Per misurare di nuovo i tuoi siti, puoi creare un nuovo account in qualsiasi momento.',
+        ],
+      },
+    },
+    support: (address) => `Per qualsiasi domanda, rispondi a questa email o scrivi a ${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
+    reason: 'Hai ricevuto questa email perché possiedi un account Pyxis.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
+  nl: {
+    language: 'nl',
+    notices: {
+      access_ended: {
+        subject: () => 'Je Pyxis-abonnement is beëindigd',
+        preheader: (w) =>
+          `Je sites versturen geen events meer. De gegevens blijven bewaard tot ${w.deletionOn}.`,
+        heading: () => 'Abonnement beëindigd',
+        paragraphs: (w) => [
+          'Het abonnement van je account is beëindigd: de sleutels zijn ingetrokken en je sites ' +
+            'versturen geen events meer naar Pyxis.',
+          `De rapporten blijven leesbaar tot ${w.deletionOn}. Op die dag worden de projecten, ` +
+            'hun events en hun sleutels definitief verwijderd.',
+          'Wil je de gegevens houden? Exporteer ze vóór die datum via de accountpagina, of neem ' +
+            'opnieuw een abonnement om te blijven meten.',
+        ],
+      },
+      deletion_reminder: {
+        subject: (w) => `Je Pyxis-gegevens worden op ${w.deletionOn} verwijderd`,
+        preheader: () =>
+          'Exporteer ze of neem vóór die datum opnieuw een abonnement om ze te houden.',
+        heading: (w) => `Verwijdering op ${w.deletionOn}`,
+        paragraphs: (w) => [
+          `Op ${w.deletionOn} worden de projecten van je Pyxis-account, met hun events en hun ` +
+            'sleutels, definitief verwijderd.',
+          'Wil je de gegevens houden? Exporteer ze via de accountpagina of neem vóór die datum ' +
+            'opnieuw een abonnement.',
+        ],
+      },
+      account_deleted: {
+        subject: () => 'Je Pyxis-account is verwijderd',
+        preheader: () => 'De projecten, hun events en hun sleutels bestaan niet meer.',
+        heading: () => 'Account verwijderd',
+        paragraphs: () => [
+          'Zoals aangekondigd is je Pyxis-account verwijderd, samen met de projecten, hun events ' +
+            'en hun sleutels. Er is in Pyxis niets meer van over.',
+          'Wil je je sites weer meten? Je kunt op elk moment een nieuw account aanmaken.',
+        ],
+      },
+    },
+    support: (address) => `Heb je een vraag? Beantwoord deze e-mail of mail naar ${address}.`,
+    about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
+    reason: 'Je ontvangt deze e-mail omdat je eigenaar bent van een Pyxis-account.',
+    dashboard: 'Dashboard',
+    logoAlt: 'Pyxis',
+  },
 };

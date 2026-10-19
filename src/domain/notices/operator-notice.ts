@@ -73,5 +73,9 @@ export function countByLanguage(languages: readonly EmailLanguage[]): NoticeAudi
     en: languages.filter((language) => language === 'en').length,
     'pt-BR': languages.filter((language) => language === 'pt-BR').length,
     es: languages.filter((language) => language === 'es').length,
+    de: languages.filter((language) => language === 'de').length,
+    fr: languages.filter((language) => language === 'fr').length,
+    it: languages.filter((language) => language === 'it').length,
+    nl: languages.filter((language) => language === 'nl').length,
   };
 }

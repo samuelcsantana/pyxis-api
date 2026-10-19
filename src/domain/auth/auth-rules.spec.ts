@@ -60,9 +60,18 @@ describe('resolveEmailLanguage', () => {
     expect(resolveEmailLanguage('ES-mx')).toBe('es');
   });
 
+  it('writes in German, French, Italian and Dutch whatever the region', () => {
+    expect(resolveEmailLanguage('de-AT')).toBe('de');
+    expect(resolveEmailLanguage('de-CH')).toBe('de');
+    expect(resolveEmailLanguage('fr-CA')).toBe('fr');
+    expect(resolveEmailLanguage('FR-be')).toBe('fr');
+    expect(resolveEmailLanguage('it-CH')).toBe('it');
+    expect(resolveEmailLanguage('nl-BE')).toBe('nl');
+  });
+
   it('falls back to English for a language it has no email for', () => {
-    expect(resolveEmailLanguage('fr')).toBe('en');
-    expect(resolveEmailLanguage('de-AT')).toBe('en');
+    expect(resolveEmailLanguage('ja')).toBe('en');
+    expect(resolveEmailLanguage('pl-PL')).toBe('en');
   });
 });
 

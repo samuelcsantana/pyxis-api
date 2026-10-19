@@ -15,6 +15,22 @@ describe('trialNotice', () => {
       'Una prueba gratis por cliente. Después de los 14 días, el cobro es automático; cancela ' +
         'cuando quieras.',
     );
+    expect(trialNotice('de', 14)).toBe(
+      'Eine kostenlose Testphase pro Kunde. Nach den 14 Tagen wird automatisch abgebucht; du ' +
+        'kannst jederzeit kündigen.',
+    );
+    expect(trialNotice('fr', 14)).toBe(
+      'Un seul essai gratuit par client. Au terme des 14 jours, le prélèvement est ' +
+        'automatique ; résiliez à tout moment.',
+    );
+    expect(trialNotice('it', 14)).toBe(
+      'Una prova gratuita per cliente. Dopo i 14 giorni l’addebito è automatico; puoi annullare ' +
+        'quando vuoi.',
+    );
+    expect(trialNotice('nl', 14)).toBe(
+      'Eén gratis proefperiode per klant. Na de 14 dagen wordt het bedrag automatisch ' +
+        'afgeschreven; je kunt altijd opzeggen.',
+    );
   });
 
   it.each(EMAIL_LANGUAGES)('fits the text Stripe shows above the button in %s', (language) => {

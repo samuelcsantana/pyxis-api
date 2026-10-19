@@ -30,7 +30,8 @@ function readNotice(directory: string, language: EmailLanguage): NoticeText {
 
 export const noticeCreateCommand: CliCommand<NoticeCreateArgs> = {
   usage:
-    'npm run -s notice:create -- --campaign <name> --dir <folder with en.txt, pt-BR.txt, es.txt> ' +
+    'npm run -s notice:create -- --campaign <name> ' +
+    '--dir <folder with en.txt, pt-BR.txt, es.txt, de.txt, fr.txt, it.txt, nl.txt> ' +
     '[--include-ended] [--dry-run]',
 
   parse(argv) {
@@ -53,6 +54,10 @@ export const noticeCreateCommand: CliCommand<NoticeCreateArgs> = {
         en: readNotice(directory, 'en'),
         'pt-BR': readNotice(directory, 'pt-BR'),
         es: readNotice(directory, 'es'),
+        de: readNotice(directory, 'de'),
+        fr: readNotice(directory, 'fr'),
+        it: readNotice(directory, 'it'),
+        nl: readNotice(directory, 'nl'),
       },
       includeEnded: flag(values, 'include-ended'),
       dryRun: flag(values, 'dry-run'),

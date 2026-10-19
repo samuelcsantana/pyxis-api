@@ -130,12 +130,13 @@ describe('dashboard sign-in', () => {
     const brazilian = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'pt-BR' });
     const portuguese = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'pt-PT' });
     const spanish = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'es-MX' });
-    const french = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'fr' });
+    const french = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'fr-CA' });
+    const japanese = await post('/v1/auth/request-code', { email: ADMIN_EMAIL, locale: 'ja' });
 
-    expect([brazilian, portuguese, spanish, french].map((answer) => answer.statusCode)).toEqual([
-      202, 202, 202, 202,
-    ]);
-    expect(mail.sent.map(({ language }) => language)).toEqual(['pt-BR', 'pt-BR', 'es', 'en']);
+    expect(
+      [brazilian, portuguese, spanish, french, japanese].map((answer) => answer.statusCode),
+    ).toEqual([202, 202, 202, 202, 202]);
+    expect(mail.sent.map(({ language }) => language)).toEqual(['pt-BR', 'pt-BR', 'es', 'fr', 'en']);
   });
 
   it('answers 400 to a language that is not a well-formed tag, and mails nothing', async () => {
