@@ -12,7 +12,9 @@ import { DrizzleRequestsQuery } from '../infra/queries/drizzle-requests.query';
 import { DrizzleAccountBillingRepository } from '../infra/repositories/drizzle-account-billing.repository';
 import { DrizzleAccountLifecycleRepository } from '../infra/repositories/drizzle-account-lifecycle.repository';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
+import { DrizzleDemoTrafficRepository } from '../infra/repositories/drizzle-demo-traffic.repository';
 import { DrizzleDigestDeliveryRepository } from '../infra/repositories/drizzle-digest-delivery.repository';
+import { DrizzleEventRepository } from '../infra/repositories/drizzle-event.repository';
 import { DrizzleRetentionRepository } from '../infra/repositories/drizzle-retention.repository';
 import { DrizzleProjectIconRepository } from '../infra/repositories/drizzle-project-icon.repository';
 import { PostgresDatabaseSizeProbe } from '../infra/repositories/postgres-database-size.probe';
@@ -34,6 +36,7 @@ import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project
 import { RunRetentionUseCase } from '../usecases/retention/run-retention.usecase';
 import { DrizzleNoticeRepository } from '../infra/repositories/drizzle-notice.repository';
 import { SendOperatorNoticesUseCase } from '../usecases/notices/send-operator-notices.usecase';
+import { GenerateDemoTrafficUseCase } from '../usecases/demo-traffic/generate-demo-traffic.usecase';
 import { createJobsHandler } from './jobs-handler';
 import { loadParameters, ssmParameterPages } from './load-parameters';
 
@@ -136,6 +139,14 @@ export const handler = createJobsHandler({
       new RefreshProjectIconsUseCase(
         new DrizzleProjectIconRepository(database),
         new HttpSiteIconFetcher(),
+        new SystemClock(),
+      ).execute(),
+    ),
+  generateDemoTraffic: () =>
+    withDatabase((database) =>
+      new GenerateDemoTrafficUseCase(
+        new DrizzleDemoTrafficRepository(database),
+        new DrizzleEventRepository(database),
         new SystemClock(),
       ).execute(),
     ),
