@@ -196,6 +196,23 @@ function (DNS, the certificate, CloudFront itself) raises none; an external upti
 aws cloudwatch set-alarm-state --alarm-name pyxis-api-unhandled-errors --state-value ALARM --state-reason "Checking the alert email" --region sa-east-1 --profile pyxis-api
 ```
 
+### Edge metrics
+
+The function logs nothing for a request it refuses early (an unknown path, a missing token, a
+throttled invocation), and the distribution keeps no access log, because an access log stores the
+client address. CloudFront's additional metrics fill that gap: the `aws_cloudfront_monitoring_subscription`
+in `infra/cloudfront.tf` turns on the 401, 403, 404, 502, 503 and 504 error rates, the origin
+latency and the cache hit rate (eight metrics, US$ 0.30 each per month). They live in CloudWatch in
+**us-east-1**, namespace `AWS/CloudFront`, with the dimensions `DistributionId` and
+`Region=Global`:
+
+```bash
+aws cloudwatch get-metric-statistics --namespace AWS/CloudFront --metric-name 404ErrorRate --dimensions Name=DistributionId,Value=<distribution-id> Name=Region,Value=Global --start-time <iso> --end-time <iso> --period 300 --statistics Average --region us-east-1 --profile pyxis-api
+```
+
+A burst of 404s with the function's durations under 5 ms is a scanner probing paths; a burst of
+401s is someone trying tokens.
+
 ## The daily jobs
 
 Run them once by hand, for example after the first deploy:

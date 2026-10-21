@@ -140,3 +140,13 @@ resource "aws_cloudfront_distribution" "api" {
     ignore_changes = [origin]
   }
 }
+
+resource "aws_cloudfront_monitoring_subscription" "api" {
+  distribution_id = aws_cloudfront_distribution.api.id
+
+  monitoring_subscription {
+    realtime_metrics_subscription_config {
+      realtime_metrics_subscription_status = "Enabled"
+    }
+  }
+}
