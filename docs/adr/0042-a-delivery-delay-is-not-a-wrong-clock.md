@@ -5,7 +5,10 @@ Date: 2026-10-21
 ## Status
 
 Accepted. Narrows the rule that every batch's event times are shifted by the difference between
-its `sent_at` and the time the API received it.
+its `sent_at` and the time the API received it. Amended by
+[ADR 0043](0043-the-reception-is-the-arrival-at-the-function-url.md): the reception is the
+arrival at the function URL, and the tracker sends a fresh `sent_at` on every attempt, not the
+build time this record assumed.
 
 ## Context
 
