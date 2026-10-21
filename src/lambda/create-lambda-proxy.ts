@@ -1,6 +1,7 @@
 import awsLambdaFastify, { type PromiseHandler } from '@fastify/aws-lambda';
 import type { APIGatewayProxyEventV2 } from 'aws-lambda';
 import type { FastifyInstance } from 'fastify';
+import { ARRIVED_AT_HEADER } from '../infra/http/request-headers';
 
 type ResponseHeaders = Readonly<Record<string, string | string[] | number | undefined>>;
 
@@ -36,9 +37,10 @@ export function queryFromRawQueryString(rawQueryString: string): QueryValues {
   return Object.fromEntries(query);
 }
 
-function withQueryFromRawQueryString(event: APIGatewayProxyEventV2) {
+function forwardedEvent(event: APIGatewayProxyEventV2) {
   return {
     ...event,
+    headers: { ...event.headers, [ARRIVED_AT_HEADER]: String(event.requestContext.timeEpoch) },
     queryStringParameters: undefined,
     multiValueQueryStringParameters: queryFromRawQueryString(event.rawQueryString),
   };
@@ -49,6 +51,5 @@ export function createLambdaProxy(fastify: FastifyInstance): PromiseHandler {
     enforceBase64: (response) => isBinaryResponse(response.headers as ResponseHeaders),
     parseCommaSeparatedQueryParams: false,
   });
-  return (event: APIGatewayProxyEventV2, context) =>
-    proxy(withQueryFromRawQueryString(event), context);
+  return (event: APIGatewayProxyEventV2, context) => proxy(forwardedEvent(event), context);
 }

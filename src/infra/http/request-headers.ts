@@ -2,6 +2,7 @@ import { isIP } from 'node:net';
 import type { FastifyRequest } from 'fastify';
 
 export const CLOUDFRONT_VIEWER_ADDRESS_HEADER = 'cloudfront-viewer-address';
+export const ARRIVED_AT_HEADER = 'x-pyxis-arrived-at';
 
 export function singleHeader(request: FastifyRequest, name: string): string | undefined {
   const value = request.headers[name];

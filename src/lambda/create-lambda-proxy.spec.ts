@@ -1,5 +1,6 @@
 import type { Context } from 'aws-lambda';
 import Fastify from 'fastify';
+import { ARRIVED_AT_HEADER } from '../infra/http/request-headers';
 import {
   createLambdaProxy,
   isBinaryResponse,
@@ -116,6 +117,25 @@ describe('createLambdaProxy', () => {
         source: 'a b',
       },
     ]);
+    await fastify.close();
+  });
+
+  it('stamps the time the function URL received the request, over any time the client sent', async () => {
+    const fastify = Fastify();
+    const seen: unknown[] = [];
+    fastify.get('/arrival', (request) => {
+      seen.push(request.headers[ARRIVED_AT_HEADER]);
+      return Promise.resolve({ ok: true });
+    });
+    const proxy = createLambdaProxy(fastify);
+    const event = functionUrlEvent('/arrival', '');
+
+    await proxy(
+      { ...event, headers: { ...event.headers, [ARRIVED_AT_HEADER]: '1' } },
+      {} as Context,
+    );
+
+    expect(seen).toEqual(['1791295200000']);
     await fastify.close();
   });
 
