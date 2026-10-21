@@ -22,7 +22,7 @@ import {
   type IngestBatchResult,
   IngestBatchUseCase,
 } from '../../../usecases/ingest/ingest-batch.usecase';
-import { singleHeader } from '../request-headers';
+import { arrivedAtOf, singleHeader } from '../request-headers';
 import { BatchEnvelopePipe } from './batch-envelope.pipe';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import {
@@ -74,6 +74,7 @@ function commandOf(batch: BatchEnvelope, request: FastifyRequest): IngestBatchCo
     viewerCountry: singleHeader(request, 'cloudfront-viewer-country'),
     viewerRegion: singleHeader(request, 'cloudfront-viewer-country-region'),
     viewerRegionName: singleHeader(request, 'cloudfront-viewer-country-region-name'),
+    arrivedAt: arrivedAtOf(request),
   };
 }
 

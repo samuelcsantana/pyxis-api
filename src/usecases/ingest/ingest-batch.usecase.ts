@@ -13,6 +13,7 @@ import {
 } from '../../domain/errors/ingest.errors';
 import { buildTrackedEvent, type ReceptionContext } from '../../domain/events/build-tracked-event';
 import { normalizeCountry } from '../../domain/events/country';
+import { receptionTime } from '../../domain/events/reception-time';
 import { normalizeRegion } from '../../domain/events/region';
 import { EVENT_NAME_PATTERN, MAX_EVENTS_PER_BATCH } from '../../domain/events/event-limits';
 import type { PiiReason } from '../../domain/events/pii-barrier';
@@ -50,6 +51,7 @@ export interface IngestBatchCommand {
   readonly viewerCountry: string | undefined;
   readonly viewerRegion: string | undefined;
   readonly viewerRegionName: string | undefined;
+  readonly arrivedAt: Date | undefined;
 }
 
 export interface EventRejection {
@@ -101,7 +103,7 @@ export class IngestBatchUseCase {
       throw new UnknownProjectKeyError(command.origin ?? null);
     }
     const origin = this.allowedOrigin(project, command.origin);
-    const receivedAt = this.clock.now();
+    const receivedAt = receptionTime(command.arrivedAt, this.clock.now());
     const decision = this.rateLimiter.tryConsume(project.id, receivedAt);
     if (!decision.allowed) {
       throw new ProjectRateLimitedError(decision.retryAfterSeconds, origin);

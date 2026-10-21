@@ -1,5 +1,7 @@
 import type { FastifyRequest } from 'fastify';
 import {
+  ARRIVED_AT_HEADER,
+  arrivedAtOf,
   CLOUDFRONT_VIEWER_ADDRESS_HEADER,
   describeClientIpSources,
   getClientIp,
@@ -22,6 +24,26 @@ describe('singleHeader', () => {
     ['repeated', { origin: ['https://a.example.com', 'https://b.example.com'] }],
   ])('ignores a header that is %s', (_, headers) => {
     expect(singleHeader(request(headers), 'origin')).toBeUndefined();
+  });
+});
+
+describe('arrivedAtOf', () => {
+  it('reads the time the function URL received the request', () => {
+    expect(arrivedAtOf(request({ [ARRIVED_AT_HEADER]: '1791295205000' }))).toEqual(
+      new Date(1_791_295_205_000),
+    );
+  });
+
+  it.each([
+    ['missing', {}],
+    ['zero', { [ARRIVED_AT_HEADER]: '0' }],
+    ['negative', { [ARRIVED_AT_HEADER]: '-1791295205000' }],
+    ['fractional', { [ARRIVED_AT_HEADER]: '1791295205000.5' }],
+    ['not a number', { [ARRIVED_AT_HEADER]: 'yesterday' }],
+    ['past the largest date', { [ARRIVED_AT_HEADER]: '99999999999999999' }],
+    ['repeated', { [ARRIVED_AT_HEADER]: ['1791295205000', '1791295206000'] }],
+  ])('knows no arrival when the header is %s', (_, headers) => {
+    expect(arrivedAtOf(request(headers))).toBeUndefined();
   });
 });
 

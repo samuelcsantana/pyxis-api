@@ -4,6 +4,7 @@ import { PUBLIC_KEY_PREFIX } from '../../src/domain/keys/project-keys';
 import { PROJECT_RATE_LIMITER } from '../../src/domain/services/project-rate-limiter';
 import { FixedWindowProjectRateLimiter } from '../../src/infra/rate-limit/fixed-window-project-rate-limiter';
 import { CLIENT_BATCHES_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
+import { ARRIVED_AT_HEADER } from '../../src/infra/http/request-headers';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
 import { E2E_CLIENT_IP_HEADER } from './env-setup';
@@ -43,6 +44,7 @@ interface SendOptions {
   readonly userAgent?: string;
   readonly clientIp?: string;
   readonly location?: Readonly<Record<string, string>>;
+  readonly arrivedAt?: number;
 }
 
 describe('POST /v1/batch', () => {
@@ -60,6 +62,9 @@ describe('POST /v1/batch', () => {
         [E2E_CLIENT_IP_HEADER]: options.clientIp ?? nextClientIp(),
         ...(options.origin === null ? {} : { origin: options.origin ?? ORIGIN }),
         ...options.location,
+        ...(options.arrivedAt === undefined
+          ? {}
+          : { [ARRIVED_AT_HEADER]: String(options.arrivedAt) }),
       },
     });
 
@@ -152,6 +157,16 @@ describe('POST /v1/batch', () => {
     `;
     expect(row).toMatchObject({ country: 'BR', region: 'BR-SP', region_name: 'São Paulo' });
     expect(JSON.stringify(row)).not.toContain('Campinas');
+  });
+
+  it('stores the time the function URL received the batch as its reception time', async () => {
+    const arrivedAt = Date.now() - 2_000;
+    await send({ body: batch([event(53)]), arrivedAt });
+
+    const [row] = await owner<{ received_at: Date }[]>`
+      SELECT received_at FROM events WHERE project_id = ${SHOP_ID} AND id = ${String(event(53).id)}
+    `;
+    expect(row?.received_at.getTime()).toBe(arrivedAt);
   });
 
   it.each([

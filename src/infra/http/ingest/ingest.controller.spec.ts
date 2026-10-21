@@ -54,6 +54,7 @@ function setup(outcome: () => Promise<IngestBatchResult> = () => Promise.resolve
       'cloudfront-viewer-country': 'BR',
       'cloudfront-viewer-country-region': 'SP',
       'cloudfront-viewer-country-region-name': 'S%C3%A3o%20Paulo',
+      'x-pyxis-arrived-at': '1791295205000',
     },
   } as unknown as FastifyRequest;
   return { controller: new IngestController(useCase), commands, headers, reply, request };
@@ -90,6 +91,7 @@ describe('IngestController', () => {
         viewerCountry: 'BR',
         viewerRegion: 'SP',
         viewerRegionName: 'S%C3%A3o%20Paulo',
+        arrivedAt: new Date(1_791_295_205_000),
       },
     ]);
   });
