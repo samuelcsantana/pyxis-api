@@ -20,3 +20,4 @@ export const MAX_REQUEST_DURATION_MS = 600_000;
 export const ERROR_CODE_PATTERN = /^[a-z0-9_.]{1,64}$/;
 
 export const MAX_OCCURRED_AT_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+export const MAX_DELIVERY_DELAY_MS = 5 * 60 * 1000;
