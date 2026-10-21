@@ -178,7 +178,7 @@ and once when it clears.
 | ----------------------------------------- | -------------------------------------------------------------------------- |
 | `pyxis-api-unhandled-errors`              | 5 or more requests end in an unexpected 500 within five minutes            |
 | `pyxis-api-function-errors`               | 3 or more HTTP function invocations fail or time out in five minutes       |
-| `pyxis-api-function-throttles`            | Any request is throttled in five minutes (reserved concurrency full)       |
+| `pyxis-api-function-throttles`            | 10 or more requests are throttled in five minutes (concurrency full)       |
 | `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch                  |
 | `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                                   |
 | `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                                     |
