@@ -4,6 +4,8 @@ import type { FastifyRequest } from 'fastify';
 export const CLOUDFRONT_VIEWER_ADDRESS_HEADER = 'cloudfront-viewer-address';
 export const ARRIVED_AT_HEADER = 'x-pyxis-arrived-at';
 
+const EPOCH_MILLISECONDS = /^[1-9]\d{0,12}$/;
+
 export function singleHeader(request: FastifyRequest, name: string): string | undefined {
   const value = request.headers[name];
   return typeof value === 'string' ? value : undefined;
@@ -49,4 +51,11 @@ export function describeClientIpSources(
     xForwardedForHops: forwardedFor === undefined ? 0 : forwardedFor.split(',').length,
     resolvedFrom: fromHeader === undefined ? 'socket' : 'header',
   };
+}
+
+export function arrivedAtOf(request: FastifyRequest): Date | undefined {
+  const value = singleHeader(request, ARRIVED_AT_HEADER);
+  return value !== undefined && EPOCH_MILLISECONDS.test(value)
+    ? new Date(Number(value))
+    : undefined;
 }

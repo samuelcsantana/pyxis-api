@@ -94,6 +94,7 @@ function setup() {
     viewerCountry: 'BR',
     viewerRegion: 'SP',
     viewerRegionName: 'S%C3%A3o%20Paulo',
+    arrivedAt: undefined,
     ...overrides,
   });
   return { useCase, events, rateLimiter, usage, command };
@@ -132,6 +133,29 @@ describe('IngestBatchUseCase', () => {
       region: 'BR-SP',
       regionName: 'São Paulo',
     });
+  });
+
+  it('takes the reception time from the arrival of the request, not from the end of a cold start', async () => {
+    const { useCase, events, rateLimiter, command } = setup();
+    const arrivedAt = new Date(RECEIVED_AT.getTime() - 4_300);
+
+    await useCase.execute(command({ arrivedAt }));
+
+    expect(events.stored[0]?.receivedAt).toEqual(arrivedAt);
+    expect(rateLimiter.calls).toEqual([{ projectId: PROJECT.id, now: arrivedAt }]);
+  });
+
+  it('keeps the events of a browser whose clock runs ahead where they happened, across a cold start', async () => {
+    const { useCase, events, command } = setup();
+    const arrivedAt = new Date(RECEIVED_AT.getTime() - 4_300);
+    const sentAt = new Date(arrivedAt.getTime() + 10_000);
+    const occurredAt = new Date(sentAt.getTime() - 1_000);
+
+    await useCase.execute(
+      command({ arrivedAt, sentAt, events: [event(1, { occurred_at: occurredAt.toISOString() })] }),
+    );
+
+    expect(events.stored[0]?.occurredAt).toEqual(new Date(arrivedAt.getTime() - 1_000));
   });
 
   it('keeps neither the user agent nor any address on the stored event', async () => {
