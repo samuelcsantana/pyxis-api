@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.27.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.26.0...v0.27.0) (2026-10-21)
+
+
+### Features
+
+* **infra:** fire the throttle alarm at 10 throttles in five minutes ([13d2f83](https://github.com/samuelcsantana/pyxis-api/commit/13d2f834ea8cece4d9bfeefa8d6d6636db3334fb))
+* **infra:** turn on CloudFront additional metrics for the API ([1e488b3](https://github.com/samuelcsantana/pyxis-api/commit/1e488b33c9f96114db23947f6dc447078bb1d66e))
+
+
+### Bug Fixes
+
+* **ingest:** keep the browser time when a batch is only delivered late ([f74fb13](https://github.com/samuelcsantana/pyxis-api/commit/f74fb13646aea30072ab5209dc15804a606b1dbe))
+
+
+### Documentation
+
+* **adr:** record that a delivery delay is not a wrong clock ([5946358](https://github.com/samuelcsantana/pyxis-api/commit/5946358e3335e93667db3a13c55f4eb5cec05fbc))
+
 ## [0.26.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.25.0...v0.26.0) (2026-10-19)
 
 
