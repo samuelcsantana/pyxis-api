@@ -805,6 +805,7 @@ What differs from the hosted service:
 | [0039](docs/adr/0039-a-refused-batch-is-readable-by-its-page.md)                      | A refused batch is readable by the page that sent it                       |
 | [0040](docs/adr/0040-a-directory-reviewer-signs-in-with-a-code-the-operator-opens.md) | A directory reviewer signs in with a code the operator opens               |
 | [0041](docs/adr/0041-a-demo-project-is-filled-with-invented-visits-every-day.md)      | A demo project is filled with invented visits every day                    |
+| [0042](docs/adr/0042-a-delivery-delay-is-not-a-wrong-clock.md)                        | A delivery delay is not a wrong clock                                      |
 
 ## Roadmap
 
