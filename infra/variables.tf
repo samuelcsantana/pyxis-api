@@ -178,7 +178,7 @@ variable "function_errors_alarm_threshold" {
 variable "function_throttles_alarm_threshold" {
   description = "Throttled requests to the HTTP function within five minutes at which the alarm fires."
   type        = number
-  default     = 1
+  default     = 10
 }
 
 variable "repeated_trials_alarm_threshold" {
