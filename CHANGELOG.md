@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.27.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.27.0...v0.27.1) (2026-10-21)
+
+
+### Bug Fixes
+
+* **ingest:** take the reception time from the request's arrival, not the end of a cold start ([9b0ff35](https://github.com/samuelcsantana/pyxis-api/commit/9b0ff358210e80e82d8ca238d1c9c28f0617d614))
+* **lambda:** stamp each request with the time the function URL received it ([ad521e9](https://github.com/samuelcsantana/pyxis-api/commit/ad521e9de83e8daa82acc430ef8a245d87e8e6c6))
+
+
+### Documentation
+
+* **adr:** record that the reception is the arrival at the function URL ([28e4c3b](https://github.com/samuelcsantana/pyxis-api/commit/28e4c3be8e6a95ef18636e59c54310cd91908cbf))
+
 ## [0.27.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.26.0...v0.27.0) (2026-10-21)
 
 
