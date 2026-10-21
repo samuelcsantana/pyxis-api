@@ -196,6 +196,7 @@
     },
     "drizzle-kit": {
       "esbuild": "^0.28.2"
-    }
+    },
+    "fastify": "$fastify"
   }
 }
