@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.2](https://github.com/samuelcsantana/pyxis-api/compare/v0.27.1...v0.27.2) (2026-10-22)
+
+
+### Bug Fixes
+
+* **mail:** call a write an escrita in the Portuguese weekly digest ([6a1815d](https://github.com/samuelcsantana/pyxis-api/commit/6a1815da85ee98b8969a0d29c696498e1a1a9000))
+
 ## [0.27.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.27.0...v0.27.1) (2026-10-21)
 
 
