@@ -210,7 +210,7 @@ describe('the weekly digest in Brazilian Portuguese', () => {
       'Usuários identificados 120 entraram pelo menos uma vez sem variação vs. a semana anterior (120)',
     );
     expect(text).toContain('Visitas com conversão 41 5,0% das visitas 0 na semana anterior');
-    expect(text).toContain('Gravações com falha 3 de 1.204 gravações, 0,2%');
+    expect(text).toContain('Escritas com falha 3 de 1.204 escritas, 0,2%');
     expect(text).toContain('Páginas mais vistas /orders/:id 1.500 visualizações');
     expect(text).toContain('Principais eventos signup_completed 50 vezes');
     expect(text).toContain('Rotas com falha POST /orders 2 de 340 falharam');
@@ -234,7 +234,7 @@ describe('the weekly digest in Brazilian Portuguese', () => {
 
   it('previews the week in Portuguese in the inbox', () => {
     expect(preheaderOf(email.html)).toBe(
-      '120 usuários identificados · 41 visitas com conversão · 3 gravações com falha',
+      '120 usuários identificados · 41 visitas com conversão · 3 escritas com falha',
     );
   });
 
@@ -311,7 +311,7 @@ describe('the inbox preview of the weekly digest', () => {
       '1 identified user · 1 converting visit · 1 failed write',
     );
     expect(preheaderOf(buildWeeklyDigestEmail(single, 'pt-BR', LINKS).html)).toBe(
-      '1 usuário identificado · 1 visita com conversão · 1 gravação com falha',
+      '1 usuário identificado · 1 visita com conversão · 1 escrita com falha',
     );
     expect(preheaderOf(buildWeeklyDigestEmail(single, 'es', LINKS).html)).toBe(
       '1 usuario identificado · 1 visita con conversión · 1 escritura fallida',

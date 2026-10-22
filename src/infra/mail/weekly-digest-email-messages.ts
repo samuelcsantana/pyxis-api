@@ -95,7 +95,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
     convertingVisitCount: (visits, count) =>
       count === 1 ? `${visits} visita com conversão` : `${visits} visitas com conversão`,
     failedWriteCount: (writes, count) =>
-      count === 1 ? `${writes} gravação com falha` : `${writes} gravações com falha`,
+      count === 1 ? `${writes} escrita com falha` : `${writes} escritas com falha`,
     kicker: 'Resumo semanal',
     weekLine: (week, zoneName) => `${week} · ${zoneName}`,
     noVisits: 'Nenhuma visita chegou na semana passada.',
@@ -107,9 +107,9 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
     identifiedUsersNote: 'entraram pelo menos uma vez',
     convertingVisits: 'Visitas com conversão',
     shareOfVisits: (share) => `${share} das visitas`,
-    failedWrites: 'Gravações com falha',
-    ofWrites: (writes, rate) => `de ${writes} gravações, ${rate}`,
-    noWrites: 'nenhuma gravação',
+    failedWrites: 'Escritas com falha',
+    ofWrites: (writes, rate) => `de ${writes} escritas, ${rate}`,
+    noWrites: 'nenhuma escrita',
     versusWeekBefore: (change, previous) => `${change} vs. a semana anterior (${previous})`,
     unchangedFromWeekBefore: (previous) => `sem variação vs. a semana anterior (${previous})`,
     weekBeforeOnly: (previous) => `${previous} na semana anterior`,
@@ -122,7 +122,7 @@ export const WEEKLY_DIGEST_EMAIL_MESSAGES: Readonly<
     times: 'vezes',
     failingRoutes: 'Rotas com falha',
     failedOf: (failed, total) => `${failed} de ${total} falharam`,
-    noFailedWrites: 'Nenhuma gravação falhou na semana passada.',
+    noFailedWrites: 'Nenhuma escrita falhou na semana passada.',
     openWeek: 'Abrir a semana no painel',
     reason: (project) =>
       `Você recebe este e-mail às segundas-feiras por ser admin de ${project} no Pyxis.`,
