@@ -42,6 +42,7 @@ export const events = pgTable(
   (table) => [
     primaryKey({ name: 'events_pkey', columns: [table.projectId, table.id] }),
     index('events_project_occurred_at_idx').on(table.projectId, table.occurredAt),
+    index('events_project_received_at_idx').on(table.projectId, table.receivedAt),
     index('events_project_name_occurred_at_idx').on(table.projectId, table.name, table.occurredAt),
     index('events_project_user_occurred_at_idx').on(
       table.projectId,

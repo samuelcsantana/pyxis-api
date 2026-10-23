@@ -76,6 +76,7 @@ describe('database schema', () => {
       })),
     ).toEqual([
       { name: 'events_project_occurred_at_idx', columns: ['project_id', 'occurred_at'] },
+      { name: 'events_project_received_at_idx', columns: ['project_id', 'received_at'] },
       {
         name: 'events_project_name_occurred_at_idx',
         columns: ['project_id', 'name', 'occurred_at'],
