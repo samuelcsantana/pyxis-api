@@ -285,6 +285,140 @@
         ],
         "type": "object"
       },
+      "ArrivalsReport": {
+        "additionalProperties": false,
+        "description": "What reached the project since a moment and happened inside the range of days, kind by kind. Only times and counts: no ids, names or paths.",
+        "properties": {
+          "active_visits": {
+            "description": "Visits with any event received in the last 5 minutes, whatever the range",
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "as_of": {
+            "description": "The moment of the answer, by the API clock",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "conversions": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "more": {
+                    "description": "Whether more than 100 arrived",
+                    "type": "boolean"
+                  },
+                  "times": {
+                    "description": "When each one arrived, newest first, rounded up to the second",
+                    "items": {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    "maxItems": 100,
+                    "type": "array"
+                  }
+                },
+                "required": [
+                  "times",
+                  "more"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The conversion event of the project; null when it has none"
+          },
+          "failed_requests": {
+            "additionalProperties": false,
+            "description": "Requests of the site that failed, reads and writes",
+            "properties": {
+              "more": {
+                "description": "Whether more than 100 arrived",
+                "type": "boolean"
+              },
+              "times": {
+                "description": "When each one arrived, newest first, rounded up to the second",
+                "items": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "more"
+            ],
+            "type": "object"
+          },
+          "named_events": {
+            "additionalProperties": false,
+            "description": "Events with a name of the site",
+            "properties": {
+              "more": {
+                "description": "Whether more than 100 arrived",
+                "type": "boolean"
+              },
+              "times": {
+                "description": "When each one arrived, newest first, rounded up to the second",
+                "items": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "more"
+            ],
+            "type": "object"
+          },
+          "visits": {
+            "additionalProperties": false,
+            "description": "Visits that started: the first page view of each",
+            "properties": {
+              "more": {
+                "description": "Whether more than 100 arrived",
+                "type": "boolean"
+              },
+              "times": {
+                "description": "When each one arrived, newest first, rounded up to the second",
+                "items": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "maxItems": 100,
+                "type": "array"
+              }
+            },
+            "required": [
+              "times",
+              "more"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "as_of",
+          "active_visits",
+          "visits",
+          "conversions",
+          "named_events",
+          "failed_requests"
+        ],
+        "type": "object"
+      },
       "AuthorizationDecision": {
         "additionalProperties": false,
         "properties": {
@@ -6388,6 +6522,129 @@
           }
         ],
         "summary": "Visits per day and channel, and the sources that brought them",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/arrivals": {
+      "get": {
+        "operationId": "ArrivalsController_arrivals",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Count what arrived after this moment; earlier than 7 days ago counts from then",
+            "in": "query",
+            "name": "since",
+            "required": true,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArrivalsReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "More than 30 asks a minute from one session or token."
+          }
+        },
+        "security": [
+          {
+            "access_token": []
+          },
+          {
+            "connection_token": []
+          },
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "What reached the project since a moment, inside the range, kind by kind",
         "tags": [
           "dashboard queries"
         ]

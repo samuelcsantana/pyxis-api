@@ -4,11 +4,14 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { configureApp } from '../configure-app';
 import { createFastifyAdapter } from '../fastify-adapter.options';
+import { ACCESS_TOKENS_THROTTLER } from '../rate-limit/rate-limits';
 import { AccessTokenThrottlerGuard } from './access-token-throttler.guard';
 
 const LIMIT = 2;
 const TOKEN_A = `Bearer pyxis_at_${'A'.repeat(32)}`;
 const TOKEN_B = `Bearer pyxis_at_${'B'.repeat(32)}`;
+const TOKEN_C = `Bearer pyxis_at_${'C'.repeat(32)}`;
+const ANOTHER_THROTTLER = 'another';
 
 @Controller('read')
 @UseGuards(AccessTokenThrottlerGuard)
@@ -25,7 +28,13 @@ describe('AccessTokenThrottlerGuard', () => {
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
-        ThrottlerModule.forRoot({ throttlers: [{ ttl: 60_000, limit: LIMIT }], setHeaders: false }),
+        ThrottlerModule.forRoot({
+          throttlers: [
+            { name: ACCESS_TOKENS_THROTTLER, ttl: 60_000, limit: LIMIT },
+            { name: ANOTHER_THROTTLER, ttl: 60_000, limit: 1 },
+          ],
+          setHeaders: false,
+        }),
       ],
       controllers: [ReadController],
     }).compile();
@@ -62,5 +71,14 @@ describe('AccessTokenThrottlerGuard', () => {
     }
 
     expect(statuses).toEqual([200, 200, 200, 200]);
+  });
+
+  it('counts only the access token throttler, whatever else the route registers', async () => {
+    const statuses = [];
+    for (let attempt = 0; attempt < LIMIT; attempt += 1) {
+      statuses.push((await read({ authorization: TOKEN_C })).statusCode);
+    }
+
+    expect(statuses).toEqual([200, 200]);
   });
 });
