@@ -139,7 +139,13 @@ Shipping now:
   `/time-of-day` (for each weekday, Monday first, and each local hour, the visits whose first page
   view happened then; the grid adds up to the visits of the range) and
   `/engagement` (the top entry and exit pages, the visits that viewed a single page, and the visit
-  length from the first to the last event: the median and seven buckets). Times are UTC
+  length from the first to the last event: the median and seven buckets) and
+  `/arrivals?since=<instant>` (what reached the project after that moment and happened inside the
+  range, kind by kind: the arrival times of visits, conversions, named events and failed
+  requests, newest first, rounded up to the second, at most 100 each with `more` beyond them, and
+  the visits with an event in the last five minutes; the moment counts from 7 days ago at the
+  earliest; only times and counts, no ids; 30 asks a minute per session or token:
+  [ADR 0044](docs/adr/0044-arrivals-are-counted-by-reception-time.md)). Times are UTC
   instants; the answers that list them (`/requests`, `/funnel/subjects`, `/timeline` and
   `/visits`) also carry the project's `timezone`, so a client shows them in local time without
   asking for the settings first. A project
@@ -737,6 +743,11 @@ What differs from the hosted service:
   ignores it, and a request that carries one is judged by it alone, even with a session cookie. Each token allows 60 requests a minute
   and lasts at most a year; creating and revoking them needs a dashboard session and the
   dashboard's `Origin`, and the logs name tokens and admins by id only
+- The dashboard asks `/arrivals` every 30 seconds while a tab is visible, so it has a limit of its
+  own: 30 asks a minute per session, access token or connection, counted after the credential is
+  authenticated and the project's access checked. It is not counted per address, because every
+  dashboard read reaches the API from the dashboard's servers. Each route names the throttlers it
+  uses and skips every other registered one, so a new limit never lands on another route
 - A connected application's tokens are 256 random bits each, stored only as SHA-256 hashes and
   bound to one person and one client. The code works once, for five minutes, and only with the
   PKCE verifier of its challenge; a code presented twice ends the connection it made, and so does a
@@ -807,6 +818,7 @@ What differs from the hosted service:
 | [0041](docs/adr/0041-a-demo-project-is-filled-with-invented-visits-every-day.md)      | A demo project is filled with invented visits every day                    |
 | [0042](docs/adr/0042-a-delivery-delay-is-not-a-wrong-clock.md)                        | A delivery delay is not a wrong clock                                      |
 | [0043](docs/adr/0043-the-reception-is-the-arrival-at-the-function-url.md)             | The reception is the arrival at the function URL                           |
+| [0044](docs/adr/0044-arrivals-are-counted-by-reception-time.md)                       | Arrivals are counted by reception time, as times not counts                |
 
 ## Roadmap
 
