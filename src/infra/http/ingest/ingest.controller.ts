@@ -25,12 +25,7 @@ import {
 import { arrivedAtOf, singleHeader } from '../request-headers';
 import { BatchEnvelopePipe } from './batch-envelope.pipe';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import {
-  ACCESS_TOKENS_THROTTLER,
-  AUTH_THROTTLER,
-  OAUTH_THROTTLER,
-  SUBJECTS_THROTTLER,
-} from '../rate-limit/rate-limits';
+import { INGEST_THROTTLER, skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { allowOrigin, answerPreflight } from './ingest-cors';
 import {
   type BatchEnvelope,
@@ -92,12 +87,7 @@ function ApiErrorResponses(): MethodDecorator {
 
 @ApiTags('ingestion')
 @Controller('v1/batch')
-@SkipThrottle({
-  [AUTH_THROTTLER]: true,
-  [SUBJECTS_THROTTLER]: true,
-  [ACCESS_TOKENS_THROTTLER]: true,
-  [OAUTH_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept(INGEST_THROTTLER))
 export class IngestController {
   private readonly logger = new Logger(IngestController.name);
 

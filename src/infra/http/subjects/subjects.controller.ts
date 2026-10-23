@@ -24,12 +24,7 @@ import { EraseSubjectUseCase } from '../../../usecases/subjects/erase-subject.us
 import { ExportSubjectEventsUseCase } from '../../../usecases/subjects/export-subject-events.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import {
-  ACCESS_TOKENS_THROTTLER,
-  AUTH_THROTTLER,
-  INGEST_THROTTLER,
-  OAUTH_THROTTLER,
-} from '../rate-limit/rate-limits';
+import { SUBJECTS_THROTTLER, skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
 import { SecretKeyThrottlerGuard } from './secret-key-throttler.guard';
 import { SecretKeyGuard, secretKeyOf } from './secret-key.guard';
@@ -82,12 +77,7 @@ function subjectEventsBody(page: SubjectEventsPage): SubjectEventsBody {
 })
 @Controller('v1/subjects/:userId')
 @UseGuards(ClientAddressThrottlerGuard, SecretKeyGuard, SecretKeyThrottlerGuard)
-@SkipThrottle({
-  [INGEST_THROTTLER]: true,
-  [AUTH_THROTTLER]: true,
-  [ACCESS_TOKENS_THROTTLER]: true,
-  [OAUTH_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept(SUBJECTS_THROTTLER))
 export class SubjectsController {
   constructor(
     private readonly eraseSubject: EraseSubjectUseCase,

@@ -31,11 +31,8 @@ import { errorResponseSchema } from '../ingest/ingest.schemas';
 import {
   ACCESS_TOKEN_RATE_WINDOW_MS,
   ACCESS_TOKENS_THROTTLER,
-  AUTH_THROTTLER,
-  INGEST_THROTTLER,
   MCP_MESSAGES_PER_WINDOW,
-  OAUTH_THROTTLER,
-  SUBJECTS_THROTTLER,
+  skipThrottlersExcept,
 } from '../rate-limit/rate-limits';
 import { createInternalFetch } from './internal-fetch';
 import { McpAccessGuard } from './mcp-access.guard';
@@ -54,12 +51,7 @@ const JSON_RPC_BODY = {
 @ApiBearerAuth(CONNECTION_TOKEN_SECURITY)
 @ApiBearerAuth(ACCESS_TOKEN_SECURITY)
 @Controller(MCP_PATH)
-@SkipThrottle({
-  [INGEST_THROTTLER]: true,
-  [AUTH_THROTTLER]: true,
-  [SUBJECTS_THROTTLER]: true,
-  [OAUTH_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept(ACCESS_TOKENS_THROTTLER))
 @Throttle({
   [ACCESS_TOKENS_THROTTLER]: { limit: MCP_MESSAGES_PER_WINDOW, ttl: ACCESS_TOKEN_RATE_WINDOW_MS },
 })
