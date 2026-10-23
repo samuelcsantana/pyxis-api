@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ACQUISITION_QUERY } from '../../../domain/queries/acquisition';
+import { ARRIVALS_QUERY } from '../../../domain/queries/arrivals';
 import { DEVICES_QUERY } from '../../../domain/queries/devices';
 import { ENGAGEMENT_QUERY } from '../../../domain/queries/engagement';
 import { FEATURES_QUERY } from '../../../domain/queries/features';
@@ -17,6 +18,7 @@ import { ACCOUNT_REPOSITORY } from '../../../domain/repositories/account.reposit
 import { PROJECT_KEY_REPOSITORY } from '../../../domain/repositories/project-key.repository';
 import { PROJECT_SETTINGS_REPOSITORY } from '../../../domain/repositories/project-settings.repository';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
+import { GetArrivalsUseCase } from '../../../usecases/queries/get-arrivals.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetEngagementUseCase } from '../../../usecases/queries/get-engagement.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
@@ -32,6 +34,7 @@ import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { GetProjectIconUseCase } from '../../../usecases/projects/get-project-icon.usecase';
 import { GetProjectSettingsUseCase } from '../../../usecases/projects/get-project-settings.usecase';
 import { DrizzleAcquisitionQuery } from '../../queries/drizzle-acquisition.query';
+import { DrizzleArrivalsQuery } from '../../queries/drizzle-arrivals.query';
 import { DrizzleDevicesQuery } from '../../queries/drizzle-devices.query';
 import { DrizzleEngagementQuery } from '../../queries/drizzle-engagement.query';
 import { DrizzleFeaturesQuery } from '../../queries/drizzle-features.query';
@@ -52,6 +55,8 @@ import { AuthModule } from '../auth/auth.module';
 import { AccessTokenThrottlerGuard } from '../auth/access-token-throttler.guard';
 import { SessionGuard } from '../auth/auth.guards';
 import { ReadAccessGuard } from '../auth/read-access.guard';
+import { ArrivalsController } from './arrivals.controller';
+import { ArrivalsThrottlerGuard } from './arrivals-throttler.guard';
 import { EngagementController } from './engagement.controller';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
 import { FunnelSegmentsController } from './funnel-segments.controller';
@@ -75,6 +80,7 @@ import { VisitsController } from './visits.controller';
     ProjectIconController,
     TimeOfDayController,
     EngagementController,
+    ArrivalsController,
   ],
   providers: [
     GetOverviewUseCase,
@@ -99,6 +105,8 @@ import { VisitsController } from './visits.controller';
     { provide: TIMELINE_QUERY, useClass: DrizzleTimelineQuery },
     GetTimeOfDayUseCase,
     { provide: TIME_OF_DAY_QUERY, useClass: DrizzleTimeOfDayQuery },
+    GetArrivalsUseCase,
+    { provide: ARRIVALS_QUERY, useClass: DrizzleArrivalsQuery },
     GetVisitsUseCase,
     { provide: VISITS_QUERY, useClass: DrizzleVisitsQuery },
     GetProjectSettingsUseCase,
@@ -112,6 +120,7 @@ import { VisitsController } from './visits.controller';
     SessionGuard,
     ReadAccessGuard,
     AccessTokenThrottlerGuard,
+    ArrivalsThrottlerGuard,
     ProjectAccessGuard,
   ],
 })

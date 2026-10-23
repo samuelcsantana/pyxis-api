@@ -1,5 +1,8 @@
 import {
   ACCESS_TOKEN_RATE_WINDOW_MS,
+  ARRIVALS_RATE_WINDOW_MS,
+  ARRIVALS_REQUESTS_PER_WINDOW,
+  ARRIVALS_THROTTLER,
   ACCESS_TOKEN_REQUESTS_PER_WINDOW,
   ACCESS_TOKENS_THROTTLER,
   AUTH_THROTTLER,
@@ -72,7 +75,16 @@ describe('rate limits', () => {
       { name: 'subjects', ttl: 60_000, limit: 60 },
       { name: 'access-tokens', ttl: 60_000, limit: 60 },
       { name: 'oauth', ttl: 60_000, limit: 600 },
+      { name: 'arrivals', ttl: 60_000, limit: 30 },
     ]);
+  });
+
+  it('lets one session ask what arrived thirty times a minute, room for a few visible tabs', () => {
+    expect({ ARRIVALS_THROTTLER, ARRIVALS_REQUESTS_PER_WINDOW, ARRIVALS_RATE_WINDOW_MS }).toEqual({
+      ARRIVALS_THROTTLER: 'arrivals',
+      ARRIVALS_REQUESTS_PER_WINDOW: 30,
+      ARRIVALS_RATE_WINDOW_MS: 60_000,
+    });
   });
 
   it('skips every registered throttler but the ones a route uses', () => {
@@ -81,11 +93,13 @@ describe('rate limits', () => {
       subjects: true,
       'access-tokens': true,
       oauth: true,
+      arrivals: true,
     });
     expect(skipThrottlersExcept(INGEST_THROTTLER, OAUTH_THROTTLER)).toEqual({
       auth: true,
       subjects: true,
       'access-tokens': true,
+      arrivals: true,
     });
     expect(Object.keys(skipThrottlersExcept())).toEqual(THROTTLERS.map(({ name }) => name));
   });

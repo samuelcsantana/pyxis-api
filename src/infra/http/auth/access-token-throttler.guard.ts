@@ -1,8 +1,13 @@
 import { type ExecutionContext, Injectable } from '@nestjs/common';
-import { ThrottlerGuard, type ThrottlerLimitDetail } from '@nestjs/throttler';
+import {
+  ThrottlerGuard,
+  type ThrottlerLimitDetail,
+  type ThrottlerRequest,
+} from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { sha256Hex } from '../../../domain/auth/hashing';
 import { ClientRateLimitedError } from '../errors/http-errors';
+import { ACCESS_TOKENS_THROTTLER } from '../rate-limit/rate-limits';
 import { singleHeader } from '../request-headers';
 
 function presentedAuthorization(request: FastifyRequest): string | undefined {
@@ -14,6 +19,12 @@ export class AccessTokenThrottlerGuard extends ThrottlerGuard {
   protected override shouldSkip(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<FastifyRequest>();
     return Promise.resolve(presentedAuthorization(request) === undefined);
+  }
+
+  protected override handleRequest(request: ThrottlerRequest): Promise<boolean> {
+    return request.throttler.name === ACCESS_TOKENS_THROTTLER
+      ? super.handleRequest(request)
+      : Promise.resolve(true);
   }
 
   protected override getTracker(request: FastifyRequest): Promise<string> {
