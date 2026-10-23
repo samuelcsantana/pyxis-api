@@ -26,12 +26,7 @@ import {
 } from '../../../usecases/auth/verify-sign-in-code.usecase';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import {
-  ACCESS_TOKENS_THROTTLER,
-  INGEST_THROTTLER,
-  OAUTH_THROTTLER,
-  SUBJECTS_THROTTLER,
-} from '../rate-limit/rate-limits';
+import { AUTH_THROTTLER, skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { singleHeader } from '../request-headers';
 import { SchemaPipe } from '../schema-pipe';
 import { adminOf, DashboardOriginGuard, SessionGuard, sessionOf } from './auth.guards';
@@ -64,12 +59,7 @@ export function clientOf(request: FastifyRequest): SignInClient {
 
 @ApiTags('dashboard sign-in')
 @Controller('v1/auth')
-@SkipThrottle({
-  [INGEST_THROTTLER]: true,
-  [SUBJECTS_THROTTLER]: true,
-  [ACCESS_TOKENS_THROTTLER]: true,
-  [OAUTH_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept(AUTH_THROTTLER))
 export class AuthController {
   constructor(
     private readonly requestSignInCode: RequestSignInCodeUseCase,

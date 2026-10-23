@@ -1,47 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
-import {
-  ACCESS_TOKEN_RATE_WINDOW_MS,
-  ACCESS_TOKEN_REQUESTS_PER_WINDOW,
-  ACCESS_TOKENS_THROTTLER,
-  AUTH_THROTTLER,
-  CLIENT_BATCHES_PER_WINDOW,
-  CLIENT_RATE_WINDOW_MS,
-  INGEST_THROTTLER,
-  OAUTH_RATE_WINDOW_MS,
-  OAUTH_THROTTLER,
-  OAUTH_TOKEN_REQUESTS_PER_WINDOW,
-  SIGN_IN_RATE_WINDOW_MS,
-  SIGN_IN_REQUESTS_PER_WINDOW,
-  SUBJECT_RATE_WINDOW_MS,
-  SUBJECT_REQUESTS_PER_WINDOW,
-  SUBJECTS_THROTTLER,
-} from './rate-limits';
+import { THROTTLERS } from './rate-limits';
 
 @Module({
-  imports: [
-    ThrottlerModule.forRoot({
-      throttlers: [
-        { name: INGEST_THROTTLER, ttl: CLIENT_RATE_WINDOW_MS, limit: CLIENT_BATCHES_PER_WINDOW },
-        { name: AUTH_THROTTLER, ttl: SIGN_IN_RATE_WINDOW_MS, limit: SIGN_IN_REQUESTS_PER_WINDOW },
-        {
-          name: SUBJECTS_THROTTLER,
-          ttl: SUBJECT_RATE_WINDOW_MS,
-          limit: SUBJECT_REQUESTS_PER_WINDOW,
-        },
-        {
-          name: ACCESS_TOKENS_THROTTLER,
-          ttl: ACCESS_TOKEN_RATE_WINDOW_MS,
-          limit: ACCESS_TOKEN_REQUESTS_PER_WINDOW,
-        },
-        {
-          name: OAUTH_THROTTLER,
-          ttl: OAUTH_RATE_WINDOW_MS,
-          limit: OAUTH_TOKEN_REQUESTS_PER_WINDOW,
-        },
-      ],
-      setHeaders: false,
-    }),
-  ],
+  imports: [ThrottlerModule.forRoot({ throttlers: [...THROTTLERS], setHeaders: false })],
 })
 export class RateLimitModule {}

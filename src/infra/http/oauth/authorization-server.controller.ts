@@ -28,13 +28,10 @@ import { RevokeOAuthTokenUseCase } from '../../../usecases/oauth/revoke-oauth-to
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import {
-  ACCESS_TOKENS_THROTTLER,
-  AUTH_THROTTLER,
-  INGEST_THROTTLER,
   OAUTH_AUTHORIZE_REQUESTS_PER_WINDOW,
   OAUTH_RATE_WINDOW_MS,
   OAUTH_THROTTLER,
-  SUBJECTS_THROTTLER,
+  skipThrottlersExcept,
 } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
 import { OAuthErrorFilter } from './oauth-error.filter';
@@ -91,12 +88,7 @@ function tokenResponse(grant: TokenGrant): TokenResponseBody {
 
 @ApiTags('oauth')
 @Controller()
-@SkipThrottle({
-  [INGEST_THROTTLER]: true,
-  [AUTH_THROTTLER]: true,
-  [SUBJECTS_THROTTLER]: true,
-  [ACCESS_TOKENS_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept(OAUTH_THROTTLER))
 export class AuthorizationServerController {
   constructor(
     @Inject(REMOTE_MCP_SETTINGS) private readonly settings: RemoteMcpSettings,

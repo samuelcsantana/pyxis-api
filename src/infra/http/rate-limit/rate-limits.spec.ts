@@ -16,6 +16,8 @@ import {
   SUBJECT_RATE_WINDOW_MS,
   SUBJECT_REQUESTS_PER_WINDOW,
   SUBJECTS_THROTTLER,
+  skipThrottlersExcept,
+  THROTTLERS,
 } from './rate-limits';
 
 describe('rate limits', () => {
@@ -61,6 +63,31 @@ describe('rate limits', () => {
       ACCESS_TOKEN_RATE_WINDOW_MS: 60_000,
     });
     expect(MCP_MESSAGES_PER_WINDOW).toBe(120);
+  });
+
+  it('registers each throttler once, with its own window and limit', () => {
+    expect(THROTTLERS).toEqual([
+      { name: 'ingest', ttl: 60_000, limit: 120 },
+      { name: 'auth', ttl: 900_000, limit: 5 },
+      { name: 'subjects', ttl: 60_000, limit: 60 },
+      { name: 'access-tokens', ttl: 60_000, limit: 60 },
+      { name: 'oauth', ttl: 60_000, limit: 600 },
+    ]);
+  });
+
+  it('skips every registered throttler but the ones a route uses', () => {
+    expect(skipThrottlersExcept(AUTH_THROTTLER)).toEqual({
+      ingest: true,
+      subjects: true,
+      'access-tokens': true,
+      oauth: true,
+    });
+    expect(skipThrottlersExcept(INGEST_THROTTLER, OAUTH_THROTTLER)).toEqual({
+      auth: true,
+      subjects: true,
+      'access-tokens': true,
+    });
+    expect(Object.keys(skipThrottlersExcept())).toEqual(THROTTLERS.map(({ name }) => name));
   });
 
   it('only breaks the circuit for an address that floods the token endpoint', () => {

@@ -19,12 +19,7 @@ import { clientOf } from '../auth/auth.controller';
 import { DashboardOriginGuard } from '../auth/auth.guards';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
-import {
-  ACCESS_TOKENS_THROTTLER,
-  INGEST_THROTTLER,
-  OAUTH_THROTTLER,
-  SUBJECTS_THROTTLER,
-} from '../rate-limit/rate-limits';
+import { AUTH_THROTTLER, skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
 import {
   type SignedUpBody,
@@ -39,12 +34,7 @@ import {
 
 @ApiTags('sign-up')
 @Controller('v1/auth/sign-up')
-@SkipThrottle({
-  [INGEST_THROTTLER]: true,
-  [SUBJECTS_THROTTLER]: true,
-  [ACCESS_TOKENS_THROTTLER]: true,
-  [OAUTH_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept(AUTH_THROTTLER))
 export class SignUpController {
   constructor(
     private readonly requestSignUpCode: RequestSignUpCodeUseCase,

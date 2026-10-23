@@ -24,13 +24,7 @@ import { adminOf, DashboardOriginGuard, SessionGuard } from '../auth/auth.guards
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { ProjectAccessGuard, projectOf } from '../queries/project-access.guard';
-import {
-  ACCESS_TOKENS_THROTTLER,
-  AUTH_THROTTLER,
-  INGEST_THROTTLER,
-  OAUTH_THROTTLER,
-  SUBJECTS_THROTTLER,
-} from '../rate-limit/rate-limits';
+import { skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
 import {
   type AddedPersonBody,
@@ -66,13 +60,7 @@ export function personBody(person: PersonOfProject): PersonBody {
   standardSchema: errorResponseSchema,
 })
 @Controller('v1/projects/:projectId/people')
-@SkipThrottle({
-  [INGEST_THROTTLER]: true,
-  [AUTH_THROTTLER]: true,
-  [SUBJECTS_THROTTLER]: true,
-  [ACCESS_TOKENS_THROTTLER]: true,
-  [OAUTH_THROTTLER]: true,
-})
+@SkipThrottle(skipThrottlersExcept())
 export class PeopleController {
   constructor(
     private readonly listPeople: ListProjectPeopleUseCase,
