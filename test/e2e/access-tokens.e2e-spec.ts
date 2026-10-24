@@ -3,6 +3,7 @@ import postgres from 'postgres';
 import { sha256Hex } from '../../src/domain/auth/hashing';
 import { CLOCK } from '../../src/domain/services/clock';
 import { SESSION_COOKIE_NAME } from '../../src/infra/http/auth/session-cookie';
+import { ACCESS_TOKEN_REQUESTS_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
 import { FixedClock } from '../../src/test-utils/fixed-clock';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
@@ -16,6 +17,7 @@ const OTHER_ADMIN_ID = '3d4e5f6a-7b8c-4d9e-8f0a-1b2c3d4e5f04';
 const SESSION_TOKEN = 'e2e-access-tokens-session-token';
 const SESSION_COOKIE = `${SESSION_COOKIE_NAME}=${SESSION_TOKEN}`;
 const RANGE = 'from=2026-10-13&to=2026-10-14';
+const SPACING_VARIANTS = 3;
 
 describe('read-only access tokens', () => {
   let app: NestFastifyApplication;
@@ -106,6 +108,24 @@ describe('read-only access tokens', () => {
       SELECT last_used_at FROM admin_access_tokens WHERE id = ${created.id}
     `;
     expect(row?.last_used_at).toEqual(NOW);
+  });
+
+  it('limits a token by what it is, however the spaces of its authorization header vary', async () => {
+    const created = await createToken('Spaced');
+    const spacedRead = (attempt: number) =>
+      app.inject({
+        method: 'GET',
+        url: '/v1/me',
+        headers: {
+          authorization: `Bearer${' '.repeat(1 + (attempt % SPACING_VARIANTS))}${created.token}`,
+          origin: E2E_DASHBOARD_ORIGIN,
+        },
+      });
+    for (let attempt = 0; attempt < ACCESS_TOKEN_REQUESTS_PER_WINDOW; attempt += 1) {
+      expect((await spacedRead(attempt)).statusCode).toBe(200);
+    }
+
+    expect((await spacedRead(ACCESS_TOKEN_REQUESTS_PER_WINDOW)).statusCode).toBe(429);
   });
 
   it("answers 404 for another admin's project, exactly as a session would", async () => {

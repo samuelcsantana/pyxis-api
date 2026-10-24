@@ -6,6 +6,7 @@ import { REMOTE_MCP_SETTINGS } from '../../src/domain/oauth/remote-mcp-settings'
 import { CLIENT_METADATA_SOURCE } from '../../src/domain/services/client-metadata-source';
 import { CLOCK } from '../../src/domain/services/clock';
 import { SESSION_COOKIE_NAME } from '../../src/infra/http/auth/session-cookie';
+import { MCP_MESSAGES_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
 import { FixedClock } from '../../src/test-utils/fixed-clock';
 import { StubClientMetadataSource } from '../../src/test-utils/stub-client-metadata-source';
 import { createTestApp } from './create-test-app';
@@ -23,6 +24,7 @@ const VERIFIER = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
 const CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
 const CLAUDE_REDIRECT = 'https://claude.ai/api/mcp/auth_callback';
 const MCP_E2E_STATE = 'mcp-e2e-state';
+const SPACING_VARIANTS = 3;
 const MCP_HEADERS = {
   accept: 'application/json, text/event-stream',
   'content-type': 'application/json',
@@ -330,6 +332,19 @@ describe('the remote MCP endpoint', () => {
       expect((await post(list, withBearer(messages))).statusCode).toBe(200);
     }
     expect((await post(list, withBearer(messages))).statusCode).toBe(429);
+  });
+
+  it('counts a token once however the spaces of its authorization header vary', async () => {
+    const token = await personalToken('Spaced');
+    const list = { jsonrpc: '2.0', id: 1, method: 'tools/list' };
+    const spaced = (message: number) => ({
+      authorization: `Bearer${' '.repeat(1 + (message % SPACING_VARIANTS))}${token}`,
+    });
+    for (let message = 0; message < MCP_MESSAGES_PER_WINDOW; message += 1) {
+      expect((await post(list, spaced(message))).statusCode).toBe(200);
+    }
+
+    expect((await post(list, spaced(MCP_MESSAGES_PER_WINDOW))).statusCode).toBe(429);
   });
 });
 
