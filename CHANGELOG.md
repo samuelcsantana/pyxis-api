@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.29.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.28.0...v0.29.0) (2026-10-24)
+
+
+### Features
+
+* **http:** say whether the network header reaches the function ([fa7df4c](https://github.com/samuelcsantana/pyxis-api/commit/fa7df4c85862f21551083da54cadd7652b5278ae))
+* **ingest:** name the networks of cloud data centers ([1c3cf0c](https://github.com/samuelcsantana/pyxis-api/commit/1c3cf0ca6e30f25ab764d04891d5f022171e7c53))
+* **ingest:** refuse batches sent from cloud data centers ([d958a20](https://github.com/samuelcsantana/pyxis-api/commit/d958a2069a92caab401e8612a8ccbd88fbdec66e))
+* **oauth:** count the live access tokens of a connection ([b8f28ad](https://github.com/samuelcsantana/pyxis-api/commit/b8f28adb2cdeac5da924a85385c124bafefa6aa8))
+
+
+### Bug Fixes
+
+* **auth:** count a token's rate limit by its authenticated identity ([e267684](https://github.com/samuelcsantana/pyxis-api/commit/e2676841ac8e1c689310adf7c7d4e33471229fdf))
+* **ingest:** refuse a client that is no browser, not only one named bot ([e349248](https://github.com/samuelcsantana/pyxis-api/commit/e349248b637bb349d80d75279999bca0bbd0edc7))
+* **oauth:** refuse a refresh replay once a connection holds three tokens ([7bccb82](https://github.com/samuelcsantana/pyxis-api/commit/7bccb82aab5e7579e0cf694696c9af5e88681072))
+
+
+### Refactoring
+
+* **http:** share the authenticated reader between throttlers ([4bf8acc](https://github.com/samuelcsantana/pyxis-api/commit/4bf8acccf8765f4c7ecaa3a5ee1ec2bd967d3aa7))
+
+
+### Documentation
+
+* **adr:** record that a token is counted by its identity ([2272388](https://github.com/samuelcsantana/pyxis-api/commit/2272388d4331b6fd7ab0d87272be3250b5856381))
+* **adr:** refuse a client that is no browser (ADR 0045) ([7495872](https://github.com/samuelcsantana/pyxis-api/commit/74958722715ba366c1dbfe9ad5b06dacc1be8bc7))
+* record the cap on refresh replays ([8a6c24a](https://github.com/samuelcsantana/pyxis-api/commit/8a6c24ab8d2a60ca40d75679726c366770a748b7))
+* refuse traffic from cloud data centers (ADR 0046) ([ee6a563](https://github.com/samuelcsantana/pyxis-api/commit/ee6a5636958c9e541cd66fe4a264038c168795e2))
+* **runbook:** say that a deploy reuses an image already in ECR ([3d9d0ed](https://github.com/samuelcsantana/pyxis-api/commit/3d9d0ed696b47e5da61f969c6932d52f49e227d8))
+
 ## [0.28.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.27.2...v0.28.0) (2026-10-24)
 
 
