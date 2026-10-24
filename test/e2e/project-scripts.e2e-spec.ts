@@ -9,6 +9,8 @@ import { e2eOwnerUrl } from './e2e-database';
 import { E2E_CLIENT_IP_HEADER } from './env-setup';
 
 const ORIGIN = 'https://scripts.example.com';
+const SAFARI_IPHONE =
+  'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 
 describe('project scripts and ingestion', () => {
   let app: NestFastifyApplication;
@@ -32,6 +34,7 @@ describe('project scripts and ingestion', () => {
       headers: {
         'content-type': 'text/plain',
         origin: ORIGIN,
+        'user-agent': SAFARI_IPHONE,
         [E2E_CLIENT_IP_HEADER]: '192.0.2.77',
       },
       payload: JSON.stringify({
