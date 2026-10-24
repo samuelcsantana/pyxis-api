@@ -34,9 +34,10 @@ admin tokens that read exactly what their session reads, and nothing else.
 - **Who creates them:** the signed-in admin, from the dashboard (`GET`, `POST /v1/me/tokens`,
   `DELETE /v1/me/tokens/{tokenId}`), with the same `Origin` check as every session write. A token
   cannot mint, list or revoke tokens.
-- **Limits:** 60 requests a minute per token, counted on a hash of the header, in memory per
-  execution environment like the other limits. Requests without the header use the session and
-  are not counted against it.
+- **Limits:** 60 requests a minute per token, counted on the token that authenticated the request,
+  in memory per execution environment like the other limits. Requests without the header use the
+  session and are not counted against it. Until 2026-10-24 the count used a hash of the header
+  itself, so the same token sent with extra spaces after `Bearer` was counted as a new one.
 
 ## Consequences
 
