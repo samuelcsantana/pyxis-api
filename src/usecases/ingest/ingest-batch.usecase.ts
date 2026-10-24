@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { isPausedAt } from '../../domain/accounts/account-quota';
 import type { Project } from '../../domain/entities/project.entity';
 import { AccountSuspendedError } from '../../domain/errors/account.errors';
@@ -13,6 +13,7 @@ import {
 } from '../../domain/errors/ingest.errors';
 import { buildTrackedEvent, type ReceptionContext } from '../../domain/events/build-tracked-event';
 import { normalizeCountry } from '../../domain/events/country';
+import { dataCenterNetworkOf } from '../../domain/events/data-center-networks';
 import { receptionTime } from '../../domain/events/reception-time';
 import { normalizeRegion } from '../../domain/events/region';
 import { EVENT_NAME_PATTERN, MAX_EVENTS_PER_BATCH } from '../../domain/events/event-limits';
@@ -51,11 +52,14 @@ export interface IngestBatchCommand {
   readonly viewerCountry: string | undefined;
   readonly viewerRegion: string | undefined;
   readonly viewerRegionName: string | undefined;
+  readonly viewerAsn: string | undefined;
   readonly arrivedAt: Date | undefined;
 }
 
+export type AutomatedClientReason = 'bot' | 'data_center';
+
 export interface EventRejection {
-  readonly reason: EventRejectionReason | 'bot';
+  readonly reason: EventRejectionReason | AutomatedClientReason;
   readonly name: string | null;
 }
 
@@ -75,6 +79,23 @@ export interface IngestBatchResult {
   readonly dropped: readonly DroppedProperty[];
 }
 
+function refusedWhole(
+  events: readonly unknown[],
+  projectId: string,
+  allowedOrigin: string,
+  reason: AutomatedClientReason,
+): IngestBatchResult {
+  return {
+    accepted: 0,
+    duplicates: 0,
+    rejected: events.length,
+    projectId,
+    allowedOrigin,
+    rejections: events.map(() => ({ reason, name: null })),
+    dropped: [],
+  };
+}
+
 function eventNameOf(input: unknown): string | null {
   if (typeof input !== 'object' || input === null || !('name' in input)) {
     return null;
@@ -85,6 +106,8 @@ function eventNameOf(input: unknown): string | null {
 
 @Injectable()
 export class IngestBatchUseCase {
+  private readonly logger = new Logger(IngestBatchUseCase.name);
+
   constructor(
     @Inject(PROJECT_REPOSITORY) private readonly projects: ProjectRepository,
     @Inject(EVENT_REPOSITORY) private readonly events: EventRepository,
@@ -119,15 +142,18 @@ export class IngestBatchUseCase {
       throw new QuotaExceededError(state.ingestionPausedUntil, origin);
     }
     if (isBotUserAgent(command.userAgent)) {
-      return {
-        accepted: 0,
-        duplicates: 0,
-        rejected: command.events.length,
+      return refusedWhole(command.events, project.id, origin, 'bot');
+    }
+    const network = dataCenterNetworkOf(command.viewerAsn);
+    if (network !== null) {
+      this.logger.log({
+        message: 'ingest.data_center_refused',
         projectId: project.id,
-        allowedOrigin: origin,
-        rejections: command.events.map(() => ({ reason: 'bot', name: null })),
-        dropped: [],
-      };
+        asn: network.asn,
+        operator: network.operator,
+        events: command.events.length,
+      });
+      return refusedWhole(command.events, project.id, origin, 'data_center');
     }
     const country = normalizeCountry(command.viewerCountry);
     const context: ReceptionContext = {

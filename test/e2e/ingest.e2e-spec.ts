@@ -147,6 +147,26 @@ describe('POST /v1/batch', () => {
     expect(stored).toHaveLength(0);
   });
 
+  it('rejects every event sent from a cloud data center and stores the rest', async () => {
+    const fromCloud = await send({
+      body: batch([event(45), event(46)]),
+      location: { 'cloudfront-viewer-asn': '16509' },
+    });
+    const fromCarrier = await send({
+      body: batch([event(47)]),
+      location: { 'cloudfront-viewer-asn': '28573' },
+    });
+
+    expect(fromCloud.json()).toEqual({ accepted: 0, duplicates: 0, rejected: 2 });
+    expect(fromCarrier.json()).toEqual({ accepted: 1, duplicates: 0, rejected: 0 });
+    const stored = await owner<{ id: string }[]>`
+      SELECT id FROM events
+      WHERE project_id = ${SHOP_ID}
+        AND id IN (${String(event(45).id)}, ${String(event(46).id)}, ${String(event(47).id)})
+    `;
+    expect(stored.map((row) => row.id)).toEqual([String(event(47).id)]);
+  });
+
   it('stores neither the user agent nor the address in the row', async () => {
     await send({ body: batch([event(51)]), clientIp: '203.0.113.99' });
 

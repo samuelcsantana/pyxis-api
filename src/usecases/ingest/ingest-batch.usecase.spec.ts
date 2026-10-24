@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import type { Project } from '../../domain/entities/project.entity';
 import { AccountSuspendedError } from '../../domain/errors/account.errors';
 import { ProjectSuspendedError } from '../../domain/errors/project.errors';
@@ -22,6 +23,8 @@ const ORIGIN = 'https://shop.example.com';
 const PUBLIC_KEY = `${PUBLIC_KEY_PREFIX}${'A'.repeat(32)}`;
 const REVOKED_KEY = `${PUBLIC_KEY_PREFIX}${'R'.repeat(32)}`;
 const RECEIVED_AT = new Date('2026-10-06T14:00:10.000Z');
+const AMAZON_ASN = '16509';
+const BRAZILIAN_CARRIER_ASN = '28573';
 const SAFARI_IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 
@@ -94,6 +97,7 @@ function setup() {
     viewerCountry: 'BR',
     viewerRegion: 'SP',
     viewerRegionName: 'S%C3%A3o%20Paulo',
+    viewerAsn: BRAZILIAN_CARRIER_ASN,
     arrivedAt: undefined,
     ...overrides,
   });
@@ -101,6 +105,10 @@ function setup() {
 }
 
 describe('IngestBatchUseCase', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('stores the events of an allowed origin and reports the counts', async () => {
     const { useCase, events, command } = setup();
 
@@ -254,6 +262,45 @@ describe('IngestBatchUseCase', () => {
       { reason: 'bot', name: null },
     ]);
     expect(events.insertCalls).toBe(0);
+  });
+
+  it('rejects every event sent from a cloud data center, logging only its network', async () => {
+    const { useCase, events, command } = setup();
+    const logged: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logged.push(message);
+    });
+
+    const result = await useCase.execute(
+      command({ viewerAsn: AMAZON_ASN, events: [event(1), event(2)] }),
+    );
+
+    expect(result).toMatchObject({ accepted: 0, duplicates: 0, rejected: 2 });
+    expect(result.rejections).toEqual([
+      { reason: 'data_center', name: null },
+      { reason: 'data_center', name: null },
+    ]);
+    expect(events.insertCalls).toBe(0);
+    expect(logged).toEqual([
+      {
+        message: 'ingest.data_center_refused',
+        projectId: expect.any(String) as string,
+        asn: 16509,
+        operator: 'Amazon',
+        events: 2,
+      },
+    ]);
+  });
+
+  it.each([
+    ['a Brazilian carrier', BRAZILIAN_CARRIER_ASN],
+    ['no network header', undefined],
+  ])('stores the events sent from %s', async (_label, viewerAsn) => {
+    const { useCase, command } = setup();
+
+    const result = await useCase.execute(command({ viewerAsn }));
+
+    expect(result).toMatchObject({ accepted: 1, rejected: 0 });
   });
 
   it(`refuses more than ${String(MAX_EVENTS_PER_BATCH)} events before looking the key up`, async () => {
