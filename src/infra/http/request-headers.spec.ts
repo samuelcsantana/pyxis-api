@@ -3,6 +3,7 @@ import {
   ARRIVED_AT_HEADER,
   arrivedAtOf,
   CLOUDFRONT_VIEWER_ADDRESS_HEADER,
+  CLOUDFRONT_VIEWER_ASN_HEADER,
   describeClientIpSources,
   getClientIp,
   singleHeader,
@@ -84,6 +85,7 @@ describe('describeClientIpSources', () => {
       describeClientIpSources(
         request({
           [CLOUDFRONT_VIEWER_ADDRESS_HEADER]: '198.51.100.10:46532',
+          [CLOUDFRONT_VIEWER_ASN_HEADER]: '28573',
           'x-forwarded-for': '203.0.113.7, 130.176.0.1',
         }),
         CLOUDFRONT_VIEWER_ADDRESS_HEADER,
@@ -91,6 +93,7 @@ describe('describeClientIpSources', () => {
     ).toEqual({
       trustedHeader: CLOUDFRONT_VIEWER_ADDRESS_HEADER,
       cloudfrontViewerAddress: true,
+      cloudfrontViewerAsn: true,
       xForwardedForHops: 2,
       resolvedFrom: 'header',
     });
@@ -100,6 +103,7 @@ describe('describeClientIpSources', () => {
     expect(describeClientIpSources(request({}), undefined)).toEqual({
       trustedHeader: null,
       cloudfrontViewerAddress: false,
+      cloudfrontViewerAsn: false,
       xForwardedForHops: 0,
       resolvedFrom: 'socket',
     });

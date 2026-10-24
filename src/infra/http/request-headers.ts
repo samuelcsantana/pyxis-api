@@ -2,6 +2,7 @@ import { isIP } from 'node:net';
 import type { FastifyRequest } from 'fastify';
 
 export const CLOUDFRONT_VIEWER_ADDRESS_HEADER = 'cloudfront-viewer-address';
+export const CLOUDFRONT_VIEWER_ASN_HEADER = 'cloudfront-viewer-asn';
 export const ARRIVED_AT_HEADER = 'x-pyxis-arrived-at';
 
 const EPOCH_MILLISECONDS = /^[1-9]\d{0,12}$/;
@@ -34,6 +35,7 @@ export function getClientIp(request: FastifyRequest, trustedHeader: string | und
 export interface ClientIpSources {
   readonly trustedHeader: string | null;
   readonly cloudfrontViewerAddress: boolean;
+  readonly cloudfrontViewerAsn: boolean;
   readonly xForwardedForHops: number;
   readonly resolvedFrom: 'header' | 'socket';
 }
@@ -48,6 +50,7 @@ export function describeClientIpSources(
   return {
     trustedHeader: trustedHeader ?? null,
     cloudfrontViewerAddress: singleHeader(request, CLOUDFRONT_VIEWER_ADDRESS_HEADER) !== undefined,
+    cloudfrontViewerAsn: singleHeader(request, CLOUDFRONT_VIEWER_ASN_HEADER) !== undefined,
     xForwardedForHops: forwardedFor === undefined ? 0 : forwardedFor.split(',').length,
     resolvedFrom: fromHeader === undefined ? 'socket' : 'header',
   };
