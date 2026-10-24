@@ -10,10 +10,12 @@ import {
   generateAuthorizationCode,
   generateConnectionAccessToken,
   generateConnectionRefreshToken,
+  hasReachedReplayCap,
   idleConnectionCutoff,
   isConnectionIdle,
   isWithinReplayGrace,
   later,
+  MAX_LIVE_ACCESS_TOKENS_FOR_REPLAY,
   mcpResourceOf,
   refreshTokenExpiry,
   verifierMatches,
@@ -73,6 +75,12 @@ describe('oauth policy', () => {
   it('forgives a replayed refresh token for one minute after its rotation, never later', () => {
     expect(isWithinReplayGrace(later(NOW, -60 * 1000), NOW)).toBe(true);
     expect(isWithinReplayGrace(later(NOW, -60 * 1000 - 1), NOW)).toBe(false);
+  });
+
+  it('stops forgiving replays once a connection holds three live access tokens', () => {
+    expect(hasReachedReplayCap(MAX_LIVE_ACCESS_TOKENS_FOR_REPLAY - 1)).toBe(false);
+    expect(hasReachedReplayCap(MAX_LIVE_ACCESS_TOKENS_FOR_REPLAY)).toBe(true);
+    expect(MAX_LIVE_ACCESS_TOKENS_FOR_REPLAY).toBe(3);
   });
 
   it('reads only a well-formed connection access token from the authorization header', () => {
