@@ -72,7 +72,9 @@ Shipping now:
   ([ADR 0005](docs/adr/0005-per-event-validation.md)); a resent event is a duplicate, never stored
   twice; bots are rejected, both those that say so and clients that are no browser (no user agent,
   the `compatible;` form robots use, or no known browser and system;
-  [ADR 0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md))
+  [ADR 0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md)), and so are batches sent
+  from cloud data centers, by the network CloudFront reports
+  ([ADR 0046](docs/adr/0046-traffic-from-cloud-data-centers-is-refused.md))
 - A server-side barrier that drops any property or campaign value that looks like an email, a
   phone number or a tax id, and re-templates paths
 - Device, browser, operating system, channel, country and region derived on the server; the user
@@ -698,7 +700,8 @@ What differs from the hosted service:
   email addresses become `:id`), a second layer behind the browser's
 - Device, browser and operating system are classified by own code from the user agent and client
   hints, then the user agent is discarded; the country and the region (`BR-SP`) come from
-  CloudFront, never from the IP, and the city is never read
+  CloudFront, never from the IP, and the city is never read. The network number CloudFront
+  reports is read only to refuse batches from cloud data centers, and never stored
 - Strict response headers: a CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default
 - `X-Forwarded-For` is never trusted for the client address
@@ -823,6 +826,7 @@ What differs from the hosted service:
 | [0043](docs/adr/0043-the-reception-is-the-arrival-at-the-function-url.md)             | The reception is the arrival at the function URL                           |
 | [0044](docs/adr/0044-arrivals-are-counted-by-reception-time.md)                       | Arrivals are counted by reception time, as times not counts                |
 | [0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md)                       | A client that is no browser is refused, not only one that says "bot"       |
+| [0046](docs/adr/0046-traffic-from-cloud-data-centers-is-refused.md)                   | Traffic from cloud data centers is refused                                 |
 
 ## Roadmap
 
