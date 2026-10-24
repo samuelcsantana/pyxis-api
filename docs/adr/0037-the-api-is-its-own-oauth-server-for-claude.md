@@ -52,10 +52,11 @@ limits it per token.
    random bits and is stored only as a SHA-256 hash, in three tables: requests, connections and
    their tokens.
 7. **A refresh token is traded once.** Presented again within a minute (two refreshes of the same
-   client at once) it gets another pair; later, the whole connection ends, and a code presented
-   twice ends the connection it made. A connection ends after ninety days without use, and its use
-   is recorded at most every five minutes and at every refresh. At most ten live connections per
-   person.
+   client at once) it gets another pair, until the connection holds three live access tokens: from
+   then on the replay is refused and the connection stays (since 2026-10-24; before, each replay in
+   that minute added a pair). Later, the whole connection ends, and a code presented twice ends the
+   connection it made. A connection ends after ninety days without use, and its use is recorded at
+   most every five minutes and at every refresh. At most ten live connections per person.
 8. **A connection reads what a read-only token reads** and nothing else: the routes behind
    `ReadAccess` accept `Authorization: Bearer pyxis_oat_…` and judge the request by it; writes,
    sessions, tokens, connections and preferences refuse it.
