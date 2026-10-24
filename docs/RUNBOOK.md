@@ -153,7 +153,10 @@ scripts/deploy-lambda.sh
 
 From a clean working tree on a commit already in `origin/main`. It builds and pushes the image,
 runs the migrations, updates the HTTP function only if they succeed, and checks `/health`.
-Merging a pull request never deploys.
+Merging a pull request never deploys. The repository's tags are immutable, so when the commit's
+image is already in ECR the script skips the build and the push and deploys that image: running
+it again on the same commit, after a failed migration or to recycle the functions, needs no other
+command.
 
 ## Checks after a deploy
 
