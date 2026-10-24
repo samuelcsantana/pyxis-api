@@ -37,18 +37,27 @@ REGISTRY="$ACCOUNT.dkr.ecr.$REGION.amazonaws.com"
 TAG="$(git rev-parse --short HEAD)"
 IMAGE="$REGISTRY/$PROJECT:$TAG"
 
-log "Logging in to ECR"
-aws ecr get-login-password --region "$REGION" |
-  docker login --username AWS --password-stdin "$REGISTRY" > /dev/null
+image_in_registry() {
+  aws ecr describe-images --region "$REGION" --repository-name "$PROJECT" \
+    --image-ids imageTag="$TAG" > /dev/null 2>&1
+}
 
-log "Building $IMAGE"
-docker build --pull --platform linux/amd64 --provenance=false --sbom=false \
-  -f Dockerfile.lambda -t "$IMAGE" .
-log "Pushing $IMAGE"
-docker push "$IMAGE"
+if image_in_registry; then
+  log "$IMAGE is already in ECR; reusing it"
+else
+  log "Logging in to ECR"
+  aws ecr get-login-password --region "$REGION" |
+    docker login --username AWS --password-stdin "$REGISTRY" > /dev/null
+
+  log "Building $IMAGE"
+  docker build --pull --platform linux/amd64 --provenance=false --sbom=false \
+    -f Dockerfile.lambda -t "$IMAGE" .
+  log "Pushing $IMAGE"
+  docker push "$IMAGE"
+fi
 
 if [ "$IMAGE_ONLY" = true ]; then
-  log "Image pushed; functions untouched (--image-only)"
+  log "Image ready; functions untouched (--image-only)"
   exit 0
 fi
 
