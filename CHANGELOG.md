@@ -1,5 +1,30 @@
 # Changelog
 
+## [0.28.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.27.2...v0.28.0) (2026-10-24)
+
+
+### Features
+
+* **database:** index the events of a project by the time they arrived ([84cf932](https://github.com/samuelcsantana/pyxis-api/commit/84cf93256aa70dca95b31c2748aca919d9504ff0))
+* **http:** answer GET /v1/projects/{projectId}/arrivals, limited per session ([bf2fa23](https://github.com/samuelcsantana/pyxis-api/commit/bf2fa231eafc50e40652b9169a6d063f7ddc9a9d))
+* **queries:** read the arrivals of a project from Postgres ([91e3648](https://github.com/samuelcsantana/pyxis-api/commit/91e36485d48f3684a2e2df1bf223b86b414b5dbf))
+* **queries:** say what reached a project since a moment, kind by kind ([0ce38c7](https://github.com/samuelcsantana/pyxis-api/commit/0ce38c7325f0606f37210c19d31d698ba9d38180))
+
+
+### Bug Fixes
+
+* **deps:** take body-parser 2.4.0 for the compressed body advisory ([5f20f7f](https://github.com/samuelcsantana/pyxis-api/commit/5f20f7f59312fd77ed76104272faa3ed720641c8))
+
+
+### Refactoring
+
+* **http:** derive every throttler skip list from one list of throttlers ([8f38b2a](https://github.com/samuelcsantana/pyxis-api/commit/8f38b2addb79ee38a773c38c27202e8b9ff7a586))
+
+
+### Documentation
+
+* record how arrivals are counted and limited ([8e05055](https://github.com/samuelcsantana/pyxis-api/commit/8e05055bf255bf96a6bc8968579e2bab3b3fae29))
+
 ## [0.27.2](https://github.com/samuelcsantana/pyxis-api/compare/v0.27.1...v0.27.2) (2026-10-22)
 
 
