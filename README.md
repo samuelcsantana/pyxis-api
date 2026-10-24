@@ -751,11 +751,12 @@ What differs from the hosted service:
 - A connected application's tokens are 256 random bits each, stored only as SHA-256 hashes and
   bound to one person and one client. The code works once, for five minutes, and only with the
   PKCE verifier of its challenge; a code presented twice ends the connection it made, and so does a
-  refresh token presented again more than a minute after it was traded. The client's return
-  address must be one its own metadata document lists (any port only for a loopback address
-  registered without one), and an unknown client or return address is never redirected to. The
-  token endpoint has no limit an address shares with every user of the same client, only a
-  circuit breaker; its errors follow RFC 6749
+  refresh token presented again more than a minute after it was traded. Within that minute a
+  replay gets another pair only while the connection holds fewer than three live access tokens.
+  The client's return address must be one its own metadata document lists (any port only for a
+  loopback address registered without one), and an unknown client or return address is never
+  redirected to. The token endpoint has no limit an address shares with every user of the same
+  client, only a circuit breaker; its errors follow RFC 6749
 - The MCP endpoint reads only with a bearer token, never with the dashboard's session cookie, and
   refuses a request that carries an `Origin` header, so a web page cannot drive it, DNS rebinding
   included. Its tools can only send `GET` requests, in process, to the API's own origin, and
