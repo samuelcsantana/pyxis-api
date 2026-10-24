@@ -129,6 +129,24 @@ describe('POST /v1/batch', () => {
     expect(response.json()).toEqual({ accepted: 0, duplicates: 0, rejected: 2 });
   });
 
+  it.each([
+    [
+      'a crawler that renders like Chrome on a phone',
+      'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 (compatible; GoogleOther)',
+    ],
+    ['a client that is no browser', 'curl/8.10.1'],
+  ])('rejects every event of %s, storing nothing', async (_label, userAgent) => {
+    const response = await send({ body: batch([event(43), event(44)]), userAgent });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toEqual({ accepted: 0, duplicates: 0, rejected: 2 });
+    const stored = await owner`
+      SELECT id FROM events
+      WHERE project_id = ${SHOP_ID} AND id IN (${String(event(43).id)}, ${String(event(44).id)})
+    `;
+    expect(stored).toHaveLength(0);
+  });
+
   it('stores neither the user agent nor the address in the row', async () => {
     await send({ body: batch([event(51)]), clientIp: '203.0.113.99' });
 
