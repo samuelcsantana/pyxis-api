@@ -56,6 +56,7 @@ describe('ClientAddressThrottlerGuard', () => {
         message: 'client_ip.sources',
         trustedHeader: 'x-client-ip',
         cloudfrontViewerAddress: false,
+        cloudfrontViewerAsn: false,
         xForwardedForHops: 0,
         resolvedFrom: 'header',
       },
