@@ -35,6 +35,7 @@ export interface OAuthConnectionRepository {
   findLiveByAnyToken(tokenHash: string): Promise<OAuthConnection | null>;
   findRefreshToken(tokenHash: string): Promise<StoredRefreshToken | null>;
   markRefreshTokenRotated(tokenId: string, rotatedAt: Date): Promise<boolean>;
+  countLiveAccessTokens(connectionId: string, now: Date): Promise<number>;
   listLiveOf(adminUserId: string, idleCutoff: Date): Promise<readonly OAuthConnection[]>;
   touch(connectionId: string, usedAt: Date): Promise<void>;
   revoke(connectionId: string, revokedAt: Date): Promise<boolean>;

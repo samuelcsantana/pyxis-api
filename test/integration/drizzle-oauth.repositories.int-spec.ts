@@ -188,6 +188,16 @@ describe('OAuth repositories against a real Postgres', () => {
     });
   });
 
+  it("counts a connection's access tokens that are still alive, and nothing else", async () => {
+    const connection = await connect(anaId, 'counted');
+    await connections.issueTokens(connection.id, at(30 * MINUTE), pair('later', at(30 * MINUTE)));
+    await connect(anaId, 'elsewhere');
+
+    expect(await connections.countLiveAccessTokens(connection.id, at(MINUTE))).toBe(2);
+    expect(await connections.countLiveAccessTokens(connection.id, at(HOUR))).toBe(1);
+    expect(await connections.countLiveAccessTokens(connection.id, at(2 * HOUR))).toBe(0);
+  });
+
   it('lists the live connections of an admin, newest first, leaving out idle and revoked ones', async () => {
     const older = await connect(anaId, 'older');
     const newer = await connect(anaId, 'newer', at(MINUTE));

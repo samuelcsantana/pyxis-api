@@ -112,6 +112,17 @@ export class DrizzleOAuthConnectionRepository implements OAuthConnectionReposito
     return rotated.length > 0;
   }
 
+  countLiveAccessTokens(connectionId: string, now: Date): Promise<number> {
+    return this.db.$count(
+      oauthConnectionTokens,
+      and(
+        eq(oauthConnectionTokens.connectionId, connectionId),
+        eq(oauthConnectionTokens.kind, 'access'),
+        gt(oauthConnectionTokens.expiresAt, now),
+      ),
+    );
+  }
+
   async listLiveOf(adminUserId: string, idleCutoff: Date): Promise<readonly OAuthConnection[]> {
     const rows = await this.db
       .select()

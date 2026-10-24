@@ -94,6 +94,17 @@ export class InMemoryOAuthConnectionRepository implements OAuthConnectionReposit
     return Promise.resolve(true);
   }
 
+  countLiveAccessTokens(connectionId: string, now: Date): Promise<number> {
+    return Promise.resolve(
+      this.tokens.filter(
+        (token) =>
+          token.connectionId === connectionId &&
+          token.kind === 'access' &&
+          now.getTime() < token.expiresAt.getTime(),
+      ).length,
+    );
+  }
+
   listLiveOf(adminUserId: string, idleCutoff: Date): Promise<readonly OAuthConnection[]> {
     return Promise.resolve(
       this.connections
