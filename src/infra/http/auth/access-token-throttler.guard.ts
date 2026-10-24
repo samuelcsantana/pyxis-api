@@ -5,10 +5,10 @@ import {
   type ThrottlerRequest,
 } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
-import { sha256Hex } from '../../../domain/auth/hashing';
 import { ClientRateLimitedError } from '../errors/http-errors';
 import { ACCESS_TOKENS_THROTTLER } from '../rate-limit/rate-limits';
 import { singleHeader } from '../request-headers';
+import { readerOf } from './authenticated-reader';
 
 function presentedAuthorization(request: FastifyRequest): string | undefined {
   return singleHeader(request, 'authorization');
@@ -28,7 +28,7 @@ export class AccessTokenThrottlerGuard extends ThrottlerGuard {
   }
 
   protected override getTracker(request: FastifyRequest): Promise<string> {
-    return Promise.resolve(sha256Hex(String(presentedAuthorization(request))));
+    return Promise.resolve(readerOf(request));
   }
 
   protected override throwThrottlingException(

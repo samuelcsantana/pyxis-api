@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify';
+import { sha256Hex } from '../../../domain/auth/hashing';
 import type { AccessToken } from '../../../domain/entities/access-token.entity';
 import type { AdminSession } from '../../../domain/entities/admin-session.entity';
 import type { OAuthConnection } from '../../../domain/entities/oauth-connection.entity';
@@ -33,6 +34,16 @@ describe('readerOf', () => {
     expect(readerOf({ oauthConnection: connection('c-1') } as FastifyRequest)).toBe(
       'connection:c-1',
     );
+  });
+
+  it('names an MCP caller by the kind and the hash of the bearer it authenticated', () => {
+    const caller = (secret: string) =>
+      ({
+        mcpCaller: { bearer: { kind: 'connection', secret }, issuer: 'https://api.example.com' },
+      }) as FastifyRequest;
+
+    expect(readerOf(caller('pyxis_oat_a'))).toBe(`mcp-connection:${sha256Hex('pyxis_oat_a')}`);
+    expect(readerOf(caller('pyxis_oat_a'))).not.toContain('pyxis_oat_a');
   });
 
   it('refuses a request that nothing authenticated', () => {
