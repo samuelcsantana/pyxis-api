@@ -54,6 +54,7 @@ function setup(outcome: () => Promise<IngestBatchResult> = () => Promise.resolve
       'cloudfront-viewer-country': 'BR',
       'cloudfront-viewer-country-region': 'SP',
       'cloudfront-viewer-country-region-name': 'S%C3%A3o%20Paulo',
+      'cloudfront-viewer-asn': '28573',
       'x-pyxis-arrived-at': '1791295205000',
     },
   } as unknown as FastifyRequest;
@@ -91,6 +92,7 @@ describe('IngestController', () => {
         viewerCountry: 'BR',
         viewerRegion: 'SP',
         viewerRegionName: 'S%C3%A3o%20Paulo',
+        viewerAsn: '28573',
         arrivedAt: new Date(1_791_295_205_000),
       },
     ]);
