@@ -164,10 +164,41 @@ describe('isBotUserAgent', () => {
     expect(isBotUserAgent(userAgent)).toBe(true);
   });
 
-  it.each([SAFARI_IPHONE, CHROME_ANDROID, SAMSUNG_INTERNET, EDGE_WINDOWS, undefined])(
-    'lets %s through',
-    (userAgent) => {
-      expect(isBotUserAgent(userAgent)).toBe(false);
-    },
-  );
+  it.each([
+    [
+      'GoogleOther on a phone',
+      'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 (compatible; GoogleOther)',
+    ],
+    [
+      'GoogleOther on a computer',
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GoogleOther) Chrome/141.0.0.0 Safari/537.36',
+    ],
+    [
+      'Google-InspectionTool on a phone',
+      'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36 (compatible; Google-InspectionTool/1.0)',
+    ],
+    ['Google-InspectionTool on a computer', 'Mozilla/5.0 (compatible; Google-InspectionTool/1.0)'],
+    ['a link preview', 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'],
+    ['curl', 'curl/8.10.1'],
+    ['an HTTP library', 'python-requests/2.32.3'],
+    ['an empty header', ''],
+    ['a header of spaces', '   '],
+    ['no header', undefined],
+  ])('flags %s, which names no bot but is no browser either', (_label, userAgent) => {
+    expect(isBotUserAgent(userAgent)).toBe(true);
+  });
+
+  it.each([
+    SAFARI_IPHONE,
+    CHROME_ANDROID,
+    SAMSUNG_INTERNET,
+    EDGE_WINDOWS,
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:144.0) Gecko/20100101 Firefox/144.0',
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Safari/605.1.15',
+    'Mozilla/5.0 (iPad; CPU OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/141.0.0.0 Mobile/15E148 Safari/604.1',
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36 OPR/125.0.0.0',
+    'Mozilla/5.0 (SMART-TV; Linux; Tizen 8.0) AppleWebKit/537.36 (KHTML, like Gecko) Version/8.0 TV Safari/537.36',
+  ])('lets %s through', (userAgent) => {
+    expect(isBotUserAgent(userAgent)).toBe(false);
+  });
 });

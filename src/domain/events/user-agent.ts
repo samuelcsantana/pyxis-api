@@ -51,7 +51,7 @@ const DESKTOP_SYSTEMS: ReadonlySet<OsFamily> = new Set<OsFamily>([
   'linux',
   'chromeos',
 ]);
-const BOT_MARKERS = ['bot', 'crawler', 'spider', 'headless', 'lighthouse'] as const;
+const BOT_MARKERS = ['bot', 'crawler', 'spider', 'headless', 'lighthouse', 'compatible;'] as const;
 
 function firstMatch<T>(rules: readonly Rule<T>[], userAgent: string, fallback: T): T {
   return rules.find(([pattern]) => pattern.test(userAgent))?.[1] ?? fallback;
@@ -88,7 +88,19 @@ export function classifyUserAgent(
   };
 }
 
+function namesNoBrowserNorSystem(userAgent: string): boolean {
+  return (
+    firstMatch(BROWSER_RULES, userAgent, 'other') === 'other' &&
+    firstMatch(OS_RULES, userAgent, 'other') === 'other'
+  );
+}
+
 export function isBotUserAgent(userAgent: string | undefined): boolean {
-  const lowerCased = userAgent?.toLowerCase() ?? '';
-  return BOT_MARKERS.some((marker) => lowerCased.includes(marker));
+  const text = userAgent?.trim() ?? '';
+  const lowerCased = text.toLowerCase();
+  return (
+    text === '' ||
+    BOT_MARKERS.some((marker) => lowerCased.includes(marker)) ||
+    namesNoBrowserNorSystem(text)
+  );
 }
