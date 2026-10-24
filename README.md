@@ -70,7 +70,9 @@ Shipping now:
   allowlist, as `text/plain` (no CORS preflight, `sendBeacon`-friendly) or `application/json`.
   Invalid events are rejected one by one while the rest of the batch is stored
   ([ADR 0005](docs/adr/0005-per-event-validation.md)); a resent event is a duplicate, never stored
-  twice; bots are recognized and rejected
+  twice; bots are rejected, both those that say so and clients that are no browser (no user agent,
+  the `compatible;` form robots use, or no known browser and system;
+  [ADR 0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md))
 - A server-side barrier that drops any property or campaign value that looks like an email, a
   phone number or a tax id, and re-templates paths
 - Device, browser, operating system, channel, country and region derived on the server; the user
@@ -820,6 +822,7 @@ What differs from the hosted service:
 | [0042](docs/adr/0042-a-delivery-delay-is-not-a-wrong-clock.md)                        | A delivery delay is not a wrong clock                                      |
 | [0043](docs/adr/0043-the-reception-is-the-arrival-at-the-function-url.md)             | The reception is the arrival at the function URL                           |
 | [0044](docs/adr/0044-arrivals-are-counted-by-reception-time.md)                       | Arrivals are counted by reception time, as times not counts                |
+| [0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md)                       | A client that is no browser is refused, not only one that says "bot"       |
 
 ## Roadmap
 
