@@ -166,7 +166,8 @@ curl -s -o /dev/null -w '%{http_code}\n' "$(terraform -chdir=infra output -raw f
 aws logs tail /aws/lambda/pyxis-api --since 15m --profile pyxis-api | grep -E 'client_ip.sources|database.role_ok'
 ```
 
-`client_ip.sources` must show `"cloudfrontViewerAddress":true` and `"resolvedFrom":"header"`;
+`client_ip.sources` must show `"cloudfrontViewerAddress":true`, `"cloudfrontViewerAsn":true` and
+`"resolvedFrom":"header"` (without the network header nothing is refused as data center traffic);
 `database.role_ok` confirms the function connects as the least-privilege role. A batch sent from
 an allowed origin must store a row whose `country`, `region` and `region_name` are filled, which
 proves `CloudFront-Viewer-Country` and `CloudFront-Viewer-Country-Region(-Name)` arrive. Send it
