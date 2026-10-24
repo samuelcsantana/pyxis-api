@@ -22,6 +22,7 @@ export const CONNECTION_ACCESS_TOKEN_TTL_SECONDS = 60 * 60;
 export const CONNECTION_IDLE_TTL_DAYS = 90;
 export const MAX_LIVE_CONNECTIONS = 10;
 export const REFRESH_REPLAY_GRACE_MS = 60 * 1000;
+export const MAX_LIVE_ACCESS_TOKENS_FOR_REPLAY = 3;
 export const CONNECTION_TOUCH_INTERVAL_MS = SESSION_TOUCH_INTERVAL_MS;
 export const SPENT_REFRESH_TOKEN_RETENTION_DAYS = 30;
 export const FINISHED_AUTHORIZATION_REQUEST_RETENTION_DAYS = 1;
@@ -91,6 +92,10 @@ export function connectionNeedsTouch(lastUsedAt: Date, now: Date): boolean {
 
 export function isWithinReplayGrace(rotatedAt: Date, now: Date): boolean {
   return now.getTime() - rotatedAt.getTime() <= REFRESH_REPLAY_GRACE_MS;
+}
+
+export function hasReachedReplayCap(liveAccessTokens: number): boolean {
+  return liveAccessTokens >= MAX_LIVE_ACCESS_TOKENS_FOR_REPLAY;
 }
 
 export function connectionAccessTokenFromAuthorization(header: string | undefined): string | null {

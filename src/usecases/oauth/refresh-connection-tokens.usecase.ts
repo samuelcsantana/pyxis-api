@@ -1,6 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { sha256Hex } from '../../domain/auth/hashing';
-import { isConnectionIdle, isWithinReplayGrace } from '../../domain/oauth/oauth-policy';
+import {
+  hasReachedReplayCap,
+  isConnectionIdle,
+  isWithinReplayGrace,
+} from '../../domain/oauth/oauth-policy';
 import {
   REMOTE_MCP_SETTINGS,
   type RemoteMcpSettings,
@@ -70,11 +74,21 @@ export class RefreshConnectionTokensUseCase {
     await requireActiveAdmin(this.admins, connection.adminUserId);
     if (stored.rotatedAt === null) {
       await this.connections.markRefreshTokenRotated(stored.id, now);
+    } else {
+      await this.refuseReplayPastTheCap(connection.id, now);
     }
     const pair = issueTokenPair(this.random, now);
     await this.connections.issueTokens(connection.id, now, pair.tokens);
     await this.connections.touch(connection.id, now);
     return pair.grant;
+  }
+
+  private async refuseReplayPastTheCap(connectionId: string, now: Date): Promise<void> {
+    const liveAccessTokens = await this.connections.countLiveAccessTokens(connectionId, now);
+    if (hasReachedReplayCap(liveAccessTokens)) {
+      this.logger.warn({ message: 'oauth.refresh_replay_capped', connectionId });
+      throw invalidGrant();
+    }
   }
 
   private async dropReplayedConnection(stored: StoredRefreshToken, now: Date): Promise<void> {

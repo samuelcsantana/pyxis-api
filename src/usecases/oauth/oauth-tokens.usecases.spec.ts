@@ -46,6 +46,7 @@ const CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
 const CLAUDE_REDIRECT = 'https://claude.ai/api/mcp/auth_callback';
 const SECOND_MS = 1000;
 const MINUTE_MS = 60 * SECOND_MS;
+const HOUR_MS = 60 * MINUTE_MS;
 const DAY_MS = 86_400_000;
 
 async function setup(settings: RemoteMcpSettings = OPEN) {
@@ -334,6 +335,52 @@ describe('RefreshConnectionTokensUseCase', () => {
     await expect(authenticate.execute(again.accessToken)).resolves.toMatchObject({
       admin: { email: 'ana@example.com' },
     });
+  });
+
+  it('refuses a replay once the connection holds three live access tokens, keeping the connection', async () => {
+    const { connect, refresh, authenticate } = await setup();
+    const warnings: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'warn').mockImplementation((message: unknown) => {
+      warnings.push(message);
+    });
+    const first = await connect();
+    const second = await refresh.execute({
+      refreshToken: first.refreshToken,
+      clientId: CLAUDE_CLIENT_ID,
+    });
+    const replayed = await refresh.execute({
+      refreshToken: first.refreshToken,
+      clientId: CLAUDE_CLIENT_ID,
+    });
+
+    await expect(
+      refresh.execute({ refreshToken: first.refreshToken, clientId: CLAUDE_CLIENT_ID }),
+    ).rejects.toEqual(oauthError('invalid_grant'));
+    await expect(authenticate.execute(replayed.accessToken)).resolves.toMatchObject({
+      admin: { email: 'ana@example.com' },
+    });
+    await expect(
+      refresh.execute({ refreshToken: second.refreshToken, clientId: CLAUDE_CLIENT_ID }),
+    ).resolves.toMatchObject({ scope: 'read' });
+    expect(warnings).toEqual([
+      { message: 'oauth.refresh_replay_capped', connectionId: expect.any(String) as string },
+    ]);
+  });
+
+  it('counts only access tokens still alive toward the cap on replays', async () => {
+    const { connect, refresh, clock } = await setup();
+    const first = await connect();
+    clock.advanceBy(HOUR_MS);
+    await refresh.execute({ refreshToken: first.refreshToken, clientId: CLAUDE_CLIENT_ID });
+
+    for (let replay = 0; replay < 2; replay += 1) {
+      await expect(
+        refresh.execute({ refreshToken: first.refreshToken, clientId: CLAUDE_CLIENT_ID }),
+      ).resolves.toMatchObject({ scope: 'read' });
+    }
+    await expect(
+      refresh.execute({ refreshToken: first.refreshToken, clientId: CLAUDE_CLIENT_ID }),
+    ).rejects.toEqual(oauthError('invalid_grant'));
   });
 
   it('drops the whole connection when a rotated refresh token comes back later', async () => {
