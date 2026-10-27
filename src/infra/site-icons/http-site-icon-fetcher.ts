@@ -37,7 +37,7 @@ interface Fetched {
 export class SiteRequestRefusedError extends Error {}
 
 export async function resolveWithDns(hostname: string): Promise<readonly string[]> {
-  const addresses = await lookup(hostname, { all: true, verbatim: true });
+  const addresses = await lookup(hostname, { all: true, order: 'verbatim' });
   return addresses.map((entry) => entry.address);
 }
 
