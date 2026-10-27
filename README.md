@@ -260,6 +260,12 @@ Shipping now:
   the daily job ends the account on that day if it still does not fit. `GET /v1/me/accounts`
   answers the owner the `project_count`, `people_count` and `free_plan_fit_due_at`
   ([ADR 0051](docs/adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md))
+- Free accounts with no events: the daily job warns the owner of a free account that stored no
+  event in the 30 days after it entered the free plan (`free_since`), or none for 90 days in a row,
+  with the deletion day seven days ahead, and deletes it then unless an event was stored in the
+  meantime; replying to the notice asks a person to review it. Only stored events count; paid and
+  comped accounts, deletion holds and suspended accounts are never touched
+  ([ADR 0052](docs/adr/0052-free-accounts-with-no-events-are-deleted.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -873,6 +879,7 @@ What differs from the hosted service:
 | [0049](docs/adr/0049-sign-up-without-a-card.md)                                       | Sign-up without a card                                                     |
 | [0050](docs/adr/0050-subscribing-from-the-free-plan-and-withdrawing-back-to-it.md)    | Subscribing from the free plan, and withdrawing back to it                 |
 | [0051](docs/adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md)            | An ended subscription falls back to the free plan                          |
+| [0052](docs/adr/0052-free-accounts-with-no-events-are-deleted.md)                     | Free accounts with no events are deleted after a notice                    |
 
 ## Roadmap
 
@@ -918,7 +925,8 @@ What differs from the hosted service:
 - [x] The free plan's status, limits and pause at 100%
 - [x] Sign-up into the free plan, behind a switch, with a waiting list at the cap
 - [x] Subscribing from the free plan, and withdrawing back to it within 7 days
-- [ ] Falling back to the free plan when a paid subscription ends
+- [x] Falling back to the free plan when a paid subscription ends
+- [x] Free accounts with no events deleted after a notice
 
 ## Contributing and license
 
