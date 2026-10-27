@@ -32,6 +32,11 @@ describe('LazyMailSender', () => {
       { plan: { kind: 'subscription' }, terms: null },
       'en',
     );
+    await sender.sendSubscriptionConfirmed(
+      'ana@example.com',
+      { interval: 'month', withdrawalDays: 7, terms: null },
+      'en',
+    );
     await sender.sendExportReady(
       'ana@example.com',
       {
@@ -60,6 +65,7 @@ describe('LazyMailSender', () => {
     expect(recording.invitations).toHaveLength(1);
     expect(recording.accountNotices).toHaveLength(1);
     expect(recording.welcomes).toHaveLength(1);
+    expect(recording.subscriptionConfirmations).toHaveLength(1);
     expect(recording.exportsReady).toHaveLength(1);
     expect(recording.operatorNotices).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);

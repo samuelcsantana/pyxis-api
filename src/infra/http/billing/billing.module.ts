@@ -1,3 +1,6 @@
+import { SUBSCRIPTION_CONFIRMATION_REPOSITORY } from '../../../domain/repositories/subscription-confirmation.repository';
+import { DrizzleSubscriptionConfirmationRepository } from '../../repositories/drizzle-subscription-confirmation.repository';
+import { ConfirmSubscriptionsUseCase } from '../../../usecases/billing/confirm-subscriptions.usecase';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SIGN_UP_SETTINGS } from '../../../domain/accounts/sign-up-settings';
@@ -29,6 +32,11 @@ import { BillingWebhookController } from './billing-webhook.controller';
   providers: [
     HandleBillingEventUseCase,
     WelcomeAccountsUseCase,
+    ConfirmSubscriptionsUseCase,
+    {
+      provide: SUBSCRIPTION_CONFIRMATION_REPOSITORY,
+      useClass: DrizzleSubscriptionConfirmationRepository,
+    },
     DetectRepeatedTrialUseCase,
     { provide: TRIAL_CARD_REPOSITORY, useClass: DrizzleTrialCardRepository },
     { provide: ACCOUNT_WELCOME_REPOSITORY, useClass: DrizzleAccountWelcomeRepository },

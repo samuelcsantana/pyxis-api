@@ -12,6 +12,7 @@ import {
 } from '../../domain/repositories/billing-event.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { WelcomeAccountsUseCase } from '../accounts/welcome-accounts.usecase';
+import { ConfirmSubscriptionsUseCase } from './confirm-subscriptions.usecase';
 import { DetectRepeatedTrialUseCase } from './detect-repeated-trial.usecase';
 
 export interface HandleBillingEventCommand {
@@ -32,6 +33,7 @@ export class HandleBillingEventUseCase {
     @Inject(CLOCK) private readonly clock: Clock,
     private readonly welcomes: WelcomeAccountsUseCase,
     private readonly repeatedTrials: DetectRepeatedTrialUseCase,
+    private readonly confirmations: ConfirmSubscriptionsUseCase,
   ) {}
 
   async execute(command: HandleBillingEventCommand): Promise<BillingEventOutcome> {
@@ -74,6 +76,9 @@ export class HandleBillingEventUseCase {
     await this.accounts.apply(account.accountId, update);
     if (update.restoresAccess && !hasAccess(account.status)) {
       await this.welcomes.tryWelcome(account.accountId);
+    }
+    if (update.leavesFreePlan !== null) {
+      await this.confirmations.tryConfirm(account.accountId);
     }
     await this.repeatedTrials.tryDetect(account.accountId, subscription);
     await this.events.complete(event.id, now);

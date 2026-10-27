@@ -2,6 +2,7 @@ import type { NoticeText } from '../../domain/notices/operator-notice';
 import { Logger } from '@nestjs/common';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
+import type { SubscriptionConfirmation } from '../../domain/accounts/subscription-confirmation';
 import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
@@ -55,6 +56,20 @@ export class LoggingMailSender implements MailSender {
       message: 'mail.welcome',
       plan: welcome.plan.kind,
       withTerms: welcome.terms !== null,
+      language,
+    });
+    return Promise.resolve();
+  }
+
+  sendSubscriptionConfirmed(
+    _email: string,
+    confirmation: SubscriptionConfirmation,
+    language: EmailLanguage,
+  ): Promise<void> {
+    this.logger.log({
+      message: 'mail.subscription_confirmed',
+      interval: confirmation.interval,
+      withTerms: confirmation.terms !== null,
       language,
     });
     return Promise.resolve();

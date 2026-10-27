@@ -23,6 +23,8 @@ import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher'
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
 import { OpenFreePlacesUseCase } from '../usecases/accounts/open-free-places.usecase';
+import { ConfirmSubscriptionsUseCase } from '../usecases/billing/confirm-subscriptions.usecase';
+import { DrizzleSubscriptionConfirmationRepository } from '../infra/repositories/drizzle-subscription-confirmation.repository';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
 import { DrizzleProjectlessPeopleRepository } from '../infra/repositories/drizzle-projectless-people.repository';
 import { SweepProjectlessPeopleUseCase } from '../usecases/people/sweep-projectless-people.usecase';
@@ -110,6 +112,11 @@ export const handler = createJobsHandler({
         new SweepProjectlessPeopleUseCase(new DrizzleProjectlessPeopleRepository(database), clock),
         new OpenFreePlacesUseCase(
           new DrizzleAccountRepository(database),
+          signUpSettingsFromEnv(env),
+        ),
+        new ConfirmSubscriptionsUseCase(
+          new DrizzleSubscriptionConfirmationRepository(database),
+          mail,
           signUpSettingsFromEnv(env),
         ),
       ).execute();
