@@ -1,6 +1,5 @@
 import { Logger } from '@nestjs/common';
 import {
-  ACCOUNT_DELETION_BATCH_SIZE,
   deletionDueAt,
   deletionThreshold,
   staleIncompleteThresholds,
@@ -21,6 +20,7 @@ import type { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 import type { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import type { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.usecase';
 import type { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
+import { AccountDataDeletion } from './account-data-deletion';
 
 export interface AccountLifecycleReport {
   readonly freePlacesOpened: number;
@@ -59,13 +59,9 @@ interface EndedAccountDeletion extends Removal {
   readonly partlyHeld: number;
 }
 
-type DeletionOutcome =
-  | { readonly kind: 'deleted'; readonly peopleRemoved: number }
-  | { readonly kind: 'partlyHeld'; readonly peopleRemoved: number }
-  | { readonly kind: 'failed' };
-
 export class RunAccountLifecycleUseCase {
   private readonly logger = new Logger(RunAccountLifecycleUseCase.name);
+  private readonly deletion: AccountDataDeletion;
 
   constructor(
     private readonly lifecycle: AccountLifecycleRepository,
@@ -78,7 +74,9 @@ export class RunAccountLifecycleUseCase {
     private readonly freePlaces: OpenFreePlacesUseCase,
     private readonly confirmations: ConfirmSubscriptionsUseCase,
     private readonly fallbacks: FallBackToFreePlanUseCase,
-  ) {}
+  ) {
+    this.deletion = new AccountDataDeletion(lifecycle, mail);
+  }
 
   async execute(): Promise<AccountLifecycleReport> {
     const now = this.clock.now();
@@ -193,7 +191,7 @@ export class RunAccountLifecycleUseCase {
     let peopleRemoved = 0;
     const failed: string[] = [];
     for (const account of await this.lifecycle.dueForDeletion(deletionThreshold(now))) {
-      const outcome = await this.deleteAccountData(account);
+      const outcome = await this.deletion.delete(account);
       if (outcome.kind === 'failed') {
         failed.push(account.accountId);
         continue;
@@ -204,70 +202,9 @@ export class RunAccountLifecycleUseCase {
         continue;
       }
       removed += 1;
-      await this.tryNotifyDeleted(account);
+      await this.deletion.tryNotifyDeleted(account);
     }
     return { removed, partlyHeld, peopleRemoved, failed };
-  }
-
-  private async deleteAccountData(account: EndedAccount): Promise<DeletionOutcome> {
-    try {
-      const people = await this.lifecycle.peopleOf(account.accountId);
-      const held = new Set(await this.lifecycle.heldProjectIdsOf(account.accountId));
-      for (const projectId of await this.lifecycle.projectIdsOf(account.accountId)) {
-        if (!held.has(projectId)) {
-          await this.deleteEventsOf(projectId);
-          await this.lifecycle.deleteProject(projectId);
-        }
-      }
-      if (held.size > 0) {
-        this.logger.log({
-          message: 'accounts.deletion_partly_held',
-          accountId: account.accountId,
-          heldProjects: held.size,
-        });
-        return {
-          kind: 'partlyHeld',
-          peopleRemoved: await this.lifecycle.deleteAdminsLeftWithout(people),
-        };
-      }
-      await this.lifecycle.deleteAccount(account.accountId);
-      const peopleRemoved = await this.lifecycle.deleteAdminsLeftWithout([
-        ...new Set([...people, account.ownerAdminId]),
-      ]);
-      this.logger.log({ message: 'accounts.deleted', accountId: account.accountId });
-      return { kind: 'deleted', peopleRemoved };
-    } catch (error) {
-      this.logger.error({
-        message: 'accounts.deletion_failed',
-        accountId: account.accountId,
-        reason: String(error),
-      });
-      return { kind: 'failed' };
-    }
-  }
-
-  private async deleteEventsOf(projectId: string): Promise<void> {
-    let deleted: number;
-    do {
-      deleted = await this.lifecycle.deleteEventsOf(projectId, ACCOUNT_DELETION_BATCH_SIZE);
-    } while (deleted === ACCOUNT_DELETION_BATCH_SIZE);
-  }
-
-  private async tryNotifyDeleted(account: EndedAccount): Promise<void> {
-    try {
-      await this.mail.sendAccountNotice(
-        account.ownerEmail,
-        { kind: 'account_deleted' },
-        account.ownerLanguage,
-      );
-    } catch (error) {
-      this.logger.error({
-        message: 'accounts.notice_failed',
-        kind: 'account_deleted',
-        accountId: account.accountId,
-        reason: String(error),
-      });
-    }
   }
 
   private async removeStaleIncomplete(now: Date): Promise<Removal> {
