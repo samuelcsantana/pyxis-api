@@ -1,3 +1,4 @@
+import type { StaleIncompleteThresholds } from '../accounts/account-lifecycle';
 import type { EmailLanguage } from '../auth/email-language';
 import type { AccountBillingState } from '../billing/account-billing';
 
@@ -26,7 +27,7 @@ export interface AccountLifecycleRepository {
   dueForReminder(remindBefore: Date, deleteBefore: Date): Promise<readonly EndedAccount[]>;
   markReminded(accountId: string, at: Date): Promise<void>;
   dueForDeletion(deleteBefore: Date): Promise<readonly EndedAccount[]>;
-  staleIncomplete(createdBefore: Date): Promise<readonly StaleAccount[]>;
+  staleIncomplete(thresholds: StaleIncompleteThresholds): Promise<readonly StaleAccount[]>;
   peopleOf(accountId: string): Promise<readonly string[]>;
   projectIdsOf(accountId: string): Promise<readonly string[]>;
   heldProjectIdsOf(accountId: string): Promise<readonly string[]>;

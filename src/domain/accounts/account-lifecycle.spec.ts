@@ -1,8 +1,8 @@
 import {
   deletionDueAt,
   deletionThreshold,
-  incompleteThreshold,
   reminderThreshold,
+  staleIncompleteThresholds,
   withdrawalWindowStart,
 } from './account-lifecycle';
 
@@ -18,8 +18,11 @@ describe('the end of an account', () => {
     expect(reminderThreshold(NOW)).toEqual(new Date('2026-11-08T03:00:00.000Z'));
   });
 
-  it('removes an account that never subscribed after seven days', () => {
-    expect(incompleteThreshold(NOW)).toEqual(new Date('2026-11-24T03:00:00.000Z'));
+  it('removes an account that never subscribed after seven days, or after sixty of waiting for a free place', () => {
+    expect(staleIncompleteThresholds(NOW)).toEqual({
+      createdBefore: new Date('2026-11-24T03:00:00.000Z'),
+      waitlistedBefore: new Date('2026-10-02T03:00:00.000Z'),
+    });
   });
 });
 

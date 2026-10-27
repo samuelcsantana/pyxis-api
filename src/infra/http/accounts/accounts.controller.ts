@@ -66,6 +66,7 @@ export function myAccountBody({
     access_ends_at: isoOrNull(account.accessEndsAt),
     ingestion_paused_until: isoOrNull(account.ingestionPausedUntil),
     quota_pause_exempt_until: isoOrNull(account.quotaPauseExemptUntil),
+    free_waitlisted_at: owner ? isoOrNull(account.freeWaitlistedAt) : null,
     suspended_at: isoOrNull(account.suspendedAt),
     suspension_reason: owner ? account.suspensionReason : null,
     deletion_held_at: owner ? isoOrNull(account.deletionHeldAt) : null,

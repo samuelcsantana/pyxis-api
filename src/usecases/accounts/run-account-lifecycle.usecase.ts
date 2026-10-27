@@ -3,7 +3,7 @@ import {
   ACCOUNT_DELETION_BATCH_SIZE,
   deletionDueAt,
   deletionThreshold,
-  incompleteThreshold,
+  staleIncompleteThresholds,
   reminderThreshold,
 } from '../../domain/accounts/account-lifecycle';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
@@ -252,7 +252,7 @@ export class RunAccountLifecycleUseCase {
     let removed = 0;
     let peopleRemoved = 0;
     const failed: string[] = [];
-    for (const account of await this.lifecycle.staleIncomplete(incompleteThreshold(now))) {
+    for (const account of await this.lifecycle.staleIncomplete(staleIncompleteThresholds(now))) {
       try {
         await this.lifecycle.deleteAccount(account.accountId);
         peopleRemoved += await this.lifecycle.deleteAdminsLeftWithout([account.ownerAdminId]);

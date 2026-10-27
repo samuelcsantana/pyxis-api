@@ -1,3 +1,4 @@
+import type { StaleIncompleteThresholds } from '../domain/accounts/account-lifecycle';
 import type { AccountStatus } from '../domain/accounts/account-status';
 import type { EmailLanguage } from '../domain/auth/email-language';
 import type {
@@ -23,6 +24,7 @@ export interface LifecycleAccount {
   readonly accessEndsAt: Date | null;
   readonly subscriptionId: string | null;
   readonly createdAt: Date;
+  readonly freeWaitlistedAt: Date | null;
   readonly keysRevokedAt: Date | null;
   readonly endedNotifiedAt: Date | null;
   readonly deletionRemindedAt: Date | null;
@@ -30,6 +32,12 @@ export interface LifecycleAccount {
 }
 
 const CREATED_AT = new Date('2026-10-01T00:00:00.000Z');
+
+function isStale(account: LifecycleAccount, thresholds: StaleIncompleteThresholds): boolean {
+  return account.freeWaitlistedAt === null
+    ? account.createdAt < thresholds.createdBefore
+    : account.freeWaitlistedAt < thresholds.waitlistedBefore;
+}
 
 export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepository {
   private readonly accounts = new Map<string, LifecycleAccount>();
@@ -54,6 +62,7 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
       accessEndsAt: null,
       subscriptionId: null,
       createdAt: CREATED_AT,
+      freeWaitlistedAt: null,
       keysRevokedAt: null,
       endedNotifiedAt: null,
       deletionRemindedAt: null,
@@ -167,7 +176,7 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
     );
   }
 
-  staleIncomplete(createdBefore: Date): Promise<readonly StaleAccount[]> {
+  staleIncomplete(thresholds: StaleIncompleteThresholds): Promise<readonly StaleAccount[]> {
     const holding = new Set(this.projects.values());
     return Promise.resolve(
       [...this.accounts.values()]
@@ -175,7 +184,7 @@ export class InMemoryAccountLifecycleRepository implements AccountLifecycleRepos
           (account) =>
             account.status === 'incomplete' &&
             account.subscriptionId === null &&
-            account.createdAt < createdBefore &&
+            isStale(account, thresholds) &&
             account.deletionHeldAt === null &&
             !holding.has(account.accountId),
         )

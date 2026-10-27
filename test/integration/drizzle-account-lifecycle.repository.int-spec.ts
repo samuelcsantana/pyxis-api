@@ -24,6 +24,10 @@ function daysAgo(days: number): Date {
   return new Date(NOW.getTime() - days * DAY_MS);
 }
 
+function stale(createdDays: number, waitlistedDays: number) {
+  return { createdBefore: daysAgo(createdDays), waitlistedBefore: daysAgo(waitlistedDays) };
+}
+
 describe('the account lifecycle against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
@@ -159,16 +163,26 @@ describe('the account lifecycle against a real Postgres', () => {
     expect(await lifecycle.dueForReminder(remindBefore, deleteBefore)).toEqual([]);
     await setEnded(daysAgo(31));
     expect(await lifecycle.dueForDeletion(deleteBefore)).toEqual([]);
-    expect(await lifecycle.staleIncomplete(daysAgo(7))).toEqual([]);
+    expect(await lifecycle.staleIncomplete(stale(7, 60))).toEqual([]);
   });
 
   it('finds the abandoned sign-ups: incomplete, never subscribed, old and without projects', async () => {
-    expect(await lifecycle.staleIncomplete(daysAgo(7))).toEqual([
+    expect(await lifecycle.staleIncomplete(stale(7, 60))).toEqual([
       { accountId: INCOMPLETE_ID, ownerAdminId: DORA },
     ]);
-    expect(await lifecycle.staleIncomplete(daysAgo(9))).toEqual([]);
+    expect(await lifecycle.staleIncomplete(stale(9, 60))).toEqual([]);
     await owner`UPDATE accounts SET stripe_subscription_id = 'sub_pending' WHERE id = ${INCOMPLETE_ID}`;
-    expect(await lifecycle.staleIncomplete(daysAgo(7))).toEqual([]);
+    expect(await lifecycle.staleIncomplete(stale(7, 60))).toEqual([]);
+  });
+
+  it('keeps a sign-up waiting for a free place sixty days from when it started waiting', async () => {
+    await owner`UPDATE accounts SET free_waitlisted_at = ${daysAgo(8)} WHERE id = ${INCOMPLETE_ID}`;
+    expect(await lifecycle.staleIncomplete(stale(7, 60))).toEqual([]);
+
+    await owner`UPDATE accounts SET free_waitlisted_at = ${daysAgo(61)} WHERE id = ${INCOMPLETE_ID}`;
+    expect(await lifecycle.staleIncomplete(stale(7, 60))).toEqual([
+      { accountId: INCOMPLETE_ID, ownerAdminId: DORA },
+    ]);
   });
 
   it('lists the people and the projects of an account', async () => {

@@ -99,6 +99,10 @@ export const myAccountsSchema = z
           'Until when the operator exempts the account from the pause past its monthly events (a ' +
             'customer of an earlier version of the terms, until its renewal); null when it is not.',
         ),
+        free_waitlisted_at: isoDate.describe(
+          'Since when an unfinished account waits for a place on the free plan, which was full at ' +
+            'sign-up; null when it does not wait. Its owner can subscribe in the meantime.',
+        ),
         suspended_at: isoDate.describe(
           'Set while the operator suspended the account for abuse: its projects take no events ' +
             'and answer account_suspended in the dashboard until it is lifted.',
