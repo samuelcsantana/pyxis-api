@@ -5,6 +5,7 @@ import { LazyMailSender } from './lazy-mail-sender';
 
 const NOTICE: QuotaNotice = {
   kind: 'quota_paused',
+  plan: 'paid',
   events: 150_000,
   limit: 100_000,
   month: '2026-10',

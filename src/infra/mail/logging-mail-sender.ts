@@ -39,6 +39,7 @@ export class LoggingMailSender implements MailSender {
     this.logger.log({
       message: 'mail.quota_notice',
       kind: notice.kind,
+      plan: notice.plan,
       month: notice.month,
       events: notice.events,
       language,

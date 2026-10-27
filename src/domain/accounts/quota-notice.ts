@@ -9,7 +9,10 @@ export type QuotaWarningPercent = (typeof QUOTA_WARNING_PERCENTS)[number];
 export type QuotaNoticeLevel =
   typeof NOT_NOTIFIED | QuotaWarningPercent | typeof QUOTA_PAUSED_LEVEL;
 
+export type QuotaPlan = 'free' | 'paid';
+
 export interface QuotaFigures {
+  readonly plan: QuotaPlan;
   readonly events: number;
   readonly limit: number;
   readonly month: string;
@@ -78,6 +81,7 @@ export function quotaNoticeDue(
     return null;
   }
   const figures: QuotaFigures = {
+    plan: usage.status === 'free' ? 'free' : 'paid',
     events: usage.events,
     limit: eventsPerMonth,
     month: context.month,
