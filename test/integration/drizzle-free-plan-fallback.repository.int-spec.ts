@@ -145,6 +145,47 @@ describe('the fall back to the free plan against a real Postgres', () => {
     expect(await fallbacks.pendingNotices()).toEqual([]);
   });
 
+  it('lists the free accounts whose deadline to fit has come, with their fit', async () => {
+    await owner`
+      UPDATE accounts SET status = 'free', free_plan_fit_due_at = ${AT} WHERE id = ${ENDING}
+    `;
+    await owner`
+      UPDATE accounts SET free_plan_fit_due_at = ${new Date(AT.getTime() + 1)} WHERE id = ${BIAS_FREE}
+    `;
+
+    const due = await fallbacks.fitDeadlinesDue(AT);
+
+    expect(due.map(({ accountId }) => accountId)).toEqual([ENDING]);
+    expect(due[0]?.fit).toMatchObject({ projects: 2, people: 2, projectsLimit: 2 });
+  });
+
+  it('clears a deadline once the account fits, and ends one that still does not', async () => {
+    await owner`
+      UPDATE accounts SET status = 'free', free_plan_fit_due_at = ${AT}
+      WHERE id IN (${ENDING}, ${BIAS_FREE})
+    `;
+
+    await fallbacks.clearFitDeadline(BIAS_FREE);
+    await fallbacks.endUnfit(ENDING, AT);
+
+    const rows = await owner<{ id: string; status: string; access_ends_at: Date | null }[]>`
+      SELECT id, status, access_ends_at, free_plan_fit_due_at FROM accounts
+      WHERE id IN (${ENDING}, ${BIAS_FREE}) ORDER BY id
+    `;
+    expect(rows).toEqual([
+      { id: ENDING, status: 'ended', access_ends_at: AT, free_plan_fit_due_at: null },
+      { id: BIAS_FREE, status: 'free', access_ends_at: null, free_plan_fit_due_at: null },
+    ]);
+  });
+
+  it('never ends an account that is no longer free on its deadline', async () => {
+    await owner`UPDATE accounts SET free_plan_fit_due_at = ${AT} WHERE id = ${BIAS_PAID}`;
+
+    await fallbacks.endUnfit(BIAS_PAID, AT);
+
+    expect((await stored(BIAS_PAID))?.status).toBe('active');
+  });
+
   it('never notifies an account that left the free plan before the notice went', async () => {
     await fallbacks.fallBack(ENDING, AT);
     await owner`UPDATE accounts SET status = 'ended' WHERE id = ${ENDING}`;

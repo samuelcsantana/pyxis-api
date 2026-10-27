@@ -17,6 +17,7 @@ import {
   ACCOUNT_NOTICE_EMAIL_MESSAGES,
   type AccountNoticeEmailMessages,
   type AccountNoticeWords,
+  NO_DEADLINE,
   NO_REFUND,
 } from './account-notice-email-messages';
 
@@ -38,7 +39,17 @@ const NO_WORDS: AccountNoticeWords = {
   deletionOn: NO_DATE,
   refunded: NO_REFUND,
   monthlyEvents: '',
+  fitBy: NO_DEADLINE,
 };
+
+function longDateOf(moment: Date, locale: string): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(moment);
+}
 
 interface NoticeText {
   readonly subject: string;
@@ -62,6 +73,7 @@ function wordsOf(notice: AccountNotice, language: EmailLanguage): AccountNoticeW
                 style: 'currency',
                 currency: REFUND_CURRENCY,
               }).format(notice.refundedAmount / CENTS_PER_UNIT),
+        fitBy: notice.fitBy === null ? NO_DEADLINE : longDateOf(notice.fitBy, locale),
       };
     case 'back_to_free':
       return {
@@ -72,12 +84,7 @@ function wordsOf(notice: AccountNotice, language: EmailLanguage): AccountNoticeW
     case 'deletion_reminder':
       return {
         ...NO_WORDS,
-        deletionOn: new Intl.DateTimeFormat(locale, {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          timeZone: 'UTC',
-        }).format(notice.deletionOn),
+        deletionOn: longDateOf(notice.deletionOn, locale),
       };
   }
 }

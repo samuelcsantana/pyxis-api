@@ -90,7 +90,10 @@ function accountsController(accounts: readonly MyAccount[] = []) {
     {
       execute: (command: WithdrawToFreePlanCommand) => {
         withdrawals.push(command);
-        return Promise.resolve({ refundedAmount: 3900 });
+        return Promise.resolve({
+          refundedAmount: 3900,
+          fitBy: new Date('2026-12-20T15:00:00.000Z'),
+        });
       },
     } as unknown as WithdrawToFreePlanUseCase,
   );
@@ -338,6 +341,7 @@ describe('AccountsController withdraw', () => {
     expect(await controller.withdraw(signedIn(), 'acc00000-0000-4000-a000-000000000001')).toEqual({
       status: 'free',
       refunded_amount: 3900,
+      fit_by: '2026-12-20T15:00:00.000Z',
     });
     expect(withdrawals).toEqual([
       {

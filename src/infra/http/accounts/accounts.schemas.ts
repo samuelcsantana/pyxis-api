@@ -160,6 +160,13 @@ export const withdrawnSchema = z
         'What was refunded of the first payment, in the smallest unit of the currency ' +
           '(centavos); 0 when the automatic refund failed and is done by hand',
       ),
+    fit_by: z.iso
+      .datetime()
+      .nullable()
+      .describe(
+        "When an account over the free plan's projects or people ends unless it fits by then; " +
+          'null when it already fits',
+      ),
   })
   .meta({
     id: 'Withdrawn',

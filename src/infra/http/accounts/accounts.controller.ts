@@ -172,7 +172,8 @@ export class AccountsController {
     description:
       'Only the owner, while the free plan is open, within 7 days of the first payment of the ' +
       'subscription: cancels it at once, refunds that payment in full and puts the account back ' +
-      'on the free plan, with its projects and data. 409 free_plan_closed, ' +
+      'on the free plan, with its projects and data; an account over the free plan has until ' +
+      'fit_by to fit, or it ends. 409 free_plan_closed, ' +
       'withdrawal_unavailable (no paid subscription) or withdrawal_window_closed otherwise.',
   })
   @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
@@ -192,7 +193,11 @@ export class AccountsController {
       ownerLanguage: admin.emailLanguage,
       accountId,
     });
-    return { status: 'free', refunded_amount: withdrawn.refundedAmount };
+    return {
+      status: 'free',
+      refunded_amount: withdrawn.refundedAmount,
+      fit_by: isoOrNull(withdrawn.fitBy),
+    };
   }
 
   @Post('accounts/:accountId/close')

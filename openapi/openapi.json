@@ -4397,6 +4397,19 @@
         "additionalProperties": false,
         "description": "The subscription cancelled now and its first payment refunded: the account is back on the free plan.",
         "properties": {
+          "fit_by": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "When an account over the free plan's projects or people ends unless it fits by then; null when it already fits"
+          },
           "refunded_amount": {
             "description": "What was refunded of the first payment, in the smallest unit of the currency (centavos); 0 when the automatic refund failed and is done by hand",
             "maximum": 9007199254740991,
@@ -4412,7 +4425,8 @@
         },
         "required": [
           "status",
-          "refunded_amount"
+          "refunded_amount",
+          "fit_by"
         ],
         "type": "object"
       }
@@ -5229,7 +5243,7 @@
     },
     "/v1/accounts/{accountId}/withdraw": {
       "post": {
-        "description": "Only the owner, while the free plan is open, within 7 days of the first payment of the subscription: cancels it at once, refunds that payment in full and puts the account back on the free plan, with its projects and data. 409 free_plan_closed, withdrawal_unavailable (no paid subscription) or withdrawal_window_closed otherwise.",
+        "description": "Only the owner, while the free plan is open, within 7 days of the first payment of the subscription: cancels it at once, refunds that payment in full and puts the account back on the free plan, with its projects and data; an account over the free plan has until fit_by to fit, or it ends. 409 free_plan_closed, withdrawal_unavailable (no paid subscription) or withdrawal_window_closed otherwise.",
         "operationId": "AccountsController_withdraw",
         "parameters": [
           {

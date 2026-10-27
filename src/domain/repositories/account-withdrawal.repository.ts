@@ -1,6 +1,6 @@
 export interface AccountWithdrawalRepository {
   subscriptionOf(accountId: string): Promise<string | null>;
-  returnToFreePlan(accountId: string): Promise<void>;
+  returnToFreePlan(accountId: string, fitDueAt: Date | null): Promise<void>;
 }
 
 export const ACCOUNT_WITHDRAWAL_REPOSITORY = Symbol('AccountWithdrawalRepository');

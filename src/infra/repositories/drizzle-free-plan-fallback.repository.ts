@@ -1,9 +1,21 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, count, countDistinct, eq, inArray, isNotNull, ne, type SQL, sql } from 'drizzle-orm';
+import {
+  and,
+  count,
+  countDistinct,
+  eq,
+  inArray,
+  isNotNull,
+  lte,
+  ne,
+  type SQL,
+  sql,
+} from 'drizzle-orm';
 import { ACCOUNT_STATUSES, hasRunningSubscription } from '../../domain/accounts/account-status';
 import type { FreePlanFit } from '../../domain/accounts/free-plan-fallback';
 import type {
   BackToFreeTarget,
+  FitDeadline,
   FreePlanFallbackRepository,
 } from '../../domain/repositories/free-plan-fallback.repository';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
@@ -105,6 +117,37 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
       .update(accounts)
       .set({ backToFreeNoticeDueAt: null })
       .where(eq(accounts.id, accountId));
+  }
+
+  async fitDeadlinesDue(now: Date): Promise<readonly FitDeadline[]> {
+    const due = await this.db
+      .select({ accountId: accounts.id })
+      .from(accounts)
+      .where(and(eq(accounts.status, 'free'), lte(accounts.freePlanFitDueAt, now)));
+    const deadlines = await Promise.all(
+      due.map(async ({ accountId }) => ({ accountId, fit: await this.fitOf(accountId) })),
+    );
+    return deadlines.filter((deadline): deadline is FitDeadline => deadline.fit !== null);
+  }
+
+  async clearFitDeadline(accountId: string): Promise<void> {
+    await this.db
+      .update(accounts)
+      .set({ freePlanFitDueAt: null })
+      .where(eq(accounts.id, accountId));
+  }
+
+  async endUnfit(accountId: string, at: Date): Promise<void> {
+    await this.db
+      .update(accounts)
+      .set({ status: 'ended', accessEndsAt: at, freePlanFitDueAt: null })
+      .where(
+        and(
+          eq(accounts.id, accountId),
+          eq(accounts.status, 'free'),
+          isNotNull(accounts.freePlanFitDueAt),
+        ),
+      );
   }
 
   private targets(condition: SQL): Promise<BackToFreeTarget[]> {

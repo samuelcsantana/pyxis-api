@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { withdrawalWindowStart } from '../../domain/accounts/account-lifecycle';
+import { fitsFreePlan, freePlanFitDueAt } from '../../domain/accounts/free-plan-fallback';
 import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../domain/accounts/sign-up-settings';
 import { BILLING_GATEWAY, type BillingGateway } from '../../domain/billing/billing-gateway';
 import {
@@ -15,6 +16,10 @@ import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
 } from '../../domain/repositories/account.repository';
+import {
+  FREE_PLAN_FALLBACK_REPOSITORY,
+  type FreePlanFallbackRepository,
+} from '../../domain/repositories/free-plan-fallback.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { MAIL_SENDER, type MailSender } from '../../domain/services/mail-sender';
 import type { EmailLanguage } from '../../domain/auth/email-language';
@@ -29,6 +34,7 @@ export interface WithdrawToFreePlanCommand {
 
 export interface WithdrawnToFreePlan {
   readonly refundedAmount: number;
+  readonly fitBy: Date | null;
 }
 
 const PAID_STATUSES: ReadonlySet<string> = new Set(['active', 'past_due', 'ending']);
@@ -45,6 +51,8 @@ export class WithdrawToFreePlanUseCase {
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(SIGN_UP_SETTINGS) private readonly settings: SignUpSettings,
     @Inject(MAIL_SENDER) private readonly mail: MailSender,
+    @Inject(FREE_PLAN_FALLBACK_REPOSITORY)
+    private readonly fallbacks: FreePlanFallbackRepository,
   ) {}
 
   async execute(command: WithdrawToFreePlanCommand): Promise<WithdrawnToFreePlan> {
@@ -64,24 +72,31 @@ export class WithdrawToFreePlanUseCase {
     }
     await this.gateway.cancelSubscription(subscriptionId);
     const refundedAmount = await this.tryRefund(account.id, subscriptionId, windowStart);
-    await this.withdrawals.returnToFreePlan(account.id);
-    await this.tryNotify(command, refundedAmount);
+    const fitBy = await this.fitDeadline(account.id, now);
+    await this.withdrawals.returnToFreePlan(account.id, fitBy);
+    await this.tryNotify(command, { refundedAmount, fitBy });
     this.logger.log({
       message: 'accounts.withdrawn_to_free',
       accountId: account.id,
       refundedAmount,
+      fitBy,
     });
-    return { refundedAmount };
+    return { refundedAmount, fitBy };
+  }
+
+  private async fitDeadline(accountId: string, now: Date): Promise<Date | null> {
+    const fit = await this.fallbacks.fitOf(accountId);
+    return fit === null || fitsFreePlan(fit) ? null : freePlanFitDueAt(now);
   }
 
   private async tryNotify(
     command: WithdrawToFreePlanCommand,
-    refundedAmount: number,
+    withdrawn: WithdrawnToFreePlan,
   ): Promise<void> {
     try {
       await this.mail.sendAccountNotice(
         command.ownerEmail,
-        { kind: 'withdrawn_to_free', refundedAmount },
+        { kind: 'withdrawn_to_free', ...withdrawn },
         command.ownerLanguage,
       );
     } catch (error) {

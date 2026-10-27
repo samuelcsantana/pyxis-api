@@ -30,6 +30,7 @@ export interface AccountLifecycleReport {
   readonly reconciled: number;
   readonly statusChanges: number;
   readonly reconcileFailures: number;
+  readonly unfitFreeAccountsEnded: number;
   readonly keysRevoked: number;
   readonly endedNotices: number;
   readonly reminders: number;
@@ -86,6 +87,7 @@ export class RunAccountLifecycleUseCase {
     const subscriptionsConfirmed = await this.confirmations.confirmPending();
     const backToFreeNotices = await this.fallbacks.notifyPending();
     const reconciliation = await this.reconcile(now);
+    const unfitFreeAccountsEnded = await this.fallbacks.settleFitDeadlines(now);
     const keysRevoked = await this.lifecycle.revokeKeysOfEndedAccounts(now);
     const endedNotices = await this.notifyEach(
       await this.lifecycle.endedToNotify(now),
@@ -106,6 +108,7 @@ export class RunAccountLifecycleUseCase {
       subscriptionsConfirmed,
       backToFreeNotices,
       ...reconciliation,
+      unfitFreeAccountsEnded,
       keysRevoked,
       endedNotices,
       reminders,

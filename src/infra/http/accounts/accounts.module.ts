@@ -1,4 +1,6 @@
 import { ACCOUNT_WITHDRAWAL_REPOSITORY } from '../../../domain/repositories/account-withdrawal.repository';
+import { FREE_PLAN_FALLBACK_REPOSITORY } from '../../../domain/repositories/free-plan-fallback.repository';
+import { DrizzleFreePlanFallbackRepository } from '../../repositories/drizzle-free-plan-fallback.repository';
 import { DrizzleAccountWithdrawalRepository } from '../../repositories/drizzle-account-withdrawal.repository';
 import { WithdrawToFreePlanUseCase } from '../../../usecases/accounts/withdraw-to-free-plan.usecase';
 import { Module } from '@nestjs/common';
@@ -49,6 +51,7 @@ import { SignUpController } from './sign-up.controller';
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: ACCOUNT_CLOSURE_REPOSITORY, useClass: DrizzleAccountClosureRepository },
     { provide: ACCOUNT_WITHDRAWAL_REPOSITORY, useClass: DrizzleAccountWithdrawalRepository },
+    { provide: FREE_PLAN_FALLBACK_REPOSITORY, useClass: DrizzleFreePlanFallbackRepository },
     { provide: ACCOUNT_USAGE_REPOSITORY, useClass: DrizzleAccountUsageRepository },
     { provide: TERMS_ACCEPTANCE_REPOSITORY, useClass: DrizzleTermsAcceptanceRepository },
   ],

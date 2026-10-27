@@ -85,7 +85,7 @@ function setup() {
       trialOffered: true,
       freePlanTermsForEarlierAccountsFrom: null,
     }),
-    new FallBackToFreePlanUseCase(fallbacks, mail, clock, {
+    new FallBackToFreePlanUseCase(fallbacks, mail, new FixedClock(new Date(NOW.getTime() + 1)), {
       open: true,
       termsVersion: '1.3',
       termsUrl: null,
@@ -135,6 +135,7 @@ describe('RunAccountLifecycleUseCase', () => {
       reconciled: 0,
       statusChanges: 0,
       reconcileFailures: 0,
+      unfitFreeAccountsEnded: 0,
       keysRevoked: 0,
       endedNotices: 0,
       reminders: 0,
@@ -534,6 +535,35 @@ describe('RunAccountLifecycleUseCase', () => {
 
     expect(report.freePlacesOpened).toBe(1);
     expect(accounts.stored[0]?.status).toBe('free');
+  });
+
+  it('ends a free account still over its limits on its deadline, before revoking the keys of the ended', async () => {
+    const { lifecycle, fallbacks, useCase } = setup();
+    fallbacks.add({
+      accountId: 'too-big',
+      ownerEmail: 'ana@example.com',
+      ownerLanguage: 'es',
+      eventsPerMonthLimit: null,
+      status: 'free',
+      fit: {
+        ...NO_LIMIT_OVERRIDES,
+        projects: 2,
+        people: 1,
+        acceptedTermsVersions: ['1.3'],
+        ownerHasAnotherFreeAccount: false,
+      },
+    });
+    fallbacks.setFitDeadline('too-big', NOW);
+    const end = jest.spyOn(fallbacks, 'endUnfit');
+    const revoke = jest.spyOn(lifecycle, 'revokeKeysOfEndedAccounts');
+
+    const report = await useCase.execute();
+
+    expect(report.unfitFreeAccountsEnded).toBe(1);
+    expect(fallbacks.ended).toEqual([{ accountId: 'too-big', at: NOW }]);
+    expect(end.mock.invocationCallOrder[0]).toBeLessThan(
+      revoke.mock.invocationCallOrder[0] ?? Number.NaN,
+    );
   });
 
   it('sends the back-to-free notices the webhook could not', async () => {
