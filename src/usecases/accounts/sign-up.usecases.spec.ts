@@ -565,6 +565,43 @@ describe('StartCheckoutUseCase', () => {
     ]);
   });
 
+  it('opens a Checkout without a trial from the free plan, coming back to Account if left', async () => {
+    const context = setup({ ...OPEN, open: false });
+    const { ownerId, account } = await ownerWith(context, { status: 'free' });
+
+    await context.startCheckout.execute({
+      adminUserId: ownerId,
+      ownerEmail: EMAIL,
+      accountId: account.id,
+      interval: 'month',
+      language: 'pt-BR',
+    });
+
+    expect(context.gateway.checkouts).toEqual([
+      expect.objectContaining({
+        accountId: account.id,
+        customerId: null,
+        trialDays: null,
+        cancelUrl: `${ORIGIN}/account`,
+      }),
+    ]);
+  });
+
+  it('offers no trial to an account that never subscribed once the trial is no longer offered', async () => {
+    const context = setup({ ...OPEN, trialOffered: false });
+    const { ownerId, account } = await ownerWith(context);
+
+    await context.startCheckout.execute({
+      adminUserId: ownerId,
+      ownerEmail: EMAIL,
+      accountId: account.id,
+      interval: 'year',
+      language: 'es',
+    });
+
+    expect(context.gateway.checkouts[0]?.trialDays).toBeNull();
+  });
+
   it('opens a Checkout without a trial for a customer coming back after the end', async () => {
     const context = setup();
     const { ownerId, account } = await ownerWith(context, {
