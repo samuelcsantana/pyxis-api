@@ -226,6 +226,13 @@ describe('the free plan and billing over HTTP', () => {
       stripe_customer_id: CUSTOMER,
       stripe_subscription_id: null,
     });
+    expect(mail.accountNotices).toEqual([
+      {
+        email: OWNER_EMAIL,
+        notice: { kind: 'withdrawn_to_free', refundedAmount: 3900 },
+        language: 'pt-BR',
+      },
+    ]);
   });
 
   it('keeps the account on the free plan when Stripe reports the cancellation afterwards', async () => {

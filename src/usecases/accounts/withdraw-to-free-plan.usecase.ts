@@ -16,10 +16,14 @@ import {
   type AccountRepository,
 } from '../../domain/repositories/account.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
+import { MAIL_SENDER, type MailSender } from '../../domain/services/mail-sender';
+import type { EmailLanguage } from '../../domain/auth/email-language';
 import { ownedAccount } from './owned-account';
 
 export interface WithdrawToFreePlanCommand {
   readonly adminUserId: string;
+  readonly ownerEmail: string;
+  readonly ownerLanguage: EmailLanguage;
   readonly accountId: string;
 }
 
@@ -40,6 +44,7 @@ export class WithdrawToFreePlanUseCase {
     @Inject(BILLING_GATEWAY) private readonly gateway: BillingGateway,
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(SIGN_UP_SETTINGS) private readonly settings: SignUpSettings,
+    @Inject(MAIL_SENDER) private readonly mail: MailSender,
   ) {}
 
   async execute(command: WithdrawToFreePlanCommand): Promise<WithdrawnToFreePlan> {
@@ -60,12 +65,33 @@ export class WithdrawToFreePlanUseCase {
     await this.gateway.cancelSubscription(subscriptionId);
     const refundedAmount = await this.tryRefund(account.id, subscriptionId, windowStart);
     await this.withdrawals.returnToFreePlan(account.id);
+    await this.tryNotify(command, refundedAmount);
     this.logger.log({
       message: 'accounts.withdrawn_to_free',
       accountId: account.id,
       refundedAmount,
     });
     return { refundedAmount };
+  }
+
+  private async tryNotify(
+    command: WithdrawToFreePlanCommand,
+    refundedAmount: number,
+  ): Promise<void> {
+    try {
+      await this.mail.sendAccountNotice(
+        command.ownerEmail,
+        { kind: 'withdrawn_to_free', refundedAmount },
+        command.ownerLanguage,
+      );
+    } catch (error) {
+      this.logger.error({
+        message: 'accounts.notice_failed',
+        kind: 'withdrawn_to_free',
+        accountId: command.accountId,
+        reason: String(error),
+      });
+    }
   }
 
   private async tryRefund(accountId: string, subscriptionId: string, since: Date): Promise<number> {

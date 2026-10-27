@@ -185,8 +185,11 @@ export class AccountsController {
     @Req() request: FastifyRequest,
     @Param('accountId', new SchemaPipe(accountIdSchema)) accountId: string,
   ): Promise<WithdrawnBody> {
+    const admin = adminOf(request);
     const withdrawn = await this.withdrawToFreePlan.execute({
-      adminUserId: adminOf(request).id,
+      adminUserId: admin.id,
+      ownerEmail: admin.email,
+      ownerLanguage: admin.emailLanguage,
       accountId,
     });
     return { status: 'free', refunded_amount: withdrawn.refundedAmount };
