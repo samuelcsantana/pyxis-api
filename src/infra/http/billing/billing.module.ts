@@ -41,6 +41,8 @@ import { BillingWebhookController } from './billing-webhook.controller';
           TERMS_VERSION: config.get('TERMS_VERSION', { infer: true }),
           TERMS_URL: config.get('TERMS_URL', { infer: true }),
           DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
+          FREE_PLAN_OPEN: config.get('FREE_PLAN_OPEN', { infer: true }),
+          FREE_ACCOUNTS_MAX: config.get('FREE_ACCOUNTS_MAX', { infer: true }),
         }),
     },
 

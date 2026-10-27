@@ -1,3 +1,4 @@
+import { DEFAULT_FREE_ACCOUNTS_MAX } from '../domain/accounts/sign-up-policy';
 import { DEFAULT_MAIL_FROM, DEFAULT_PORT, validateEnv, validateServerEnv } from './env.schema';
 
 const DASHBOARD_ORIGIN = 'https://pyxis.example.com';
@@ -15,9 +16,24 @@ describe('validateEnv', () => {
       MAIL_PROVIDER: 'resend',
       MAIL_FROM: DEFAULT_MAIL_FROM,
       SIGNUP_OPEN: 'false',
+      FREE_PLAN_OPEN: 'false',
+      FREE_ACCOUNTS_MAX: DEFAULT_FREE_ACCOUNTS_MAX,
       PROMOTION_CODES_OPEN: 'false',
       REMOTE_MCP_OPEN: 'false',
     });
+  });
+
+  it('reads the free plan switch and its cap of accounts, coerced from the environment', () => {
+    expect(validateEnv({ FREE_PLAN_OPEN: 'true', FREE_ACCOUNTS_MAX: '50' })).toMatchObject({
+      FREE_PLAN_OPEN: 'true',
+      FREE_ACCOUNTS_MAX: 50,
+    });
+    expect(validateEnv({ FREE_ACCOUNTS_MAX: '' }).FREE_ACCOUNTS_MAX).toBe(
+      DEFAULT_FREE_ACCOUNTS_MAX,
+    );
+    expect(() => validateEnv({ FREE_PLAN_OPEN: 'yes' })).toThrow(/FREE_PLAN_OPEN/);
+    expect(() => validateEnv({ FREE_ACCOUNTS_MAX: '-1' })).toThrow(/FREE_ACCOUNTS_MAX/);
+    expect(() => validateEnv({ FREE_ACCOUNTS_MAX: '2.5' })).toThrow(/FREE_ACCOUNTS_MAX/);
   });
 
   it('reads the switch that lets Checkout take a promotion code', () => {

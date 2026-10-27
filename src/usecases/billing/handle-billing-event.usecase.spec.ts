@@ -72,6 +72,8 @@ function setup(before: 'incomplete' | 'active' = 'incomplete') {
     termsVersion: '2026-11-01',
     termsUrl: 'https://example.com/termos',
     dashboardOrigin: 'https://app.example.com',
+    freePlanOpen: false,
+    freeAccountsMax: 200,
   });
   const trialCards = new InMemoryTrialCardRepository();
   const useCase = new HandleBillingEventUseCase(

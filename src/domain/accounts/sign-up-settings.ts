@@ -3,6 +3,8 @@ export interface SignUpSettings {
   readonly termsVersion: string | null;
   readonly termsUrl: string | null;
   readonly dashboardOrigin: string | null;
+  readonly freePlanOpen: boolean;
+  readonly freeAccountsMax: number;
 }
 
 export const SIGN_UP_SETTINGS = Symbol('SignUpSettings');

@@ -7,6 +7,17 @@ locals {
     "STRIPE_WEBHOOK_SECRET",
   ]
 
+  free_plan_settings = {
+    FREE_ACCOUNTS_MAX = {
+      value       = tostring(var.free_accounts_max)
+      description = "How many accounts the free plan holds at most; past it, a new owner waits for a place."
+    }
+    FREE_PLAN_OPEN = {
+      value       = tostring(var.free_plan_open)
+      description = "Whether new owners start on the free plan and the daily job opens waiting accounts."
+    }
+  }
+
   app_settings = {
     API_ORIGIN = {
       value       = var.api_domain_enabled ? "https://${var.api_domain}" : "https://${aws_cloudfront_distribution.api.domain_name}"
@@ -45,6 +56,17 @@ resource "aws_ssm_parameter" "terms_url" {
   type        = "String"
   value       = var.terms_url
   description = "Where the published terms are; sign-up shows it and the welcome e-mail links to it."
+}
+
+resource "aws_ssm_parameter" "free_plan_setting" {
+  for_each = {
+    for pair in setproduct(["app", "jobs"], keys(local.free_plan_settings)) :
+    "${pair[0]}/${pair[1]}" => local.free_plan_settings[pair[1]]
+  }
+  name        = "/${var.project}/${each.key}"
+  type        = "String"
+  value       = each.value.value
+  description = each.value.description
 }
 
 resource "aws_ssm_parameter" "terms_version" {

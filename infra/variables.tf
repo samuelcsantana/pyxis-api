@@ -94,6 +94,23 @@ variable "signup_open" {
   default     = false
 }
 
+variable "free_plan_open" {
+  description = "Let new owners start on the free plan without a card, and let the daily job open waiting accounts. Keep false until terms 1.3 are published."
+  type        = bool
+  default     = false
+}
+
+variable "free_accounts_max" {
+  description = "How many accounts the free plan holds at most; past it, a new owner waits for a place."
+  type        = number
+  default     = 200
+
+  validation {
+    condition     = var.free_accounts_max >= 0 && floor(var.free_accounts_max) == var.free_accounts_max
+    error_message = "free_accounts_max must be a whole number, zero or more."
+  }
+}
+
 variable "promotion_codes_open" {
   description = "Show the promotion code field in Stripe Checkout, for codes made in the Stripe dashboard. Turning it off keeps the discounts already applied."
   type        = bool

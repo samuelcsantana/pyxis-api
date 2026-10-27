@@ -40,6 +40,8 @@ const OPEN: SignUpSettings = {
   termsVersion: '2026-11-01',
   termsUrl: 'https://example.com/terms',
   dashboardOrigin: 'https://app.example.com',
+  freePlanOpen: false,
+  freeAccountsMax: 200,
 };
 
 describe('SignUpController', () => {

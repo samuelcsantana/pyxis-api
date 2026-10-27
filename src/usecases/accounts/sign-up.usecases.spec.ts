@@ -44,6 +44,8 @@ const OPEN: SignUpSettings = {
   termsVersion: TERMS,
   termsUrl: 'https://example.com/terms',
   dashboardOrigin: ORIGIN,
+  freePlanOpen: false,
+  freeAccountsMax: 200,
 };
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
 

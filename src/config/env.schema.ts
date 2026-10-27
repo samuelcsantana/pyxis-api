@@ -1,4 +1,7 @@
-import { MAX_TERMS_VERSION_LENGTH } from '../domain/accounts/sign-up-policy';
+import {
+  DEFAULT_FREE_ACCOUNTS_MAX,
+  MAX_TERMS_VERSION_LENGTH,
+} from '../domain/accounts/sign-up-policy';
 import { z } from 'zod';
 
 export const DEFAULT_PORT = 3040;
@@ -40,6 +43,11 @@ export const envSchema = z.object({
   SIGNUP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
   TERMS_VERSION: z.preprocess(emptyAsUnset, z.string().max(MAX_TERMS_VERSION_LENGTH).optional()),
   TERMS_URL: z.preprocess(emptyAsUnset, z.url({ protocol: /^https?$/ }).optional()),
+  FREE_PLAN_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
+  FREE_ACCOUNTS_MAX: z.preprocess(
+    emptyAsUnset,
+    z.coerce.number().int().min(0).default(DEFAULT_FREE_ACCOUNTS_MAX),
+  ),
   EXPORT_BUCKET: z.preprocess(emptyAsUnset, z.string().regex(S3_BUCKET_NAME).optional()),
   JOBS_FUNCTION_NAME: z.preprocess(emptyAsUnset, z.string().regex(LAMBDA_FUNCTION_NAME).optional()),
   STRIPE_SECRET_KEY: z.preprocess(emptyAsUnset, z.string().optional()),

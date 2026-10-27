@@ -8,5 +8,7 @@ mail_from             = "<sender on a domain verified in Resend, such as Pyxis <
 alert_email           = "<address that receives the alarms>"
 support_email         = "<optional: address the account e-mails name, such as hello@example.com>"
 signup_open           = false
+free_plan_open        = false
+free_accounts_max     = 200
 remote_mcp_open       = false
 promotion_codes_open  = false

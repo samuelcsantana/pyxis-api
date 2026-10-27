@@ -6,6 +6,8 @@ describe('signUpSettingsFromEnv', () => {
     TERMS_VERSION: '2026-11-01',
     TERMS_URL: 'https://example.com/terms',
     DASHBOARD_ORIGIN: 'https://app.example.com',
+    FREE_PLAN_OPEN: 'false',
+    FREE_ACCOUNTS_MAX: 200,
   } as const;
 
   it('opens sign-up when the switch is on and the terms are published with their address', () => {
@@ -14,6 +16,8 @@ describe('signUpSettingsFromEnv', () => {
       termsVersion: '2026-11-01',
       termsUrl: 'https://example.com/terms',
       dashboardOrigin: 'https://app.example.com',
+      freePlanOpen: false,
+      freeAccountsMax: 200,
     });
   });
 
@@ -24,12 +28,31 @@ describe('signUpSettingsFromEnv', () => {
         TERMS_VERSION: undefined,
         TERMS_URL: undefined,
         DASHBOARD_ORIGIN: undefined,
+        FREE_PLAN_OPEN: 'false',
+        FREE_ACCOUNTS_MAX: 200,
       }),
-    ).toEqual({ open: false, termsVersion: null, termsUrl: null, dashboardOrigin: null });
+    ).toEqual({
+      open: false,
+      termsVersion: null,
+      termsUrl: null,
+      dashboardOrigin: null,
+      freePlanOpen: false,
+      freeAccountsMax: 200,
+    });
   });
 
   it('keeps sign-up closed while the terms have no address', () => {
     expect(signUpSettingsFromEnv({ ...PUBLISHED, TERMS_URL: undefined }).open).toBe(false);
+  });
+
+  it('opens the free plan when its own switch is on, with the cap it is given', () => {
+    expect(
+      signUpSettingsFromEnv({ ...PUBLISHED, FREE_PLAN_OPEN: 'true', FREE_ACCOUNTS_MAX: 50 }),
+    ).toMatchObject({ freePlanOpen: true, freeAccountsMax: 50 });
+  });
+
+  it('keeps the free plan closed while its switch is off', () => {
+    expect(signUpSettingsFromEnv(PUBLISHED).freePlanOpen).toBe(false);
   });
 
   it('keeps sign-up closed while the switch is off', () => {
