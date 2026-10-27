@@ -80,6 +80,7 @@ function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
     freePlanOpen: false,
     freeAccountsMax: 200,
     trialOffered: true,
+    freePlanTermsForEarlierAccountsFrom: null,
   };
   const welcomes = new WelcomeAccountsUseCase(welcomeRepository, mail, clock, settings);
   const confirmationRepository = new InMemorySubscriptionConfirmationRepository();

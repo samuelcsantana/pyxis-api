@@ -45,6 +45,10 @@ export const envSchema = z.object({
   TERMS_URL: z.preprocess(emptyAsUnset, z.url({ protocol: /^https?$/ }).optional()),
   FREE_PLAN_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
   TRIAL_OFFERED: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('true')),
+  FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: z.preprocess(
+    emptyAsUnset,
+    z.iso.datetime({ offset: true }).optional(),
+  ),
   FREE_ACCOUNTS_MAX: z.preprocess(
     emptyAsUnset,
     z.coerce.number().int().min(0).default(DEFAULT_FREE_ACCOUNTS_MAX),

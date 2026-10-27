@@ -31,6 +31,7 @@ const SETTINGS: SignUpSettings = {
   freePlanOpen: true,
   freeAccountsMax: 200,
   trialOffered: false,
+  freePlanTermsForEarlierAccountsFrom: null,
 };
 
 async function setup(status: Account['status'] = 'active', settings: SignUpSettings = SETTINGS) {

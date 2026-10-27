@@ -153,6 +153,7 @@ describe('sign-up while it is open', () => {
           freePlanOpen: false,
           freeAccountsMax: 200,
           trialOffered: true,
+          freePlanTermsForEarlierAccountsFrom: null,
         })
         .overrideProvider(BILLING_GATEWAY)
         .useValue(new StripeBillingGateway(stripe.stripe, null)),

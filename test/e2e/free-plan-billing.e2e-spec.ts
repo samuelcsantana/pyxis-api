@@ -132,6 +132,7 @@ describe('the free plan and billing over HTTP', () => {
           freePlanOpen: true,
           freeAccountsMax: 200,
           trialOffered: false,
+          freePlanTermsForEarlierAccountsFrom: null,
         }),
     );
   });

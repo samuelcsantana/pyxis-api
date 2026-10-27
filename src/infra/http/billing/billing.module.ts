@@ -52,6 +52,10 @@ import { BillingWebhookController } from './billing-webhook.controller';
           FREE_PLAN_OPEN: config.get('FREE_PLAN_OPEN', { infer: true }),
           FREE_ACCOUNTS_MAX: config.get('FREE_ACCOUNTS_MAX', { infer: true }),
           TRIAL_OFFERED: config.get('TRIAL_OFFERED', { infer: true }),
+          FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: config.get(
+            'FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM',
+            { infer: true },
+          ),
         }),
     },
 

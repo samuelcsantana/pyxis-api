@@ -117,6 +117,17 @@ variable "trial_offered" {
   default     = true
 }
 
+variable "free_plan_terms_for_earlier_accounts_from" {
+  description = "The instant the terms with the free plan bind the accounts created before them, with its offset, such as 2026-12-20T00:00:00-03:00. Until then a cancelled subscription of such an account ends as the earlier terms say."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.free_plan_terms_for_earlier_accounts_from == null || can(regex("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(Z|[+-]\\d{2}:\\d{2})$", coalesce(var.free_plan_terms_for_earlier_accounts_from, "x")))
+    error_message = "free_plan_terms_for_earlier_accounts_from is an instant with its offset, such as 2026-12-20T00:00:00-03:00."
+  }
+}
+
 variable "promotion_codes_open" {
   description = "Show the promotion code field in Stripe Checkout, for codes made in the Stripe dashboard. Turning it off keeps the discounts already applied."
   type        = bool

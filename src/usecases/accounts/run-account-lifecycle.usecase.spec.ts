@@ -57,6 +57,7 @@ function setup() {
     freePlanOpen: false,
     freeAccountsMax: 200,
     trialOffered: true,
+    freePlanTermsForEarlierAccountsFrom: null,
   });
   const projectless = new InMemoryProjectlessPeopleRepository();
   const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
@@ -78,6 +79,7 @@ function setup() {
       freePlanOpen: false,
       freeAccountsMax: 200,
       trialOffered: true,
+      freePlanTermsForEarlierAccountsFrom: null,
     }),
   );
   return {

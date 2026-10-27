@@ -50,6 +50,7 @@ const OPEN: SignUpSettings = {
   freePlanOpen: false,
   freeAccountsMax: 200,
   trialOffered: true,
+  freePlanTermsForEarlierAccountsFrom: null,
 };
 
 describe('SignUpController', () => {

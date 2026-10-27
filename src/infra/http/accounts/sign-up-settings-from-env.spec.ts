@@ -9,6 +9,7 @@ describe('signUpSettingsFromEnv', () => {
     FREE_PLAN_OPEN: 'false',
     FREE_ACCOUNTS_MAX: 200,
     TRIAL_OFFERED: 'true',
+    FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: undefined,
   } as const;
 
   it('opens sign-up when the switch is on and the terms are published with their address', () => {
@@ -20,6 +21,7 @@ describe('signUpSettingsFromEnv', () => {
       freePlanOpen: false,
       freeAccountsMax: 200,
       trialOffered: true,
+      freePlanTermsForEarlierAccountsFrom: null,
     });
   });
 
@@ -33,6 +35,7 @@ describe('signUpSettingsFromEnv', () => {
         FREE_PLAN_OPEN: 'false',
         FREE_ACCOUNTS_MAX: 200,
         TRIAL_OFFERED: 'false',
+        FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: undefined,
       }),
     ).toEqual({
       open: false,
@@ -42,6 +45,7 @@ describe('signUpSettingsFromEnv', () => {
       freePlanOpen: false,
       freeAccountsMax: 200,
       trialOffered: false,
+      freePlanTermsForEarlierAccountsFrom: null,
     });
   });
 
@@ -57,6 +61,15 @@ describe('signUpSettingsFromEnv', () => {
 
   it('keeps the free plan closed while its switch is off', () => {
     expect(signUpSettingsFromEnv(PUBLISHED).freePlanOpen).toBe(false);
+  });
+
+  it('reads the moment the free plan terms bind earlier accounts as an instant', () => {
+    expect(
+      signUpSettingsFromEnv({
+        ...PUBLISHED,
+        FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: '2026-12-20T00:00:00-03:00',
+      }).freePlanTermsForEarlierAccountsFrom,
+    ).toEqual(new Date('2026-12-20T03:00:00.000Z'));
   });
 
   it('keeps sign-up closed while the switch is off', () => {

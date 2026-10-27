@@ -11,6 +11,7 @@ const OPEN: SignUpSettings = {
   freePlanOpen: true,
   freeAccountsMax: 2,
   trialOffered: true,
+  freePlanTermsForEarlierAccountsFrom: null,
 };
 
 async function statusWith(settings: SignUpSettings, freeAccounts: number) {

@@ -73,6 +73,14 @@ resource "aws_ssm_parameter" "free_plan_setting" {
   description = each.value.description
 }
 
+resource "aws_ssm_parameter" "free_plan_terms_for_earlier_accounts_from" {
+  for_each    = var.free_plan_terms_for_earlier_accounts_from == null ? toset([]) : toset(["app", "jobs"])
+  name        = "/${var.project}/${each.key}/FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM"
+  type        = "String"
+  value       = var.free_plan_terms_for_earlier_accounts_from
+  description = "When the terms with the free plan bind earlier accounts; from then a cancelled subscription that fits falls back to free."
+}
+
 resource "aws_ssm_parameter" "terms_version" {
   count       = var.terms_version == null ? 0 : 1
   name        = "/${var.project}/app/TERMS_VERSION"

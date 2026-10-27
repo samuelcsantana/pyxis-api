@@ -6,6 +6,7 @@ export interface SignUpSettings {
   readonly freePlanOpen: boolean;
   readonly freeAccountsMax: number;
   readonly trialOffered: boolean;
+  readonly freePlanTermsForEarlierAccountsFrom: Date | null;
 }
 
 export const SIGN_UP_SETTINGS = Symbol('SignUpSettings');

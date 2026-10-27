@@ -43,6 +43,20 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ TRIAL_OFFERED: 'no' })).toThrow(/TRIAL_OFFERED/);
   });
 
+  it('reads the moment the free plan terms bind earlier accounts, only with its time offset', () => {
+    expect(
+      validateEnv({ FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: '2026-12-20T00:00:00-03:00' })
+        .FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM,
+    ).toBe('2026-12-20T00:00:00-03:00');
+    expect(
+      validateEnv({ FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: '' })
+        .FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM,
+    ).toBeUndefined();
+    expect(() => validateEnv({ FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM: '2026-12-20' })).toThrow(
+      /FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM/,
+    );
+  });
+
   it('reads the switch that lets Checkout take a promotion code', () => {
     expect(validateEnv({ PROMOTION_CODES_OPEN: 'true' }).PROMOTION_CODES_OPEN).toBe('true');
     expect(validateEnv({ PROMOTION_CODES_OPEN: '' }).PROMOTION_CODES_OPEN).toBe('false');
