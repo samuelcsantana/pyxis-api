@@ -253,6 +253,13 @@
       "when": 1793133571440,
       "tag": "0035_free-plan-fallback",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1793136634602,
+      "tag": "0036_free-account-inactivity",
+      "breakpoints": true
     }
   ]
 }
