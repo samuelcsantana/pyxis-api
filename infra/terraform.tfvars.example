@@ -10,5 +10,6 @@ support_email         = "<optional: address the account e-mails name, such as he
 signup_open           = false
 free_plan_open        = false
 free_accounts_max     = 200
+trial_offered         = true
 remote_mcp_open       = false
 promotion_codes_open  = false

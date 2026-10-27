@@ -8,6 +8,7 @@ describe('signUpSettingsFromEnv', () => {
     DASHBOARD_ORIGIN: 'https://app.example.com',
     FREE_PLAN_OPEN: 'false',
     FREE_ACCOUNTS_MAX: 200,
+    TRIAL_OFFERED: 'true',
   } as const;
 
   it('opens sign-up when the switch is on and the terms are published with their address', () => {
@@ -18,6 +19,7 @@ describe('signUpSettingsFromEnv', () => {
       dashboardOrigin: 'https://app.example.com',
       freePlanOpen: false,
       freeAccountsMax: 200,
+      trialOffered: true,
     });
   });
 
@@ -30,6 +32,7 @@ describe('signUpSettingsFromEnv', () => {
         DASHBOARD_ORIGIN: undefined,
         FREE_PLAN_OPEN: 'false',
         FREE_ACCOUNTS_MAX: 200,
+        TRIAL_OFFERED: 'false',
       }),
     ).toEqual({
       open: false,
@@ -38,6 +41,7 @@ describe('signUpSettingsFromEnv', () => {
       dashboardOrigin: null,
       freePlanOpen: false,
       freeAccountsMax: 200,
+      trialOffered: false,
     });
   });
 

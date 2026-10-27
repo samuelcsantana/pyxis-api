@@ -48,6 +48,7 @@ const OPEN: SignUpSettings = {
   dashboardOrigin: ORIGIN,
   freePlanOpen: false,
   freeAccountsMax: 200,
+  trialOffered: true,
 };
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
 

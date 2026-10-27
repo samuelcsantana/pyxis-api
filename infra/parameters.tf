@@ -47,6 +47,10 @@ locals {
       value       = tostring(var.signup_open)
       description = "Whether anyone can create an account and subscribe; also needs TERMS_VERSION."
     }
+    TRIAL_OFFERED = {
+      value       = tostring(var.trial_offered)
+      description = "Whether Checkout offers the 14-day trial to a customer Stripe does not know yet."
+    }
   }
 }
 

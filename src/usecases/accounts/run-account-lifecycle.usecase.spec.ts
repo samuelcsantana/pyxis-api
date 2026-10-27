@@ -54,6 +54,7 @@ function setup() {
     dashboardOrigin: 'https://app.example.com',
     freePlanOpen: false,
     freeAccountsMax: 200,
+    trialOffered: true,
   });
   const projectless = new InMemoryProjectlessPeopleRepository();
   const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());

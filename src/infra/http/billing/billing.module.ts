@@ -43,6 +43,7 @@ import { BillingWebhookController } from './billing-webhook.controller';
           DASHBOARD_ORIGIN: config.get('DASHBOARD_ORIGIN', { infer: true }),
           FREE_PLAN_OPEN: config.get('FREE_PLAN_OPEN', { infer: true }),
           FREE_ACCOUNTS_MAX: config.get('FREE_ACCOUNTS_MAX', { infer: true }),
+          TRIAL_OFFERED: config.get('TRIAL_OFFERED', { infer: true }),
         }),
     },
 

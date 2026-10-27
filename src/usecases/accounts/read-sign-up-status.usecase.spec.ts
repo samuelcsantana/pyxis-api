@@ -10,6 +10,7 @@ const OPEN: SignUpSettings = {
   dashboardOrigin: 'https://app.example.com',
   freePlanOpen: true,
   freeAccountsMax: 2,
+  trialOffered: true,
 };
 
 async function statusWith(settings: SignUpSettings, freeAccounts: number) {

@@ -5,6 +5,7 @@ export interface SignUpSettings {
   readonly dashboardOrigin: string | null;
   readonly freePlanOpen: boolean;
   readonly freeAccountsMax: number;
+  readonly trialOffered: boolean;
 }
 
 export const SIGN_UP_SETTINGS = Symbol('SignUpSettings');

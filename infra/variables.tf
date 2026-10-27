@@ -111,6 +111,12 @@ variable "free_accounts_max" {
   }
 }
 
+variable "trial_offered" {
+  description = "Offer the 14-day trial in Checkout to a customer Stripe does not know yet. Set false the day terms 1.3 take effect: they have no trial."
+  type        = bool
+  default     = true
+}
+
 variable "promotion_codes_open" {
   description = "Show the promotion code field in Stripe Checkout, for codes made in the Stripe dashboard. Turning it off keeps the discounts already applied."
   type        = bool

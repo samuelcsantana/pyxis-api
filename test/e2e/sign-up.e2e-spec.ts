@@ -152,6 +152,7 @@ describe('sign-up while it is open', () => {
           dashboardOrigin: E2E_DASHBOARD_ORIGIN,
           freePlanOpen: false,
           freeAccountsMax: 200,
+          trialOffered: true,
         })
         .overrideProvider(BILLING_GATEWAY)
         .useValue(new StripeBillingGateway(stripe.stripe, null)),
