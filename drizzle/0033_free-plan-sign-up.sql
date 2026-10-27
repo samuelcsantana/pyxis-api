@@ -1,0 +1,2 @@
+ALTER TABLE "accounts" ADD COLUMN "free_waitlisted_at" timestamp with time zone;--> statement-breakpoint
+CREATE UNIQUE INDEX "accounts_one_free_account_per_owner_idx" ON "accounts" USING btree ("owner_admin_id") WHERE "accounts"."status" = 'free';

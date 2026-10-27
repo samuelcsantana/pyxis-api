@@ -85,6 +85,18 @@ describe('accounts against a real Postgres', () => {
     expect(await accounts.liveAccountOwnedBy(OWNER_ID)).toEqual(created);
   });
 
+  it('refuses a second account on the free plan for the same owner, and allows other statuses', async () => {
+    await accounts.create({ ownerAdminId: OWNER_ID, status: 'free' });
+
+    await expect(accounts.create({ ownerAdminId: OWNER_ID, status: 'free' })).rejects.toThrow();
+    await expect(
+      accounts.create({ ownerAdminId: OWNER_ID, status: 'ended' }),
+    ).resolves.toMatchObject({ status: 'ended' });
+    await expect(
+      accounts.create({ ownerAdminId: GUEST_ID, status: 'free' }),
+    ).resolves.toMatchObject({ status: 'free' });
+  });
+
   it('lists the projects of an account, oldest first, and counts the people who read them', async () => {
     const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
     await owner`

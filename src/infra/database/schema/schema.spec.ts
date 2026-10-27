@@ -135,8 +135,21 @@ describe('database schema', () => {
     expect(config.foreignKeys[0]?.onDelete).toBe('restrict');
     expect(config.indexes.map((index) => index.config.name)).toEqual([
       'accounts_owner_admin_id_idx',
+      'accounts_one_free_account_per_owner_idx',
     ]);
     expect(config.checks.map((check) => check.name)).toEqual(['accounts_status_check']);
+  });
+
+  it('holds one account on the free plan per owner, unique only among free accounts', () => {
+    const freePerOwner = getTableConfig(accounts).indexes.find(
+      (index) => index.config.name === 'accounts_one_free_account_per_owner_idx',
+    );
+
+    expect(freePerOwner?.config.unique).toBe(true);
+    expect(
+      freePerOwner?.config.columns.map((column) => ('name' in column ? column.name : null)),
+    ).toEqual(['owner_admin_id']);
+    expect(freePerOwner?.config.where).toBeDefined();
   });
 
   it('keeps one usage figure per account and month, gone with the account', () => {
