@@ -4,7 +4,15 @@ export const HOSTED_PLAN_LIMITS = {
   people: 3,
 } as const;
 
-export const INGESTION_PAUSE_RATIO = 1.5;
+export const HOSTED_PLAN_PAUSE_RATIO = 1.5;
+
+export const FREE_PLAN_LIMITS = {
+  eventsPerMonth: 10_000,
+  projects: 1,
+  people: 1,
+} as const;
+
+export const FREE_PLAN_PAUSE_RATIO = 1;
 
 export const TRIAL_DAYS = 14;
 

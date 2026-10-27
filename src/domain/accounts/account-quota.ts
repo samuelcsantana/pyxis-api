@@ -1,6 +1,6 @@
 import type { EmailLanguage } from '../auth/email-language';
 import type { AccountStatus } from './account-status';
-import { eventsPerMonthOf, ingestionPauseThresholdOf } from './account-limits';
+import { ingestionPauseThresholdOf } from './account-limits';
 
 export interface AccountOwnerContact {
   readonly email: string;
@@ -29,8 +29,7 @@ export function ingestionPauseFor(
   if (usage.status === 'comped' || isPauseExemptAt(usage.pauseExemptUntil, measuredAt)) {
     return null;
   }
-  const threshold = ingestionPauseThresholdOf(eventsPerMonthOf(usage.eventsPerMonthLimit));
-  return usage.events >= threshold ? monthEnd : null;
+  return usage.events >= ingestionPauseThresholdOf(usage) ? monthEnd : null;
 }
 
 export function isPausedAt(pausedUntil: Date | null, moment: Date): pausedUntil is Date {

@@ -1,7 +1,7 @@
 import { ACCOUNT_STATUSES, hasAccess, hasRunningSubscription } from './account-status';
 
 describe('hasAccess', () => {
-  it.each(['trialing', 'active', 'past_due', 'ending', 'comped'] as const)(
+  it.each(['trialing', 'active', 'past_due', 'ending', 'comped', 'free'] as const)(
     'gives a %s account the use of its projects',
     (status) => {
       expect(hasAccess(status)).toBe(true);
@@ -16,7 +16,7 @@ describe('hasAccess', () => {
   );
 
   it('decides for every status', () => {
-    expect(ACCOUNT_STATUSES.filter(hasAccess)).toHaveLength(5);
+    expect(ACCOUNT_STATUSES.filter(hasAccess)).toHaveLength(6);
   });
 });
 
@@ -28,7 +28,10 @@ describe('hasRunningSubscription', () => {
     },
   );
 
-  it.each(['incomplete', 'ended', 'comped'] as const)('knows a %s account has none', (status) => {
-    expect(hasRunningSubscription(status)).toBe(false);
-  });
+  it.each(['incomplete', 'ended', 'comped', 'free'] as const)(
+    'knows a %s account has none',
+    (status) => {
+      expect(hasRunningSubscription(status)).toBe(false);
+    },
+  );
 });

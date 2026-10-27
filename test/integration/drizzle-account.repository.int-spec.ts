@@ -74,8 +74,15 @@ describe('accounts against a real Postgres', () => {
 
   it('refuses a status outside the lifecycle', async () => {
     await expect(
-      owner`INSERT INTO accounts (owner_admin_id, status) VALUES (${OWNER_ID}, 'free')`,
+      owner`INSERT INTO accounts (owner_admin_id, status) VALUES (${OWNER_ID}, 'gifted')`,
     ).rejects.toThrow(/accounts_status_check/);
+  });
+
+  it('keeps an account on the free plan', async () => {
+    const created = await accounts.create({ ownerAdminId: OWNER_ID, status: 'free' });
+
+    expect(await accounts.findById(created.id)).toMatchObject({ status: 'free' });
+    expect(await accounts.liveAccountOwnedBy(OWNER_ID)).toEqual(created);
   });
 
   it('lists the projects of an account, oldest first, and counts the people who read them', async () => {

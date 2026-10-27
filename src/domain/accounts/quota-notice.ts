@@ -35,8 +35,12 @@ function eventsAt(eventsPerMonth: number, percent: number): number {
   return Math.ceil((eventsPerMonth * percent) / PERCENT);
 }
 
-export function quotaLevelOf(events: number, eventsPerMonth: number): QuotaNoticeLevel {
-  if (events >= ingestionPauseThresholdOf(eventsPerMonth)) {
+export function quotaLevelOf(
+  events: number,
+  eventsPerMonth: number,
+  pauseAtEvents: number,
+): QuotaNoticeLevel {
+  if (events >= pauseAtEvents) {
     return QUOTA_PAUSED_LEVEL;
   }
   const [warning, full] = QUOTA_WARNING_PERCENTS;
@@ -66,8 +70,9 @@ export function quotaNoticeDue(
     return null;
   }
   const exempt = isPauseExemptAt(usage.pauseExemptUntil, context.measuredAt);
-  const eventsPerMonth = eventsPerMonthOf(usage.eventsPerMonthLimit);
-  const reached = quotaLevelOf(usage.events, eventsPerMonth);
+  const eventsPerMonth = eventsPerMonthOf(usage);
+  const pauseAtEvents = ingestionPauseThresholdOf(usage);
+  const reached = quotaLevelOf(usage.events, eventsPerMonth, pauseAtEvents);
   const level = exempt && reached === QUOTA_PAUSED_LEVEL ? QUOTA_WARNING_PERCENTS[1] : reached;
   if (level === NOT_NOTIFIED || level <= context.notifiedLevel) {
     return null;
@@ -87,9 +92,7 @@ export function quotaNoticeDue(
       ...figures,
       kind: 'quota_warning',
       percent: level,
-      pause: exempt
-        ? null
-        : { atEvents: ingestionPauseThresholdOf(eventsPerMonth), until: context.monthEnd },
+      pause: exempt ? null : { atEvents: pauseAtEvents, until: context.monthEnd },
     },
   };
 }

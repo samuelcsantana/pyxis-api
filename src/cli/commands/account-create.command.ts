@@ -19,8 +19,8 @@ export const accountCreateCommand: CliCommand<AccountCreateArgs> = {
     output.stdout(`owner_admin_id=${account.ownerAdminId}`);
     output.stdout('status=comped');
     output.stderr(
-      `Free account created for ${account.ownerEmail}. Create its projects with ` +
-        '`project:create --account <account_id>`; the owner reads each one.',
+      `Comped account created for ${account.ownerEmail}, on the paid plan's limits. Create its ` +
+        'projects with `project:create --account <account_id>`; the owner reads each one.',
     );
   },
 };

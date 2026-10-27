@@ -13,6 +13,7 @@ export const NOTICE_AUDIENCE: readonly AccountStatus[] = [
   'past_due',
   'ending',
   'comped',
+  'free',
 ];
 export const ENDED_AUDIENCE: readonly AccountStatus[] = [...NOTICE_AUDIENCE, 'ended'];
 
