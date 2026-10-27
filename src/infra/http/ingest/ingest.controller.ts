@@ -45,8 +45,9 @@ const ERROR_RESPONSES = [
   [
     HttpStatus.FORBIDDEN,
     "The Origin header is missing or not one of the project's origins (origin_not_allowed), " +
-      "or the project's account used 150% of its monthly events and is paused until the next " +
-      'month (quota_exceeded), or the account is suspended for abuse (account_suspended), or ' +
+      "or the project's account went past its monthly events (100% on the free plan, 150% on " +
+      'the paid one) and is paused until the next month (quota_exceeded), or the account is ' +
+      'suspended for abuse (account_suspended), or ' +
       "the project's own reception is suspended (project_suspended). Each comes with a CORS " +
       'grant to the Origin that sent it, so the tracker drops the batch; a missing or opaque ' +
       'Origin gets none.',

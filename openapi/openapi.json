@@ -2015,6 +2015,12 @@
                       "minimum": -9007199254740991,
                       "type": "integer"
                     },
+                    "pause_at_events": {
+                      "description": "Events this month at which the daily measurement pauses measuring until the 1st: 100% of the monthly limit on the free plan, 150% on the paid one.",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
                     "people": {
                       "maximum": 9007199254740991,
                       "minimum": -9007199254740991,
@@ -2029,7 +2035,8 @@
                   "required": [
                     "events_per_month",
                     "projects",
-                    "people"
+                    "people",
+                    "pause_at_events"
                   ],
                   "type": "object"
                 },
@@ -2060,7 +2067,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "Until when the operator exempts the account from the pause at 150% of the plan (a customer of an earlier version of the terms, until its renewal); null when it is not."
+                  "description": "Until when the operator exempts the account from the pause past its monthly events (a customer of an earlier version of the terms, until its renewal); null when it is not."
                 },
                 "role": {
                   "enum": [
@@ -5591,7 +5598,7 @@
                 }
               }
             },
-            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account used 150% of its monthly events and is paused until the next month (quota_exceeded), or the account is suspended for abuse (account_suspended), or the project's own reception is suspended (project_suspended). Each comes with a CORS grant to the Origin that sent it, so the tracker drops the batch; a missing or opaque Origin gets none."
+            "description": "The Origin header is missing or not one of the project's origins (origin_not_allowed), or the project's account went past its monthly events (100% on the free plan, 150% on the paid one) and is paused until the next month (quota_exceeded), or the account is suspended for abuse (account_suspended), or the project's own reception is suspended (project_suspended). Each comes with a CORS grant to the Origin that sent it, so the tracker drops the batch; a missing or opaque Origin gets none."
           },
           "413": {
             "content": {

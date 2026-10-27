@@ -1,5 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { type PlanLimits, planLimitsOf } from '../../domain/accounts/account-limits';
+import {
+  ingestionPauseThresholdOf,
+  type PlanLimits,
+  planLimitsOf,
+} from '../../domain/accounts/account-limits';
 import type { Account } from '../../domain/entities/account.entity';
 import { monthLabelOf } from '../../domain/queries/project-usage';
 import {
@@ -20,6 +24,7 @@ export interface MyAccount {
   readonly month: string;
   readonly usage: RecordedUsage | null;
   readonly limits: PlanLimits;
+  readonly pauseAtEvents: number;
 }
 
 @Injectable()
@@ -40,6 +45,7 @@ export class ListMyAccountsUseCase {
         month,
         usage: await this.usage.recordedFor(account.id, month),
         limits: planLimitsOf(account),
+        pauseAtEvents: ingestionPauseThresholdOf(account),
       })),
     );
   }
