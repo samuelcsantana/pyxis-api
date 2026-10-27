@@ -13,6 +13,7 @@ import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
 } from '../../domain/repositories/account.repository';
+import type { Account } from '../../domain/entities/account.entity';
 import { ownedAccount } from './owned-account';
 
 export interface StartCheckoutCommand {
@@ -23,7 +24,7 @@ export interface StartCheckoutCommand {
   readonly language: EmailLanguage;
 }
 
-const CHECKOUT_STATUSES: ReadonlySet<string> = new Set(['incomplete', 'ended']);
+const CHECKOUT_STATUSES: ReadonlySet<string> = new Set(['incomplete', 'ended', 'free']);
 const SIGN_UP_STATUS = 'incomplete';
 const SIGN_UP_CANCEL_PATH = '/sign-up?step=plan';
 const RETURN_CANCEL_PATH = '/account';
@@ -55,9 +56,15 @@ export class StartCheckoutUseCase {
       customerEmail: command.ownerEmail,
       interval: command.interval,
       language: command.language,
-      trialDays: account.stripeCustomerId === null ? TRIAL_DAYS : null,
+      trialDays: this.trialDaysFor(account),
       successUrl: `${origin}/welcome?account=${account.id}`,
       cancelUrl: `${origin}${signingUp ? SIGN_UP_CANCEL_PATH : RETURN_CANCEL_PATH}`,
     });
+  }
+
+  private trialDaysFor(account: Account): number | null {
+    const offersTrial =
+      account.status !== 'free' && this.settings.trialOffered && account.stripeCustomerId === null;
+    return offersTrial ? TRIAL_DAYS : null;
   }
 }

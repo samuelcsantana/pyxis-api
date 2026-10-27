@@ -111,8 +111,9 @@ export class AccountsController {
     summary: 'Open a Stripe Checkout for the account',
     description:
       'Only the owner, while the account has no running subscription. The first one comes with ' +
-      'the free trial. An ended account, not yet deleted, may subscribe again even while sign-up ' +
-      'is closed, with no trial; leaving that Checkout goes back to /account.',
+      'the free trial while the trial is offered. An account on the free plan subscribes with no ' +
+      'trial, and an ended account, not yet deleted, may subscribe again, both even while ' +
+      'sign-up is closed; leaving their Checkout goes back to /account.',
   })
   @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: billingRedirectSchema })
