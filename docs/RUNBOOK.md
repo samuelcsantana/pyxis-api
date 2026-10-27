@@ -327,6 +327,16 @@ already created keep working, and an ended account not yet deleted can still sub
 Account and billing (a Checkout with no trial; coming back is not a new sign-up). A new version of the terms is the same change with a new
 `terms_version`: a page still showing the old one is refused with `409 terms_outdated`.
 
+### The free plan
+
+The free plan takes no new owner until `free_plan_open = true`. Publish the terms that describe it
+first: the version a new owner accepts must say there is a free plan. To open it, set
+`free_plan_open = true` (and, if needed, `free_accounts_max`, 200 by default) in
+`terraform.tfvars`, apply, and start fresh containers so both functions read them. Check
+`GET /v1/auth/sign-up` answers `"free_plan":"open"`. To close it again, set it back to `false`:
+accounts already free keep working, a new owner goes through Checkout again, and the daily job
+stops opening places to waiting accounts.
+
 ### Promotion codes
 
 Checkout takes no promotion code until `promotion_codes_open = true`. To give one:

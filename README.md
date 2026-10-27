@@ -233,9 +233,16 @@ Shipping now:
   owner alone, with every feature; it has access and no subscription, its owner gets the notices
   sent to every owner, the operator's limits still apply on top, and its measuring pauses at
   100% of the month instead of 150%. `GET /v1/me/accounts` answers `pause_at_events`, so the
-  dashboard never copies the ratio. Nothing creates a free account yet: sign-up into it comes
-  next, behind its own switch
+  dashboard never copies the ratio
   ([ADR 0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md))
+- Sign-up into the free plan, without a card, behind `FREE_PLAN_OPEN`: completing sign-up takes a
+  place while the plan holds fewer than `FREE_ACCOUNTS_MAX` accounts (counted under a Postgres
+  advisory lock, so two sign-ups never share the last place), and turns an owner's unfinished
+  account into a free one. At the cap the account waits, marked `free_waitlisted_at`, for up to 60
+  days; the daily job opens the places left to those who waited longest. A free account is
+  welcomed at sign-up with its limits and the terms accepted. `GET /v1/auth/sign-up` answers
+  `free_plan` (`open`, `full`, `closed`) and the verify answer the `account_status`
+  ([ADR 0049](docs/adr/0049-sign-up-without-a-card.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -843,6 +850,7 @@ What differs from the hosted service:
 | [0046](docs/adr/0046-traffic-from-cloud-data-centers-is-refused.md)                   | Traffic from cloud data centers is refused                                 |
 | [0047](docs/adr/0047-a-filter-selects-visits.md)                                      | A filter selects visits, and every report counts their events              |
 | [0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md)                  | A free plan is a status with its own limits                                |
+| [0049](docs/adr/0049-sign-up-without-a-card.md)                                       | Sign-up without a card                                                     |
 
 ## Roadmap
 
@@ -886,7 +894,8 @@ What differs from the hosted service:
 - [x] A reviewer code for connector directory reviewers, opened and closed by the operator
 - [x] Demo traffic: invented visits added every day to a project of the operator
 - [x] The free plan's status, limits and pause at 100%
-- [ ] Sign-up into the free plan, subscribing from it and falling back to it, behind a switch
+- [x] Sign-up into the free plan, behind a switch, with a waiting list at the cap
+- [ ] Subscribing from the free plan and falling back to it
 
 ## Contributing and license
 
