@@ -18,6 +18,7 @@ import {
   QUOTA_NOTICE_EMAIL_MESSAGES,
   type QuotaNoticeEmailMessages,
   type QuotaPausedWords,
+  type QuotaPauseWords,
   type QuotaWarningWords,
 } from './quota-notice-email-messages';
 
@@ -31,12 +32,15 @@ const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   nl: 'nl',
 };
 const PERCENT = 100;
+const ACCOUNT_PATH = 'account';
 
 interface QuotaNoticeCopy {
   readonly subject: string;
   readonly preheader: string;
   readonly heading: string;
   readonly paragraphs: readonly string[];
+  readonly accountLink: string | null;
+  readonly support: readonly string[];
 }
 
 function formatters(language: EmailLanguage) {
@@ -59,7 +63,10 @@ function copyOf(
   supportEmail: string | null,
 ): QuotaNoticeCopy {
   const format = formatters(messages.language);
-  const support = supportEmail === null ? [] : [messages.support(supportEmail)];
+  const free = notice.plan === 'free';
+  const supportOf = free ? messages.free.support : messages.support;
+  const support = supportEmail === null ? [] : [supportOf(supportEmail)];
+  const accountLink = free ? messages.free.accountLink : null;
   const shared = {
     events: format.count(notice.events),
     limit: format.count(notice.limit),
@@ -69,9 +76,17 @@ function copyOf(
     const words: QuotaPausedWords = { ...shared, resumesOn: format.day(notice.resumesAt) };
     return {
       subject: messages.pausedSubject(words),
-      preheader: messages.pausedPreheader(words),
+      preheader: free ? messages.free.pausedPreheader(words) : messages.pausedPreheader(words),
       heading: messages.pausedHeading,
-      paragraphs: [messages.pausedCount(words), messages.pausedEffect(words), ...support],
+      paragraphs: free
+        ? [
+            messages.free.pausedCount(words),
+            messages.pausedEffect(words),
+            messages.free.pausedSubscribe,
+          ]
+        : [messages.pausedCount(words), messages.pausedEffect(words)],
+      accountLink,
+      support,
     };
   }
   const words: QuotaWarningWords = {
@@ -82,23 +97,36 @@ function copyOf(
   const pause =
     notice.pause === null
       ? []
-      : [
-          messages.warningPause({
+      : pauseParagraphs(
+          {
             pauseAtEvents: format.count(notice.pause.atEvents),
             pauseUntil: format.day(notice.pause.until),
-          }),
-        ];
+          },
+          messages,
+          free,
+        );
   return {
     subject: messages.warningSubject(words),
     preheader: messages.warningPreheader(words),
     heading: messages.warningHeading(words),
-    paragraphs: [
-      messages.warningCount(words),
-      messages.warningCarriesOn[notice.percent],
-      ...pause,
-      ...support,
-    ],
+    paragraphs: [messages.warningCount(words), messages.warningCarriesOn[notice.percent], ...pause],
+    accountLink,
+    support,
   };
+}
+
+function pauseParagraphs(
+  words: QuotaPauseWords,
+  messages: QuotaNoticeEmailMessages,
+  free: boolean,
+): readonly string[] {
+  return free
+    ? [messages.free.warningPause(words), messages.free.warningSubscribe]
+    : [messages.warningPause(words)];
+}
+
+function accountUrlOf(links: EmailLinks): string {
+  return `${links.dashboardUrl}${ACCOUNT_PATH}`;
 }
 
 function buildHtml(
@@ -117,6 +145,15 @@ function buildHtml(
       ...cardRow([
         heading(copy.heading),
         ...copy.paragraphs.map((text) => paragraph(body, escapeHtml(text))),
+        ...(copy.accountLink === null
+          ? []
+          : [
+              paragraph(
+                body,
+                `${escapeHtml(copy.accountLink)}: ${inkLink(accountUrlOf(links), `${links.dashboardHost}/${ACCOUNT_PATH}`)}`,
+              ),
+            ]),
+        ...copy.support.map((text) => paragraph(body, escapeHtml(text))),
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
@@ -141,6 +178,8 @@ function buildText(
   return [
     copy.heading,
     ...copy.paragraphs.flatMap((text) => ['', ...wrapped(text)]),
+    ...(copy.accountLink === null ? [] : ['', `${copy.accountLink}: ${accountUrlOf(links)}`]),
+    ...copy.support.flatMap((text) => ['', ...wrapped(text)]),
     '',
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
