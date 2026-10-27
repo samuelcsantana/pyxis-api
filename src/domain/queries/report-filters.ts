@@ -1,4 +1,9 @@
-import type { Channel, DeviceType } from '../entities/tracked-event.entity';
+import type {
+  BrowserFamily,
+  Channel,
+  DeviceType,
+  OsFamily,
+} from '../entities/tracked-event.entity';
 
 export const MAX_VISIT_PATH_FILTERS = 3;
 
@@ -20,6 +25,8 @@ export interface ReportFilters {
   readonly event: VisitEventFilter | null;
   readonly channel: Channel | null;
   readonly deviceType: DeviceType | null;
+  readonly browser: BrowserFamily | null;
+  readonly os: OsFamily | null;
   readonly identity: VisitIdentity | null;
   readonly country: string | null;
   readonly region: string | null;
@@ -33,6 +40,8 @@ export const NO_REPORT_FILTERS: ReportFilters = {
   event: null,
   channel: null,
   deviceType: null,
+  browser: null,
+  os: null,
   identity: null,
   country: null,
   region: null,

@@ -51,6 +51,8 @@ export function reportFilterConditions(filters: ReportFilters): readonly SQL[] {
     ...eventConditions(filters.event),
     ...anyEventWith(events.channel, filters.channel),
     ...anyEventWith(events.deviceType, filters.deviceType),
+    ...anyEventWith(events.browser, filters.browser),
+    ...anyEventWith(events.os, filters.os),
     ...identityConditions(filters.identity),
     ...anyEventWith(events.country, filters.country),
     ...anyEventWith(events.region, filters.region),

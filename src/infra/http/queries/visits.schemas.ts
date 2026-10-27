@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { CHANNELS, DEVICE_TYPES } from '../../../domain/entities/tracked-event.entity';
+import {
+  BROWSER_FAMILIES,
+  CHANNELS,
+  DEVICE_TYPES,
+  OS_FAMILIES,
+} from '../../../domain/entities/tracked-event.entity';
 import { COUNTRY_CODE_PATTERN } from '../../../domain/events/country';
 import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import {
@@ -71,6 +76,8 @@ export const visitsQuerySchema = rangeQuerySchema
     property: propertyFilterSchema.optional(),
     channel: z.enum(CHANNELS).optional(),
     device: z.enum(DEVICE_TYPES).optional(),
+    browser: z.enum(BROWSER_FAMILIES).optional(),
+    os: z.enum(OS_FAMILIES).optional(),
     identity: z.enum(VISIT_IDENTITIES).optional(),
     country: z.string().regex(COUNTRY_CODE_PATTERN).optional(),
     region: z.string().regex(REGION_CODE_PATTERN).optional(),

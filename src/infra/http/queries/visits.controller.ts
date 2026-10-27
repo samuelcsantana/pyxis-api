@@ -8,7 +8,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import { CHANNELS, DEVICE_TYPES } from '../../../domain/entities/tracked-event.entity';
+import {
+  BROWSER_FAMILIES,
+  CHANNELS,
+  DEVICE_TYPES,
+  OS_FAMILIES,
+} from '../../../domain/entities/tracked-event.entity';
 import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import {
   MAX_REFERRER_HOST_LENGTH,
@@ -38,6 +43,8 @@ function visitFilters(query: VisitsQueryParams): VisitFilters {
       query.event === undefined ? null : { name: query.event, property: query.property ?? null },
     channel: query.channel ?? null,
     deviceType: query.device ?? null,
+    browser: query.browser ?? null,
+    os: query.os ?? null,
     identity: query.identity ?? null,
     country: query.country ?? null,
     region: query.region ?? null,
@@ -125,6 +132,8 @@ export class VisitsController {
   })
   @ApiQuery({ name: 'channel', required: false, enum: CHANNELS })
   @ApiQuery({ name: 'device', required: false, enum: DEVICE_TYPES })
+  @ApiQuery({ name: 'browser', required: false, enum: BROWSER_FAMILIES })
+  @ApiQuery({ name: 'os', required: false, description: 'The operating system', enum: OS_FAMILIES })
   @ApiQuery({ name: 'identity', required: false, enum: VISIT_IDENTITIES })
   @ApiQuery({
     name: 'country',
