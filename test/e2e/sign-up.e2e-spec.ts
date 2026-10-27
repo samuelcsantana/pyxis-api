@@ -244,7 +244,12 @@ describe('sign-up while it is open', () => {
           role: 'owner',
           status: 'incomplete',
           events_this_month: null,
-          limits: { events_per_month: 100_000, projects: 3, people: 3 },
+          limits: {
+            events_per_month: 100_000,
+            projects: 3,
+            people: 3,
+            pause_at_events: 150_000,
+          },
         }),
       ],
     });

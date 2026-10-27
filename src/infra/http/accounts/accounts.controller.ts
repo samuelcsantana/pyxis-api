@@ -47,7 +47,14 @@ function isoOrNull(date: Date | null): string | null {
   return date === null ? null : date.toISOString();
 }
 
-export function myAccountBody({ account, role, month, usage, limits }: MyAccount): MyAccountBody {
+export function myAccountBody({
+  account,
+  role,
+  month,
+  usage,
+  limits,
+  pauseAtEvents,
+}: MyAccount): MyAccountBody {
   const owner = role === 'owner';
   return {
     id: account.id,
@@ -69,6 +76,7 @@ export function myAccountBody({ account, role, month, usage, limits }: MyAccount
       events_per_month: limits.eventsPerMonth,
       projects: limits.projects,
       people: limits.people,
+      pause_at_events: pauseAtEvents,
     },
   };
 }

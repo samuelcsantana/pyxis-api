@@ -624,6 +624,7 @@ describe('ListMyAccountsUseCase', () => {
         month: '2026-11',
         usage: { month: '2026-11', events: 4200, updatedAt: NOW },
         limits: HOSTED_PLAN_LIMITS,
+        pauseAtEvents: 150_000,
       },
       {
         account: joined,
@@ -631,8 +632,23 @@ describe('ListMyAccountsUseCase', () => {
         month: '2026-11',
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
+        pauseAtEvents: 150_000,
       },
     ]);
+  });
+
+  it('gives an account on the free plan its own limits and pauses it at 100%', async () => {
+    const context = setup();
+    const owner = await context.admins.findOrCreateByEmail(EMAIL);
+    const free = accountOf({ ownerAdminId: owner.id, status: 'free' });
+    context.accounts.add(free);
+
+    const [listed] = await context.listAccounts.execute(owner.id);
+
+    expect(listed).toMatchObject({
+      limits: { eventsPerMonth: 10_000, projects: 1, people: 1 },
+      pauseAtEvents: 10_000,
+    });
   });
 
   it('lists nothing for an admin without accounts', async () => {

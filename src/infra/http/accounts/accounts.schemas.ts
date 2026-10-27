@@ -81,7 +81,7 @@ export const myAccountsSchema = z
         access_ends_at: isoDate,
         ingestion_paused_until: isoDate,
         quota_pause_exempt_until: isoDate.describe(
-          'Until when the operator exempts the account from the pause at 150% of the plan (a ' +
+          'Until when the operator exempts the account from the pause past its monthly events (a ' +
             'customer of an earlier version of the terms, until its renewal); null when it is not.',
         ),
         suspended_at: isoDate.describe(
@@ -108,6 +108,13 @@ export const myAccountsSchema = z
           events_per_month: z.number().int(),
           projects: z.number().int(),
           people: z.number().int(),
+          pause_at_events: z
+            .number()
+            .int()
+            .describe(
+              'Events this month at which the daily measurement pauses measuring until the 1st: ' +
+                '100% of the monthly limit on the free plan, 150% on the paid one.',
+            ),
         }),
       }),
     ),
