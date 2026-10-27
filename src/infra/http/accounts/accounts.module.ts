@@ -1,3 +1,6 @@
+import { ACCOUNT_WITHDRAWAL_REPOSITORY } from '../../../domain/repositories/account-withdrawal.repository';
+import { DrizzleAccountWithdrawalRepository } from '../../repositories/drizzle-account-withdrawal.repository';
+import { WithdrawToFreePlanUseCase } from '../../../usecases/accounts/withdraw-to-free-plan.usecase';
 import { Module } from '@nestjs/common';
 import { ACCOUNT_CLOSURE_REPOSITORY } from '../../../domain/repositories/account-closure.repository';
 import { ACCOUNT_REPOSITORY } from '../../../domain/repositories/account.repository';
@@ -37,6 +40,7 @@ import { SignUpController } from './sign-up.controller';
     StartCheckoutUseCase,
     OpenBillingPortalUseCase,
     CloseAccountUseCase,
+    WithdrawToFreePlanUseCase,
     DashboardOriginGuard,
     SessionGuard,
     { provide: RANDOM_SOURCE, useClass: CryptoRandomSource },
@@ -44,6 +48,7 @@ import { SignUpController } from './sign-up.controller';
     { provide: ADMIN_SESSION_REPOSITORY, useClass: DrizzleAdminSessionRepository },
     { provide: ACCOUNT_REPOSITORY, useClass: DrizzleAccountRepository },
     { provide: ACCOUNT_CLOSURE_REPOSITORY, useClass: DrizzleAccountClosureRepository },
+    { provide: ACCOUNT_WITHDRAWAL_REPOSITORY, useClass: DrizzleAccountWithdrawalRepository },
     { provide: ACCOUNT_USAGE_REPOSITORY, useClass: DrizzleAccountUsageRepository },
     { provide: TERMS_ACCEPTANCE_REPOSITORY, useClass: DrizzleTermsAcceptanceRepository },
   ],

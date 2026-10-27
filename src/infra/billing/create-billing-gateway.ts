@@ -40,6 +40,10 @@ export class UnconfiguredBillingGateway implements BillingGateway {
     return Promise.reject(new BillingUnavailableError(NOT_CONFIGURED));
   }
 
+  firstPaymentAt(): Promise<Date | null> {
+    return Promise.reject(new BillingUnavailableError(NOT_CONFIGURED));
+  }
+
   refundFirstPaymentSince(): Promise<number> {
     return Promise.reject(new BillingUnavailableError(NOT_CONFIGURED));
   }

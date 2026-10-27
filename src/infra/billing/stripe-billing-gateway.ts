@@ -237,6 +237,17 @@ export class StripeBillingGateway implements BillingGateway {
     await this.call('subscriptions.cancel', () => this.stripe.subscriptions.cancel(subscriptionId));
   }
 
+  async firstPaymentAt(subscriptionId: string): Promise<Date | null> {
+    const invoices = await this.call('invoices.list', () =>
+      this.stripe.invoices.list({
+        subscription: subscriptionId,
+        status: 'paid',
+        limit: INVOICE_PAGE,
+      }),
+    );
+    return firstPaidInvoice(invoices.data)?.paidAt ?? null;
+  }
+
   async refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number> {
     const invoices = await this.call('invoices.list', () =>
       this.stripe.invoices.list({

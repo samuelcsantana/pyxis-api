@@ -319,6 +319,27 @@ describe('StripeBillingGateway when an account is closed', () => {
     expect(requests[2]?.form.get('payment_intent')).toBe('pi_1');
   });
 
+  it('reads when the first payment of a subscription was made, or nothing before one', async () => {
+    const paid = setup();
+    paid.answer('GET', '/v1/invoices', {
+      body: {
+        object: 'list',
+        data: [
+          invoice('in_2', PAID_AT + 2_600_000),
+          invoice('in_1', PAID_AT),
+          invoice('in_0', null, 0),
+        ],
+      },
+    });
+    const none = setup();
+    none.answer('GET', '/v1/invoices', { body: { object: 'list', data: [] } });
+
+    expect(await paid.gateway.firstPaymentAt('sub_1')).toEqual(new Date(PAID_AT * 1000));
+    expect(paid.requests[0]?.query.get('subscription')).toBe('sub_1');
+    expect(paid.requests[0]?.query.get('status')).toBe('paid');
+    expect(await none.gateway.firstPaymentAt('sub_1')).toBeNull();
+  });
+
   it('refunds nothing when the first payment is older than the window, or there is none', async () => {
     const old = setup();
     old.answer('GET', '/v1/invoices', {
