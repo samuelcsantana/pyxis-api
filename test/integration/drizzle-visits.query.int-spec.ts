@@ -145,6 +145,8 @@ const SEEDED: readonly TrackedEvent[] = [
     channel: 'direct',
     attribution: NO_ATTRIBUTION,
   }),
+  event(12, '2026-10-02T10:00:00.000Z', 'page_view', { country: 'BR' }),
+  event(12, '2026-10-02T10:05:00.000Z', 'page_view', { country: 'PT' }),
   event(5, '2026-10-06T08:00:00.000Z', 'page_view', { path: '/calculadora-taxa-ifood' }),
   event(6, '2026-10-05T11:00:00.000Z', 'page_view', {
     path: '/calculadora-taxa-ifood',
@@ -362,6 +364,14 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
     expect(await sessions({ route: { method: 'GET', route: '/v1/orders' } }, withOctober3)).toEqual(
       [],
     );
+  });
+
+  it('keeps a visit whose country changed mid-visit under either country', async () => {
+    const october2 = { ...SCOPE, range: { from: '2026-10-02', to: '2026-10-02' } };
+
+    expect(await sessions({ country: 'BR' }, october2)).toEqual([visitId(12)]);
+    expect(await sessions({ country: 'PT' }, october2)).toEqual([visitId(12)]);
+    expect(await sessions({ country: 'AR' }, october2)).toEqual([]);
   });
 
   it('counts every visit that matches the filters, whichever page is asked', async () => {

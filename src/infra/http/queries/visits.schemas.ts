@@ -11,12 +11,14 @@ import {
   PROPERTY_KEY_PATTERN,
 } from '../../../domain/events/event-limits';
 import {
-  MAX_VISIT_HIGHLIGHTS,
   MAX_VISIT_PATH_FILTERS,
   VISIT_IDENTITIES,
+  type VisitPropertyFilter,
+} from '../../../domain/queries/report-filters';
+import {
+  MAX_VISIT_HIGHLIGHTS,
   VISIT_LIST_PAGE_SIZE,
   type VisitCursor,
-  type VisitPropertyFilter,
 } from '../../../domain/queries/visits';
 import { rangeQuerySchema, reportTimezoneSchema, routeFilterSchema } from './query.schemas';
 
