@@ -2,12 +2,21 @@ import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { FunnelMode, FunnelOutcome, FunnelStep } from '../../src/domain/queries/funnel';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleFunnelQuery } from '../../src/infra/queries/drizzle-funnel.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import {
+  filteredEvent,
+  filteredScope,
+  MOBILE_ONLY,
+  MOBILE_VISIT,
+  ON_A_LAPTOP,
+  seedMobileAndDesktopVisits,
+} from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -68,12 +77,33 @@ const SCOPE: QueryScope = {
   timeZone: 'UTC',
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-04', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 const CALCULATOR: readonly FunnelStep[] = [
   { type: 'page', path: '/calculadora-*' },
   { type: 'event', name: 'calculator_used' },
   { type: 'event', name: 'signup_completed' },
+];
+
+const PRICING_TO_PLAN: readonly FunnelStep[] = [
+  { type: 'page', path: '/pricing' },
+  { type: 'event', name: 'plan_selected' },
+];
+
+const ONE_PERSON_ON_TWO_DEVICES = [
+  filteredEvent('f5f5f5f5-0000-4000-8000-000000000001', '2026-10-03T09:00:00.000Z', 'page_view', {
+    userId: 'lia',
+    ...ON_A_LAPTOP,
+  }),
+  filteredEvent(
+    'f5f5f5f5-0000-4000-8000-000000000002',
+    '2026-10-03T12:00:00.000Z',
+    'plan_selected',
+    {
+      userId: 'lia',
+    },
+  ),
 ];
 
 describe('DrizzleFunnelQuery against a real Postgres', () => {
@@ -92,6 +122,7 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db, ONE_PERSON_ON_TWO_DEVICES);
   });
 
   afterAll(async () => {
@@ -187,5 +218,33 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
     expect(await counts({ ...SCOPE, projectId: BLOG_ID }, 'visit', CALCULATOR.slice(0, 2))).toEqual(
       [1, 0],
     );
+  });
+
+  describe('with report filters', () => {
+    const october3 = (filters = {}) => ({
+      ...filteredScope(filters),
+      range: { from: '2026-10-03', to: '2026-10-03' },
+    });
+
+    it('counts only the visits the filters select', async () => {
+      expect(await counts(filteredScope(), 'visit', PRICING_TO_PLAN)).toEqual([2, 2]);
+      expect(await counts(filteredScope(MOBILE_ONLY), 'visit', PRICING_TO_PLAN)).toEqual([1, 1]);
+      expect(
+        await query.subjects(
+          filteredScope(MOBILE_ONLY),
+          { mode: 'visit', steps: PRICING_TO_PLAN, stepIndex: 1, outcome: 'reached' },
+          null,
+          50,
+        ),
+      ).toEqual([{ id: MOBILE_VISIT, lastStepAt: new Date('2026-10-05T10:01:00.000Z') }]);
+    });
+
+    it('counts a person 1 and 1 unfiltered, 1 and 0 on desktop and 0 and 0 on mobile, when step 1 was on a laptop and step 2 on a phone', async () => {
+      expect(await counts(october3(), 'user', PRICING_TO_PLAN)).toEqual([1, 1]);
+      expect(await counts(october3({ deviceType: 'desktop' }), 'user', PRICING_TO_PLAN)).toEqual([
+        1, 0,
+      ]);
+      expect(await counts(october3(MOBILE_ONLY), 'user', PRICING_TO_PLAN)).toEqual([0, 0]);
+    });
   });
 });

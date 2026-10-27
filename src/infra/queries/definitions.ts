@@ -11,7 +11,7 @@ function rangeEnd(scope: QueryScope): SQL {
   return sql`(${scope.range.to}::date + ${scope.lastDayUntil}::time) AT TIME ZONE ${scope.timeZone}`;
 }
 
-export function inScope(scope: QueryScope): SQL {
+export function inPeriod(scope: QueryScope): SQL {
   return sql`${events.projectId} = ${scope.projectId}
     AND ${events.occurredAt} >= (${scope.range.from}::date)::timestamp AT TIME ZONE ${scope.timeZone}
     AND ${events.occurredAt} < ${rangeEnd(scope)}`;

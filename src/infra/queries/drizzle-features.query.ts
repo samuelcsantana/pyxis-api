@@ -10,7 +10,8 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isNamedEvent, isPageView, localDay } from './definitions';
+import { isNamedEvent, isPageView, localDay } from './definitions';
+import { inScope } from './report-filters';
 
 const KINDS = {
   events: { key: events.name, filter: isNamedEvent },

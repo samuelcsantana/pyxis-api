@@ -3,6 +3,7 @@ import { InvalidRangeError } from '../../domain/errors/query.errors';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubArrivalsQuery } from '../../test-utils/stub-arrivals.query';
 import { GetArrivalsUseCase } from './get-arrivals.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const NOW = new Date('2026-10-23T17:05:12.000Z');
 const PROJECT: Project = {
@@ -44,6 +45,7 @@ describe('GetArrivalsUseCase', () => {
           timeZone: 'America/Sao_Paulo',
           conversionEvent: null,
           range: { from: '2026-10-17', to: '2026-10-23' },
+          filters: NO_REPORT_FILTERS,
         },
         since: new Date('2026-10-23T17:00:00.000Z'),
         activeSince: new Date('2026-10-23T17:00:12.000Z'),

@@ -1,6 +1,7 @@
 import type postgres from 'postgres';
 import type { PropertyMap, TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
@@ -8,6 +9,7 @@ import {
 import { DrizzleFeaturesQuery } from '../../src/infra/queries/drizzle-features.query';
 import { DrizzleRequestsQuery } from '../../src/infra/queries/drizzle-requests.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import { filteredScope, MOBILE_ONLY, seedMobileAndDesktopVisits } from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -113,6 +115,7 @@ const SCOPE: QueryScope = {
   timeZone: 'UTC',
   conversionEvent: null,
   range: { from: '2026-10-04', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 describe('features and requests queries against a real Postgres', () => {
@@ -133,6 +136,7 @@ describe('features and requests queries against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db);
   });
 
   afterAll(async () => {
@@ -335,6 +339,36 @@ describe('features and requests queries against a real Postgres', () => {
       expect(await requests.statuses(checkout)).toHaveLength(1);
       expect(await requests.screens(checkout)).toHaveLength(1);
       expect(await requests.recentFailures(checkout, 5)).toHaveLength(1);
+    });
+  });
+
+  describe('with report filters', () => {
+    it('counts only the features used in the visits the filters select', async () => {
+      expect(await features.totals(filteredScope(MOBILE_ONLY), 'events', 50)).toEqual([
+        { name: 'plan_selected', count: 1, visits: 1 },
+        { name: 'signup_completed', count: 1, visits: 1 },
+      ]);
+      expect(await features.totals(filteredScope(MOBILE_ONLY), 'screens', 50)).toEqual([
+        { name: '/pricing', count: 1, visits: 1 },
+      ]);
+      expect(await features.days(filteredScope(MOBILE_ONLY), 'events', ['plan_selected'])).toEqual([
+        { name: 'plan_selected', date: '2026-10-05', count: 1 },
+      ]);
+    });
+
+    it('counts only the requests made in the visits the filters select', async () => {
+      const writes = { screen: null, kind: 'writes' } as const;
+      const mobileWrites = { ...filteredScope(MOBILE_ONLY), ...writes };
+
+      expect(await requests.routes({ ...filteredScope(), ...writes }, 20)).toMatchObject([
+        { method: 'POST', route: '/v1/orders', total: 2, failed: 1 },
+      ]);
+      expect(await requests.routes(mobileWrites, 20)).toMatchObject([
+        { method: 'POST', route: '/v1/orders', total: 1, failed: 1 },
+      ]);
+      expect(
+        await requests.routes({ ...filteredScope({ deviceType: 'desktop' }), ...writes }, 20),
+      ).toMatchObject([{ total: 1, failed: 0 }]);
     });
   });
 });

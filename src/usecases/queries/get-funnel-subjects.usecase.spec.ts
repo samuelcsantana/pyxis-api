@@ -8,6 +8,7 @@ import {
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubFunnelQuery } from '../../test-utils/stub-funnel.query';
 import { GetFunnelSubjectsUseCase } from './get-funnel-subjects.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -59,6 +60,7 @@ describe('GetFunnelSubjectsUseCase', () => {
           timeZone: 'America/Sao_Paulo',
           conversionEvent: 'signup_completed',
           range: RANGE,
+          filters: NO_REPORT_FILTERS,
         },
         asked: ASKED,
         after: null,

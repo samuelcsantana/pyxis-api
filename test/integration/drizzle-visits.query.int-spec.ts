@@ -1,6 +1,7 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import { NO_VISIT_FILTERS, type VisitFilters } from '../../src/domain/queries/visits';
 import {
   createDrizzleDatabase,
@@ -159,6 +160,7 @@ const SCOPE: QueryScope = {
   timeZone: 'UTC',
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-04', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 const ALL = 50;

@@ -1,12 +1,14 @@
 import type postgres from 'postgres';
 import type { PropertyMap, TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzlePropertyBreakdownQuery } from '../../src/infra/queries/drizzle-property-breakdown.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import { filteredScope, MOBILE_ONLY, seedMobileAndDesktopVisits } from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -70,6 +72,7 @@ const SCOPE: QueryScope = {
   timeZone: 'UTC',
   conversionEvent: null,
   range: { from: '2026-10-04', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 describe('DrizzlePropertyBreakdownQuery against a real Postgres', () => {
@@ -87,6 +90,7 @@ describe('DrizzlePropertyBreakdownQuery against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(createDrizzleDatabase(app)).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, createDrizzleDatabase(app));
   });
 
   afterAll(async () => {
@@ -133,5 +137,16 @@ describe('DrizzlePropertyBreakdownQuery against a real Postgres', () => {
       events: 0,
       values: [],
     });
+  });
+
+  it('counts only the events of the visits the filters select', async () => {
+    const mobile = await query.counts(filteredScope(MOBILE_ONLY), 'plan_selected', 10);
+    const everyone = await query.counts(filteredScope(), 'plan_selected', 10);
+
+    expect(mobile.events).toBe(1);
+    expect(mobile.values.map(({ value, count, visits }) => [value, count, visits])).toEqual([
+      ['pro', 1, 1],
+    ]);
+    expect(everyone.events).toBe(2);
   });
 });

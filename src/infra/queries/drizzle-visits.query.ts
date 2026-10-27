@@ -17,13 +17,12 @@ import { events } from '../database/schema/events';
 import {
   entrySource,
   hasFailed,
-  inScope,
   isEntryPageView,
   isFailedRequest,
   isNamedEvent,
   isPageView,
 } from './definitions';
-import { reportFilterConditions } from './report-filters';
+import { inScope, reportFilterConditions } from './report-filters';
 
 const inVisitOrder = sql`ORDER BY ${events.occurredAt}, ${events.id}`;
 

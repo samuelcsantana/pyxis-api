@@ -11,7 +11,8 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isNamedEvent, isPageView, localDay, periodTotalsColumns } from './definitions';
+import { isNamedEvent, isPageView, localDay, periodTotalsColumns } from './definitions';
+import { inScope } from './report-filters';
 
 @Injectable()
 export class DrizzleOverviewQuery implements OverviewQuery {

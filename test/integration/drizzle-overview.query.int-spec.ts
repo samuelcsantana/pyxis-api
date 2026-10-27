@@ -1,16 +1,32 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleOverviewQuery } from '../../src/infra/queries/drizzle-overview.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import {
+  filteredEvent,
+  filteredScope,
+  MOBILE_ONLY,
+  ON_A_LAPTOP,
+  seedMobileAndDesktopVisits,
+} from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
 const SHOP_ID = 'c1d2e3f4-a5b6-4c7d-8e9f-a0b1c2d3e4f5';
+
+const DAY_BEFORE_FILTERED = [
+  filteredEvent('f4f4f4f4-0000-4000-8000-000000000001', '2026-10-04T09:00:00.000Z', 'page_view'),
+  filteredEvent('f4f4f4f4-0000-4000-8000-000000000002', '2026-10-04T09:30:00.000Z', 'page_view', {
+    ...ON_A_LAPTOP,
+  }),
+  filteredEvent('f4f4f4f4-0000-4000-8000-000000000003', '2026-10-04T15:00:00.000Z', 'page_view'),
+];
 const BLOG_ID = 'd2e3f4a5-b6c7-4d8e-9fa0-b1c2d3e4f5a6';
 const SESSION = {
   morning: '11111111-0000-4000-8000-000000000001',
@@ -82,6 +98,7 @@ const SCOPE: QueryScope = {
   timeZone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-04', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 describe('DrizzleOverviewQuery against a real Postgres', () => {
@@ -102,6 +119,7 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
              (${BLOG_ID}, 'Blog', 'UTC', 'signup_completed')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db, DAY_BEFORE_FILTERED);
   });
 
   afterAll(async () => {
@@ -238,5 +256,77 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
     expect(await query.topEvents(blog, 10)).toEqual([
       { name: 'signup_completed', count: 1, visits: 1 },
     ]);
+  });
+
+  describe('with report filters', () => {
+    it('counts only the events of the visits the filters select', async () => {
+      expect(await query.totals(filteredScope())).toMatchObject({ visits: 2, writes: 2 });
+      expect(await query.totals(filteredScope(MOBILE_ONLY))).toEqual({
+        visits: 1,
+        identifiedUsers: 0,
+        conversions: 1,
+        convertingVisits: 1,
+        writes: 1,
+        failedWrites: 1,
+      });
+      expect(await query.days(filteredScope(MOBILE_ONLY))).toMatchObject([
+        { date: '2026-10-05', visits: 1, pageViews: 1, events: 2 },
+      ]);
+      expect(await query.topPages(filteredScope(MOBILE_ONLY), 10)).toEqual([
+        { path: '/pricing', views: 1, visits: 1 },
+      ]);
+      expect(await query.topEvents(filteredScope(MOBILE_ONLY), 10)).toEqual([
+        { name: 'plan_selected', count: 1, visits: 1 },
+        { name: 'signup_completed', count: 1, visits: 1 },
+      ]);
+    });
+
+    it('filters the previous period too, up to its cutoff', async () => {
+      const dayBefore = { from: '2026-10-04', to: '2026-10-04' };
+      const previousMobile = { ...filteredScope(MOBILE_ONLY), range: dayBefore };
+      const untilNoon = { ...previousMobile, lastDayUntil: '12:00:00.000' };
+
+      expect((await query.totals(previousMobile)).visits).toBe(2);
+      expect((await query.totals(untilNoon)).visits).toBe(1);
+      expect((await query.totals({ ...untilNoon, filters: filteredScope().filters })).visits).toBe(
+        2,
+      );
+      expect(await query.days(untilNoon)).toMatchObject([{ date: '2026-10-04', visits: 1 }]);
+    });
+
+    it.each([
+      [
+        'a device and an event of the visit',
+        { deviceType: 'mobile', event: { name: 'plan_selected', property: null } },
+        1,
+      ],
+      [
+        'a device and a channel the visit did not come from',
+        { deviceType: 'desktop', channel: 'paid' },
+        0,
+      ],
+      [
+        'a property value of an event',
+        { event: { name: 'plan_selected', property: { key: 'plan', value: 'free' } } },
+        1,
+      ],
+      ['two pages viewed', { paths: ['/pricing', '/docs'] }, 1],
+      ['three pages, one never viewed', { paths: ['/pricing', '/docs', '/nowhere'] }, 0],
+      ['a page with a star', { paths: ['/pri*'] }, 2],
+      ['anonymous visits, leaving out one identified at its end', { identity: 'anonymous' }, 1],
+      ['identified visits', { identity: 'identified' }, 1],
+      ['a browser', { browser: 'chrome' }, 1],
+      ['an operating system', { os: 'ios' }, 1],
+      ['a browser and a system of different visits', { browser: 'chrome', os: 'ios' }, 0],
+      ['a country', { country: 'PT' }, 1],
+      ['a region', { region: 'BR-SP' }, 1],
+      ['a channel', { channel: 'direct' }, 1],
+      ['a source', { source: 'google' }, 1],
+      ['the direct source', { source: '(direct)' }, 1],
+      ['a campaign', { campaign: 'spring_sale' }, 1],
+      ['a failed request', { failed: true }, 1],
+    ] as const)('keeps every condition, as an AND: %s', async (_case, filters, visits) => {
+      expect((await query.totals(filteredScope(filters))).visits).toBe(visits);
+    });
   });
 });

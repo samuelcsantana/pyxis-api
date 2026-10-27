@@ -5,7 +5,8 @@ import type { TimeOfDayQuery, VisitStartCell } from '../../domain/queries/time-o
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isPageView } from './definitions';
+import { isPageView } from './definitions';
+import { inScope } from './report-filters';
 
 @Injectable()
 export class DrizzleTimeOfDayQuery implements TimeOfDayQuery {

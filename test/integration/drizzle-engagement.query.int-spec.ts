@@ -1,12 +1,14 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleEngagementQuery } from '../../src/infra/queries/drizzle-engagement.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import { filteredScope, MOBILE_ONLY, seedMobileAndDesktopVisits } from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -63,6 +65,7 @@ const SCOPE: QueryScope = {
   timeZone: 'UTC',
   conversionEvent: null,
   range: { from: '2026-10-01', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 describe('DrizzleEngagementQuery against a real Postgres', () => {
@@ -81,6 +84,7 @@ describe('DrizzleEngagementQuery against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db);
   });
 
   afterAll(async () => {
@@ -129,5 +133,21 @@ describe('DrizzleEngagementQuery against a real Postgres', () => {
     });
     expect(await query.entryPages(empty, 10)).toEqual([]);
     expect(await query.visitLengths(empty)).toEqual([]);
+  });
+
+  it('counts only the visits the filters select', async () => {
+    const lengths = await query.visitLengths(filteredScope(MOBILE_ONLY));
+
+    expect(await query.entryPages(filteredScope(MOBILE_ONLY), 10)).toEqual([
+      { path: '/pricing', visits: 1, singlePageVisits: 1 },
+    ]);
+    expect(await query.exitPages(filteredScope({ deviceType: 'desktop' }), 10)).toEqual([
+      { path: '/docs', visits: 1 },
+    ]);
+    expect(await query.totals(filteredScope(MOBILE_ONLY))).toMatchObject({
+      visits: 1,
+      singlePageVisits: 1,
+    });
+    expect(lengths.reduce((sum, length) => sum + length.visits, 0)).toBe(1);
   });
 });

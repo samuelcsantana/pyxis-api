@@ -9,6 +9,7 @@ import {
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubVisitsQuery } from '../../test-utils/stub-visits.query';
 import { GetVisitsUseCase } from './get-visits.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -68,12 +69,22 @@ describe('GetVisitsUseCase', () => {
           timeZone: 'America/Sao_Paulo',
           conversionEvent: 'signup_completed',
           range: RANGE,
+          filters: NO_REPORT_FILTERS,
         },
         filters,
         after: null,
         limit: VISIT_LIST_PAGE_SIZE + 1,
       },
     ]);
+  });
+
+  it('keeps report filters off the scope, so the Visits filters are applied once', async () => {
+    const query = new StubVisitsQuery();
+    const filtered = { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' as const } };
+
+    await new GetVisitsUseCase(query, CLOCK).execute(PROJECT, filtered, NO_VISIT_FILTERS, null);
+
+    expect(query.calls[0]?.scope.filters).toBe(NO_REPORT_FILTERS);
   });
 
   it('shows a full page and points the cursor at its last visit when more exist', async () => {

@@ -2,12 +2,14 @@ import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { FunnelStep } from '../../src/domain/queries/funnel';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleFunnelQuery } from '../../src/infra/queries/drizzle-funnel.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import { filteredScope, MOBILE_ONLY, seedMobileAndDesktopVisits } from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -65,11 +67,17 @@ const SCOPE: QueryScope = {
   timeZone: 'UTC',
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-05', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 const SIGNUP: readonly FunnelStep[] = [
   { type: 'page', path: '/pricing' },
   { type: 'event', name: 'signup_completed' },
+];
+
+const PRICING_TO_PLAN: readonly FunnelStep[] = [
+  { type: 'page', path: '/pricing' },
+  { type: 'event', name: 'plan_selected' },
 ];
 
 describe('DrizzleFunnelQuery segments against a real Postgres', () => {
@@ -88,6 +96,7 @@ describe('DrizzleFunnelQuery segments against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db);
   });
 
   afterAll(async () => {
@@ -120,5 +129,15 @@ describe('DrizzleFunnelQuery segments against a real Postgres', () => {
     expect(
       await query.segments(SCOPE, [{ type: 'page', path: '/nowhere' }, ...SIGNUP], 'device'),
     ).toEqual([]);
+  });
+
+  it('splits only the visits the filters select', async () => {
+    expect(await query.segments(filteredScope(), PRICING_TO_PLAN, 'device')).toEqual([
+      { segment: 'desktop', counts: [1, 1] },
+      { segment: 'mobile', counts: [1, 1] },
+    ]);
+    expect(await query.segments(filteredScope(MOBILE_ONLY), PRICING_TO_PLAN, 'device')).toEqual([
+      { segment: 'mobile', counts: [1, 1] },
+    ]);
   });
 });

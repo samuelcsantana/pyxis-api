@@ -6,10 +6,12 @@ import {
   todayIn,
 } from '../../domain/queries/date-range';
 import type { QueryScope } from '../../domain/queries/query-scope';
+import { NO_REPORT_FILTERS, type ReportFilters } from '../../domain/queries/report-filters';
 
 export interface RequestedRange {
   readonly from: string;
   readonly to: string;
+  readonly filters?: ReportFilters;
 }
 
 export interface ScopedPeriods {
@@ -29,6 +31,7 @@ export function scopedPeriods(
     timeZone: project.timezone,
     conversionEvent: project.conversionEvent,
     range,
+    filters: requested.filters ?? NO_REPORT_FILTERS,
   };
   const previous: QueryScope = { ...current, range: previousRange(range) };
   const cutoff = comparisonCutoff(range, project.timezone, now);
