@@ -18,5 +18,6 @@ export interface Account extends PlanLimitOverrides {
   readonly deletionHoldReason: string | null;
   readonly quotaPauseExemptUntil: Date | null;
   readonly freeWaitlistedAt: Date | null;
+  readonly freePlanFitDueAt: Date | null;
   readonly createdAt: Date;
 }

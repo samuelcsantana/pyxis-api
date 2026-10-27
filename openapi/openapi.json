@@ -1990,6 +1990,19 @@
                   ],
                   "description": "Events counted by the last daily measurement; null before the first."
                 },
+                "free_plan_fit_due_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Set after a withdrawal left the account on the free plan with more projects or people than it holds: on that day the account ends unless it fits by then. Null for members."
+                },
                 "free_waitlisted_at": {
                   "anyOf": [
                     {
@@ -2068,6 +2081,32 @@
                 "month": {
                   "description": "The calendar month in UTC the usage is counted in, YYYY-MM.",
                   "type": "string"
+                },
+                "people_count": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "How many people, the owner included, read a project of the account now; null for members."
+                },
+                "project_count": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "How many projects the account holds now; null for members."
                 },
                 "quota_pause_exempt_until": {
                   "anyOf": [
@@ -2149,6 +2188,9 @@
                 "suspended_at",
                 "suspension_reason",
                 "deletion_held_at",
+                "free_plan_fit_due_at",
+                "project_count",
+                "people_count",
                 "month",
                 "events_this_month",
                 "measured_at",
