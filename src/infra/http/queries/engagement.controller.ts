@@ -10,7 +10,8 @@ import { SchemaPipe } from '../schema-pipe';
 import { type EngagementReportBody, engagementReportSchema } from './engagement.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
-import { type RangeQuery, rangeQuerySchema } from './query.schemas';
+import { type FilteredRangeQuery, filteredRangeQuerySchema } from './query.schemas';
+import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 export function engagementBody(report: EngagementReport): EngagementReportBody {
@@ -49,13 +50,16 @@ export class EngagementController {
 
   @Get('engagement')
   @ApiRange()
+  @ApiReportFilters()
   @ApiOperation({ summary: 'Entry and exit pages, single-page visits and visit length' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: engagementReportSchema })
   async engagement(
     @Req() request: FastifyRequest,
-    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
-    range: RangeQuery,
+    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
+    query: FilteredRangeQuery,
   ): Promise<EngagementReportBody> {
-    return engagementBody(await this.getEngagement.execute(projectOf(request), range));
+    return engagementBody(
+      await this.getEngagement.execute(projectOf(request), filteredRangeOf(query)),
+    );
   }
 }

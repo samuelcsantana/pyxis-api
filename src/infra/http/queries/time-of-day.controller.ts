@@ -8,7 +8,8 @@ import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
-import { type RangeQuery, rangeQuerySchema } from './query.schemas';
+import { type FilteredRangeQuery, filteredRangeQuerySchema } from './query.schemas';
+import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { type TimeOfDayReportBody, timeOfDayReportSchema } from './time-of-day.schemas';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
@@ -30,14 +31,15 @@ export class TimeOfDayController {
 
   @Get('time-of-day')
   @ApiRange()
+  @ApiReportFilters()
   @ApiOperation({ summary: 'The visits of the range by the weekday and local hour they started' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: timeOfDayReportSchema })
   async timeOfDay(
     @Req() request: FastifyRequest,
-    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
-    range: RangeQuery,
+    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
+    query: FilteredRangeQuery,
   ): Promise<TimeOfDayReportBody> {
-    const weekdays = await this.getTimeOfDay.execute(projectOf(request), range);
+    const weekdays = await this.getTimeOfDay.execute(projectOf(request), filteredRangeOf(query));
     return { weekdays: weekdays.map((day) => ({ weekday: day.weekday, hours: [...day.hours] })) };
   }
 }

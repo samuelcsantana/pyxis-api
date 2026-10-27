@@ -1,5 +1,6 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
 import type { PropertyBreakdownReport } from '../../../domain/queries/property-breakdown';
 import type { GetPropertyBreakdownUseCase } from '../../../usecases/queries/get-property-breakdown.usecase';
 import { PropertyBreakdownController } from './property-breakdown.controller';
@@ -43,14 +44,30 @@ describe('PropertyBreakdownController', () => {
       },
     } as unknown as GetPropertyBreakdownUseCase);
 
-    const body = await controller.properties({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-04',
-      to: '2026-10-05',
-      name: 'calculator_result_shown',
-    });
+    const body = await controller.properties(
+      { project: PROJECT } as FastifyRequest,
+      propertyBreakdownQuerySchema.parse({
+        from: '2026-10-04',
+        to: '2026-10-05',
+        name: 'calculator_result_shown',
+        event: 'signup_completed',
+        property: 'plan=pro',
+      }),
+    );
 
     expect(calls).toEqual([
-      [PROJECT, { from: '2026-10-04', to: '2026-10-05' }, 'calculator_result_shown'],
+      [
+        PROJECT,
+        {
+          from: '2026-10-04',
+          to: '2026-10-05',
+          filters: {
+            ...NO_REPORT_FILTERS,
+            event: { name: 'signup_completed', property: { key: 'plan', value: 'pro' } },
+          },
+        },
+        'calculator_result_shown',
+      ],
     ]);
     expect(propertyBreakdownReportSchema.parse(body)).toEqual({
       name: 'calculator_result_shown',
@@ -72,6 +89,16 @@ describe('PropertyBreakdownController', () => {
 
 describe('propertyBreakdownQuerySchema', () => {
   const RANGE = { from: '2026-10-04', to: '2026-10-05' };
+
+  it('refuses a property filter without an event', () => {
+    expect(
+      propertyBreakdownQuerySchema.safeParse({
+        ...RANGE,
+        name: 'cta_clicked',
+        property: 'plan=pro',
+      }).success,
+    ).toBe(false);
+  });
 
   it('accepts a named event', () => {
     expect(propertyBreakdownQuerySchema.parse({ ...RANGE, name: 'cta_clicked' }).name).toBe(

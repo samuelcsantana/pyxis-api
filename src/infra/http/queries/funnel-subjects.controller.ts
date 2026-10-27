@@ -27,6 +27,7 @@ import {
 } from './funnel-subjects.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
+import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function funnelSubjectsBody(
@@ -80,6 +81,7 @@ export class FunnelSubjectsController {
     description: 'The next_cursor of the previous page',
     schema: { type: 'string' },
   })
+  @ApiReportFilters()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: funnelSubjectsReportSchema })
   async subjects(
     @Req() request: FastifyRequest,
@@ -92,7 +94,7 @@ export class FunnelSubjectsController {
     const project = projectOf(request);
     const report = await this.getFunnelSubjects.execute(
       project,
-      { from: query.from, to: query.to },
+      filteredRangeOf(query),
       { mode: query.mode, steps: query.steps, stepIndex: query.step - 1, outcome: query.outcome },
       query.cursor ?? null,
     );

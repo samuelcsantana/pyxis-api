@@ -22,6 +22,7 @@ import {
 } from './funnel-segments.schemas';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
+import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 @ApiTags('dashboard queries')
@@ -49,6 +50,7 @@ export class FunnelSegmentsController {
     schema: { type: 'string' },
   })
   @ApiQuery({ name: 'by', enum: FUNNEL_SEGMENT_DIMENSIONS })
+  @ApiReportFilters()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: funnelSegmentsReportSchema })
   async segments(
     @Req() request: FastifyRequest,
@@ -60,7 +62,7 @@ export class FunnelSegmentsController {
   ): Promise<FunnelSegmentsReportBody> {
     const segments = await this.getFunnelSegments.execute(
       projectOf(request),
-      { from: query.from, to: query.to },
+      filteredRangeOf(query),
       query.steps,
       query.by,
     );

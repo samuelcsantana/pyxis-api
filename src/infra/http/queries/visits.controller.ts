@@ -8,25 +8,14 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import {
-  BROWSER_FAMILIES,
-  CHANNELS,
-  DEVICE_TYPES,
-  OS_FAMILIES,
-} from '../../../domain/entities/tracked-event.entity';
-import { REGION_CODE_PATTERN } from '../../../domain/events/region';
-import {
-  MAX_REFERRER_HOST_LENGTH,
-  MAX_UTM_VALUE_LENGTH,
-} from '../../../domain/events/event-limits';
-import { MAX_VISIT_PATH_FILTERS, VISIT_IDENTITIES } from '../../../domain/queries/report-filters';
-import { type VisitFilters, type VisitsReport } from '../../../domain/queries/visits';
+import type { VisitFilters, VisitsReport } from '../../../domain/queries/visits';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { ApiReportFilters, reportFiltersOf } from './report-filter-params';
 import {
   visitCursorText,
   type VisitsQueryParams,
@@ -37,22 +26,7 @@ import {
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function visitFilters(query: VisitsQueryParams): VisitFilters {
-  return {
-    paths: query.path ?? [],
-    event:
-      query.event === undefined ? null : { name: query.event, property: query.property ?? null },
-    channel: query.channel ?? null,
-    deviceType: query.device ?? null,
-    browser: query.browser ?? null,
-    os: query.os ?? null,
-    identity: query.identity ?? null,
-    country: query.country ?? null,
-    region: query.region ?? null,
-    source: query.source ?? null,
-    campaign: query.campaign ?? null,
-    route: query.route ?? null,
-    failed: query.failed ?? false,
-  };
+  return { ...reportFiltersOf(query), route: query.route ?? null };
 }
 
 function visitsBody(report: VisitsReport, timezone: string): VisitsReportBody {
@@ -110,70 +84,14 @@ export class VisitsController {
     description: 'Last day, inclusive, at most today in the project time zone; 400 days at most',
     schema: { type: 'string', format: 'date' },
   })
-  @ApiQuery({
-    name: 'path',
-    required: false,
-    description:
-      `A page the visit viewed; a star matches any characters. Repeat it, up to ` +
-      `${String(MAX_VISIT_PATH_FILTERS)} times, for visits that viewed every one`,
-    schema: { type: 'array', items: { type: 'string' }, maxItems: MAX_VISIT_PATH_FILTERS },
-  })
-  @ApiQuery({
-    name: 'event',
-    required: false,
-    description: 'A named event the visit sent',
-    schema: { type: 'string' },
-  })
-  @ApiQuery({
-    name: 'property',
-    required: false,
-    description: 'key=value: the event above carried this property value; needs event',
-    schema: { type: 'string' },
-  })
-  @ApiQuery({ name: 'channel', required: false, enum: CHANNELS })
-  @ApiQuery({ name: 'device', required: false, enum: DEVICE_TYPES })
-  @ApiQuery({ name: 'browser', required: false, enum: BROWSER_FAMILIES })
-  @ApiQuery({ name: 'os', required: false, description: 'The operating system', enum: OS_FAMILIES })
-  @ApiQuery({ name: 'identity', required: false, enum: VISIT_IDENTITIES })
-  @ApiQuery({
-    name: 'country',
-    required: false,
-    description: 'The two-letter country code of the visit',
-    schema: { type: 'string', pattern: '^[A-Z]{2}$' },
-  })
-  @ApiQuery({
-    name: 'region',
-    required: false,
-    description:
-      'The region of the visit: its ISO 3166-2 code, the country code, a hyphen and the subdivision',
-    schema: { type: 'string', pattern: REGION_CODE_PATTERN.source },
-  })
-  @ApiQuery({
-    name: 'source',
-    required: false,
-    description:
-      'The source of the visit as Acquisition names it: campaign source, referring host, ' +
-      '(ad click) or (direct)',
-    schema: { type: 'string', maxLength: MAX_REFERRER_HOST_LENGTH },
-  })
-  @ApiQuery({
-    name: 'campaign',
-    required: false,
-    description: 'The campaign (utm_campaign) of the visit entry',
-    schema: { type: 'string', maxLength: MAX_UTM_VALUE_LENGTH },
-  })
+  @ApiReportFilters()
   @ApiQuery({
     name: 'route',
     required: false,
-    description: 'A request the visit made, as method and route: POST /orders/:id',
-    schema: { type: 'string' },
-  })
-  @ApiQuery({
-    name: 'failed',
-    required: false,
     description:
-      'true: the visit had a failed request (status 0 or 400 and above); with route, on that route',
-    schema: { type: 'string', enum: ['true', 'false'] },
+      'Only the visits that made this request, as method and route: POST /orders/:id; with ' +
+      'failed=true, only those where a call to it failed',
+    schema: { type: 'string' },
   })
   @ApiQuery({
     name: 'cursor',

@@ -1,5 +1,6 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
 import type { FunnelSubjectsReport } from '../../../domain/queries/funnel';
 import type { GetFunnelSubjectsUseCase } from '../../../usecases/queries/get-funnel-subjects.usecase';
 import { FunnelSubjectsController } from './funnel-subjects.controller';
@@ -53,6 +54,7 @@ describe('FunnelSubjectsController', () => {
         ...BASE,
         step: '2',
         outcome: 'dropped',
+        channel: 'paid',
         cursor: `2026-10-05T13:00:00.000Z~${SESSION_ID}`,
       }),
     );
@@ -60,7 +62,7 @@ describe('FunnelSubjectsController', () => {
     expect(calls).toEqual([
       [
         PROJECT,
-        RANGE,
+        { ...RANGE, filters: { ...NO_REPORT_FILTERS, channel: 'paid' } },
         {
           mode: 'visit',
           steps: JSON.parse(STEPS) as unknown,

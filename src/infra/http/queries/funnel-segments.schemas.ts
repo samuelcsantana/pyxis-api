@@ -1,11 +1,19 @@
 import { z } from 'zod';
 import { FUNNEL_SEGMENT_DIMENSIONS } from '../../../domain/queries/funnel';
-import { funnelStepsSchema, rangeQuerySchema } from './query.schemas';
+import {
+  funnelStepsSchema,
+  propertyNeedsEvent,
+  rangeQuerySchema,
+  reportFilterFields,
+} from './query.schemas';
 
-export const funnelSegmentsQuerySchema = rangeQuerySchema.extend({
-  steps: funnelStepsSchema,
-  by: z.enum(FUNNEL_SEGMENT_DIMENSIONS),
-});
+export const funnelSegmentsQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend({
+    steps: funnelStepsSchema,
+    by: z.enum(FUNNEL_SEGMENT_DIMENSIONS),
+    ...reportFilterFields,
+  }),
+);
 
 export const funnelSegmentsReportSchema = z
   .strictObject({

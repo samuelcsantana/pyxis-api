@@ -26,6 +26,7 @@ import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
 import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import {
   type AcquisitionReportBody,
   acquisitionReportSchema,
@@ -41,8 +42,8 @@ import {
   funnelReportSchema,
   type OverviewReportBody,
   overviewReportSchema,
-  type RangeQuery,
-  rangeQuerySchema,
+  type FilteredRangeQuery,
+  filteredRangeQuerySchema,
   type RequestsQuery,
   requestsQuerySchema,
   type RequestsReportBody,
@@ -247,54 +248,61 @@ export class QueriesController {
 
   @Get('overview')
   @ApiRange()
+  @ApiReportFilters()
   @ApiOperation({ summary: 'KPIs, daily activity, top pages and top events of a range' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: overviewReportSchema })
   async overview(
     @Req() request: FastifyRequest,
-    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
-    range: RangeQuery,
+    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
+    query: FilteredRangeQuery,
   ): Promise<OverviewReportBody> {
-    return overviewBody(await this.getOverview.execute(projectOf(request), range));
+    return overviewBody(await this.getOverview.execute(projectOf(request), filteredRangeOf(query)));
   }
 
   @Get('devices')
   @ApiRange()
+  @ApiReportFilters()
   @ApiOperation({
     summary: 'Visits and conversions by device type, browser, system, country and region',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: devicesReportSchema })
   async devices(
     @Req() request: FastifyRequest,
-    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
-    range: RangeQuery,
+    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
+    query: FilteredRangeQuery,
   ): Promise<DevicesReportBody> {
-    return devicesBody(await this.getDevices.execute(projectOf(request), range));
+    return devicesBody(await this.getDevices.execute(projectOf(request), filteredRangeOf(query)));
   }
 
   @Get('acquisition')
   @ApiRange()
+  @ApiReportFilters()
   @ApiOperation({ summary: 'Visits per day and channel, and the sources that brought them' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: acquisitionReportSchema })
   async acquisition(
     @Req() request: FastifyRequest,
-    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
-    range: RangeQuery,
+    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
+    query: FilteredRangeQuery,
   ): Promise<AcquisitionReportBody> {
-    return acquisitionBody(await this.getAcquisition.execute(projectOf(request), range));
+    return acquisitionBody(
+      await this.getAcquisition.execute(projectOf(request), filteredRangeOf(query)),
+    );
   }
 
   @Get('features')
   @ApiRange()
   @ApiOperation({ summary: 'The most used named events or screens, with their daily counts' })
   @ApiQuery({ name: 'kind', enum: ['events', 'screens'] })
+  @ApiReportFilters()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: featuresReportSchema })
   async features(
     @Req() request: FastifyRequest,
     @Query({ schema: featuresQuerySchema, pipes: [new SchemaPipe(featuresQuerySchema)] })
     query: FeaturesQuery,
   ): Promise<FeaturesReportBody> {
-    const range = { from: query.from, to: query.to };
-    return featuresBody(await this.getFeatures.execute(projectOf(request), range, query.kind));
+    return featuresBody(
+      await this.getFeatures.execute(projectOf(request), filteredRangeOf(query), query.kind),
+    );
   }
 
   @Get('requests')
@@ -320,6 +328,7 @@ export class QueriesController {
     description: 'Also answer route_days for this method and route: POST /orders/:id',
     schema: { type: 'string' },
   })
+  @ApiReportFilters()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: requestsReportSchema })
   async requests(
     @Req() request: FastifyRequest,
@@ -327,10 +336,9 @@ export class QueriesController {
     query: RequestsQuery,
   ): Promise<RequestsReportBody> {
     const project = projectOf(request);
-    const range = { from: query.from, to: query.to };
     const report = await this.getRequests.execute(
       project,
-      range,
+      filteredRangeOf(query),
       query.screen ?? null,
       query.kind,
       query.route ?? null,
@@ -349,14 +357,19 @@ export class QueriesController {
       'matches any characters) or {"type":"event","name":"signup_completed"}',
     schema: { type: 'string' },
   })
+  @ApiReportFilters()
   @ApiResponse({ status: HttpStatus.OK, standardSchema: funnelReportSchema })
   async funnel(
     @Req() request: FastifyRequest,
     @Query({ schema: funnelQuerySchema, pipes: [new SchemaPipe(funnelQuerySchema)] })
     query: FunnelQuery,
   ): Promise<FunnelReportBody> {
-    const range = { from: query.from, to: query.to };
-    const report = await this.getFunnel.execute(projectOf(request), range, query.mode, query.steps);
+    const report = await this.getFunnel.execute(
+      projectOf(request),
+      filteredRangeOf(query),
+      query.mode,
+      query.steps,
+    );
     return {
       steps: report.steps.map((step) => ({
         count: step.count,

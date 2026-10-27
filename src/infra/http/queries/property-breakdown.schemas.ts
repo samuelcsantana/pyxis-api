@@ -1,11 +1,14 @@
 import { z } from 'zod';
 import { EVENT_NAME_PATTERN } from '../../../domain/events/event-limits';
 import { TOP_PROPERTY_VALUES } from '../../../domain/queries/property-breakdown';
-import { rangeQuerySchema } from './query.schemas';
+import { propertyNeedsEvent, rangeQuerySchema, reportFilterFields } from './query.schemas';
 
-export const propertyBreakdownQuerySchema = rangeQuerySchema.extend({
-  name: z.string().regex(EVENT_NAME_PATTERN).describe('The named event to break down'),
-});
+export const propertyBreakdownQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend({
+    name: z.string().regex(EVENT_NAME_PATTERN).describe('The named event to break down'),
+    ...reportFilterFields,
+  }),
+);
 
 export const propertyBreakdownReportSchema = z
   .strictObject({

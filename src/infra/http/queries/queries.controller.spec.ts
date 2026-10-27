@@ -5,6 +5,7 @@ import type { DevicesReport } from '../../../domain/queries/devices';
 import type { FeaturesReport } from '../../../domain/queries/features';
 import type { RequestsReport } from '../../../domain/queries/requests';
 import type { OverviewReport } from '../../../domain/queries/overview';
+import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
 import type { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import type { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
@@ -16,6 +17,8 @@ import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.
 import { QueriesController } from './queries.controller';
 import {
   acquisitionReportSchema,
+  featuresQuerySchema,
+  filteredRangeQuerySchema,
   devicesReportSchema,
   featuresReportSchema,
   funnelQuerySchema,
@@ -229,7 +232,7 @@ describe('QueriesController', () => {
 
     const body = await controller.overview({ project: PROJECT } as FastifyRequest, range);
 
-    expect(calls).toEqual([[PROJECT, range]]);
+    expect(calls).toEqual([[PROJECT, { ...range, filters: NO_REPORT_FILTERS }]]);
     expect(overviewReportSchema.parse(body)).toEqual(body);
     expect(body.kpis.identified_users).toEqual({ current: 1, previous: 0, daily: [0, 1] });
     expect(body.kpis.converting_visits).toEqual({ current: 1, previous: 1, daily: [1, 0] });
@@ -246,6 +249,54 @@ describe('QueriesController', () => {
       converting_visits: 1,
       write_errors: { failed: 0, total: 1 },
     });
+  });
+
+  it('asks for the overview with every filter, read from the query', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+    const range = { from: '2026-10-04', to: '2026-10-05' };
+
+    await controller.overview(
+      { project: PROJECT } as FastifyRequest,
+      filteredRangeQuerySchema.parse({
+        ...range,
+        path: ['/pricing', '/docs'],
+        event: 'plan_selected',
+        property: 'plan=pro',
+        channel: 'paid',
+        device: 'mobile',
+        browser: 'safari',
+        os: 'ios',
+        identity: 'anonymous',
+        country: 'BR',
+        region: 'BR-SP',
+        source: 'google',
+        campaign: 'spring_sale',
+        failed: 'true',
+      }),
+    );
+
+    expect(calls).toEqual([
+      [
+        PROJECT,
+        {
+          ...range,
+          filters: {
+            paths: ['/pricing', '/docs'],
+            event: { name: 'plan_selected', property: { key: 'plan', value: 'pro' } },
+            channel: 'paid',
+            deviceType: 'mobile',
+            browser: 'safari',
+            os: 'ios',
+            identity: 'anonymous',
+            country: 'BR',
+            region: 'BR-SP',
+            source: 'google',
+            campaign: 'spring_sale',
+            failed: true,
+          },
+        },
+      ],
+    ]);
   });
 
   it('answers a null cutoff when the range is over', async () => {
@@ -278,9 +329,14 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
     const range = { from: '2026-10-04', to: '2026-10-05' };
 
-    const body = await controller.devices({ project: PROJECT } as FastifyRequest, range);
+    const body = await controller.devices(
+      { project: PROJECT } as FastifyRequest,
+      filteredRangeQuerySchema.parse({ ...range, browser: 'safari' }),
+    );
 
-    expect(calls).toEqual([[PROJECT, range]]);
+    expect(calls).toEqual([
+      [PROJECT, { ...range, filters: { ...NO_REPORT_FILTERS, browser: 'safari' } }],
+    ]);
     expect(devicesReportSchema.parse(body)).toEqual({
       device_types: [{ value: 'mobile', visits: 4, conversions: 2, converting_visits: 1 }],
       browsers: [{ value: 'safari', visits: 4, conversions: 2, converting_visits: 1 }],
@@ -297,9 +353,12 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
     const range = { from: '2026-10-05', to: '2026-10-05' };
 
-    const body = await controller.acquisition({ project: PROJECT } as FastifyRequest, range);
+    const body = await controller.acquisition(
+      { project: PROJECT } as FastifyRequest,
+      filteredRangeQuerySchema.parse({ ...range, os: 'ios' }),
+    );
 
-    expect(calls).toEqual([[PROJECT, range]]);
+    expect(calls).toEqual([[PROJECT, { ...range, filters: { ...NO_REPORT_FILTERS, os: 'ios' } }]]);
     expect(acquisitionReportSchema.parse(body)).toEqual({
       days: [{ date: '2026-10-05', by_channel: { ...noChannelVisits(), paid: 2 } }],
       sources: [
@@ -331,13 +390,27 @@ describe('QueriesController', () => {
   it('asks for the features of one kind and answers them', async () => {
     const { controller, calls } = controllerAnswering(REPORT);
 
-    const body = await controller.features({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-04',
-      to: '2026-10-05',
-      kind: 'events',
-    });
+    const body = await controller.features(
+      { project: PROJECT } as FastifyRequest,
+      featuresQuerySchema.parse({
+        from: '2026-10-04',
+        to: '2026-10-05',
+        kind: 'events',
+        event: 'signup_completed',
+      }),
+    );
 
-    expect(calls).toEqual([[PROJECT, { from: '2026-10-04', to: '2026-10-05' }, 'events']]);
+    expect(calls).toEqual([
+      [
+        PROJECT,
+        {
+          from: '2026-10-04',
+          to: '2026-10-05',
+          filters: { ...NO_REPORT_FILTERS, event: { name: 'signup_completed', property: null } },
+        },
+        'events',
+      ],
+    ]);
     expect(featuresReportSchema.parse(body)).toEqual({
       items: [{ name: 'plan_selected', count: 3, visits: 2, daily: [1, 2] }],
     });
@@ -355,9 +428,10 @@ describe('QueriesController', () => {
     });
     await controller.requests({ project: PROJECT } as FastifyRequest, { ...range, kind: 'reads' });
 
+    const unfiltered = { ...range, filters: NO_REPORT_FILTERS };
     expect(calls).toEqual([
-      [PROJECT, range, '/pricing', 'writes', { method: 'POST', route: '/v1/plans' }],
-      [PROJECT, range, null, 'reads', null],
+      [PROJECT, unfiltered, '/pricing', 'writes', { method: 'POST', route: '/v1/plans' }],
+      [PROJECT, unfiltered, null, 'reads', null],
     ]);
     expect(requestsReportSchema.parse(body).days).toEqual([
       {
@@ -405,6 +479,30 @@ describe('QueriesController', () => {
     expect(body.route_days).toBeNull();
   });
 
+  it('takes the filters on requests, the route keeping its own meaning', async () => {
+    const { controller, calls } = controllerAnswering(REPORT);
+
+    await controller.requests(
+      { project: PROJECT } as FastifyRequest,
+      requestsQuerySchema.parse({
+        from: '2026-10-05',
+        to: '2026-10-05',
+        route: 'POST /v1/plans',
+        failed: 'true',
+      }),
+    );
+
+    expect(calls).toEqual([
+      [
+        PROJECT,
+        { from: '2026-10-05', to: '2026-10-05', filters: { ...NO_REPORT_FILTERS, failed: true } },
+        null,
+        'writes',
+        { method: 'POST', route: '/v1/plans' },
+      ],
+    ]);
+  });
+
   it('reads the route of the requests query as a method and a route', () => {
     expect(
       requestsQuerySchema.parse({ from: '2026-10-05', to: '2026-10-05', route: 'POST /v1/plans' })
@@ -426,6 +524,7 @@ describe('QueriesController', () => {
         { type: 'page', path: '/calculator-*' },
         { type: 'event', name: 'signup_completed' },
       ]),
+      country: 'PT',
     });
 
     const body = await controller.funnel({ project: PROJECT } as FastifyRequest, query);
@@ -440,7 +539,7 @@ describe('QueriesController', () => {
     expect(calls).toEqual([
       [
         PROJECT,
-        { from: '2026-10-01', to: '2026-10-05' },
+        { from: '2026-10-01', to: '2026-10-05', filters: { ...NO_REPORT_FILTERS, country: 'PT' } },
         'visit',
         [
           { type: 'page', path: '/calculator-*' },
@@ -514,8 +613,32 @@ describe('timelineQuerySchema', () => {
     ],
     ['a visit id that is not a UUID', { session_id: 'visit-1' }],
     ['a cursor that is not a timestamp', { user_id: 'ana', before: 'yesterday' }],
+    [
+      'a device filter: a timeline is one person or one visit',
+      { user_id: 'ana', device: 'mobile' },
+    ],
   ])('refuses %s', (_case, query) => {
     expect(timelineQuerySchema.safeParse(query).success).toBe(false);
+  });
+});
+
+describe('filteredRangeQuerySchema', () => {
+  const range = { from: '2026-10-04', to: '2026-10-05' };
+
+  it.each([
+    ['a property without an event', { property: 'plan=pro' }],
+    ['a route, which only Visits and Requests take', { route: 'POST /orders' }],
+    ['an unknown browser', { browser: 'netscape' }],
+    ['an unknown system', { os: 'beos' }],
+    ['four pages', { path: ['/a', '/b', '/c', '/d'] }],
+  ])('refuses %s', (_case, extra) => {
+    expect(filteredRangeQuerySchema.safeParse({ ...range, ...extra }).success).toBe(false);
+  });
+
+  it('reads one page as a list of one, and failed=false as no failure filter', () => {
+    expect(filteredRangeQuerySchema.parse({ ...range, path: '/pricing', failed: 'false' })).toEqual(
+      { ...range, path: ['/pricing'], failed: false },
+    );
   });
 });
 
@@ -531,6 +654,14 @@ describe('funnelQuerySchema', () => {
     ['an unknown step type', JSON.stringify([step, { type: 'click', name: 'x' }])],
   ])('refuses %s', (_case, steps) => {
     expect(funnelQuerySchema.safeParse({ ...base, steps }).success).toBe(false);
+  });
+
+  it('refuses a property filter without an event', () => {
+    const steps = JSON.stringify([step, step]);
+
+    expect(funnelQuerySchema.safeParse({ ...base, steps, property: 'plan=pro' }).success).toBe(
+      false,
+    );
   });
 
   it('accepts eight steps', () => {

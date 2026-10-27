@@ -1,5 +1,6 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
 import type { GetFunnelSegmentsUseCase } from '../../../usecases/queries/get-funnel-segments.usecase';
 import { FunnelSegmentsController } from './funnel-segments.controller';
 import { funnelSegmentsQuerySchema, funnelSegmentsReportSchema } from './funnel-segments.schemas';
@@ -31,13 +32,17 @@ describe('FunnelSegmentsController', () => {
 
     const body = await controller.segments(
       { project: PROJECT } as FastifyRequest,
-      funnelSegmentsQuerySchema.parse({ ...BASE, by: 'device' }),
+      funnelSegmentsQuerySchema.parse({ ...BASE, by: 'device', identity: 'anonymous' }),
     );
 
     expect(calls).toEqual([
       [
         PROJECT,
-        { from: '2026-10-04', to: '2026-10-05' },
+        {
+          from: '2026-10-04',
+          to: '2026-10-05',
+          filters: { ...NO_REPORT_FILTERS, identity: 'anonymous' },
+        },
         [
           { type: 'page', path: '/pricing' },
           { type: 'event', name: 'signup_completed' },
@@ -49,6 +54,12 @@ describe('FunnelSegmentsController', () => {
       by: 'device',
       segments: [{ segment: 'mobile', steps: [5, 2] }],
     });
+  });
+
+  it('refuses a property filter without an event', () => {
+    expect(
+      funnelSegmentsQuerySchema.safeParse({ ...BASE, by: 'device', property: 'plan=pro' }).success,
+    ).toBe(false);
   });
 
   it('refuses a dimension it does not segment by', () => {
