@@ -232,16 +232,18 @@ Shipping now:
 - A free plan, as the account status `free`: 10,000 events a month, 1 project and 1 person, the
   owner alone, with every feature; it has access and no subscription, its owner gets the notices
   sent to every owner, the operator's limits still apply on top, and its measuring pauses at
-  100% of the month instead of 150%. `GET /v1/me/accounts` answers `pause_at_events`, so the
-  dashboard never copies the ratio
+  100% of the month instead of 150%: its notices are the 80% warning and the pause, which speak
+  of the free plan's limit and link to subscribing in Account and billing. `GET /v1/me/accounts`
+  answers `pause_at_events`, so the dashboard never copies the ratio
   ([ADR 0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md))
 - Sign-up into the free plan, without a card, behind `FREE_PLAN_OPEN`: completing sign-up takes a
   place while the plan holds fewer than `FREE_ACCOUNTS_MAX` accounts (counted under a Postgres
   advisory lock, so two sign-ups never share the last place), and turns an owner's unfinished
   account into a free one. At the cap the account waits, marked `free_waitlisted_at`, for up to 60
   days; the daily job opens the places left to those who waited longest. A free account is
-  welcomed at sign-up with its limits and the terms accepted. `GET /v1/auth/sign-up` answers
-  `free_plan` (`open`, `full`, `closed`) and the verify answer the `account_status`
+  welcomed at sign-up with its limits, the deletion of an unused free account and the terms
+  accepted. `GET /v1/auth/sign-up` answers `free_plan` (`open`, `full`, `closed`), counting the free
+  accounts at most once a minute per instance, and the verify answer the `account_status`
   ([ADR 0049](docs/adr/0049-sign-up-without-a-card.md))
 - Subscribing from the free plan, never with a trial (the trial of an unfinished sign-up follows
   `TRIAL_OFFERED`): when it pays, the webhook lifts the month's pause at once, resets the month's
