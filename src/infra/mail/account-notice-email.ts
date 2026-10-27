@@ -17,6 +17,7 @@ import {
   ACCOUNT_NOTICE_EMAIL_MESSAGES,
   type AccountNoticeEmailMessages,
   type AccountNoticeWords,
+  NO_REFUND,
 } from './account-notice-email-messages';
 
 const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
@@ -31,6 +32,8 @@ const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
 const BODY: TextBlock = { tone: 'ink', size: 'body', margin: '16px 0 0 0' };
 const FOOTNOTE: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
 const NO_DATE = '';
+const REFUND_CURRENCY = 'BRL';
+const CENTS_PER_UNIT = 100;
 
 interface NoticeText {
   readonly subject: string;
@@ -40,16 +43,32 @@ interface NoticeText {
 }
 
 function wordsOf(notice: AccountNotice, language: EmailLanguage): AccountNoticeWords {
-  if (notice.kind === 'account_deleted') {
-    return { deletionOn: NO_DATE };
+  switch (notice.kind) {
+    case 'account_deleted':
+      return { deletionOn: NO_DATE, refunded: NO_REFUND };
+    case 'withdrawn_to_free':
+      return {
+        deletionOn: NO_DATE,
+        refunded:
+          notice.refundedAmount === 0
+            ? NO_REFUND
+            : new Intl.NumberFormat(INTL_LOCALES[language], {
+                style: 'currency',
+                currency: REFUND_CURRENCY,
+              }).format(notice.refundedAmount / CENTS_PER_UNIT),
+      };
+    case 'access_ended':
+    case 'deletion_reminder':
+      return {
+        deletionOn: new Intl.DateTimeFormat(INTL_LOCALES[language], {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'UTC',
+        }).format(notice.deletionOn),
+        refunded: NO_REFUND,
+      };
   }
-  const day = new Intl.DateTimeFormat(INTL_LOCALES[language], {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-  return { deletionOn: day.format(notice.deletionOn) };
 }
 
 function textOf(

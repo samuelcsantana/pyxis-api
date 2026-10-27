@@ -2,8 +2,11 @@ import type { AccountNoticeKind } from '../../domain/accounts/account-notice';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import { SIGN_IN_CODE_EMAIL_MESSAGES } from './sign-in-code-email-messages';
 
+export const NO_REFUND = '';
+
 export interface AccountNoticeWords {
   readonly deletionOn: string;
+  readonly refunded: string;
 }
 
 export interface AccountNoticeCopy {
@@ -52,6 +55,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'To keep the data, export it from the account page or subscribe again before then.',
         ],
       },
+      withdrawn_to_free: {
+        subject: () => 'You withdrew from the Pyxis paid plan',
+        preheader: () => 'Your account is back on the free plan.',
+        heading: () => 'Back on the free plan',
+        paragraphs: (w) => [
+          'Your paid subscription was cancelled at once, and your account is back on the free plan, with its projects and data.',
+          w.refunded === NO_REFUND
+            ? 'The automatic refund of the first payment did not go through: we are making it by hand within 2 business days and will write to you.'
+            : `${w.refunded} was refunded to your card. It shows on your statement within the time your card company takes.`,
+          'The free plan’s limits apply again from now; the account page shows them.',
+        ],
+      },
       account_deleted: {
         subject: () => 'Your Pyxis account was deleted',
         preheader: () => 'Its projects, their events and their keys are gone.',
@@ -93,6 +108,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           `Em ${w.deletionOn}, os projetos da sua conta do Pyxis, com os eventos e as chaves, ` +
             'serão apagados de vez.',
           'Para guardar os dados, exporte-os pela página da conta ou assine de novo antes disso.',
+        ],
+      },
+      withdrawn_to_free: {
+        subject: () => 'Você desistiu do plano pago do Pyxis',
+        preheader: () => 'Sua conta voltou ao plano grátis.',
+        heading: () => 'De volta ao plano grátis',
+        paragraphs: (w) => [
+          'Sua assinatura foi cancelada na hora, e sua conta voltou ao plano grátis, com os projetos e os dados.',
+          w.refunded === NO_REFUND
+            ? 'O estorno automático do primeiro pagamento não deu certo: vamos fazê-lo à mão em até 2 dias úteis e avisar você.'
+            : `${w.refunded} foram devolvidos ao seu cartão. O valor aparece na fatura no prazo da administradora do cartão.`,
+          'Os limites do plano grátis voltam a valer a partir de agora; a página da conta mostra quais são.',
         ],
       },
       account_deleted: {
@@ -139,6 +166,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'claves, se eliminarán definitivamente.',
           'Para conservar los datos, expórtalos desde la página de la cuenta o suscríbete de ' +
             'nuevo antes de esa fecha.',
+        ],
+      },
+      withdrawn_to_free: {
+        subject: () => 'Desististe del plan de pago de Pyxis',
+        preheader: () => 'Tu cuenta volvió al plan gratis.',
+        heading: () => 'De vuelta al plan gratis',
+        paragraphs: (w) => [
+          'Tu suscripción se canceló de inmediato y tu cuenta volvió al plan gratis, con sus proyectos y sus datos.',
+          w.refunded === NO_REFUND
+            ? 'La devolución automática del primer pago no se completó: la haremos a mano en un plazo de 2 días hábiles y te escribiremos.'
+            : `Se devolvieron ${w.refunded} a tu tarjeta. Aparece en tu extracto en el plazo de la emisora de la tarjeta.`,
+          'Los límites del plan gratis vuelven a aplicarse desde ahora; la página de la cuenta los muestra.',
         ],
       },
       account_deleted: {
@@ -189,6 +228,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'erneut ein Abo ab.',
         ],
       },
+      withdrawn_to_free: {
+        subject: () => 'Du hast den kostenpflichtigen Pyxis-Plan widerrufen',
+        preheader: () => 'Dein Konto ist wieder im kostenlosen Plan.',
+        heading: () => 'Zurück im kostenlosen Plan',
+        paragraphs: (w) => [
+          'Dein Abo wurde sofort gekündigt, und dein Konto ist wieder im kostenlosen Plan, mit seinen Projekten und Daten.',
+          w.refunded === NO_REFUND
+            ? 'Die automatische Erstattung der ersten Zahlung hat nicht geklappt: Wir erstatten sie innerhalb von 2 Werktagen manuell und schreiben dir.'
+            : `${w.refunded} wurden auf deine Karte zurückerstattet. Der Betrag erscheint auf deiner Abrechnung, sobald dein Kartenanbieter ihn bucht.`,
+          'Ab jetzt gelten wieder die Grenzen des kostenlosen Plans; die Kontoseite zeigt sie.',
+        ],
+      },
       account_deleted: {
         subject: () => 'Dein Pyxis-Konto wurde gelöscht',
         preheader: () => 'Seine Projekte, ihre Ereignisse und ihre Schlüssel gibt es nicht mehr.',
@@ -234,6 +285,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'clés, seront définitivement supprimés.',
           'Pour garder les données, exportez-les depuis la page du compte ou abonnez-vous à ' +
             'nouveau d’ici là.',
+        ],
+      },
+      withdrawn_to_free: {
+        subject: () => 'Vous vous êtes rétracté de la formule payante de Pyxis',
+        preheader: () => 'Votre compte est revenu à la formule gratuite.',
+        heading: () => 'De retour sur la formule gratuite',
+        paragraphs: (w) => [
+          'Votre abonnement a été résilié immédiatement et votre compte est revenu à la formule gratuite, avec ses projets et ses données.',
+          w.refunded === NO_REFUND
+            ? 'Le remboursement automatique du premier paiement n’a pas abouti\u00a0: nous le ferons à la main sous 2 jours ouvrés et vous écrirons.'
+            : `${w.refunded} ont été remboursés sur votre carte. Le montant apparaît sur votre relevé dans le délai de votre banque.`,
+          'Les limites de la formule gratuite s’appliquent de nouveau dès maintenant\u00a0; la page du compte les indique.',
         ],
       },
       account_deleted: {
@@ -283,6 +346,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'di quella data.',
         ],
       },
+      withdrawn_to_free: {
+        subject: () => 'Hai receduto dal piano a pagamento di Pyxis',
+        preheader: () => 'Il tuo account è tornato al piano gratuito.',
+        heading: () => 'Di nuovo nel piano gratuito',
+        paragraphs: (w) => [
+          'Il tuo abbonamento è stato annullato subito e il tuo account è tornato al piano gratuito, con i suoi progetti e i suoi dati.',
+          w.refunded === NO_REFUND
+            ? 'Il rimborso automatico del primo pagamento non è andato a buon fine: lo faremo a mano entro 2 giorni lavorativi e ti scriveremo.'
+            : `${w.refunded} sono stati rimborsati sulla tua carta. L’importo compare nell’estratto conto nei tempi del circuito della carta.`,
+          'Da ora valgono di nuovo i limiti del piano gratuito; la pagina dell’account li mostra.',
+        ],
+      },
       account_deleted: {
         subject: () => 'Il tuo account Pyxis è stato eliminato',
         preheader: () => 'I suoi progetti, i loro eventi e le loro chiavi non esistono più.',
@@ -327,6 +402,18 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'sleutels, definitief verwijderd.',
           'Wil je de gegevens houden? Exporteer ze via de accountpagina of neem vóór die datum ' +
             'opnieuw een abonnement.',
+        ],
+      },
+      withdrawn_to_free: {
+        subject: () => 'Je hebt het betaalde Pyxis-abonnement herroepen',
+        preheader: () => 'Je account staat weer op het gratis abonnement.',
+        heading: () => 'Terug op het gratis abonnement',
+        paragraphs: (w) => [
+          'Je abonnement is meteen opgezegd en je account staat weer op het gratis abonnement, met zijn projecten en gegevens.',
+          w.refunded === NO_REFUND
+            ? 'De automatische terugbetaling van de eerste betaling is niet gelukt: we doen het binnen 2 werkdagen handmatig en laten het je weten.'
+            : `${w.refunded} is teruggestort op je kaart. Het bedrag verschijnt op je afschrift binnen de termijn van je kaartuitgever.`,
+          'Vanaf nu gelden weer de limieten van het gratis abonnement; de accountpagina toont ze.',
         ],
       },
       account_deleted: {

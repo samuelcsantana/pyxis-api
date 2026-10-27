@@ -8,7 +8,9 @@ const DELETION_ON = new Date('2026-12-14T00:00:00.000Z');
 const ENDED: AccountNotice = { kind: 'access_ended', deletionOn: DELETION_ON };
 const REMINDER: AccountNotice = { kind: 'deletion_reminder', deletionOn: DELETION_ON };
 const DELETED: AccountNotice = { kind: 'account_deleted' };
-const NOTICES: readonly AccountNotice[] = [ENDED, REMINDER, DELETED];
+const WITHDRAWN: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 3900 };
+const WITHDRAWN_BY_HAND: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 0 };
+const NOTICES: readonly AccountNotice[] = [ENDED, REMINDER, DELETED, WITHDRAWN, WITHDRAWN_BY_HAND];
 
 function longestLine(content: string): number {
   return Math.max(...content.split('\n').map((line) => line.length));
@@ -38,6 +40,23 @@ describe('buildAccountNoticeEmail', () => {
 
     expect(email.subject).toBe('Your Pyxis account was deleted');
     expect(email.html).toContain('Nothing of them is left in Pyxis.');
+  });
+
+  it('confirms a withdrawal back to the free plan with the amount refunded, in the reader’s money format', () => {
+    const english = buildAccountNoticeEmail(WITHDRAWN, 'en', LINKS, null);
+    const portuguese = buildAccountNoticeEmail(WITHDRAWN, 'pt-BR', LINKS, null);
+
+    expect(english.subject).toBe('You withdrew from the Pyxis paid plan');
+    expect(english.html).toContain('your account is back on the free plan, with its projects');
+    expect(english.html).toContain('R$39.00 was refunded to your card.');
+    expect(portuguese.html).toContain('R$\u00a039,00 foram devolvidos ao seu cartão.');
+  });
+
+  it('says a refund that did not go through is made by hand', () => {
+    const email = buildAccountNoticeEmail(WITHDRAWN_BY_HAND, 'en', LINKS, null);
+
+    expect(email.html).toContain('we are making it by hand within 2 business days');
+    expect(email.html).not.toContain('was refunded to your card');
   });
 
   it('names the support address only when there is one', () => {

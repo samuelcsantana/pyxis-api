@@ -9,6 +9,7 @@ import {
 } from '../../domain/errors/account.errors';
 import { FakeBillingGateway } from '../../test-utils/fake-billing-gateway';
 import { FixedClock } from '../../test-utils/fixed-clock';
+import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
 import { InMemoryAccountWithdrawalRepository } from '../../test-utils/in-memory-account-withdrawal.repository';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
@@ -17,6 +18,11 @@ import { WithdrawToFreePlanUseCase } from './withdraw-to-free-plan.usecase';
 const NOW = new Date('2026-11-20T15:00:00.000Z');
 const DAY_MS = 24 * 60 * 60 * 1000;
 const OWNER = 'owner-1';
+const WHO = {
+  adminUserId: OWNER,
+  ownerEmail: 'owner@example.com',
+  ownerLanguage: 'pt-BR',
+} as const;
 const SETTINGS: SignUpSettings = {
   open: true,
   termsVersion: '1.3',
@@ -34,14 +40,16 @@ async function setup(status: Account['status'] = 'active', settings: SignUpSetti
   withdrawals.subscribe(account.id, 'sub_1');
   const gateway = new FakeBillingGateway();
   gateway.paidFirstOn('sub_1', new Date(NOW.getTime() - 2 * DAY_MS));
+  const mail = new RecordingMailSender();
   const useCase = new WithdrawToFreePlanUseCase(
     accounts,
     withdrawals,
     gateway,
     new FixedClock(NOW),
     settings,
+    mail,
   );
-  return { account, withdrawals, gateway, useCase };
+  return { account, withdrawals, gateway, mail, useCase };
 }
 
 describe('WithdrawToFreePlanUseCase', () => {
@@ -57,10 +65,10 @@ describe('WithdrawToFreePlanUseCase', () => {
   });
 
   it('cancels at once, refunds the first payment of the window and puts the account back on free', async () => {
-    const { account, withdrawals, gateway, useCase } = await setup();
+    const { account, withdrawals, gateway, mail, useCase } = await setup();
     gateway.refundAmount = 3900;
 
-    expect(await useCase.execute({ adminUserId: OWNER, accountId: account.id })).toEqual({
+    expect(await useCase.execute({ ...WHO, accountId: account.id })).toEqual({
       refundedAmount: 3900,
     });
     expect(gateway.cancelled).toEqual(['sub_1']);
@@ -68,12 +76,34 @@ describe('WithdrawToFreePlanUseCase', () => {
       { subscriptionId: 'sub_1', since: new Date(NOW.getTime() - 7 * DAY_MS) },
     ]);
     expect(withdrawals.returnedToFree).toEqual([account.id]);
+    expect(mail.accountNotices).toEqual([
+      {
+        email: 'owner@example.com',
+        notice: { kind: 'withdrawn_to_free', refundedAmount: 3900 },
+        language: 'pt-BR',
+      },
+    ]);
+  });
+
+  it('keeps the withdrawal when the e-mail fails, and says so in the log', async () => {
+    const { account, withdrawals, mail, useCase } = await setup();
+    mail.failFor('owner@example.com', new Error('provider down'));
+
+    await useCase.execute({ ...WHO, accountId: account.id });
+
+    expect(withdrawals.returnedToFree).toEqual([account.id]);
+    expect(error).toHaveBeenCalledWith({
+      message: 'accounts.notice_failed',
+      kind: 'withdrawn_to_free',
+      accountId: account.id,
+      reason: 'Error: provider down',
+    });
   });
 
   it.each(['past_due', 'ending'] as const)('withdraws a %s subscription too', async (status) => {
     const { account, withdrawals, useCase } = await setup(status);
 
-    await useCase.execute({ adminUserId: OWNER, accountId: account.id });
+    await useCase.execute({ ...WHO, accountId: account.id });
 
     expect(withdrawals.returnedToFree).toEqual([account.id]);
   });
@@ -82,7 +112,7 @@ describe('WithdrawToFreePlanUseCase', () => {
     const { account, withdrawals, gateway, useCase } = await setup();
     gateway.refundFailure = new Error('stripe down');
 
-    expect(await useCase.execute({ adminUserId: OWNER, accountId: account.id })).toEqual({
+    expect(await useCase.execute({ ...WHO, accountId: account.id })).toEqual({
       refundedAmount: 0,
     });
     expect(withdrawals.returnedToFree).toEqual([account.id]);
@@ -97,9 +127,7 @@ describe('WithdrawToFreePlanUseCase', () => {
     const { account, withdrawals, gateway, useCase } = await setup();
     gateway.cancelFailure = new Error('stripe down');
 
-    await expect(useCase.execute({ adminUserId: OWNER, accountId: account.id })).rejects.toThrow(
-      'stripe down',
-    );
+    await expect(useCase.execute({ ...WHO, accountId: account.id })).rejects.toThrow('stripe down');
     expect(withdrawals.returnedToFree).toEqual([]);
   });
 
@@ -110,11 +138,11 @@ describe('WithdrawToFreePlanUseCase', () => {
     lastMoment.gateway.paidFirstOn('sub_1', new Date(NOW.getTime() - 7 * DAY_MS));
 
     await expect(
-      late.useCase.execute({ adminUserId: OWNER, accountId: late.account.id }),
+      late.useCase.execute({ ...WHO, accountId: late.account.id }),
     ).rejects.toBeInstanceOf(WithdrawalWindowClosedError);
     expect(late.gateway.cancelled).toEqual([]);
     await expect(
-      lastMoment.useCase.execute({ adminUserId: OWNER, accountId: lastMoment.account.id }),
+      lastMoment.useCase.execute({ ...WHO, accountId: lastMoment.account.id }),
     ).resolves.toBeDefined();
   });
 
@@ -122,9 +150,9 @@ describe('WithdrawToFreePlanUseCase', () => {
     const { account, withdrawals, gateway, useCase } = await setup();
     withdrawals.subscribe(account.id, 'sub_never_paid');
 
-    await expect(
-      useCase.execute({ adminUserId: OWNER, accountId: account.id }),
-    ).rejects.toBeInstanceOf(WithdrawalWindowClosedError);
+    await expect(useCase.execute({ ...WHO, accountId: account.id })).rejects.toBeInstanceOf(
+      WithdrawalWindowClosedError,
+    );
     expect(gateway.cancelled).toEqual([]);
   });
 
@@ -133,9 +161,9 @@ describe('WithdrawToFreePlanUseCase', () => {
     async (status) => {
       const { account, useCase } = await setup(status);
 
-      await expect(
-        useCase.execute({ adminUserId: OWNER, accountId: account.id }),
-      ).rejects.toBeInstanceOf(WithdrawalUnavailableError);
+      await expect(useCase.execute({ ...WHO, accountId: account.id })).rejects.toBeInstanceOf(
+        WithdrawalUnavailableError,
+      );
     },
   );
 
@@ -143,9 +171,9 @@ describe('WithdrawToFreePlanUseCase', () => {
     const { account, withdrawals, useCase } = await setup();
     await withdrawals.returnToFreePlan(account.id);
 
-    await expect(
-      useCase.execute({ adminUserId: OWNER, accountId: account.id }),
-    ).rejects.toBeInstanceOf(WithdrawalUnavailableError);
+    await expect(useCase.execute({ ...WHO, accountId: account.id })).rejects.toBeInstanceOf(
+      WithdrawalUnavailableError,
+    );
   });
 
   it('refuses while the free plan is closed, and someone who does not own the account', async () => {
@@ -153,10 +181,14 @@ describe('WithdrawToFreePlanUseCase', () => {
     const stranger = await setup();
 
     await expect(
-      closed.useCase.execute({ adminUserId: OWNER, accountId: closed.account.id }),
+      closed.useCase.execute({ ...WHO, accountId: closed.account.id }),
     ).rejects.toBeInstanceOf(FreePlanClosedError);
     await expect(
-      stranger.useCase.execute({ adminUserId: 'someone-else', accountId: stranger.account.id }),
+      stranger.useCase.execute({
+        ...WHO,
+        adminUserId: 'someone-else',
+        accountId: stranger.account.id,
+      }),
     ).rejects.toBeInstanceOf(AccountNotFoundError);
     expect(closed.gateway.cancelled).toEqual([]);
   });

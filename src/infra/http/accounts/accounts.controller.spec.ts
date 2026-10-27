@@ -340,7 +340,12 @@ describe('AccountsController withdraw', () => {
       refunded_amount: 3900,
     });
     expect(withdrawals).toEqual([
-      { adminUserId: ADMIN.id, accountId: 'acc00000-0000-4000-a000-000000000001' },
+      {
+        adminUserId: ADMIN.id,
+        ownerEmail: ADMIN.email,
+        ownerLanguage: ADMIN.emailLanguage,
+        accountId: 'acc00000-0000-4000-a000-000000000001',
+      },
     ]);
   });
 });
