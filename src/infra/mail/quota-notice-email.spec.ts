@@ -14,6 +14,7 @@ function warning(
 ): Extract<QuotaNotice, { kind: 'quota_warning' }> {
   return {
     kind: 'quota_warning',
+    plan: 'paid',
     percent,
     events,
     limit: 100_000,
@@ -25,6 +26,7 @@ function warning(
 
 const PAUSED: QuotaNotice = {
   kind: 'quota_paused',
+  plan: 'paid',
   events: 150_412,
   limit: 100_000,
   month: '2026-10',

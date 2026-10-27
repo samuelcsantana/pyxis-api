@@ -68,6 +68,7 @@ describe('quotaNoticeDue', () => {
       level: 150,
       notice: {
         kind: 'quota_paused',
+        plan: 'paid',
         events: 160_000,
         limit: 100_000,
         month: '2026-10',
@@ -79,6 +80,7 @@ describe('quotaNoticeDue', () => {
       level: 100,
       notice: {
         kind: 'quota_warning',
+        plan: 'paid',
         percent: 100,
         pause: { atEvents: 150_000, until: CONTEXT.monthEnd },
       },
@@ -104,6 +106,7 @@ describe('quotaNoticeDue', () => {
       level: 80,
       notice: {
         kind: 'quota_warning',
+        plan: 'free',
         percent: 80,
         events: 8_000,
         limit: 10_000,
@@ -116,6 +119,7 @@ describe('quotaNoticeDue', () => {
       level: 150,
       notice: {
         kind: 'quota_paused',
+        plan: 'free',
         events: 10_000,
         limit: 10_000,
         month: '2026-10',

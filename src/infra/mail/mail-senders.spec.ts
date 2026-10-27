@@ -40,6 +40,7 @@ const DIGEST: WeeklyDigest = {
 const SUPPORT = 'hello@example.com';
 const PAUSED: QuotaNotice = {
   kind: 'quota_paused',
+  plan: 'paid',
   events: 150_412,
   limit: 100_000,
   month: '2026-10',
@@ -535,6 +536,7 @@ describe('LoggingMailSender', () => {
       {
         message: 'mail.quota_notice',
         kind: 'quota_paused',
+        plan: 'paid',
         month: '2026-10',
         events: 150_412,
         language: 'pt-BR',

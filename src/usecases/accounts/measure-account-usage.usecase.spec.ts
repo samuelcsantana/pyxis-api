@@ -81,6 +81,7 @@ describe('MeasureAccountUsageUseCase', () => {
         language: 'pt-BR',
         notice: {
           kind: 'quota_paused',
+          plan: 'paid',
           events: 160_000,
           limit: 100_000,
           month: '2026-10',
@@ -93,6 +94,7 @@ describe('MeasureAccountUsageUseCase', () => {
         language: 'pt-BR',
         notice: {
           kind: 'quota_warning',
+          plan: 'paid',
           percent: 80,
           events: 85_000,
           limit: 100_000,
