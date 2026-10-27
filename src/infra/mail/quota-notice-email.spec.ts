@@ -34,6 +34,27 @@ const PAUSED: QuotaNotice = {
   resumesAt: NOVEMBER_FIRST,
 };
 
+const FREE_WARNING: QuotaNotice = {
+  kind: 'quota_warning',
+  plan: 'free',
+  percent: 80,
+  events: 8_123,
+  limit: 10_000,
+  month: '2026-10',
+  measuredAt: MEASURED_AT,
+  pause: { atEvents: 10_000, until: NOVEMBER_FIRST },
+};
+
+const FREE_PAUSED: QuotaNotice = {
+  kind: 'quota_paused',
+  plan: 'free',
+  events: 10_004,
+  limit: 10_000,
+  month: '2026-10',
+  measuredAt: MEASURED_AT,
+  resumesAt: NOVEMBER_FIRST,
+};
+
 function flowing(content: string): string {
   return content.replace(/\s+/g, ' ');
 }
@@ -112,10 +133,53 @@ describe('buildQuotaNoticeEmail in Portuguese and Spanish', () => {
     expect(flowing(spanish.text)).toContain('hasta el 1 de noviembre');
   });
 
+  it('warns a free account that measuring pauses at the free plan’s limit and how to keep measuring', () => {
+    const email = buildQuotaNoticeEmail(FREE_WARNING, 'en', LINKS, SUPPORT);
+
+    expect(email.subject).toBe('Your Pyxis account used 80% of October’s events');
+    expect(flowing(email.text)).toContain(
+      'If the account reaches 10,000 events this month, the free plan’s limit, measuring pauses',
+    );
+    expect(flowing(email.text)).toContain(
+      'To keep measuring past it, subscribe in Account and billing.',
+    );
+    expect(email.text).toContain('Account and billing: https://dashboard.example.com/account');
+    expect(email.text.indexOf('Account and billing: https')).toBeLessThan(
+      email.text.indexOf('To ask anything'),
+    );
+    expect(email.html).toContain('href="https://dashboard.example.com/account"');
+    expect(flowing(email.text)).toContain('To ask anything, reply to this e-mail');
+    expect(email.text).not.toContain('150%');
+  });
+
+  it('tells a paused free account it reached the free plan’s limit and that subscribing resumes it', () => {
+    const email = buildQuotaNoticeEmail(FREE_PAUSED, 'pt-BR', LINKS, null);
+
+    expect(flowing(email.text)).toContain(
+      'Sua conta recebeu 10.004 eventos em outubro, os 10.000 do plano grátis.',
+    );
+    expect(flowing(email.text)).toContain('a medição volta em até um minuto');
+    expect(email.text).toContain('Conta e cobrança: https://dashboard.example.com/account');
+    expect(email.text).not.toContain('150%');
+  });
+
+  it('gives a paid notice no link to the account', () => {
+    const email = buildQuotaNoticeEmail(PAUSED, 'en', LINKS, SUPPORT);
+
+    expect(email.text).not.toContain('/account');
+    expect(flowing(email.text)).toContain('To talk about a larger plan');
+  });
+
   it.each(EMAIL_LANGUAGES)(
     'declares %s on the page and keeps every notice readable',
     (language) => {
-      for (const notice of [warning(80, 82_345), warning(100, 101_000), PAUSED]) {
+      for (const notice of [
+        warning(80, 82_345),
+        warning(100, 101_000),
+        PAUSED,
+        FREE_WARNING,
+        FREE_PAUSED,
+      ]) {
         const email = buildQuotaNoticeEmail(notice, language, LINKS, SUPPORT);
 
         expect(email.html).toContain(`<html lang="${language}"`);
