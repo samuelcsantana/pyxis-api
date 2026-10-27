@@ -1,6 +1,7 @@
 import { SendEmailCommand, type SendEmailCommandInput, SESv2Client } from '@aws-sdk/client-sesv2';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
+import type { SubscriptionConfirmation } from '../../domain/accounts/subscription-confirmation';
 import type { Welcome } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
@@ -16,6 +17,7 @@ import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
+import { buildSubscriptionConfirmedEmail } from './subscription-confirmed-email';
 import { buildWelcomeEmail } from './welcome-email';
 
 export type SesSend = (input: SendEmailCommandInput) => Promise<unknown>;
@@ -76,6 +78,18 @@ export class SesMailSender implements MailSender {
 
   sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
     return this.deliver(email, buildWelcomeEmail(welcome, language, this.links), this.supportEmail);
+  }
+
+  sendSubscriptionConfirmed(
+    email: string,
+    confirmation: SubscriptionConfirmation,
+    language: EmailLanguage,
+  ): Promise<void> {
+    return this.deliver(
+      email,
+      buildSubscriptionConfirmedEmail(confirmation, language, this.links),
+      this.supportEmail,
+    );
   }
 
   sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {

@@ -1,5 +1,6 @@
 import type { AccountNotice } from '../domain/accounts/account-notice';
 import type { QuotaNotice } from '../domain/accounts/quota-notice';
+import type { SubscriptionConfirmation } from '../domain/accounts/subscription-confirmation';
 import type { Welcome } from '../domain/accounts/welcome';
 import type { EmailLanguage } from '../domain/auth/email-language';
 import type { WeeklyDigest } from '../domain/digest/weekly-digest';
@@ -44,6 +45,12 @@ export interface SentWelcome {
   readonly language: EmailLanguage;
 }
 
+export interface SentSubscriptionConfirmation {
+  readonly email: string;
+  readonly confirmation: SubscriptionConfirmation;
+  readonly language: EmailLanguage;
+}
+
 export interface SentExportReady {
   readonly email: string;
   readonly ready: ExportReady;
@@ -64,6 +71,7 @@ export class RecordingMailSender implements MailSender {
   readonly invitations: SentInvitation[] = [];
   readonly accountNotices: SentAccountNotice[] = [];
   readonly welcomes: SentWelcome[] = [];
+  readonly subscriptionConfirmations: SentSubscriptionConfirmation[] = [];
   readonly exportsReady: SentExportReady[] = [];
   readonly operatorNotices: SentOperatorNotice[] = [];
   private failure: Error | null = null;
@@ -135,6 +143,19 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(failure);
     }
     this.welcomes.push({ email, welcome, language });
+    return Promise.resolve();
+  }
+
+  sendSubscriptionConfirmed(
+    email: string,
+    confirmation: SubscriptionConfirmation,
+    language: EmailLanguage,
+  ): Promise<void> {
+    const failure = this.failingAddresses.get(email);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
+    }
+    this.subscriptionConfirmations.push({ email, confirmation, language });
     return Promise.resolve();
   }
 

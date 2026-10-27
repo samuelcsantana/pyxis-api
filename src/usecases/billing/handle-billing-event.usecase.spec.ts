@@ -13,7 +13,9 @@ import {
   InMemoryAccountBillingRepository,
   InMemoryBillingEventRepository,
 } from '../../test-utils/in-memory-account-billing.repository';
+import { InMemorySubscriptionConfirmationRepository } from '../../test-utils/in-memory-subscription-confirmation.repository';
 import { InMemoryTrialCardRepository } from '../../test-utils/in-memory-trial-card.repository';
+import { ConfirmSubscriptionsUseCase } from './confirm-subscriptions.usecase';
 import { DetectRepeatedTrialUseCase } from './detect-repeated-trial.usecase';
 import { HandleBillingEventUseCase } from './handle-billing-event.usecase';
 
@@ -70,7 +72,7 @@ function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
     peopleLimit: null,
   });
   const mail = new RecordingMailSender();
-  const welcomes = new WelcomeAccountsUseCase(welcomeRepository, mail, clock, {
+  const settings = {
     open: true,
     termsVersion: '2026-11-01',
     termsUrl: 'https://example.com/termos',
@@ -78,6 +80,15 @@ function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
     freePlanOpen: false,
     freeAccountsMax: 200,
     trialOffered: true,
+  };
+  const welcomes = new WelcomeAccountsUseCase(welcomeRepository, mail, clock, settings);
+  const confirmationRepository = new InMemorySubscriptionConfirmationRepository();
+  confirmationRepository.add({
+    accountId: ACCOUNT_ID,
+    ownerEmail: 'owner@example.com',
+    ownerLanguage: 'pt-BR',
+    billingInterval: 'year',
+    termsVersion: '2026-11-01',
   });
   const trialCards = new InMemoryTrialCardRepository();
   const useCase = new HandleBillingEventUseCase(
@@ -87,8 +98,9 @@ function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
     clock,
     welcomes,
     new DetectRepeatedTrialUseCase(trialCards, clock),
+    new ConfirmSubscriptionsUseCase(confirmationRepository, mail, settings),
   );
-  return { gateway, events, accounts, mail, trialCards, useCase };
+  return { gateway, events, accounts, mail, trialCards, confirmationRepository, useCase };
 }
 
 describe('HandleBillingEventUseCase', () => {
@@ -134,6 +146,17 @@ describe('HandleBillingEventUseCase', () => {
       leavesFreePlan: { at: NOW, month: NOW.toISOString().slice(0, 7) },
     });
     expect(mail.welcomes).toEqual([]);
+    expect(mail.subscriptionConfirmations).toEqual([
+      {
+        email: 'owner@example.com',
+        confirmation: {
+          interval: 'year',
+          withdrawalDays: 7,
+          terms: { version: '2026-11-01', url: 'https://example.com/termos' },
+        },
+        language: 'pt-BR',
+      },
+    ]);
   });
 
   it('keeps a free account free when its subscription ended or never ran, and completes the event', async () => {

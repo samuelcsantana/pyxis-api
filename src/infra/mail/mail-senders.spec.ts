@@ -11,6 +11,7 @@ import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
 import { buildAccountNoticeEmail } from './account-notice-email';
 import { buildInvitationEmail } from './invitation-email';
+import { buildSubscriptionConfirmedEmail } from './subscription-confirmed-email';
 import { buildWelcomeEmail } from './welcome-email';
 import { buildExportReadyEmail } from './export-ready-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
@@ -193,6 +194,25 @@ describe('ResendMailSender', () => {
     });
   });
 
+  it('sends the subscription confirmation with replies going to the support address', async () => {
+    const send = okResend();
+    const confirmation = { interval: 'month' as const, withdrawalDays: 7, terms: null };
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendSubscriptionConfirmed(
+      'owner@example.com',
+      confirmation,
+      'pt-BR',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildSubscriptionConfirmedEmail(confirmation, 'pt-BR', LINKS),
+    });
+  });
+
   it('sends an account notice with replies going to the support address', async () => {
     const send = okResend();
     const notice = { kind: 'account_deleted' } as const;
@@ -337,6 +357,18 @@ describe('SesMailSender', () => {
         availableUntil: new Date('2026-11-09T00:00:00.000Z'),
       },
       'pt-BR',
+    );
+
+    expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
+  });
+
+  it('sends the subscription confirmation through SES too', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendSubscriptionConfirmed(
+      'owner@example.com',
+      { interval: 'month' as const, withdrawalDays: 7, terms: null },
+      'en',
     );
 
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
@@ -564,6 +596,28 @@ describe('LoggingMailSender', () => {
 
     expect(logs).toEqual([
       { message: 'mail.welcome', plan: 'trial', withTerms: false, language: 'en' },
+    ]);
+  });
+
+  it('logs the interval of a subscription confirmation and whether it has terms, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendSubscriptionConfirmed(
+      'owner@example.com',
+      { interval: 'year', withdrawalDays: 7, terms: null },
+      'es',
+    );
+
+    expect(logs).toEqual([
+      {
+        message: 'mail.subscription_confirmed',
+        interval: 'year',
+        withTerms: false,
+        language: 'es',
+      },
     ]);
   });
 

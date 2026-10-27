@@ -15,6 +15,8 @@ import {
   AccountLifecycleFailedError,
   RunAccountLifecycleUseCase,
 } from './run-account-lifecycle.usecase';
+import { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.usecase';
+import { InMemorySubscriptionConfirmationRepository } from '../../test-utils/in-memory-subscription-confirmation.repository';
 import { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 
@@ -58,6 +60,7 @@ function setup() {
   });
   const projectless = new InMemoryProjectlessPeopleRepository();
   const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
+  const confirmations = new InMemorySubscriptionConfirmationRepository();
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
@@ -67,8 +70,27 @@ function setup() {
     welcomes,
     new SweepProjectlessPeopleUseCase(projectless, clock),
     new OpenFreePlacesUseCase(accounts, { freePlanOpen: true, freeAccountsMax: 1 }),
+    new ConfirmSubscriptionsUseCase(confirmations, mail, {
+      open: true,
+      termsVersion: '2026-11-01',
+      termsUrl: null,
+      dashboardOrigin: 'https://app.example.com',
+      freePlanOpen: false,
+      freeAccountsMax: 200,
+      trialOffered: true,
+    }),
   );
-  return { lifecycle, billing, gateway, mail, welcomeRepository, projectless, accounts, useCase };
+  return {
+    lifecycle,
+    billing,
+    gateway,
+    mail,
+    welcomeRepository,
+    projectless,
+    accounts,
+    confirmations,
+    useCase,
+  };
 }
 
 describe('RunAccountLifecycleUseCase', () => {
@@ -91,6 +113,7 @@ describe('RunAccountLifecycleUseCase', () => {
     await expect(useCase.execute()).resolves.toEqual({
       freePlacesOpened: 0,
       welcomes: 0,
+      subscriptionsConfirmed: 0,
       reconciled: 0,
       statusChanges: 0,
       reconcileFailures: 0,
@@ -454,6 +477,28 @@ describe('RunAccountLifecycleUseCase', () => {
 
     expect(report.freePlacesOpened).toBe(1);
     expect(accounts.stored[0]?.status).toBe('free');
+  });
+
+  it('sends the subscription confirmations the webhook could not', async () => {
+    const { confirmations, mail, useCase } = setup();
+    confirmations.add({
+      accountId: 'paying',
+      ownerEmail: 'ana@example.com',
+      ownerLanguage: 'es',
+      billingInterval: 'year',
+      termsVersion: null,
+    });
+
+    const report = await useCase.execute();
+
+    expect(report.subscriptionsConfirmed).toBe(1);
+    expect(mail.subscriptionConfirmations).toEqual([
+      {
+        email: 'ana@example.com',
+        confirmation: { interval: 'year', withdrawalDays: 7, terms: null },
+        language: 'es',
+      },
+    ]);
   });
 
   it('keeps a sign-up waiting for a free place for sixty days from when it started waiting', async () => {
