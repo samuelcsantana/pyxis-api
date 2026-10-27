@@ -8998,6 +8998,41 @@
           },
           {
             "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The operating system",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "identity",
             "required": false,
             "schema": {

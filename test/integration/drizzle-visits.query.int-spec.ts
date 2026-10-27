@@ -366,6 +366,12 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
     );
   });
 
+  it('filters by browser and operating system', async () => {
+    expect(await sessions({ browser: 'chrome' })).toEqual([visitId(2), visitId(3)]);
+    expect(await sessions({ os: 'ios' })).toEqual([visitId(1), visitId(7), visitId(4)]);
+    expect(await sessions({ browser: 'safari', os: 'windows' })).toEqual([]);
+  });
+
   it('keeps a visit whose country changed mid-visit under either country', async () => {
     const october2 = { ...SCOPE, range: { from: '2026-10-02', to: '2026-10-02' } };
 
