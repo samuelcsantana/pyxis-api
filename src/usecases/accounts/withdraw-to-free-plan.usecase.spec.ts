@@ -83,6 +83,7 @@ describe('WithdrawToFreePlanUseCase', () => {
     ]);
     expect(withdrawals.returnedToFree).toEqual([account.id]);
     expect(withdrawals.fitDueAt.get(account.id)).toBeNull();
+    expect(withdrawals.freeSince.get(account.id)).toEqual(NOW);
     expect(mail.accountNotices).toEqual([
       {
         email: 'owner@example.com',
@@ -208,7 +209,7 @@ describe('WithdrawToFreePlanUseCase', () => {
 
   it('refuses a paying account whose subscription it does not know', async () => {
     const { account, withdrawals, useCase } = await setup();
-    await withdrawals.returnToFreePlan(account.id, null);
+    await withdrawals.returnToFreePlan(account.id, NOW, null);
 
     await expect(useCase.execute({ ...WHO, accountId: account.id })).rejects.toBeInstanceOf(
       WithdrawalUnavailableError,

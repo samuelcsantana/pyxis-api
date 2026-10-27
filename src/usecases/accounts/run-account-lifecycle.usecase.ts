@@ -80,7 +80,7 @@ export class RunAccountLifecycleUseCase {
 
   async execute(): Promise<AccountLifecycleReport> {
     const now = this.clock.now();
-    const freePlacesOpened = await this.freePlaces.execute();
+    const freePlacesOpened = await this.freePlaces.execute(now);
     const welcomes = await this.welcomes.welcomePending();
     const subscriptionsConfirmed = await this.confirmations.confirmPending();
     const backToFreeNotices = await this.fallbacks.notifyPending();

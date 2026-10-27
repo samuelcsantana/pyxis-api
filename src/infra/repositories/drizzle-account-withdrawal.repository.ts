@@ -18,7 +18,7 @@ export class DrizzleAccountWithdrawalRepository implements AccountWithdrawalRepo
     return row?.subscriptionId ?? null;
   }
 
-  async returnToFreePlan(accountId: string, fitDueAt: Date | null): Promise<void> {
+  async returnToFreePlan(accountId: string, at: Date, fitDueAt: Date | null): Promise<void> {
     await this.db
       .update(accounts)
       .set({
@@ -34,6 +34,8 @@ export class DrizzleAccountWithdrawalRepository implements AccountWithdrawalRepo
         subscriptionConfirmationDueAt: null,
         backToFreeNoticeDueAt: null,
         freePlanFitDueAt: fitDueAt,
+        freeSince: at,
+        inactivityNotifiedAt: null,
       })
       .where(eq(accounts.id, accountId));
   }

@@ -71,6 +71,8 @@ export class DrizzleAccountBillingRepository implements AccountBillingRepository
                 subscriptionConfirmationDueAt: leavesFreePlan.at,
                 backToFreeNoticeDueAt: null,
                 freePlanFitDueAt: null,
+                freeSince: null,
+                inactivityNotifiedAt: null,
               }),
         })
         .where(eq(accounts.id, accountId));

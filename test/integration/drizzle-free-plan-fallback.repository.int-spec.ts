@@ -26,6 +26,7 @@ interface StoredAccount {
   readonly current_period_ends_at: Date | null;
   readonly access_ends_at: Date | null;
   readonly back_to_free_notice_due_at: Date | null;
+  readonly free_since: Date | null;
 }
 
 describe('the fall back to the free plan against a real Postgres', () => {
@@ -36,7 +37,7 @@ describe('the fall back to the free plan against a real Postgres', () => {
   const stored = async (accountId: string): Promise<StoredAccount | undefined> => {
     const [row] = await owner<StoredAccount[]>`
       SELECT status, stripe_customer_id, stripe_subscription_id, current_period_ends_at,
-             access_ends_at, back_to_free_notice_due_at
+             access_ends_at, back_to_free_notice_due_at, free_since
       FROM accounts WHERE id = ${accountId}
     `;
     return row;
@@ -118,6 +119,7 @@ describe('the fall back to the free plan against a real Postgres', () => {
       current_period_ends_at: null,
       access_ends_at: null,
       back_to_free_notice_due_at: AT,
+      free_since: AT,
     });
   });
 

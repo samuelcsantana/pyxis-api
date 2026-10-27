@@ -51,12 +51,13 @@ describe('withdrawals against a real Postgres', () => {
   });
 
   it('puts the account back on the free plan, keeping the Stripe customer and clearing the rest', async () => {
-    await withdrawals.returnToFreePlan(ACCOUNT_ID, null);
+    await withdrawals.returnToFreePlan(ACCOUNT_ID, AT, null);
 
     const [account] = await owner`
       SELECT status, stripe_customer_id, stripe_subscription_id, billing_interval,
              current_period_ends_at, access_ends_at, keys_revoked_at, ended_notified_at,
-             subscription_confirmation_due_at, free_plan_fit_due_at
+             subscription_confirmation_due_at, free_plan_fit_due_at, free_since,
+             inactivity_notified_at
       FROM accounts WHERE id = ${ACCOUNT_ID}
     `;
     expect(account).toEqual({
@@ -70,13 +71,15 @@ describe('withdrawals against a real Postgres', () => {
       ended_notified_at: null,
       subscription_confirmation_due_at: null,
       free_plan_fit_due_at: null,
+      free_since: AT,
+      inactivity_notified_at: null,
     });
   });
 
   it('marks the day an account over the free plan must fit by', async () => {
     const fitBy = new Date('2026-12-20T15:00:00.000Z');
 
-    await withdrawals.returnToFreePlan(ACCOUNT_ID, fitBy);
+    await withdrawals.returnToFreePlan(ACCOUNT_ID, AT, fitBy);
 
     const [account] = await owner`
       SELECT status, free_plan_fit_due_at FROM accounts WHERE id = ${ACCOUNT_ID}

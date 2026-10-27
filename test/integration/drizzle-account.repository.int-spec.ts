@@ -102,6 +102,12 @@ describe('accounts against a real Postgres', () => {
   describe('claiming a place on the free plan', () => {
     const AT = new Date('2026-11-20T12:00:00.000Z');
     const EARLIER = new Date('2026-11-18T09:00:00.000Z');
+    const freeSinceOf = async (accountId: string): Promise<Date | null | undefined> => {
+      const [row] = await owner<{ free_since: Date | null }[]>`
+        SELECT free_since FROM accounts WHERE id = ${accountId}
+      `;
+      return row?.free_since;
+    };
 
     it('starts a new owner on the free plan while there is a place', async () => {
       const claimed = await accounts.claimFreePlace({
@@ -117,6 +123,7 @@ describe('accounts against a real Postgres', () => {
         freeWaitlistedAt: null,
         freePlanFitDueAt: null,
       });
+      expect(await freeSinceOf(claimed.id)).toEqual(AT);
     });
 
     it('makes a new owner wait, marked since the claim, once the plan holds its maximum', async () => {
@@ -144,6 +151,7 @@ describe('accounts against a real Postgres', () => {
       });
 
       expect(claimed).toMatchObject({ id: unfinished.id, status: 'free', freeWaitlistedAt: null });
+      expect(await freeSinceOf(unfinished.id)).toEqual(AT);
     });
 
     it('keeps the first moment an unfinished account started waiting', async () => {
@@ -184,7 +192,9 @@ describe('accounts against a real Postgres', () => {
       await owner`UPDATE accounts SET free_waitlisted_at = ${AT} WHERE id = ${later.id}`;
       await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id = ${sooner.id}`;
 
-      expect(await accounts.openWaitingAccounts(2)).toBe(1);
+      expect(await accounts.openWaitingAccounts(2, AT)).toBe(1);
+      expect(await freeSinceOf(sooner.id)).toEqual(AT);
+      expect(await freeSinceOf(later.id)).toBeNull();
       expect(await accounts.findById(sooner.id)).toMatchObject({
         status: 'free',
         freeWaitlistedAt: null,
@@ -193,7 +203,7 @@ describe('accounts against a real Postgres', () => {
         status: 'incomplete',
         freeWaitlistedAt: AT,
       });
-      expect(await accounts.openWaitingAccounts(2)).toBe(0);
+      expect(await accounts.openWaitingAccounts(2, AT)).toBe(0);
     });
 
     it('opens no waiting account that subscribed, is held or is suspended', async () => {
@@ -205,7 +215,7 @@ describe('accounts against a real Postgres', () => {
       await owner`UPDATE accounts SET deletion_held_at = ${AT}, deletion_hold_reason = 'Court order' WHERE id = ${held.id}`;
       await owner`UPDATE accounts SET suspended_at = ${AT}, suspension_reason = 'Abuse' WHERE id = ${suspended.id}`;
 
-      expect(await accounts.openWaitingAccounts(10)).toBe(0);
+      expect(await accounts.openWaitingAccounts(10, AT)).toBe(0);
     });
 
     it('counts only the accounts on the free plan', async () => {

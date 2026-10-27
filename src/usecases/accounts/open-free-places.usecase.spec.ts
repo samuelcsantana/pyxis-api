@@ -7,6 +7,7 @@ import { OpenFreePlacesUseCase } from './open-free-places.usecase';
 const FIRST = new Date('2026-11-18T09:00:00.000Z');
 const SECOND = new Date('2026-11-19T09:00:00.000Z');
 const THIRD = new Date('2026-11-20T09:00:00.000Z');
+const OPENED_AT = new Date('2026-11-21T06:00:00.000Z');
 
 async function waiting(accounts: InMemoryAccountRepository, owner: string, since: Date) {
   const account = await accounts.create({ ownerAdminId: owner, status: 'incomplete' });
@@ -41,12 +42,13 @@ describe('OpenFreePlacesUseCase', () => {
     const opened = await new OpenFreePlacesUseCase(accounts, {
       freePlanOpen: true,
       freeAccountsMax: 3,
-    }).execute();
+    }).execute(OPENED_AT);
 
     expect(opened).toBe(2);
     expect(statusOf(accounts, 'first')).toBe('free');
     expect(statusOf(accounts, 'second')).toBe('free');
     expect(statusOf(accounts, 'third')).toBe('incomplete');
+    expect([...accounts.freeSince.values()]).toEqual([OPENED_AT, OPENED_AT]);
     expect(log).toHaveBeenCalledWith({ message: 'accounts.free_places_opened', opened: 2 });
   });
 
@@ -58,7 +60,7 @@ describe('OpenFreePlacesUseCase', () => {
     const opened = await new OpenFreePlacesUseCase(accounts, {
       freePlanOpen: true,
       freeAccountsMax: 1,
-    }).execute();
+    }).execute(OPENED_AT);
 
     expect(opened).toBe(0);
     expect(statusOf(accounts, 'first')).toBe('incomplete');
@@ -72,7 +74,7 @@ describe('OpenFreePlacesUseCase', () => {
     const opened = await new OpenFreePlacesUseCase(accounts, {
       freePlanOpen: false,
       freeAccountsMax: 200,
-    }).execute();
+    }).execute(OPENED_AT);
 
     expect(opened).toBe(0);
     expect(statusOf(accounts, 'first')).toBe('incomplete');
@@ -92,7 +94,7 @@ describe('OpenFreePlacesUseCase', () => {
     const opened = await new OpenFreePlacesUseCase(accounts, {
       freePlanOpen: true,
       freeAccountsMax: 5,
-    }).execute();
+    }).execute(OPENED_AT);
 
     expect(opened).toBe(0);
   });

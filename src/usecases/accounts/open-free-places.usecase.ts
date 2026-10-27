@@ -10,11 +10,11 @@ export class OpenFreePlacesUseCase {
     private readonly settings: Pick<SignUpSettings, 'freePlanOpen' | 'freeAccountsMax'>,
   ) {}
 
-  async execute(): Promise<number> {
+  async execute(now: Date): Promise<number> {
     if (!this.settings.freePlanOpen) {
       return 0;
     }
-    const opened = await this.accounts.openWaitingAccounts(this.settings.freeAccountsMax);
+    const opened = await this.accounts.openWaitingAccounts(this.settings.freeAccountsMax, now);
     if (opened > 0) {
       this.logger.log({ message: 'accounts.free_places_opened', opened });
     }
