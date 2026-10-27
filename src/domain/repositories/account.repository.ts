@@ -32,7 +32,7 @@ export interface AccountRepository {
   create(account: NewAccount): Promise<Account>;
   claimFreePlace(claim: FreePlaceClaim): Promise<Account>;
   freeAccountCount(): Promise<number>;
-  openWaitingAccounts(freeAccountsMax: number): Promise<number>;
+  openWaitingAccounts(freeAccountsMax: number, at: Date): Promise<number>;
   findById(accountId: string): Promise<Account | null>;
   projectsOf(accountId: string): Promise<readonly Project[]>;
   peopleCount(accountId: string): Promise<number>;

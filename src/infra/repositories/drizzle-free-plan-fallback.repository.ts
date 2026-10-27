@@ -95,6 +95,8 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
         subscriptionConfirmationDueAt: null,
         freePlanFitDueAt: null,
         backToFreeNoticeDueAt: at,
+        freeSince: at,
+        inactivityNotifiedAt: null,
       })
       .where(
         and(eq(accounts.id, accountId), inArray(accounts.status, RUNNING_SUBSCRIPTION_STATUSES)),

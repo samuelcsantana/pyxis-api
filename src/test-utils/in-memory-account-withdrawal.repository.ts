@@ -4,6 +4,7 @@ export class InMemoryAccountWithdrawalRepository implements AccountWithdrawalRep
   private readonly subscriptions = new Map<string, string>();
   readonly returnedToFree: string[] = [];
   readonly fitDueAt = new Map<string, Date | null>();
+  readonly freeSince = new Map<string, Date>();
 
   subscribe(accountId: string, subscriptionId: string): void {
     this.subscriptions.set(accountId, subscriptionId);
@@ -13,10 +14,11 @@ export class InMemoryAccountWithdrawalRepository implements AccountWithdrawalRep
     return Promise.resolve(this.subscriptions.get(accountId) ?? null);
   }
 
-  returnToFreePlan(accountId: string, fitDueAt: Date | null): Promise<void> {
+  returnToFreePlan(accountId: string, at: Date, fitDueAt: Date | null): Promise<void> {
     this.subscriptions.delete(accountId);
     this.returnedToFree.push(accountId);
     this.fitDueAt.set(accountId, fitDueAt);
+    this.freeSince.set(accountId, at);
     return Promise.resolve();
   }
 }

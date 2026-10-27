@@ -33,6 +33,7 @@ export class InMemoryAccountRepository
 {
   private readonly accounts = new Map<string, Account>();
   private readonly memberships = new Map<string, AccountMembers>();
+  readonly freeSince = new Map<string, Date>();
   private readonly members: { readonly account: Account; readonly adminUserId: string }[] = [];
 
   constructor(private readonly admins: InMemoryAdminUserRepository) {}
@@ -93,6 +94,9 @@ export class InMemoryAccountRepository
       ? { ...account, status: 'free', freeWaitlistedAt: null }
       : { ...account, freeWaitlistedAt: account.freeWaitlistedAt ?? claim.at };
     this.accounts.set(claimed.id, claimed);
+    if (hasAPlace) {
+      this.freeSince.set(claimed.id, claim.at);
+    }
     return claimed;
   }
 
@@ -100,7 +104,7 @@ export class InMemoryAccountRepository
     return Promise.resolve(this.stored.filter((account) => account.status === 'free').length);
   }
 
-  openWaitingAccounts(freeAccountsMax: number): Promise<number> {
+  openWaitingAccounts(freeAccountsMax: number, at: Date): Promise<number> {
     const places =
       freeAccountsMax - this.stored.filter((account) => account.status === 'free').length;
     const waiting = this.stored
@@ -115,6 +119,7 @@ export class InMemoryAccountRepository
       .slice(0, Math.max(places, 0));
     for (const account of waiting) {
       this.accounts.set(account.id, { ...account, status: 'free', freeWaitlistedAt: null });
+      this.freeSince.set(account.id, at);
     }
     return Promise.resolve(waiting.length);
   }

@@ -73,7 +73,7 @@ export class WithdrawToFreePlanUseCase {
     await this.gateway.cancelSubscription(subscriptionId);
     const refundedAmount = await this.tryRefund(account.id, subscriptionId, windowStart);
     const fitBy = await this.fitDeadline(account.id, now);
-    await this.withdrawals.returnToFreePlan(account.id, fitBy);
+    await this.withdrawals.returnToFreePlan(account.id, now, fitBy);
     await this.tryNotify(command, { refundedAmount, fitBy });
     this.logger.log({
       message: 'accounts.withdrawn_to_free',

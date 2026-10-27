@@ -73,7 +73,7 @@ async function insertClaim(
   hasAPlace: boolean,
 ): Promise<Account> {
   const values = hasAPlace
-    ? { ownerAdminId: claim.ownerAdminId, status: 'free' as const }
+    ? { ownerAdminId: claim.ownerAdminId, status: 'free' as const, freeSince: claim.at }
     : {
         ownerAdminId: claim.ownerAdminId,
         status: 'incomplete' as const,
@@ -92,7 +92,7 @@ async function updateClaim(
     .update(accounts)
     .set(
       hasAPlace
-        ? { status: 'free', freeWaitlistedAt: null }
+        ? { status: 'free', freeWaitlistedAt: null, freeSince: claim.at }
         : {
             freeWaitlistedAt: sql`coalesce(${accounts.freeWaitlistedAt}, ${claim.at.toISOString()}::timestamptz)`,
           },
@@ -131,7 +131,7 @@ export class DrizzleAccountRepository implements AccountRepository {
     return freeAccountCount(this.db);
   }
 
-  openWaitingAccounts(freeAccountsMax: number): Promise<number> {
+  openWaitingAccounts(freeAccountsMax: number, at: Date): Promise<number> {
     return this.db.transaction(async (transaction) => {
       await transaction.execute(sql`select pg_advisory_xact_lock(${FREE_PLACES_LOCK_KEY})`);
       const places = freeAccountsMax - (await freeAccountCount(transaction));
@@ -154,7 +154,7 @@ export class DrizzleAccountRepository implements AccountRepository {
         .limit(places);
       const opened = await transaction
         .update(accounts)
-        .set({ status: 'free', freeWaitlistedAt: null })
+        .set({ status: 'free', freeWaitlistedAt: null, freeSince: at })
         .where(inArray(accounts.id, oldestWaiting))
         .returning({ id: accounts.id });
       return opened.length;
