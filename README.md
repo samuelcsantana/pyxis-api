@@ -133,7 +133,7 @@ Shipping now:
   entry page, page views, first named events, failed requests and the source and campaign it
   came from, plus the total of matching visits; filtered by up to three pages it viewed, a star
   matching any characters, a named event with an optional property value, channel, device,
-  country, region, source, campaign, whether it was identified, a request route
+  browser, system, country, region, source, campaign, whether it was identified, a request route
   (`POST /orders/:id`) and
   whether a request, or a request to that route, failed; a visit is one browser tab, and nothing
   links two of them) and
@@ -152,7 +152,11 @@ Shipping now:
   [ADR 0044](docs/adr/0044-arrivals-are-counted-by-reception-time.md)). Times are UTC
   instants; the answers that list them (`/requests`, `/funnel/subjects`, `/timeline` and
   `/visits`) also carry the project's `timezone`, so a client shows them in local time without
-  asking for the settings first. A project
+  asking for the settings first. Every report but `/arrivals` and `/timeline` takes the filters
+  of `/visits` except `route` (`/overview?from=…&to=…&device=mobile&channel=paid`): a filter
+  selects visits, and every number counts the events of those visits only, in the range and in
+  the previous period; without a filter the answers are unchanged
+  ([ADR 0047](docs/adr/0047-a-filter-selects-visits.md)). A project
   the admin may not read answers the same 404 as one that does not exist
   ([ADR 0008](docs/adr/0008-dashboard-queries-on-raw-events.md))
 
@@ -827,6 +831,7 @@ What differs from the hosted service:
 | [0044](docs/adr/0044-arrivals-are-counted-by-reception-time.md)                       | Arrivals are counted by reception time, as times not counts                |
 | [0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md)                       | A client that is no browser is refused, not only one that says "bot"       |
 | [0046](docs/adr/0046-traffic-from-cloud-data-centers-is-refused.md)                   | Traffic from cloud data centers is refused                                 |
+| [0047](docs/adr/0047-a-filter-selects-visits.md)                                      | A filter selects visits, and every report counts their events              |
 
 ## Roadmap
 
