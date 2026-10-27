@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { hasAccess } from '../../domain/accounts/account-status';
-import { billingUpdateFor } from '../../domain/billing/account-billing';
+import { billingUpdateFor, keepsTheFreePlan } from '../../domain/billing/account-billing';
 import { BILLING_GATEWAY, type BillingGateway } from '../../domain/billing/billing-gateway';
 import {
   ACCOUNT_BILLING_REPOSITORY,
@@ -55,6 +55,17 @@ export class HandleBillingEventUseCase {
         message: 'billing.event_without_account',
         eventId: event.id,
         type: event.type,
+      });
+      await this.events.complete(event.id, now);
+      return 'ignored';
+    }
+    if (keepsTheFreePlan(subscription, account)) {
+      this.logger.log({
+        message: 'billing.free_plan_kept',
+        eventId: event.id,
+        type: event.type,
+        accountId: account.accountId,
+        subscriptionStatus: subscription.status,
       });
       await this.events.complete(event.id, now);
       return 'ignored';

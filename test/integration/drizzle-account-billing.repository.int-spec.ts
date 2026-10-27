@@ -46,6 +46,44 @@ describe('account billing and billing events against a real Postgres', () => {
     await owner.end();
   });
 
+  it('lifts the pause and resets the month notices when a free account subscribes', async () => {
+    await owner`
+      UPDATE accounts SET status = 'free', ingestion_paused_until = '2026-11-01T00:00:00Z'
+      WHERE id = ${ACCOUNT_ID}
+    `;
+    await owner`
+      INSERT INTO account_usage_months (account_id, month, events, notified_level, updated_at)
+      VALUES (${ACCOUNT_ID}, '2026-10', 10500, 150, ${NOW}),
+             (${ACCOUNT_ID}, '2026-09', 9000, 80, ${NOW})
+    `;
+
+    await accounts.apply(ACCOUNT_ID, {
+      status: 'active',
+      stripeCustomerId: 'cus_free',
+      stripeSubscriptionId: 'sub_free',
+      billingInterval: 'month',
+      trialEndsAt: null,
+      currentPeriodEndsAt: new Date('2026-11-20T12:00:00.000Z'),
+      accessEndsAt: null,
+      restoresAccess: true,
+      leavesFreePlanInMonth: '2026-10',
+    });
+
+    const [account] = await owner<{ status: string; paused: Date | null }[]>`
+      SELECT status, ingestion_paused_until AS paused FROM accounts WHERE id = ${ACCOUNT_ID}
+    `;
+    expect(account).toEqual({ status: 'active', paused: null });
+    expect(
+      await owner<{ month: string; level: number }[]>`
+        SELECT month, notified_level AS level FROM account_usage_months
+        WHERE account_id = ${ACCOUNT_ID} ORDER BY month
+      `,
+    ).toEqual([
+      { month: '2026-09', level: 80 },
+      { month: '2026-10', level: 0 },
+    ]);
+  });
+
   it('puts a subscription on the account, then finds the account by its Stripe ids', async () => {
     await accounts.apply(ACCOUNT_ID, {
       status: 'trialing',
@@ -56,6 +94,7 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: TRIAL_END,
       accessEndsAt: null,
       restoresAccess: true,
+      leavesFreePlanInMonth: null,
     });
 
     const expected = { accountId: ACCOUNT_ID, status: 'trialing', accessEndsAt: null };
@@ -84,6 +123,7 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: null,
       accessEndsAt: null,
       restoresAccess: true,
+      leavesFreePlanInMonth: null,
     };
     await accounts.apply(ACCOUNT_ID, update);
 
@@ -116,6 +156,7 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: null,
       accessEndsAt: marked,
       restoresAccess: false,
+      leavesFreePlanInMonth: null,
     };
 
     await accounts.apply(ACCOUNT_ID, ended);
@@ -128,6 +169,7 @@ describe('account billing and billing events against a real Postgres', () => {
       status: 'active',
       accessEndsAt: null,
       restoresAccess: true,
+      leavesFreePlanInMonth: null,
     });
     expect(await marks()).toEqual([
       { keys_revoked_at: null, ended_notified_at: null, deletion_reminded_at: null },
