@@ -1,5 +1,41 @@
 # Changelog
 
+## [0.30.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.29.0...v0.30.0) (2026-10-27)
+
+
+### Features
+
+* **accounts:** add the free plan as an account status with its own limits ([dc939a5](https://github.com/samuelcsantana/pyxis-api/commit/dc939a5db0102d700e7452cfc4b112fb62d4ad12))
+* **accounts:** keep a sign-up waiting for a free place for 60 days ([bbc16f8](https://github.com/samuelcsantana/pyxis-api/commit/bbc16f81a5b85541fde44c18b872145e4be0a715))
+* **accounts:** open free places to the accounts waiting longest ([2299c37](https://github.com/samuelcsantana/pyxis-api/commit/2299c378676846672c66f9ea3e9ac34f451b23f4))
+* **accounts:** start new owners on the free plan while it has a place ([6407531](https://github.com/samuelcsantana/pyxis-api/commit/64075316b601d0797edb29205249c7b52631a83d))
+* **config:** add the free plan switch and its cap of accounts ([35cff41](https://github.com/samuelcsantana/pyxis-api/commit/35cff41de7cbb574dd325390ddc563a6e2394f41))
+* **db:** hold one free account per owner and mark the waiting ones ([2ab3787](https://github.com/samuelcsantana/pyxis-api/commit/2ab3787d6d8d470b90270cb23299bce6e4c54b83))
+* **http:** accept the visit filters on every report ([71ab6c4](https://github.com/samuelcsantana/pyxis-api/commit/71ab6c4533f72c71ebc69b4ca0be02b301db40b1))
+* **http:** answer the pause point of each account ([8f0dbb1](https://github.com/samuelcsantana/pyxis-api/commit/8f0dbb1aa1e008ad9d0426fc2ff094f0b19cd4e1))
+* **http:** say whether the free plan takes new owners ([97c22ad](https://github.com/samuelcsantana/pyxis-api/commit/97c22ade90b6d373305c2c8ff36ae667dd772e6e))
+* **mail:** welcome an owner who starts on the free plan ([efe9aea](https://github.com/samuelcsantana/pyxis-api/commit/efe9aea015a19efc043a90647306e7519651ab38))
+* **queries:** filter every report by the visits it selects ([5e0dd0b](https://github.com/samuelcsantana/pyxis-api/commit/5e0dd0b1fa0c5cb3022f03f8357a58afffb90205))
+* **queries:** filter visits by browser and operating system ([5effe98](https://github.com/samuelcsantana/pyxis-api/commit/5effe9814275622bc2d099384ac79b4d93f6e09d))
+
+
+### Bug Fixes
+
+* **cli:** name either plan's pause point in account:exempt-quota ([2b40d9a](https://github.com/samuelcsantana/pyxis-api/commit/2b40d9ad1b6fe4d98966b832038f8fa6f7cacaf9))
+
+
+### Refactoring
+
+* **domain:** list the browser and system families as arrays ([9ec4e42](https://github.com/samuelcsantana/pyxis-api/commit/9ec4e4258f4380a3782a029ed0d6446a7b6e714e))
+* **queries:** build the visit filters in one place ([86ef940](https://github.com/samuelcsantana/pyxis-api/commit/86ef940163f0f04415b7b580e98f39cbf4e85387))
+
+
+### Documentation
+
+* record sign-up without a card (ADR 0049) ([d25ecdb](https://github.com/samuelcsantana/pyxis-api/commit/d25ecdbc28ede53fc4e3db5aad8b2bb4793fbf81))
+* record that a filter selects visits (ADR 0047) ([88dbd6b](https://github.com/samuelcsantana/pyxis-api/commit/88dbd6b89f49f14dbe6efd04dfa97e3482051a7d))
+* record the free plan as a status with its own limits (ADR 0048) ([8133b3e](https://github.com/samuelcsantana/pyxis-api/commit/8133b3ea798e9ae7b131c8268d34be4a9bb34396))
+
 ## [0.29.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.28.0...v0.29.0) (2026-10-24)
 
 
