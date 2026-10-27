@@ -251,6 +251,15 @@ Shipping now:
   at once, refunds that payment and puts the account back on the free plan with its data, with an
   e-mail; `409 withdrawal_window_closed` after the 7 days
   ([ADR 0050](docs/adr/0050-subscribing-from-the-free-plan-and-withdrawing-back-to-it.md))
+- Falling back to the free plan: when Stripe ends a running subscription (cancelled at the end of
+  its period, or unpaid), the webhook and the daily reconcile put the account on `free` instead of
+  ending it, if the free plan is open, the owner is bound by terms with the free plan (version 1.3
+  or later accepted, or `FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM` passed) and its projects and
+  people fit; it keeps its Stripe customer, keys and data, and the owner gets a `back_to_free`
+  e-mail. A withdrawal that leaves an account over the free plan answers `fit_by`, 30 days ahead:
+  the daily job ends the account on that day if it still does not fit. `GET /v1/me/accounts`
+  answers the owner the `project_count`, `people_count` and `free_plan_fit_due_at`
+  ([ADR 0051](docs/adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -863,6 +872,7 @@ What differs from the hosted service:
 | [0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md)                  | A free plan is a status with its own limits                                |
 | [0049](docs/adr/0049-sign-up-without-a-card.md)                                       | Sign-up without a card                                                     |
 | [0050](docs/adr/0050-subscribing-from-the-free-plan-and-withdrawing-back-to-it.md)    | Subscribing from the free plan, and withdrawing back to it                 |
+| [0051](docs/adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md)            | An ended subscription falls back to the free plan                          |
 
 ## Roadmap
 
