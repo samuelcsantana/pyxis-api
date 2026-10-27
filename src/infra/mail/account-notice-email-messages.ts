@@ -44,7 +44,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'longer send events to Pyxis.',
           `The reports stay readable until ${w.deletionOn}. On that day the projects, their ` +
             'events and their keys are deleted for good.',
-          'To keep the data, export it from the account page before then, or subscribe again to ' +
+          'To keep the data, export it from each project’s Settings before then, or subscribe again to ' +
             'keep measuring.',
         ],
       },
@@ -55,7 +55,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `On ${w.deletionOn}, the projects of your Pyxis account, with their events and their ` +
             'keys, will be deleted for good.',
-          'To keep the data, export it from the account page or subscribe again before then.',
+          'To keep the data, export it from each project’s Settings or subscribe again before then.',
         ],
       },
       withdrawn_to_free: {
@@ -69,7 +69,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `${w.refunded} was refunded to your card. It shows on your statement within the time your card company takes.`,
           w.fitBy === NO_DEADLINE
             ? 'The free plan’s limits apply again from now; the account page shows them.'
-            : `Your account has more projects or people than the free plan allows. Remove what is over on the account page by ${w.fitBy}, exporting first what you want to keep; if it still does not fit on that day, the account ends: its keys are revoked, and its data is deleted 30 days later.`,
+            : `Your account has more projects or people than the free plan allows. Remove what is over in each project’s Settings by ${w.fitBy}, exporting first what you want to keep; if it still does not fit on that day, the account ends: its keys are revoked, and its data is deleted 30 days later.`,
         ],
       },
       back_to_free: {
@@ -134,7 +134,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'enviam mais eventos ao Pyxis.',
           `Os relatórios continuam disponíveis até ${w.deletionOn}. Nesse dia, os projetos, os ` +
             'eventos e as chaves são apagados de vez.',
-          'Para guardar os dados, exporte-os pela página da conta antes disso, ou assine de novo ' +
+          'Para guardar os dados, exporte-os nas Configurações de cada projeto antes disso, ou assine de novo ' +
             'para continuar medindo.',
         ],
       },
@@ -145,7 +145,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `Em ${w.deletionOn}, os projetos da sua conta do Pyxis, com os eventos e as chaves, ` +
             'serão apagados de vez.',
-          'Para guardar os dados, exporte-os pela página da conta ou assine de novo antes disso.',
+          'Para guardar os dados, exporte-os nas Configurações de cada projeto ou assine de novo antes disso.',
         ],
       },
       withdrawn_to_free: {
@@ -159,7 +159,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `${w.refunded} foram devolvidos ao seu cartão. O valor aparece na fatura no prazo da administradora do cartão.`,
           w.fitBy === NO_DEADLINE
             ? 'Os limites do plano grátis voltam a valer a partir de agora; a página da conta mostra quais são.'
-            : `Sua conta tem mais projetos ou pessoas do que o plano grátis permite. Tire o que passar do limite pela página da conta até ${w.fitBy}, exportando antes o que quiser guardar; se nesse dia ela ainda não couber, a conta termina: as chaves são revogadas, e os dados são apagados 30 dias depois.`,
+            : `Sua conta tem mais projetos ou pessoas do que o plano grátis permite. Tire o que passar do limite nas Configurações de cada projeto até ${w.fitBy}, exportando antes o que quiser guardar; se nesse dia ela ainda não couber, a conta termina: as chaves são revogadas, e os dados são apagados 30 dias depois.`,
         ],
       },
       back_to_free: {
@@ -226,7 +226,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'envían eventos a Pyxis.',
           `Los informes siguen disponibles hasta el ${w.deletionOn}. Ese día, los proyectos, ` +
             'sus eventos y sus claves se eliminan definitivamente.',
-          'Para conservar los datos, expórtalos desde la página de la cuenta antes de esa fecha, ' +
+          'Para conservar los datos, expórtalos desde la Configuración de cada proyecto antes de esa fecha, ' +
             'o suscríbete de nuevo para seguir midiendo.',
         ],
       },
@@ -237,7 +237,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `El ${w.deletionOn}, los proyectos de tu cuenta de Pyxis, con sus eventos y sus ` +
             'claves, se eliminarán definitivamente.',
-          'Para conservar los datos, expórtalos desde la página de la cuenta o suscríbete de ' +
+          'Para conservar los datos, expórtalos desde la Configuración de cada proyecto o suscríbete de ' +
             'nuevo antes de esa fecha.',
         ],
       },
@@ -252,7 +252,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `Se devolvieron ${w.refunded} a tu tarjeta. Aparece en tu extracto en el plazo de la emisora de la tarjeta.`,
           w.fitBy === NO_DEADLINE
             ? 'Los límites del plan gratis vuelven a aplicarse desde ahora; la página de la cuenta los muestra.'
-            : `Tu cuenta tiene más proyectos o personas de los que permite el plan gratis. Quita lo que sobra desde la página de la cuenta a más tardar el ${w.fitBy}, exportando antes lo que quieras conservar; si ese día todavía no cabe, la cuenta termina: sus claves se revocan y sus datos se eliminan 30 días después.`,
+            : `Tu cuenta tiene más proyectos o personas de los que permite el plan gratis. Quita lo que sobra desde la Configuración de cada proyecto a más tardar el ${w.fitBy}, exportando antes lo que quieras conservar; si ese día todavía no cabe, la cuenta termina: sus claves se revocan y sus datos se eliminan 30 días después.`,
         ],
       },
       back_to_free: {
@@ -320,7 +320,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           `Die Berichte bleiben bis zum ${w.deletionOn} lesbar. An diesem Tag werden die ` +
             `Projekte, ` +
             'ihre Ereignisse und ihre Schlüssel endgültig gelöscht.',
-          'Um die Daten zu behalten, exportiere sie vorher auf der Kontoseite oder schließ ' +
+          'Um die Daten zu behalten, exportiere sie vorher in den Einstellungen jedes Projekts oder schließ ' +
             'erneut ein Abo ab, um weiter zu messen.',
         ],
       },
@@ -332,7 +332,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `Am ${w.deletionOn} werden die Projekte deines Pyxis-Kontos mit ihren Ereignissen und ` +
             'ihren Schlüsseln endgültig gelöscht.',
-          'Um die Daten zu behalten, exportiere sie auf der Kontoseite oder schließ vorher ' +
+          'Um die Daten zu behalten, exportiere sie in den Einstellungen jedes Projekts oder schließ vorher ' +
             'erneut ein Abo ab.',
         ],
       },
@@ -347,7 +347,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `${w.refunded} wurden auf deine Karte zurückerstattet. Der Betrag erscheint auf deiner Abrechnung, sobald dein Kartenanbieter ihn bucht.`,
           w.fitBy === NO_DEADLINE
             ? 'Ab jetzt gelten wieder die Grenzen des kostenlosen Plans; die Kontoseite zeigt sie.'
-            : `Dein Konto hat mehr Projekte oder Personen, als der kostenlose Plan erlaubt. Entferne bis zum ${w.fitBy} auf der Kontoseite, was zu viel ist, und exportiere vorher, was du behalten möchtest; passt das Konto an diesem Tag noch nicht, endet es: Seine Schlüssel werden widerrufen, und seine Daten werden 30 Tage später gelöscht.`,
+            : `Dein Konto hat mehr Projekte oder Personen, als der kostenlose Plan erlaubt. Entferne bis zum ${w.fitBy} in den Einstellungen jedes Projekts, was zu viel ist, und exportiere vorher, was du behalten möchtest; passt das Konto an diesem Tag noch nicht, endet es: Seine Schlüssel werden widerrufen, und seine Daten werden 30 Tage später gelöscht.`,
         ],
       },
       back_to_free: {
@@ -415,7 +415,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'n’envoient plus d’événements à Pyxis.',
           `Les rapports restent consultables jusqu’au ${w.deletionOn}. Ce jour-là, les projets, ` +
             'leurs événements et leurs clés seront définitivement supprimés.',
-          'Pour garder les données, exportez-les depuis la page du compte d’ici là, ou ' +
+          'Pour garder les données, exportez-les depuis les Paramètres de chaque projet d’ici là, ou ' +
             'abonnez-vous à nouveau pour continuer la mesure.',
         ],
       },
@@ -426,7 +426,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `Le ${w.deletionOn}, les projets de votre compte Pyxis, avec leurs événements et leurs ` +
             'clés, seront définitivement supprimés.',
-          'Pour garder les données, exportez-les depuis la page du compte ou abonnez-vous à ' +
+          'Pour garder les données, exportez-les depuis les Paramètres de chaque projet ou abonnez-vous à ' +
             'nouveau d’ici là.',
         ],
       },
@@ -441,7 +441,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `${w.refunded} ont été remboursés sur votre carte. Le montant apparaît sur votre relevé dans le délai de votre banque.`,
           w.fitBy === NO_DEADLINE
             ? 'Les limites de la formule gratuite s’appliquent de nouveau dès maintenant\u00a0; la page du compte les indique.'
-            : `Votre compte a plus de projets ou de personnes que la formule gratuite n’en permet. Retirez ce qui dépasse depuis la page du compte d’ici le ${w.fitBy}, en exportant d’abord ce que vous voulez garder\u00a0; si le compte ne rentre toujours pas ce jour-là, il prend fin\u00a0: ses clés sont révoquées et ses données sont supprimées 30 jours plus tard.`,
+            : `Votre compte a plus de projets ou de personnes que la formule gratuite n’en permet. Retirez ce qui dépasse depuis les Paramètres de chaque projet d’ici le ${w.fitBy}, en exportant d’abord ce que vous voulez garder\u00a0; si le compte ne rentre toujours pas ce jour-là, il prend fin\u00a0: ses clés sont révoquées et ses données sont supprimées 30 jours plus tard.`,
         ],
       },
       back_to_free: {
@@ -509,7 +509,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'siti non inviano più eventi a Pyxis.',
           `I report restano consultabili fino al giorno ${w.deletionOn}. Quel giorno i progetti, ` +
             'i loro eventi e le loro chiavi vengono eliminati per sempre.',
-          'Per conservare i dati, esportali dalla pagina dell’account prima di quella data, ' +
+          'Per conservare i dati, esportali dalle Impostazioni di ogni progetto prima di quella data, ' +
             'oppure ' +
             'abbonati di nuovo per continuare a misurare.',
         ],
@@ -521,7 +521,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `Il giorno ${w.deletionOn} i progetti del tuo account Pyxis, con i loro eventi e le ` +
             'loro chiavi, verranno eliminati per sempre.',
-          'Per conservare i dati, esportali dalla pagina dell’account o abbonati di nuovo prima ' +
+          'Per conservare i dati, esportali dalle Impostazioni di ogni progetto o abbonati di nuovo prima ' +
             'di quella data.',
         ],
       },
@@ -536,7 +536,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `${w.refunded} sono stati rimborsati sulla tua carta. L’importo compare nell’estratto conto nei tempi del circuito della carta.`,
           w.fitBy === NO_DEADLINE
             ? 'Da ora valgono di nuovo i limiti del piano gratuito; la pagina dell’account li mostra.'
-            : `Il tuo account ha più progetti o persone di quanti ne consenta il piano gratuito. Togli ciò che è in più dalla pagina dell’account entro il giorno ${w.fitBy}, esportando prima ciò che vuoi conservare; se quel giorno non rientra ancora nei limiti, l’account termina: le sue chiavi vengono revocate e i suoi dati eliminati 30 giorni dopo.`,
+            : `Il tuo account ha più progetti o persone di quanti ne consenta il piano gratuito. Togli ciò che è in più dalle Impostazioni di ogni progetto entro il giorno ${w.fitBy}, esportando prima ciò che vuoi conservare; se quel giorno non rientra ancora nei limiti, l’account termina: le sue chiavi vengono revocate e i suoi dati eliminati 30 giorni dopo.`,
         ],
       },
       back_to_free: {
@@ -602,7 +602,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             'versturen geen events meer naar Pyxis.',
           `De rapporten blijven leesbaar tot ${w.deletionOn}. Op die dag worden de projecten, ` +
             'hun events en hun sleutels definitief verwijderd.',
-          'Wil je de gegevens houden? Exporteer ze vóór die datum via de accountpagina, of neem ' +
+          'Wil je de gegevens houden? Exporteer ze vóór die datum via de Instellingen van elk project, of neem ' +
             'opnieuw een abonnement om te blijven meten.',
         ],
       },
@@ -614,7 +614,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           `Op ${w.deletionOn} worden de projecten van je Pyxis-account, met hun events en hun ` +
             'sleutels, definitief verwijderd.',
-          'Wil je de gegevens houden? Exporteer ze via de accountpagina of neem vóór die datum ' +
+          'Wil je de gegevens houden? Exporteer ze via de Instellingen van elk project of neem vóór die datum ' +
             'opnieuw een abonnement.',
         ],
       },
@@ -629,7 +629,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             : `${w.refunded} is teruggestort op je kaart. Het bedrag verschijnt op je afschrift binnen de termijn van je kaartuitgever.`,
           w.fitBy === NO_DEADLINE
             ? 'Vanaf nu gelden weer de limieten van het gratis abonnement; de accountpagina toont ze.'
-            : `Je account heeft meer projecten of mensen dan het gratis abonnement toestaat. Haal uiterlijk ${w.fitBy} via de accountpagina weg wat te veel is, en exporteer eerst wat je wilt houden; past het account er op die dag nog steeds niet in, dan eindigt het: de sleutels worden ingetrokken en de gegevens 30 dagen later verwijderd.`,
+            : `Je account heeft meer projecten of mensen dan het gratis abonnement toestaat. Haal uiterlijk ${w.fitBy} via de Instellingen van elk project weg wat te veel is, en exporteer eerst wat je wilt houden; past het account er op die dag nog steeds niet in, dan eindigt het: de sleutels worden ingetrokken en de gegevens 30 dagen later verwijderd.`,
         ],
       },
       back_to_free: {
