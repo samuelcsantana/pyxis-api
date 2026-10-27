@@ -1,4 +1,10 @@
-import { HOSTED_PLAN_LIMITS, INGESTION_PAUSE_RATIO } from './hosted-plan';
+import type { AccountStatus } from './account-status';
+import {
+  FREE_PLAN_LIMITS,
+  FREE_PLAN_PAUSE_RATIO,
+  HOSTED_PLAN_LIMITS,
+  HOSTED_PLAN_PAUSE_RATIO,
+} from './hosted-plan';
 
 export interface PlanLimits {
   readonly eventsPerMonth: number;
@@ -11,6 +17,12 @@ export interface PlanLimitOverrides {
   readonly projectsLimit: number | null;
   readonly peopleLimit: number | null;
 }
+
+export interface PlanAccount extends PlanLimitOverrides {
+  readonly status: AccountStatus;
+}
+
+export type MonthlyLimitOf = Pick<PlanAccount, 'status' | 'eventsPerMonthLimit'>;
 
 export type PlanLimitChanges = Partial<PlanLimitOverrides>;
 
@@ -44,20 +56,33 @@ export const RESET_LIMITS: PlanLimitChanges = NO_LIMIT_OVERRIDES;
 
 const LIMIT_NAMES: readonly PlanLimitName[] = ['eventsPerMonth', 'projects', 'people'];
 
-export function eventsPerMonthOf(eventsPerMonthLimit: number | null): number {
-  return eventsPerMonthLimit ?? HOSTED_PLAN_LIMITS.eventsPerMonth;
+function isOnFreePlan(status: AccountStatus): boolean {
+  return status === 'free';
 }
 
-export function planLimitsOf(overrides: PlanLimitOverrides): PlanLimits {
+function basePlanLimitsOf(status: AccountStatus): PlanLimits {
+  return isOnFreePlan(status) ? FREE_PLAN_LIMITS : HOSTED_PLAN_LIMITS;
+}
+
+function ingestionPauseRatioOf(status: AccountStatus): number {
+  return isOnFreePlan(status) ? FREE_PLAN_PAUSE_RATIO : HOSTED_PLAN_PAUSE_RATIO;
+}
+
+export function eventsPerMonthOf(account: MonthlyLimitOf): number {
+  return account.eventsPerMonthLimit ?? basePlanLimitsOf(account.status).eventsPerMonth;
+}
+
+export function planLimitsOf(account: PlanAccount): PlanLimits {
+  const base = basePlanLimitsOf(account.status);
   return {
-    eventsPerMonth: eventsPerMonthOf(overrides.eventsPerMonthLimit),
-    projects: overrides.projectsLimit ?? HOSTED_PLAN_LIMITS.projects,
-    people: overrides.peopleLimit ?? HOSTED_PLAN_LIMITS.people,
+    eventsPerMonth: eventsPerMonthOf(account),
+    projects: account.projectsLimit ?? base.projects,
+    people: account.peopleLimit ?? base.people,
   };
 }
 
-export function ingestionPauseThresholdOf(eventsPerMonth: number): number {
-  return eventsPerMonth * INGESTION_PAUSE_RATIO;
+export function ingestionPauseThresholdOf(account: MonthlyLimitOf): number {
+  return Math.ceil(eventsPerMonthOf(account) * ingestionPauseRatioOf(account.status));
 }
 
 export function exceededLimits(limits: PlanLimits, usage: PlanUsage): readonly ExceededLimit[] {

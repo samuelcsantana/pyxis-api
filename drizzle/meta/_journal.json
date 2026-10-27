@@ -225,6 +225,13 @@
       "when": 1792794245382,
       "tag": "0031_events-received-at",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1793108730900,
+      "tag": "0032_free-plan-status",
+      "breakpoints": true
     }
   ]
 }

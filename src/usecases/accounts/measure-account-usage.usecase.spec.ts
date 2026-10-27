@@ -8,7 +8,8 @@ const NOW = new Date('2026-10-14T03:00:00.000Z');
 const NOVEMBER_FIRST = new Date('2026-11-01T00:00:00.000Z');
 const OVER = 'acc00000-0000-4000-a000-000000000001';
 const UNDER = 'acc00000-0000-4000-a000-000000000002';
-const FREE = 'acc00000-0000-4000-a000-000000000003';
+const COMPED = 'acc00000-0000-4000-a000-000000000003';
+const FREE_PLAN = 'acc00000-0000-4000-a000-000000000005';
 const NEAR = 'acc00000-0000-4000-a000-000000000004';
 
 function usage(
@@ -41,7 +42,7 @@ describe('MeasureAccountUsageUseCase', () => {
     const { repository, useCase } = setup([
       usage(OVER, 160_000),
       usage(UNDER, 50_000, { status: 'trialing' }),
-      usage(FREE, 400_000, { status: 'comped' }),
+      usage(COMPED, 400_000, { status: 'comped' }),
     ]);
 
     const report = await useCase.execute();
@@ -52,7 +53,7 @@ describe('MeasureAccountUsageUseCase', () => {
     ]);
     expect(repository.pauseOf(OVER)).toEqual(NOVEMBER_FIRST);
     expect(repository.pauseOf(UNDER)).toBeNull();
-    expect(repository.pauseOf(FREE)).toBeNull();
+    expect(repository.pauseOf(COMPED)).toBeNull();
     expect(await repository.recordedFor(UNDER, '2026-10')).toEqual({
       month: '2026-10',
       events: 50_000,
@@ -61,12 +62,12 @@ describe('MeasureAccountUsageUseCase', () => {
     expect(await repository.recordedFor(UNDER, '2026-09')).toBeNull();
   });
 
-  it('tells each owner once per level, in their language, and never a free account', async () => {
+  it('tells each owner once per level, in their language, and never a comped account', async () => {
     const { repository, mail, useCase } = setup([
       usage(OVER, 160_000),
       usage(NEAR, 85_000),
       usage(UNDER, 50_000),
-      usage(FREE, 400_000, { status: 'comped' }),
+      usage(COMPED, 400_000, { status: 'comped' }),
     ]);
 
     const first = await useCase.execute();
@@ -138,6 +139,27 @@ describe('MeasureAccountUsageUseCase', () => {
     expect(report).toMatchObject({ notified: 1, notificationsFailed: 1 });
     expect(repository.notified.has(`${OVER}/2026-10`)).toBe(false);
     expect(mail.quotaNotices.map(({ email }) => email)).toEqual(['4@example.com']);
+  });
+
+  it('pauses a free-plan account at its 10,000 events, where a paid one goes on', async () => {
+    const { repository, mail, useCase } = setup([
+      usage(FREE_PLAN, 10_000, { status: 'free', notifiedLevel: 80 }),
+      usage(UNDER, 10_000),
+    ]);
+
+    const report = await useCase.execute();
+
+    expect(report).toMatchObject({ accounts: 2, paused: 1, notified: 1 });
+    expect(repository.pauseOf(FREE_PLAN)).toEqual(NOVEMBER_FIRST);
+    expect(repository.pauseOf(UNDER)).toBeNull();
+    expect(
+      mail.quotaNotices.map(({ email, notice }) => ({
+        email,
+        kind: notice.kind,
+        events: notice.events,
+        limit: notice.limit,
+      })),
+    ).toEqual([{ email: '5@example.com', kind: 'quota_paused', events: 10_000, limit: 10_000 }]);
   });
 
   it('reports nothing measured when there is no account', async () => {

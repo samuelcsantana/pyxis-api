@@ -35,8 +35,22 @@ describe('ingestionPauseFor', () => {
     );
   });
 
-  it('never pauses a free account', () => {
+  it('never pauses a comped account', () => {
     expect(ingestionPauseFor(usage(1_000_000, 'comped'), MONTH_END, MEASURED_AT)).toBeNull();
+  });
+
+  it('pauses a free account at its 10,000 events, until the month ends', () => {
+    expect(ingestionPauseFor(usage(10_000, 'free'), MONTH_END, MEASURED_AT)).toBe(MONTH_END);
+    expect(ingestionPauseFor(usage(9_999, 'free'), MONTH_END, MEASURED_AT)).toBeNull();
+  });
+
+  it('pauses a free account at the limit set for it, when one is set', () => {
+    const larger = { ...usage(19_999, 'free'), eventsPerMonthLimit: 20_000 };
+
+    expect(ingestionPauseFor(larger, MONTH_END, MEASURED_AT)).toBeNull();
+    expect(ingestionPauseFor({ ...larger, events: 20_000 }, MONTH_END, MEASURED_AT)).toBe(
+      MONTH_END,
+    );
   });
 
   it('does not pause an exempt account until the exemption is over', () => {

@@ -197,7 +197,7 @@ describe('account:create', () => {
     expect(() => accountCreateCommand.parse(['--owner-email', 'friend'])).toThrow(CliUsageError);
   });
 
-  it('prints the new free account and its owner as key=value lines', async () => {
+  it('prints the new comped account and its owner as key=value lines', async () => {
     const context = inMemoryCliContext();
     const output = captureOutput();
 
@@ -210,6 +210,7 @@ describe('account:create', () => {
       'status=comped',
     ]);
     expect(output.err).toEqual([expect.stringContaining('project:create --account')]);
+    expect(output.err).toEqual([expect.stringContaining("paid plan's limits")]);
   });
 });
 

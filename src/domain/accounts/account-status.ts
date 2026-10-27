@@ -6,6 +6,7 @@ export const ACCOUNT_STATUSES = [
   'ending',
   'ended',
   'comped',
+  'free',
 ] as const;
 
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
@@ -16,6 +17,7 @@ const STATUSES_WITH_ACCESS: ReadonlySet<AccountStatus> = new Set([
   'past_due',
   'ending',
   'comped',
+  'free',
 ]);
 
 export function hasAccess(status: AccountStatus): boolean {

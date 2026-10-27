@@ -33,7 +33,7 @@ function setup() {
 }
 
 describe('CreateCompedAccountUseCase', () => {
-  it('creates a free account for an owner who is not an admin yet', async () => {
+  it('creates a comped account for an owner who is not an admin yet', async () => {
     const { admins, accounts, createAccount } = setup();
 
     const created = await createAccount.execute({ ownerEmail: ' Friend@Example.com ' });

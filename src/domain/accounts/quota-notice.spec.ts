@@ -29,7 +29,7 @@ describe('quotaLevelOf', () => {
     [149_999, 100],
     [150_000, 150],
   ])('puts %i events at level %i', (events, level) => {
-    expect(quotaLevelOf(events, 100_000)).toBe(level);
+    expect(quotaLevelOf(events, 100_000, 150_000)).toBe(level);
   });
 });
 
@@ -40,12 +40,23 @@ describe('quotaLevelOf with a larger plan', () => {
     [1_000_000, 100],
     [1_500_000, 150],
   ])('puts %i events at level %i of a million', (events, level) => {
-    expect(quotaLevelOf(events, 1_000_000)).toBe(level);
+    expect(quotaLevelOf(events, 1_000_000, 1_500_000)).toBe(level);
+  });
+});
+
+describe('quotaLevelOf on the free plan', () => {
+  it.each([
+    [7_999, 0],
+    [8_000, 80],
+    [9_999, 80],
+    [10_000, 150],
+  ])('puts %i events at level %i, paused at the limit itself', (events, level) => {
+    expect(quotaLevelOf(events, 10_000, 10_000)).toBe(level);
   });
 });
 
 describe('quotaNoticeDue', () => {
-  it('owes nothing below 80%, to a free account, or for a level already told', () => {
+  it('owes nothing below 80%, to a comped account, or for a level already told', () => {
     expect(quotaNoticeDue(usage(79_999), CONTEXT)).toBeNull();
     expect(quotaNoticeDue(usage(200_000, 'comped'), CONTEXT)).toBeNull();
     expect(quotaNoticeDue(usage(85_000), { ...CONTEXT, notifiedLevel: 80 })).toBeNull();
@@ -85,6 +96,45 @@ describe('quotaNoticeDue', () => {
     expect(quotaNoticeDue({ ...exempt, events: 85_000 }, CONTEXT)).toMatchObject({
       level: 80,
       notice: { pause: null },
+    });
+  });
+
+  it('warns a free account at 80% of its 10,000 events, then pauses it at 10,000', () => {
+    expect(quotaNoticeDue(usage(8_000, 'free'), CONTEXT)).toEqual({
+      level: 80,
+      notice: {
+        kind: 'quota_warning',
+        percent: 80,
+        events: 8_000,
+        limit: 10_000,
+        month: '2026-10',
+        measuredAt: CONTEXT.measuredAt,
+        pause: { atEvents: 10_000, until: CONTEXT.monthEnd },
+      },
+    });
+    expect(quotaNoticeDue(usage(10_000, 'free'), { ...CONTEXT, notifiedLevel: 80 })).toEqual({
+      level: 150,
+      notice: {
+        kind: 'quota_paused',
+        events: 10_000,
+        limit: 10_000,
+        month: '2026-10',
+        measuredAt: CONTEXT.measuredAt,
+        resumesAt: CONTEXT.monthEnd,
+      },
+    });
+    expect(quotaNoticeDue(usage(12_000, 'free'), { ...CONTEXT, notifiedLevel: 150 })).toBeNull();
+  });
+
+  it('warns an exempt free account at its limit instead of pausing it', () => {
+    const exempt = {
+      ...usage(10_000, 'free'),
+      pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z'),
+    };
+
+    expect(quotaNoticeDue(exempt, CONTEXT)).toMatchObject({
+      level: 100,
+      notice: { kind: 'quota_warning', percent: 100, limit: 10_000, pause: null },
     });
   });
 });
