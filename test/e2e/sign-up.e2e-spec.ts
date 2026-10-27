@@ -190,8 +190,14 @@ describe('sign-up while it is open', () => {
     });
 
     expect(verified.statusCode).toBe(200);
-    const body = verified.json<{ email: string; session_token: string; account_id: string }>();
+    const body = verified.json<{
+      email: string;
+      session_token: string;
+      account_id: string;
+      account_status: string;
+    }>();
     expect(body.email).toBe(FOUNDER);
+    expect(body.account_status).toBe('incomplete');
     expect(body.session_token).toMatch(SESSION_TOKEN_PATTERN);
     const [account] = await owner<{ status: string; email: string; version: string }[]>`
       SELECT a.status, u.email, t.version

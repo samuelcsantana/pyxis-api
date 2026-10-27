@@ -45,6 +45,7 @@ function accountWith(overrides: Partial<Account> = {}): Account {
     deletionHeldAt: null,
     deletionHoldReason: null,
     quotaPauseExemptUntil: null,
+    freeWaitlistedAt: null,
     ...NO_LIMIT_OVERRIDES,
     createdAt: NOW,
     ...overrides,

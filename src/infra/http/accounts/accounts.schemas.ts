@@ -46,12 +46,19 @@ export const signedUpSchema = z
     email: z.email(),
     session_token: z.string().regex(SESSION_TOKEN_PATTERN),
     account_id: z.uuid(),
+    account_status: z
+      .enum(ACCOUNT_STATUSES)
+      .describe(
+        'free when the owner starts on the free plan; incomplete when the account waits for its ' +
+          'subscription (the free plan closed or full); another status when a returning owner ' +
+          'gets an account that already runs.',
+      ),
   })
   .meta({
     id: 'SignedUp',
     description:
       'The new (or returning) owner, their session token, kept by the dashboard like a sign-in, ' +
-      'and the account waiting for its subscription.',
+      'and their account: on the free plan, or waiting for its subscription.',
   });
 
 export const checkoutRequestSchema = z

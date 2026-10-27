@@ -42,6 +42,7 @@ const ACCOUNT: Account = {
   deletionHeldAt: null,
   deletionHoldReason: null,
   quotaPauseExemptUntil: null,
+  freeWaitlistedAt: null,
   eventsPerMonthLimit: null,
   projectsLimit: null,
   peopleLimit: null,

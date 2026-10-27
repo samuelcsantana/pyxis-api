@@ -27,6 +27,7 @@ function signUpController(settings: SignUpSettings) {
           email: EMAIL,
           sessionToken: 'fresh-token',
           accountId: ACCOUNT_ID,
+          accountStatus: 'free',
         });
       },
     } as unknown as CompleteSignUpUseCase,
@@ -80,7 +81,12 @@ describe('SignUpController', () => {
       request,
     );
 
-    expect(body).toEqual({ email: EMAIL, session_token: 'fresh-token', account_id: ACCOUNT_ID });
+    expect(body).toEqual({
+      email: EMAIL,
+      session_token: 'fresh-token',
+      account_id: ACCOUNT_ID,
+      account_status: 'free',
+    });
     expect(completions).toEqual([
       {
         email: EMAIL,

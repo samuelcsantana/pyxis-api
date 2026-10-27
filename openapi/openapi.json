@@ -3723,11 +3723,25 @@
       },
       "SignedUp": {
         "additionalProperties": false,
-        "description": "The new (or returning) owner, their session token, kept by the dashboard like a sign-in, and the account waiting for its subscription.",
+        "description": "The new (or returning) owner, their session token, kept by the dashboard like a sign-in, and their account: on the free plan, or waiting for its subscription.",
         "properties": {
           "account_id": {
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "account_status": {
+            "description": "free when the owner starts on the free plan; incomplete when the account waits for its subscription (the free plan closed or full); another status when a returning owner gets an account that already runs.",
+            "enum": [
+              "incomplete",
+              "trialing",
+              "active",
+              "past_due",
+              "ending",
+              "ended",
+              "comped",
+              "free"
+            ],
             "type": "string"
           },
           "email": {
@@ -3743,7 +3757,8 @@
         "required": [
           "email",
           "session_token",
-          "account_id"
+          "account_id",
+          "account_status"
         ],
         "type": "object"
       },
@@ -5382,7 +5397,7 @@
     },
     "/v1/auth/sign-up/verify": {
       "post": {
-        "description": "Records the acceptance of the terms version given, which must be the current one (409 otherwise). An owner who already has a live account gets that account back.",
+        "description": "Records the acceptance of the terms version given, which must be the current one (409 otherwise). An owner who already has a live account gets that account back. While the free plan is open and has a place, the account starts on it; when it is full, the account waits for its subscription or for a place.",
         "operationId": "SignUpController_verify",
         "parameters": [],
         "requestBody": {
@@ -5457,7 +5472,7 @@
             "description": ""
           }
         },
-        "summary": "Exchange a sign-up code for a session and an account waiting for its subscription",
+        "summary": "Exchange a sign-up code for a session and an account",
         "tags": [
           "sign-up"
         ]
