@@ -4,6 +4,7 @@ import { StubOverviewQuery } from '../../test-utils/stub-overview.query';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { StubRequestsQuery } from '../../test-utils/stub-requests.query';
 import { BuildWeeklyDigestUseCase } from './build-weekly-digest.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const SHOP: Project = {
   id: 'shop',
@@ -131,6 +132,7 @@ describe('BuildWeeklyDigestUseCase', () => {
         timeZone: 'America/Sao_Paulo',
         conversionEvent: 'signup_completed',
         range: WEEK,
+        filters: NO_REPORT_FILTERS,
         screen: null,
         kind: 'writes',
       },

@@ -1,12 +1,13 @@
 import { type SQL, sql, type SQLWrapper } from 'drizzle-orm';
 import { likePattern } from '../../domain/queries/funnel';
+import type { QueryScope } from '../../domain/queries/query-scope';
 import type {
   ReportFilters,
   VisitEventFilter,
   VisitIdentity,
 } from '../../domain/queries/report-filters';
 import { events } from '../database/schema/events';
-import { entrySource, isEntryPageView, isFailedRequest, isPageView } from './definitions';
+import { entrySource, inPeriod, isEntryPageView, isFailedRequest, isPageView } from './definitions';
 
 function pageConditions(paths: readonly string[]): readonly SQL[] {
   return paths.map(
@@ -45,14 +46,23 @@ function failureConditions(failed: boolean): readonly SQL[] {
   return failed ? [sql`bool_or(${isFailedRequest})`] : [];
 }
 
-export function reportFilterConditions(filters: ReportFilters): readonly SQL[] {
+function equalTo(column: SQLWrapper, wanted: string | null): readonly SQL[] {
+  return wanted === null ? [] : [sql`${column} = ${wanted}`];
+}
+
+function deviceConditions(filters: ReportFilters): readonly SQL[] {
+  return [
+    ...equalTo(events.deviceType, filters.deviceType),
+    ...equalTo(events.browser, filters.browser),
+    ...equalTo(events.os, filters.os),
+  ];
+}
+
+function visitConditions(filters: ReportFilters): readonly SQL[] {
   return [
     ...pageConditions(filters.paths),
     ...eventConditions(filters.event),
     ...anyEventWith(events.channel, filters.channel),
-    ...anyEventWith(events.deviceType, filters.deviceType),
-    ...anyEventWith(events.browser, filters.browser),
-    ...anyEventWith(events.os, filters.os),
     ...identityConditions(filters.identity),
     ...anyEventWith(events.country, filters.country),
     ...anyEventWith(events.region, filters.region),
@@ -60,4 +70,28 @@ export function reportFilterConditions(filters: ReportFilters): readonly SQL[] {
     ...entryWith(events.utmCampaign, filters.campaign),
     ...failureConditions(filters.failed),
   ];
+}
+
+export function reportFilterConditions(filters: ReportFilters): readonly SQL[] {
+  return [
+    ...visitConditions(filters),
+    ...deviceConditions(filters).map((condition) => sql`bool_or(${condition})`),
+  ];
+}
+
+export function inScope(scope: QueryScope): SQL {
+  const inPeriodOnDevice = sql.join(
+    [inPeriod(scope), ...deviceConditions(scope.filters)],
+    sql` AND `,
+  );
+  const conditions = visitConditions(scope.filters);
+  if (conditions.length === 0) {
+    return inPeriodOnDevice;
+  }
+  return sql`${inPeriodOnDevice} AND ${events.sessionId} IN (
+    SELECT ${events.sessionId} FROM ${events}
+    WHERE ${inPeriodOnDevice}
+    GROUP BY ${events.sessionId}
+    HAVING ${sql.join([...conditions], sql` AND `)}
+  )`;
 }

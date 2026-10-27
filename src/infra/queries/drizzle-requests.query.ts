@@ -15,7 +15,8 @@ import type {
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { hasFailed, inScope, isFailedRead, isWrite, localDay } from './definitions';
+import { hasFailed, isFailedRead, isWrite, localDay } from './definitions';
+import { inScope } from './report-filters';
 
 const method = sql`${events.properties}->>'method'`;
 const route = sql`${events.properties}->>'route'`;

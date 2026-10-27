@@ -4,6 +4,7 @@ import type { FunnelStep } from '../../domain/queries/funnel';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubFunnelQuery } from '../../test-utils/stub-funnel.query';
 import { GetFunnelSegmentsUseCase } from './get-funnel-segments.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -47,6 +48,7 @@ describe('GetFunnelSegmentsUseCase', () => {
           timeZone: 'America/Sao_Paulo',
           conversionEvent: 'signup_completed',
           range: { from: '2026-09-06', to: '2026-10-05' },
+          filters: NO_REPORT_FILTERS,
         },
         steps: STEPS,
         by: 'device',

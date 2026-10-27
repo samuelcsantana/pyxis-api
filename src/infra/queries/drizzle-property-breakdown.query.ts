@@ -9,7 +9,8 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope, isNamedEvent } from './definitions';
+import { isNamedEvent } from './definitions';
+import { inScope } from './report-filters';
 
 function ofEvent(scope: QueryScope, name: string): SQL {
   return sql`${inScope(scope)} AND ${isNamedEvent} AND ${events.name} = ${name}`;

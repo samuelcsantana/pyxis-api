@@ -18,7 +18,7 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { inScope } from './definitions';
+import { inScope } from './report-filters';
 
 function subjectEvents(scope: QueryScope, mode: FunnelMode): SQL {
   if (mode === 'visit') {

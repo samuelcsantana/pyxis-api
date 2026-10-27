@@ -10,7 +10,8 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { entrySource, inScope, isConversion, isEntryPageView, localDay } from './definitions';
+import { entrySource, isConversion, isEntryPageView, localDay } from './definitions';
+import { inScope } from './report-filters';
 
 function sessionEntries(scope: QueryScope): SQL {
   return sql`

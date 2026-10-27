@@ -14,6 +14,7 @@ import {
   type ProjectActivityQuery,
 } from '../../domain/queries/project-activity';
 import type { QueryScope } from '../../domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 import { REQUESTS_QUERY, type RequestsQuery, type RouteTotal } from '../../domain/queries/requests';
 
 function failingRoutes(routes: readonly RouteTotal[]): readonly FailingRoute[] {
@@ -36,6 +37,7 @@ export class BuildWeeklyDigestUseCase {
       timeZone: project.timezone,
       conversionEvent: project.conversionEvent,
       range: week,
+      filters: NO_REPORT_FILTERS,
     };
     const previous: QueryScope = { ...current, range: previousRange(week) };
     const [now, before, sparseDays, topPages, topEvents, routes, activity] = await Promise.all([

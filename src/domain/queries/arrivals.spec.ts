@@ -9,6 +9,7 @@ import {
   MAX_ARRIVAL_TIMES,
 } from './arrivals';
 import type { QueryScope } from './query-scope';
+import { NO_REPORT_FILTERS } from './report-filters';
 
 const AS_OF = new Date('2026-10-23T17:05:12.000Z');
 const SCOPE: QueryScope = {
@@ -16,6 +17,7 @@ const SCOPE: QueryScope = {
   timeZone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-23', to: '2026-10-23' },
+  filters: NO_REPORT_FILTERS,
 };
 
 function secondsBefore(seconds: number): Date {

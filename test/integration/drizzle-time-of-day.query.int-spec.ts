@@ -1,12 +1,14 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleTimeOfDayQuery } from '../../src/infra/queries/drizzle-time-of-day.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import { filteredScope, MOBILE_ONLY, seedMobileAndDesktopVisits } from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -59,6 +61,7 @@ const SCOPE: QueryScope = {
   timeZone: 'America/Sao_Paulo',
   conversionEvent: null,
   range: { from: '2026-10-01', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 describe('DrizzleTimeOfDayQuery against a real Postgres', () => {
@@ -77,6 +80,7 @@ describe('DrizzleTimeOfDayQuery against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db);
   });
 
   afterAll(async () => {
@@ -95,5 +99,16 @@ describe('DrizzleTimeOfDayQuery against a real Postgres', () => {
     expect(
       await query.visitStarts({ ...SCOPE, range: { from: '2026-09-01', to: '2026-09-19' } }),
     ).toEqual([]);
+  });
+
+  it('counts only the visits the filters select', async () => {
+    const hours = async (filters = {}) =>
+      (await query.visitStarts(filteredScope(filters))).map((cell) => [cell.hour, cell.visits]);
+
+    expect(await hours()).toEqual([
+      [10, 1],
+      [11, 1],
+    ]);
+    expect(await hours(MOBILE_ONLY)).toEqual([[10, 1]]);
   });
 });

@@ -4,6 +4,7 @@ import { TOP_ITEMS } from '../../domain/queries/overview';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubOverviewQuery } from '../../test-utils/stub-overview.query';
 import { GetOverviewUseCase } from './get-overview.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -109,6 +110,7 @@ describe('GetOverviewUseCase', () => {
       timeZone: 'America/Sao_Paulo',
       conversionEvent: 'signup_completed',
       range: { from: '2026-10-05', to: '2026-10-05' },
+      filters: NO_REPORT_FILTERS,
     });
   });
 
@@ -137,6 +139,21 @@ describe('GetOverviewUseCase', () => {
     for (const scope of scopesFrom(query, '2026-10-03')) {
       expect(scope.lastDayUntil).toBeUndefined();
     }
+  });
+
+  it('applies the filters to the range and to the previous period, up to the same cutoff', async () => {
+    const query = new StubOverviewQuery();
+    const useCase = new GetOverviewUseCase(query, new FixedClock(LATE_EVENING_IN_SAO_PAULO));
+    const filters = { ...NO_REPORT_FILTERS, deviceType: 'mobile', channel: 'paid' } as const;
+
+    await useCase.execute(PROJECT, { from: '2026-10-03', to: '2026-10-05', filters });
+
+    expect(query.scopes.length).toBeGreaterThan(0);
+    expect(query.scopes.every((scope) => scope.filters === filters)).toBe(true);
+    expect(scopesFrom(query, '2026-09-30')[0]).toMatchObject({
+      lastDayUntil: '23:30:00.000',
+      filters,
+    });
   });
 
   it('compares whole days when the range ended before today', async () => {

@@ -10,7 +10,8 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { convertingVisits, inScope, isConversion, visits } from './definitions';
+import { convertingVisits, isConversion, visits } from './definitions';
+import { inScope } from './report-filters';
 
 const DIMENSION_COLUMNS = {
   deviceType: events.deviceType,

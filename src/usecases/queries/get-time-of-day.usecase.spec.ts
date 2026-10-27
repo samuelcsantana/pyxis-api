@@ -3,6 +3,7 @@ import { InvalidRangeError } from '../../domain/errors/query.errors';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubTimeOfDayQuery } from '../../test-utils/stub-time-of-day.query';
 import { GetTimeOfDayUseCase } from './get-time-of-day.usecase';
+import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -35,6 +36,7 @@ describe('GetTimeOfDayUseCase', () => {
         timeZone: 'America/Sao_Paulo',
         conversionEvent: null,
         range: { from: '2026-09-06', to: '2026-10-05' },
+        filters: NO_REPORT_FILTERS,
       },
     ]);
     expect(report).toHaveLength(7);

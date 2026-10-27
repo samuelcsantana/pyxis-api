@@ -1,6 +1,7 @@
 import type postgres from 'postgres';
 import type { TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { ArrivalsAsk } from '../../src/domain/queries/arrivals';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
@@ -79,6 +80,7 @@ const TODAY: ArrivalsAsk = {
     timeZone: 'America/Sao_Paulo',
     conversionEvent: 'signup_completed',
     range: { from: '2026-10-23', to: '2026-10-23' },
+    filters: NO_REPORT_FILTERS,
   },
   since: new Date('2026-10-23T16:00:00.000Z'),
   activeSince: new Date('2026-10-23T17:00:00.000Z'),

@@ -1,12 +1,14 @@
 import type postgres from 'postgres';
 import type { Attribution, TrackedEvent } from '../../src/domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../src/domain/queries/query-scope';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
 import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleAcquisitionQuery } from '../../src/infra/queries/drizzle-acquisition.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
+import { filteredScope, MOBILE_ONLY, seedMobileAndDesktopVisits } from './filtered-visits';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -101,6 +103,7 @@ const SCOPE: QueryScope = {
   timeZone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   range: { from: '2026-10-04', to: '2026-10-05' },
+  filters: NO_REPORT_FILTERS,
 };
 
 const OCTOBER_3: QueryScope = { ...SCOPE, range: { from: '2026-10-03', to: '2026-10-03' } };
@@ -121,6 +124,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
       INSERT INTO projects (id, name) VALUES (${SHOP_ID}, 'Shop'), (${BLOG_ID}, 'Blog')
     `;
     await new DrizzleEventRepository(db).insertMany(SEEDED);
+    await seedMobileAndDesktopVisits(owner, db);
   });
 
   afterAll(async () => {
@@ -250,5 +254,26 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
     expect(
       await query.visitsByDayAndChannel({ ...SCOPE, projectId: BLOG_ID, timeZone: 'UTC' }),
     ).toEqual([{ date: '2026-10-05', channel: 'direct', visits: 1 }]);
+  });
+
+  it('counts only the visits the filters select', async () => {
+    expect(await query.visitsByDayAndChannel(filteredScope(MOBILE_ONLY))).toEqual([
+      { date: '2026-10-05', channel: 'paid', visits: 1 },
+    ]);
+    expect(await query.sources(filteredScope(MOBILE_ONLY), 20)).toEqual([
+      {
+        source: 'google',
+        medium: 'cpc',
+        channel: 'paid',
+        visits: 1,
+        conversions: 1,
+        convertingVisits: 1,
+        fromAdClickVisits: 1,
+      },
+    ]);
+    expect(await query.campaigns(filteredScope(MOBILE_ONLY), 20)).toMatchObject([
+      { campaign: 'spring_sale', visits: 1 },
+    ]);
+    expect(await query.campaigns(filteredScope({ identity: 'identified' }), 20)).toEqual([]);
   });
 });

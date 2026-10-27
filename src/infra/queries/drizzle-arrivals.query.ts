@@ -4,13 +4,8 @@ import type { ArrivalRows, ArrivalsAsk, ArrivalsQuery } from '../../domain/queri
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import {
-  inScope,
-  isConversion,
-  isEntryPageView,
-  isFailedRequest,
-  isNamedEvent,
-} from './definitions';
+import { isConversion, isEntryPageView, isFailedRequest, isNamedEvent } from './definitions';
+import { inScope } from './report-filters';
 
 interface ActiveVisitsRow extends Record<string, unknown> {
   readonly visits: number;
