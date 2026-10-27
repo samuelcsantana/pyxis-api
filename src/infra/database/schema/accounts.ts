@@ -8,6 +8,7 @@ import {
   primaryKey,
   smallint,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -44,6 +45,7 @@ export const accounts = pgTable(
     endedNotifiedAt: timestamp('ended_notified_at', { withTimezone: true }),
     deletionRemindedAt: timestamp('deletion_reminded_at', { withTimezone: true }),
     welcomedAt: timestamp('welcomed_at', { withTimezone: true }),
+    freeWaitlistedAt: timestamp('free_waitlisted_at', { withTimezone: true }),
     suspendedAt: timestamp('suspended_at', { withTimezone: true }),
     suspensionReason: varchar('suspension_reason', { length: MAX_SUSPENSION_REASON_LENGTH }),
     deletionHeldAt: timestamp('deletion_held_at', { withTimezone: true }),
@@ -58,6 +60,9 @@ export const accounts = pgTable(
   },
   (table) => [
     index('accounts_owner_admin_id_idx').on(table.ownerAdminId),
+    uniqueIndex('accounts_one_free_account_per_owner_idx')
+      .on(table.ownerAdminId)
+      .where(sql`${table.status} = 'free'`),
     check('accounts_status_check', sql`${table.status} in (${STATUS_VALUES})`),
   ],
 );
