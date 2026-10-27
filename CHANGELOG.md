@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.31.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.30.0...v0.31.0) (2026-10-27)
+
+
+### Features
+
+* **accounts:** withdraw from the paid plan back to the free plan ([536c3e2](https://github.com/samuelcsantana/pyxis-api/commit/536c3e29f20918d4da6d1a13de3d3c511870f242))
+* **billing:** move a free account onto the paid plan when it pays ([8551286](https://github.com/samuelcsantana/pyxis-api/commit/85512860ecbb055751f9bf8be2fbd25fe8706537))
+* **billing:** open Checkout from the free plan, without a trial ([d89864f](https://github.com/samuelcsantana/pyxis-api/commit/d89864f9ab49c4518cbc188621c04c16b8c8e9c6))
+* **config:** add the switch that stops offering the trial ([9096e7c](https://github.com/samuelcsantana/pyxis-api/commit/9096e7cc28d343538173e374ea93b6ae15d22fc9))
+* **db:** mark the subscription confirmation a free account is due ([1c44ef9](https://github.com/samuelcsantana/pyxis-api/commit/1c44ef91954a81dbb61ea6e00ec20206d250a044))
+* **mail:** confirm a withdrawal back to the free plan by e-mail ([2d4cf0d](https://github.com/samuelcsantana/pyxis-api/commit/2d4cf0d9d7cf14a98eae090a822407a882bccbff))
+* **mail:** confirm the subscription of a free account that starts paying ([c771aba](https://github.com/samuelcsantana/pyxis-api/commit/c771aba43fb26ee8975033e358484532c53b6a0d))
+
+
+### Refactoring
+
+* **site-icons:** ask the resolver for its own order, not the deprecated flag ([1e0f83b](https://github.com/samuelcsantana/pyxis-api/commit/1e0f83b1d9a88513436016e1003e79e9794dd88b))
+
+
+### Documentation
+
+* record subscribing from the free plan and withdrawing back to it (ADR 0050) ([eb07016](https://github.com/samuelcsantana/pyxis-api/commit/eb0701612a5f07ad652b632ed512536f9ccd0b25))
+
 ## [0.30.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.29.0...v0.30.0) (2026-10-27)
 
 
