@@ -238,4 +238,20 @@ describe('POST /v1/billing/stripe/webhook', () => {
     });
     jest.restoreAllMocks();
   });
+
+  it('does not record a card again once the trial is over, after the retention purge removed it', async () => {
+    await owner`DELETE FROM trial_cards WHERE account_id = ${ACCOUNT_ID}`;
+    stripe.answer('GET', '/v1/subscriptions/sub_e2e', { body: subscription('active') });
+    const { payload, signature } = signedEvent('evt_e2e_6', 'customer.subscription.updated', {
+      ...subscription('active'),
+    });
+
+    const response = await deliver(payload, signature);
+
+    expect(response.json()).toEqual({ received: 'applied' });
+    const cards = await owner<{ account_id: string }[]>`
+      SELECT account_id FROM trial_cards WHERE fingerprint = ${CARD_FINGERPRINT}
+    `;
+    expect(cards).toEqual([{ account_id: SECOND_ACCOUNT_ID }]);
+  });
 });

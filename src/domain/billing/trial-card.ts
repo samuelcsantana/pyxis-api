@@ -12,7 +12,8 @@ export function trialCardOf(
   at: Date,
 ): TrialCard | null {
   const fingerprint = subscription.cardFingerprint;
-  if (subscription.trialEndsAt === null || fingerprint === null) {
+  const trialing = subscription.status === 'trialing' && subscription.trialEndsAt !== null;
+  if (!trialing || fingerprint === null) {
     return null;
   }
   return { fingerprint, accountId, trialStartedAt: at };

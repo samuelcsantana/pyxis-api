@@ -29,4 +29,11 @@ describe('trialCardOf', () => {
     expect(trialCardOf(ACCOUNT_ID, { ...TRIALING, trialEndsAt: null }, NOW)).toBeNull();
     expect(trialCardOf(ACCOUNT_ID, { ...TRIALING, cardFingerprint: null }, NOW)).toBeNull();
   });
+
+  it.each(['active', 'past_due', 'canceled', 'unpaid'])(
+    'records nothing once the trial is over, even though Stripe keeps its end date (%s)',
+    (status) => {
+      expect(trialCardOf(ACCOUNT_ID, { ...TRIALING, status }, NOW)).toBeNull();
+    },
+  );
 });
