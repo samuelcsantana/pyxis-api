@@ -213,10 +213,11 @@ Shipping now:
   without an account is the operator's own, as every project was before, with no plan and no
   quota ([ADR 0016](docs/adr/0016-accounts-own-projects.md))
 - A monthly quota for those accounts: the daily job counts each account's events in the current
-  calendar month (UTC) and keeps the figure; an account past 150% of its plan (100,000 events) is
-  paused until the month turns, and its batches are answered `403 quota_exceeded`, readable by
-  the site's origin so the tracker drops them instead of retrying. Free (`comped`) accounts and the
-  operator's projects are never paused
+  calendar month (UTC) and keeps the figure; an account past its plan's pause point (150% of the
+  paid plan's 100,000 events, 100% of the free plan's 10,000) is paused until the month turns, and
+  its batches are answered `403 quota_exceeded`, readable by the site's origin so the tracker
+  drops them instead of retrying. Accounts the operator gives (`comped`) and the operator's
+  projects are never paused
   ([ADR 0017](docs/adr/0017-monthly-quota-measured-daily.md)). The owner is told by e-mail once
   per level and month, in their language: at 80%, at 100% (nothing is cut off) and when the pause
   starts; a failed e-mail is tried again the next day, and the optional `SUPPORT_EMAIL` is named in
@@ -228,6 +229,13 @@ Shipping now:
   (`account:limits`), used by the measurement, its notices, project creation, adding people and
   `GET /v1/me/accounts`; lowering a limit deletes nothing
   ([ADR 0036](docs/adr/0036-a-larger-plan-is-limits-on-the-account.md))
+- A free plan, as the account status `free`: 10,000 events a month, 1 project and 1 person, the
+  owner alone, with every feature; it has access and no subscription, its owner gets the notices
+  sent to every owner, the operator's limits still apply on top, and its measuring pauses at
+  100% of the month instead of 150%. `GET /v1/me/accounts` answers `pause_at_events`, so the
+  dashboard never copies the ratio. Nothing creates a free account yet: sign-up into it comes
+  next, behind its own switch
+  ([ADR 0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -450,7 +458,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 | `npm run -s reviewer:open -- --email <email> [--days <n>]`                                                                                                      | Gives an existing admin a reviewer code, printed once (`code=`), valid for a year by default; replaces any code they had and its failed attempts                                                                |
 | `npm run -s reviewer:close -- --email <email>`                                                                                                                  | Ends the admin's reviewer code; the address is e-mailed sign-in codes again                                                                                                                                     |
 | `npm run -s usage:report -- [--month YYYY-MM]`                                                                                                                  | For every project, the events and distinct visits received in a calendar month in UTC (the current one by default), as tab-separated lines, busiest first                                                       |
-| `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a free (comped) account for the owner, creating the admin when needed, and prints its id                                                                                                                  |
+| `npm run -s account:create -- --owner-email <email>`                                                                                                            | Opens a comped account for the owner (the paid plan's limits, never billed), creating the admin when needed, and prints its id                                                                                  |
 | `npm run -s account:show -- --account <id>`                                                                                                                     | Prints the account's status and owner, its projects and people against the plan limits, the month's events as last measured, any pause, and one line per project                                                |
 | `npm run -s account:link -- --account <id> --subscription <sub_…>`                                                                                              | Ties a subscription paid outside sign-up (a payment link) to the account and copies its state; needs `STRIPE_SECRET_KEY`                                                                                        |
 | `npm run -s account:suspend -- --account <id> --reason "<why>"`                                                                                                 | Suspends the account for abuse, keeping the reason the owner was told (500 characters at most); its projects stop taking events and opening in the dashboard within a minute                                    |
@@ -832,6 +840,7 @@ What differs from the hosted service:
 | [0045](docs/adr/0045-a-client-that-is-no-browser-is-refused.md)                       | A client that is no browser is refused, not only one that says "bot"       |
 | [0046](docs/adr/0046-traffic-from-cloud-data-centers-is-refused.md)                   | Traffic from cloud data centers is refused                                 |
 | [0047](docs/adr/0047-a-filter-selects-visits.md)                                      | A filter selects visits, and every report counts their events              |
+| [0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md)                  | A free plan is a status with its own limits                                |
 
 ## Roadmap
 
@@ -874,6 +883,8 @@ What differs from the hosted service:
 - [x] Every e-mail in seven languages
 - [x] A reviewer code for connector directory reviewers, opened and closed by the operator
 - [x] Demo traffic: invented visits added every day to a project of the operator
+- [x] The free plan's status, limits and pause at 100%
+- [ ] Sign-up into the free plan, subscribing from it and falling back to it, behind a switch
 
 ## Contributing and license
 
