@@ -640,7 +640,7 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         paragraphs: (w) => [
           'Je betaalde abonnement is beëindigd en je account staat weer op het gratis abonnement, met de projecten, hun gegevens en hun sleutels: je sites blijven events naar Pyxis sturen.',
           `Het gratis abonnement meet tot ${w.monthlyEvents} events per maand. Heeft deze maand dat aantal al bereikt, dan pauzeert het meten tot de 1e en gaat het daarna vanzelf weer verder.`,
-          'Wil je meer meten? Neem opnieuw een abonnement via de accountpagina. Wil je Pyxis liever verlaten? Sluit dan daar het account.',
+          'Wil je meer meten? Neem opnieuw een abonnement via de accountpagina. Wil je Pyxis liever verlaten? Hef dan daar het account op.',
         ],
       },
       empty_free_account: {

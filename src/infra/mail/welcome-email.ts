@@ -72,6 +72,7 @@ function planText(
             pauseAt: count.format(plan.pauseAtEvents),
           }),
           messages.nextStep,
+          messages.freeInactivity,
         ],
         reason: messages.freeReason,
       };
