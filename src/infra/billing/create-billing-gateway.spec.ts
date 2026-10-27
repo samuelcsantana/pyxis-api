@@ -54,6 +54,7 @@ describe('UnconfiguredBillingGateway', () => {
     await expect(gateway.createPortal()).rejects.toBeInstanceOf(BillingUnavailableError);
     await expect(gateway.subscription()).rejects.toBeInstanceOf(BillingUnavailableError);
     await expect(gateway.cancelSubscription()).rejects.toBeInstanceOf(BillingUnavailableError);
+    await expect(gateway.firstPaymentAt()).rejects.toBeInstanceOf(BillingUnavailableError);
     await expect(gateway.refundFirstPaymentSince()).rejects.toBeInstanceOf(BillingUnavailableError);
     await expect(gateway.latestPaidInvoice()).rejects.toBeInstanceOf(BillingUnavailableError);
     await expect(gateway.refundInvoice()).rejects.toBeInstanceOf(BillingUnavailableError);

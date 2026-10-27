@@ -87,3 +87,27 @@ export class AccountSuspendedError extends DomainError {
     super('The account is suspended: its owner was told why by e-mail and can contest it.');
   }
 }
+
+export class FreePlanClosedError extends DomainError {
+  readonly code = 'free_plan_closed';
+
+  constructor() {
+    super('The free plan takes no account now: closing the account is the way to withdraw.');
+  }
+}
+
+export class WithdrawalUnavailableError extends DomainError {
+  readonly code = 'withdrawal_unavailable';
+
+  constructor() {
+    super('The account has no paid subscription to withdraw from.');
+  }
+}
+
+export class WithdrawalWindowClosedError extends DomainError {
+  readonly code = 'withdrawal_window_closed';
+
+  constructor() {
+    super('The 7 days to withdraw from the first payment of this subscription are over.');
+  }
+}

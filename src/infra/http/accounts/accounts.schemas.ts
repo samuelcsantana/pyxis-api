@@ -151,6 +151,22 @@ export const closeAccountSchema = z
   })
   .meta({ id: 'CloseAccountRequest', description: 'The confirmation of a closure.' });
 
+export const withdrawnSchema = z
+  .strictObject({
+    status: z.literal('free'),
+    refunded_amount: z
+      .int()
+      .describe(
+        'What was refunded of the first payment, in the smallest unit of the currency ' +
+          '(centavos); 0 when the automatic refund failed and is done by hand',
+      ),
+  })
+  .meta({
+    id: 'Withdrawn',
+    description:
+      'The subscription cancelled now and its first payment refunded: the account is back on the free plan.',
+  });
+
 export const closedAccountSchema = z
   .strictObject({
     access_ends_at: z.iso.datetime(),
@@ -179,4 +195,5 @@ export type PortalRequestBody = z.infer<typeof portalRequestSchema>;
 export type BillingRedirectBody = z.infer<typeof billingRedirectSchema>;
 export type MyAccountsBody = z.infer<typeof myAccountsSchema>;
 export type CloseAccountBody = z.infer<typeof closeAccountSchema>;
+export type WithdrawnBody = z.infer<typeof withdrawnSchema>;
 export type ClosedAccountBody = z.infer<typeof closedAccountSchema>;

@@ -50,6 +50,7 @@ export interface BillingGateway {
   ): Promise<{ readonly url: string }>;
   subscription(subscriptionId: string): Promise<BillingSubscription>;
   cancelSubscription(subscriptionId: string): Promise<void>;
+  firstPaymentAt(subscriptionId: string): Promise<Date | null>;
   refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number>;
   latestPaidInvoice(subscriptionId: string): Promise<PaidInvoice | null>;
   refundInvoice(invoiceId: string, amount: number): Promise<number>;

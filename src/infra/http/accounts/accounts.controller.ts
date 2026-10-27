@@ -14,6 +14,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { resolveEmailLanguage } from '../../../domain/auth/email-language';
 import { CloseAccountUseCase } from '../../../usecases/accounts/close-account.usecase';
+import { WithdrawToFreePlanUseCase } from '../../../usecases/accounts/withdraw-to-free-plan.usecase';
 import {
   ListMyAccountsUseCase,
   type MyAccount,
@@ -33,6 +34,8 @@ import {
   closeAccountSchema,
   type ClosedAccountBody,
   closedAccountSchema,
+  type WithdrawnBody,
+  withdrawnSchema,
   type CheckoutRequestBody,
   checkoutRequestSchema,
   type MyAccountsBody,
@@ -92,6 +95,7 @@ export class AccountsController {
     private readonly startCheckout: StartCheckoutUseCase,
     private readonly openBillingPortal: OpenBillingPortalUseCase,
     private readonly closeAccount: CloseAccountUseCase,
+    private readonly withdrawToFreePlan: WithdrawToFreePlanUseCase,
   ) {}
 
   @Get('me/accounts')
@@ -158,6 +162,34 @@ export class AccountsController {
       accountId,
       language: resolveEmailLanguage(body.locale),
     });
+  }
+
+  @Post('accounts/:accountId/withdraw')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Withdraw from the paid plan and go back to the free plan',
+    description:
+      'Only the owner, while the free plan is open, within 7 days of the first payment of the ' +
+      'subscription: cancels it at once, refunds that payment in full and puts the account back ' +
+      'on the free plan, with its projects and data. 409 free_plan_closed, ' +
+      'withdrawal_unavailable (no paid subscription) or withdrawal_window_closed otherwise.',
+  })
+  @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: withdrawnSchema })
+  @ApiResponse({ status: HttpStatus.FORBIDDEN, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.CONFLICT, standardSchema: errorResponseSchema })
+  @ApiResponse({ status: HttpStatus.SERVICE_UNAVAILABLE, standardSchema: errorResponseSchema })
+  async withdraw(
+    @Req() request: FastifyRequest,
+    @Param('accountId', new SchemaPipe(accountIdSchema)) accountId: string,
+  ): Promise<WithdrawnBody> {
+    const withdrawn = await this.withdrawToFreePlan.execute({
+      adminUserId: adminOf(request).id,
+      accountId,
+    });
+    return { status: 'free', refunded_amount: withdrawn.refundedAmount };
   }
 
   @Post('accounts/:accountId/close')

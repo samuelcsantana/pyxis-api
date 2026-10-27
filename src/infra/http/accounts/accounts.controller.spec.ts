@@ -1,3 +1,7 @@
+import type {
+  WithdrawToFreePlanCommand,
+  WithdrawToFreePlanUseCase,
+} from '../../../usecases/accounts/withdraw-to-free-plan.usecase';
 import type { FastifyRequest } from 'fastify';
 import { HOSTED_PLAN_LIMITS } from '../../../domain/accounts/hosted-plan';
 import type { Account } from '../../../domain/entities/account.entity';
@@ -58,6 +62,7 @@ function accountsController(accounts: readonly MyAccount[] = []) {
   const checkouts: StartCheckoutCommand[] = [];
   const portals: OpenBillingPortalCommand[] = [];
   const closures: CloseAccountCommand[] = [];
+  const withdrawals: WithdrawToFreePlanCommand[] = [];
   const controller = new AccountsController(
     { execute: () => Promise.resolve(accounts) } as unknown as ListMyAccountsUseCase,
     {
@@ -82,8 +87,14 @@ function accountsController(accounts: readonly MyAccount[] = []) {
         });
       },
     } as unknown as CloseAccountUseCase,
+    {
+      execute: (command: WithdrawToFreePlanCommand) => {
+        withdrawals.push(command);
+        return Promise.resolve({ refundedAmount: 3900 });
+      },
+    } as unknown as WithdrawToFreePlanUseCase,
   );
-  return { controller, checkouts, portals, closures };
+  return { controller, checkouts, portals, closures, withdrawals };
 }
 
 describe('myAccountBody', () => {
@@ -317,5 +328,19 @@ describe('AccountsController', () => {
       deletion_on: '2026-12-20T15:00:00.000Z',
       refunded_amount: 3900,
     });
+  });
+});
+
+describe('AccountsController withdraw', () => {
+  it('withdraws the account of the signed-in owner and answers the refund and the free plan', async () => {
+    const { controller, withdrawals } = accountsController();
+
+    expect(await controller.withdraw(signedIn(), 'acc00000-0000-4000-a000-000000000001')).toEqual({
+      status: 'free',
+      refunded_amount: 3900,
+    });
+    expect(withdrawals).toEqual([
+      { adminUserId: ADMIN.id, accountId: 'acc00000-0000-4000-a000-000000000001' },
+    ]);
   });
 });

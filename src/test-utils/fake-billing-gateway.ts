@@ -29,6 +29,7 @@ export class FakeBillingGateway implements BillingGateway {
   cancelFailure: Error | null = null;
   refundFailure: Error | null = null;
   private readonly subscriptions = new Map<string, BillingSubscription>();
+  private readonly firstPayments = new Map<string, Date>();
   private nextEvent: BillingEvent | null = null;
 
   addSubscription(subscription: BillingSubscription): void {
@@ -67,6 +68,14 @@ export class FakeBillingGateway implements BillingGateway {
     }
     this.cancelled.push(subscriptionId);
     return Promise.resolve();
+  }
+
+  firstPaymentAt(subscriptionId: string): Promise<Date | null> {
+    return Promise.resolve(this.firstPayments.get(subscriptionId) ?? null);
+  }
+
+  paidFirstOn(subscriptionId: string, at: Date): void {
+    this.firstPayments.set(subscriptionId, at);
   }
 
   refundFirstPaymentSince(subscriptionId: string, since: Date): Promise<number> {
