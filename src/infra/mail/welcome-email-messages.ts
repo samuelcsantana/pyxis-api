@@ -24,6 +24,7 @@ export interface WelcomeEmailMessages {
   readonly freePreheader: string;
   readonly freeConfirmed: (plan: FreePlanText) => string;
   readonly freeReason: string;
+  readonly freeInactivity: string;
   readonly nextStep: string;
   readonly terms: (terms: AcceptedTerms) => string;
   readonly openDashboard: string;
@@ -59,6 +60,8 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `${counted(plan.people, 'person', 'people')}, with every feature. Measuring pauses when ` +
       `the month reaches ${plan.pauseAt} events and comes back on the 1st. You can subscribe ` +
       'to the paid plan at any time, in Account and billing.',
+    freeInactivity:
+      'A free account that stores no events in its first 30 days, or none for 90 days in a row, is deleted seven days after an email notice; a paid account never is.',
     freeReason: 'You received this email because you created a Pyxis account.',
     openDashboard: 'Open the dashboard',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.en.about,
@@ -91,6 +94,8 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `${counted(plan.people, 'pessoa', 'pessoas')}, com todas as funções. A medição pausa ` +
       `quando o mês chega a ${plan.pauseAt} eventos e volta no dia 1º. Você pode assinar o ` +
       'plano pago quando quiser, em Conta e cobrança.',
+    freeInactivity:
+      'Uma conta grátis que não guardar nenhum evento nos primeiros 30 dias, ou ficar 90 dias seguidos sem eventos, é apagada sete dias depois de um aviso por e-mail; uma conta paga nunca é.',
     freeReason: 'Você recebeu este e-mail porque criou uma conta no Pyxis.',
     openDashboard: 'Abrir o painel',
     about: SIGN_IN_CODE_EMAIL_MESSAGES['pt-BR'].about,
@@ -123,6 +128,8 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `${counted(plan.people, 'persona', 'personas')}, con todas las funciones. La medición se ` +
       `pausa cuando el mes llega a ${plan.pauseAt} eventos y vuelve el día 1. Puedes ` +
       'suscribirte al plan de pago cuando quieras, en Cuenta y facturación.',
+    freeInactivity:
+      'Una cuenta gratis que no guarde ningún evento en sus primeros 30 días, o pase 90 días seguidos sin eventos, se elimina siete días después de un aviso por correo; una cuenta de pago, nunca.',
     freeReason: 'Recibiste este correo porque creaste una cuenta en Pyxis.',
     openDashboard: 'Abrir el panel',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.es.about,
@@ -158,6 +165,8 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `${counted(plan.people, 'Person', 'Personen')}, mit allen Funktionen. Die Messung ` +
       `pausiert, wenn der Monat ${plan.pauseAt} Ereignisse erreicht, und läuft am 1. wieder ` +
       'an. Du kannst den kostenpflichtigen Plan jederzeit unter Konto und Abrechnung abonnieren.',
+    freeInactivity:
+      'Ein kostenloses Konto, das in den ersten 30 Tagen keine Ereignisse speichert oder 90 Tage am Stück ohne Ereignisse bleibt, wird sieben Tage nach einer Benachrichtigung per E-Mail gelöscht; ein kostenpflichtiges Konto nie.',
     freeReason: 'Du hast diese E-Mail bekommen, weil du ein Pyxis-Konto erstellt hast.',
     openDashboard: 'Dashboard öffnen',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
@@ -192,7 +201,9 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `événements par mois, ${counted(plan.projects, 'projet', 'projets')} et ` +
       `${counted(plan.people, 'personne', 'personnes')}, avec toutes les fonctions. La mesure ` +
       `se met en pause quand le mois atteint ${plan.pauseAt} événements et reprend le 1er. ` +
-      'Vous pouvez souscrire à la formule payante à tout moment, dans Compte et facturation.',
+      'Vous pouvez vous abonner à la formule payante à tout moment, dans Compte et facturation.',
+    freeInactivity:
+      'Un compte gratuit qui n’enregistre aucun événement pendant ses 30 premiers jours, ou aucun pendant 90 jours d’affilée, est supprimé sept jours après un avis par e-mail\u00a0; un compte payant ne l’est jamais.',
     freeReason: 'Vous recevez cet e-mail parce que vous avez créé un compte Pyxis.',
     openDashboard: 'Ouvrir le tableau de bord',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
@@ -227,6 +238,8 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `${counted(plan.people, 'persona', 'persone')}, con tutte le funzioni. La misurazione va ` +
       `in pausa quando il mese arriva a ${plan.pauseAt} eventi e riprende il giorno 1. Puoi ` +
       'abbonarti al piano a pagamento quando vuoi, in Account e fatturazione.',
+    freeInactivity:
+      'Un account gratuito che non registra nessun evento nei primi 30 giorni, o nessuno per 90 giorni di fila, viene eliminato sette giorni dopo un avviso via email; un account a pagamento mai.',
     freeReason: 'Hai ricevuto questa email perché hai creato un account Pyxis.',
     openDashboard: 'Apri la dashboard',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
@@ -260,7 +273,9 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `per maand, ${counted(plan.projects, 'project', 'projecten')} en ` +
       `${counted(plan.people, 'persoon', 'personen')}, met alle functies. Het meten pauzeert ` +
       `wanneer de maand ${plan.pauseAt} events bereikt en gaat op de 1e weer verder. Je kunt ` +
-      'op elk moment het betaalde abonnement nemen, onder Account en facturering.',
+      'op elk moment het betaalde abonnement nemen, onder Account en facturatie.',
+    freeInactivity:
+      'Een gratis account dat in de eerste 30 dagen geen enkel event opslaat, of 90 dagen achter elkaar geen, wordt zeven dagen na een melding per e-mail verwijderd; een betaald account nooit.',
     freeReason: 'Je ontvangt deze e-mail omdat je een Pyxis-account hebt aangemaakt.',
     openDashboard: 'Dashboard openen',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,

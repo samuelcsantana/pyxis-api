@@ -60,6 +60,9 @@ describe('buildWelcomeEmail', () => {
     expect(email.html).toContain('up to 10,000 events a month, 1 project and 1 person');
     expect(email.html).toContain('Measuring pauses when the month reaches 10,000 events');
     expect(email.html).toContain('create your first project in the dashboard');
+    expect(email.html).toContain(
+      'A free account that stores no events in its first 30 days, or none for 90 days in a row',
+    );
     expect(email.html).toContain('because you created a Pyxis account.');
     expect(email.text).not.toContain('because you subscribed');
     expect(email.html).toContain('version 2026-11-01, written in Brazilian Portuguese');
