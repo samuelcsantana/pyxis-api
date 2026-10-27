@@ -107,6 +107,7 @@ describe('myAccountBody', () => {
       access_ends_at: '2027-11-15T00:00:00.000Z',
       ingestion_paused_until: '2026-12-01T00:00:00.000Z',
       quota_pause_exempt_until: null,
+      free_waitlisted_at: null,
       suspended_at: null,
       suspension_reason: null,
       deletion_held_at: null,
@@ -184,6 +185,26 @@ describe('myAccountBody', () => {
         pauseAtEvents: 150_000,
       }).quota_pause_exempt_until,
     ).toBe('2027-01-15T00:00:00.000Z');
+  });
+
+  it('shows the owner, and only the owner, since when the account waits for a free place', () => {
+    const waiting = {
+      ...ACCOUNT,
+      status: 'incomplete' as const,
+      freeWaitlistedAt: new Date('2026-11-20T09:00:00.000Z'),
+    };
+    const body = (role: 'owner' | 'member') =>
+      myAccountBody({
+        account: waiting,
+        role,
+        month: '2026-11',
+        usage: null,
+        limits: HOSTED_PLAN_LIMITS,
+        pauseAtEvents: 150_000,
+      }).free_waitlisted_at;
+
+    expect(body('owner')).toBe('2026-11-20T09:00:00.000Z');
+    expect(body('member')).toBeNull();
   });
 
   it('shows the owner, and only the owner, that the deletion is held', () => {

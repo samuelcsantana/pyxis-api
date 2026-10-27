@@ -3,6 +3,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const DELETION_GRACE_DAYS = 30;
 export const DELETION_REMINDER_DAYS = 7;
 export const INCOMPLETE_ACCOUNT_DAYS = 7;
+export const FREE_WAITLIST_DAYS = 60;
 export const WITHDRAWAL_DAYS = 7;
 export const ACCOUNT_DELETION_BATCH_SIZE = 5_000;
 
@@ -22,8 +23,16 @@ export function reminderThreshold(now: Date): Date {
   return daysBefore(now, DELETION_GRACE_DAYS - DELETION_REMINDER_DAYS);
 }
 
-export function incompleteThreshold(now: Date): Date {
-  return daysBefore(now, INCOMPLETE_ACCOUNT_DAYS);
+export interface StaleIncompleteThresholds {
+  readonly createdBefore: Date;
+  readonly waitlistedBefore: Date;
+}
+
+export function staleIncompleteThresholds(now: Date): StaleIncompleteThresholds {
+  return {
+    createdBefore: daysBefore(now, INCOMPLETE_ACCOUNT_DAYS),
+    waitlistedBefore: daysBefore(now, FREE_WAITLIST_DAYS),
+  };
 }
 
 export function withdrawalWindowStart(now: Date): Date {

@@ -438,6 +438,28 @@ describe('RunAccountLifecycleUseCase', () => {
     expect(lifecycle.account('paying')).toBeDefined();
   });
 
+  it('keeps a sign-up waiting for a free place for sixty days from when it started waiting', async () => {
+    const { lifecycle, useCase } = setup();
+    lifecycle.add({
+      accountId: 'waiting',
+      status: 'incomplete',
+      createdAt: daysAgo(30),
+      freeWaitlistedAt: daysAgo(30),
+    });
+    lifecycle.add({
+      accountId: 'gave-up',
+      status: 'incomplete',
+      createdAt: daysAgo(90),
+      freeWaitlistedAt: daysAgo(61),
+    });
+
+    const report = await useCase.execute();
+
+    expect(report).toMatchObject({ incompleteRemoved: 1 });
+    expect(lifecycle.account('waiting')).toBeDefined();
+    expect(lifecycle.account('gave-up')).toBeUndefined();
+  });
+
   it('fails the run when an abandoned account cannot be removed', async () => {
     const { lifecycle, useCase } = setup();
     lifecycle.add({ accountId: 'stuck', status: 'incomplete', createdAt: daysAgo(8) });

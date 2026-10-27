@@ -10,9 +10,11 @@ import {
   lt,
   lte,
   not,
+  or,
   type SQL,
   sql,
 } from 'drizzle-orm';
+import type { StaleIncompleteThresholds } from '../../domain/accounts/account-lifecycle';
 import type {
   AccountLifecycleRepository,
   EndedAccount,
@@ -122,7 +124,7 @@ export class DrizzleAccountLifecycleRepository implements AccountLifecycleReposi
     );
   }
 
-  staleIncomplete(createdBefore: Date): Promise<readonly StaleAccount[]> {
+  staleIncomplete(thresholds: StaleIncompleteThresholds): Promise<readonly StaleAccount[]> {
     return this.db
       .select({ accountId: accounts.id, ownerAdminId: accounts.ownerAdminId })
       .from(accounts)
@@ -130,7 +132,13 @@ export class DrizzleAccountLifecycleRepository implements AccountLifecycleReposi
         and(
           eq(accounts.status, 'incomplete'),
           isNull(accounts.stripeSubscriptionId),
-          lt(accounts.createdAt, createdBefore),
+          or(
+            and(
+              isNull(accounts.freeWaitlistedAt),
+              lt(accounts.createdAt, thresholds.createdBefore),
+            ),
+            lt(accounts.freeWaitlistedAt, thresholds.waitlistedBefore),
+          ),
           isNull(accounts.deletionHeldAt),
           not(
             exists(
