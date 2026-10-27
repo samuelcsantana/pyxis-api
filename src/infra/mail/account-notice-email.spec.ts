@@ -8,8 +8,17 @@ const DELETION_ON = new Date('2026-12-14T00:00:00.000Z');
 const ENDED: AccountNotice = { kind: 'access_ended', deletionOn: DELETION_ON };
 const REMINDER: AccountNotice = { kind: 'deletion_reminder', deletionOn: DELETION_ON };
 const DELETED: AccountNotice = { kind: 'account_deleted' };
-const WITHDRAWN: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 3900 };
-const WITHDRAWN_BY_HAND: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 0 };
+const WITHDRAWN: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 3900, fitBy: null };
+const WITHDRAWN_BY_HAND: AccountNotice = {
+  kind: 'withdrawn_to_free',
+  refundedAmount: 0,
+  fitBy: null,
+};
+const WITHDRAWN_OVER_THE_LIMITS: AccountNotice = {
+  kind: 'withdrawn_to_free',
+  refundedAmount: 3900,
+  fitBy: new Date('2026-12-20T15:00:00.000Z'),
+};
 const BACK_TO_FREE: AccountNotice = { kind: 'back_to_free', eventsPerMonth: 10_000 };
 const NOTICES: readonly AccountNotice[] = [
   ENDED,
@@ -17,6 +26,7 @@ const NOTICES: readonly AccountNotice[] = [
   DELETED,
   WITHDRAWN,
   WITHDRAWN_BY_HAND,
+  WITHDRAWN_OVER_THE_LIMITS,
   BACK_TO_FREE,
 ];
 
@@ -58,6 +68,19 @@ describe('buildAccountNoticeEmail', () => {
     expect(english.html).toContain('your account is back on the free plan, with its projects');
     expect(english.html).toContain('R$39.00 was refunded to your card.');
     expect(portuguese.html).toContain('R$\u00a039,00 foram devolvidos ao seu cartão.');
+  });
+
+  it('gives an account over the free plan the day to fit by, or it ends', () => {
+    const english = buildAccountNoticeEmail(WITHDRAWN_OVER_THE_LIMITS, 'en', LINKS, null);
+    const portuguese = buildAccountNoticeEmail(WITHDRAWN_OVER_THE_LIMITS, 'pt-BR', LINKS, null);
+    const fitting = buildAccountNoticeEmail(WITHDRAWN, 'en', LINKS, null);
+
+    expect(english.html).toContain('Remove what is over on the account page by December 20, 2026');
+    expect(english.html).toContain('its data is deleted 30 days later');
+    expect(english.html).not.toContain('apply again from now');
+    expect(portuguese.html).toContain('pela página da conta até 20 de dezembro de 2026');
+    expect(fitting.html).toContain('The free plan’s limits apply again from now');
+    expect(fitting.html).not.toContain('Remove what is over');
   });
 
   it('says a refund that did not go through is made by hand', () => {

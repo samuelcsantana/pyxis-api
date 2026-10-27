@@ -194,6 +194,25 @@ describe('FallBackToFreePlanUseCase', () => {
     expect(fallbacks.isNoticeDue(OTHER_ID)).toBe(true);
   });
 
+  it('ends a free account still over the plan on its deadline, and lets one that fits stay', async () => {
+    const { fallbacks, useCase } = setup();
+    const overTheLimits = { ...ENDING, status: 'free' as const, fit: { ...ENDING.fit, people: 2 } };
+    fallbacks.add(overTheLimits);
+    fallbacks.add({ ...ENDING, accountId: OTHER_ID, status: 'free' });
+    fallbacks.add({ ...overTheLimits, accountId: 'later' });
+    fallbacks.setFitDeadline(ACCOUNT_ID, NOW);
+    fallbacks.setFitDeadline(OTHER_ID, new Date(NOW.getTime() - 1));
+    fallbacks.setFitDeadline('later', new Date(NOW.getTime() + 1));
+
+    expect(await useCase.settleFitDeadlines(NOW)).toBe(1);
+
+    expect(fallbacks.ended).toEqual([{ accountId: ACCOUNT_ID, at: NOW }]);
+    expect(fallbacks.statusOf(ACCOUNT_ID)).toBe('ended');
+    expect(fallbacks.statusOf(OTHER_ID)).toBe('free');
+    expect(fallbacks.hasFitDeadline(OTHER_ID)).toBe(false);
+    expect(fallbacks.hasFitDeadline('later')).toBe(true);
+  });
+
   it('sends no notice to an account that is not due one', async () => {
     const { fallbacks, mail, useCase } = setup();
     fallbacks.add({ ...ENDING, status: 'free' });

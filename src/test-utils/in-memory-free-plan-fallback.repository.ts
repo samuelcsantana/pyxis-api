@@ -2,6 +2,7 @@ import { hasRunningSubscription, type AccountStatus } from '../domain/accounts/a
 import type { FreePlanFit } from '../domain/accounts/free-plan-fallback';
 import type {
   BackToFreeTarget,
+  FitDeadline,
   FreePlanFallbackRepository,
 } from '../domain/repositories/free-plan-fallback.repository';
 
@@ -13,10 +14,20 @@ export interface FallbackAccount extends BackToFreeTarget {
 export class InMemoryFreePlanFallbackRepository implements FreePlanFallbackRepository {
   private readonly accounts = new Map<string, FallbackAccount>();
   private readonly due = new Set<string>();
+  private readonly deadlines = new Map<string, Date>();
+  readonly ended: { readonly accountId: string; readonly at: Date }[] = [];
   readonly fellBack: { readonly accountId: string; readonly at: Date }[] = [];
 
   add(account: FallbackAccount): void {
     this.accounts.set(account.accountId, account);
+  }
+
+  setFitDeadline(accountId: string, at: Date): void {
+    this.deadlines.set(accountId, at);
+  }
+
+  hasFitDeadline(accountId: string): boolean {
+    return this.deadlines.has(accountId);
   }
 
   statusOf(accountId: string): AccountStatus | undefined {
@@ -59,6 +70,32 @@ export class InMemoryFreePlanFallbackRepository implements FreePlanFallbackRepos
 
   markNotified(accountId: string): Promise<void> {
     this.due.delete(accountId);
+    return Promise.resolve();
+  }
+
+  fitDeadlinesDue(now: Date): Promise<readonly FitDeadline[]> {
+    return Promise.resolve(
+      [...this.accounts.values()]
+        .filter((account) => {
+          const deadline = this.deadlines.get(account.accountId);
+          return account.status === 'free' && deadline !== undefined && deadline <= now;
+        })
+        .map((account) => ({ accountId: account.accountId, fit: account.fit })),
+    );
+  }
+
+  clearFitDeadline(accountId: string): Promise<void> {
+    this.deadlines.delete(accountId);
+    return Promise.resolve();
+  }
+
+  endUnfit(accountId: string, at: Date): Promise<void> {
+    const account = this.accounts.get(accountId);
+    if (account !== undefined) {
+      this.accounts.set(accountId, { ...account, status: 'ended' });
+    }
+    this.deadlines.delete(accountId);
+    this.ended.push({ accountId, at });
     return Promise.resolve();
   }
 }

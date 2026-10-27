@@ -1,5 +1,6 @@
 import { FakeBillingGateway } from './fake-billing-gateway';
 import { InMemoryTrialCardRepository } from './in-memory-trial-card.repository';
+import { InMemoryFreePlanFallbackRepository } from './in-memory-free-plan-fallback.repository';
 
 describe('FakeBillingGateway', () => {
   it('records the Checkouts and portals it opens and answers a URL for each', async () => {
@@ -44,5 +45,19 @@ describe('InMemoryTrialCardRepository', () => {
     expect(await cards.otherAccountIds('fp_1', 'c')).toEqual(['a', 'b']);
     expect(await cards.otherAccountIds('fp_1', 'a')).toEqual(['b']);
     expect(cards.cards).toHaveLength(3);
+  });
+});
+
+describe('InMemoryFreePlanFallbackRepository', () => {
+  it('ends only what it knows, and moves back to free only an account still running', async () => {
+    const fallbacks = new InMemoryFreePlanFallbackRepository();
+    const at = new Date(1000);
+
+    await fallbacks.endUnfit('unknown', at);
+
+    expect(fallbacks.ended).toEqual([{ accountId: 'unknown', at }]);
+    expect(fallbacks.statusOf('unknown')).toBeUndefined();
+    expect(await fallbacks.fallBack('unknown', at)).toBe(false);
+    expect(await fallbacks.toNotify('unknown')).toBeNull();
   });
 });

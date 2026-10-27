@@ -13,6 +13,8 @@ import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
 import { InMemoryAccountWithdrawalRepository } from '../../test-utils/in-memory-account-withdrawal.repository';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
+import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-free-plan-fallback.repository';
+import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
 import { WithdrawToFreePlanUseCase } from './withdraw-to-free-plan.usecase';
 
 const NOW = new Date('2026-11-20T15:00:00.000Z');
@@ -42,6 +44,7 @@ async function setup(status: Account['status'] = 'active', settings: SignUpSetti
   const gateway = new FakeBillingGateway();
   gateway.paidFirstOn('sub_1', new Date(NOW.getTime() - 2 * DAY_MS));
   const mail = new RecordingMailSender();
+  const fallbacks = new InMemoryFreePlanFallbackRepository();
   const useCase = new WithdrawToFreePlanUseCase(
     accounts,
     withdrawals,
@@ -49,8 +52,9 @@ async function setup(status: Account['status'] = 'active', settings: SignUpSetti
     new FixedClock(NOW),
     settings,
     mail,
+    fallbacks,
   );
-  return { account, withdrawals, gateway, mail, useCase };
+  return { account, withdrawals, gateway, mail, fallbacks, useCase };
 }
 
 describe('WithdrawToFreePlanUseCase', () => {
@@ -71,19 +75,52 @@ describe('WithdrawToFreePlanUseCase', () => {
 
     expect(await useCase.execute({ ...WHO, accountId: account.id })).toEqual({
       refundedAmount: 3900,
+      fitBy: null,
     });
     expect(gateway.cancelled).toEqual(['sub_1']);
     expect(gateway.refunds).toEqual([
       { subscriptionId: 'sub_1', since: new Date(NOW.getTime() - 7 * DAY_MS) },
     ]);
     expect(withdrawals.returnedToFree).toEqual([account.id]);
+    expect(withdrawals.fitDueAt.get(account.id)).toBeNull();
     expect(mail.accountNotices).toEqual([
       {
         email: 'owner@example.com',
-        notice: { kind: 'withdrawn_to_free', refundedAmount: 3900 },
+        notice: { kind: 'withdrawn_to_free', refundedAmount: 3900, fitBy: null },
         language: 'pt-BR',
       },
     ]);
+  });
+
+  it('gives an account over the free plan thirty days to fit, and says until when', async () => {
+    const { account, withdrawals, gateway, mail, fallbacks, useCase } = await setup();
+    gateway.refundAmount = 3900;
+    fallbacks.add({
+      accountId: account.id,
+      ownerEmail: 'owner@example.com',
+      ownerLanguage: 'pt-BR',
+      eventsPerMonthLimit: null,
+      status: 'active',
+      fit: {
+        ...NO_LIMIT_OVERRIDES,
+        projects: 3,
+        people: 1,
+        acceptedTermsVersions: ['1.3'],
+        ownerHasAnotherFreeAccount: false,
+      },
+    });
+    const fitBy = new Date(NOW.getTime() + 30 * DAY_MS);
+
+    expect(await useCase.execute({ ...WHO, accountId: account.id })).toEqual({
+      refundedAmount: 3900,
+      fitBy,
+    });
+    expect(withdrawals.fitDueAt.get(account.id)).toEqual(fitBy);
+    expect(mail.accountNotices[0]?.notice).toEqual({
+      kind: 'withdrawn_to_free',
+      refundedAmount: 3900,
+      fitBy,
+    });
   });
 
   it('keeps the withdrawal when the e-mail fails, and says so in the log', async () => {
@@ -115,6 +152,7 @@ describe('WithdrawToFreePlanUseCase', () => {
 
     expect(await useCase.execute({ ...WHO, accountId: account.id })).toEqual({
       refundedAmount: 0,
+      fitBy: null,
     });
     expect(withdrawals.returnedToFree).toEqual([account.id]);
     expect(error).toHaveBeenCalledWith({
@@ -170,7 +208,7 @@ describe('WithdrawToFreePlanUseCase', () => {
 
   it('refuses a paying account whose subscription it does not know', async () => {
     const { account, withdrawals, useCase } = await setup();
-    await withdrawals.returnToFreePlan(account.id);
+    await withdrawals.returnToFreePlan(account.id, null);
 
     await expect(useCase.execute({ ...WHO, accountId: account.id })).rejects.toBeInstanceOf(
       WithdrawalUnavailableError,

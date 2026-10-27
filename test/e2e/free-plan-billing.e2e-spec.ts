@@ -26,6 +26,11 @@ const OWNER_SESSION = 'e2e-free-plan-owner-session';
 const SUBSCRIPTION = 'sub_free_plan_e2e';
 const CUSTOMER = 'cus_free_plan_e2e';
 const EVENT_IDS = ['evt_free_plan_e2e_paid', 'evt_free_plan_e2e_deleted'];
+const PROJECT_IDS = [
+  '7b8c9d0e-1f2a-4b3c-8d4e-5f6a7b8c9d21',
+  '7b8c9d0e-1f2a-4b3c-8d4e-5f6a7b8c9d22',
+];
+const FIT_BY = new Date(NOW.getTime() + 30 * DAY_SECONDS * 1000);
 
 function subscription(status: string): object {
   return {
@@ -139,6 +144,7 @@ describe('the free plan and billing over HTTP', () => {
 
   afterAll(async () => {
     await app.close();
+    await owner`DELETE FROM projects WHERE account_id = ${ACCOUNT_ID}`;
     await owner`DELETE FROM accounts WHERE id = ${ACCOUNT_ID}`;
     await owner`DELETE FROM admin_sessions WHERE admin_user_id = ${OWNER_ID}`;
     await owner`DELETE FROM admin_users WHERE id = ${OWNER_ID}`;
@@ -175,7 +181,10 @@ describe('the free plan and billing over HTTP', () => {
     ]);
   });
 
-  it('withdraws within 7 days: cancels, refunds the first payment and goes back to the free plan', async () => {
+  it('withdraws within 7 days: cancels, refunds and goes back to free, with 30 days to fit', async () => {
+    for (const projectId of PROJECT_IDS) {
+      await owner`INSERT INTO projects (id, name, account_id) VALUES (${projectId}, 'Site', ${ACCOUNT_ID})`;
+    }
     stripe.requests.length = 0;
     stripe.answer('GET', '/v1/invoices', {
       body: {
@@ -214,7 +223,11 @@ describe('the free plan and billing over HTTP', () => {
     });
 
     expect(withdrawn.statusCode).toBe(200);
-    expect(withdrawn.json()).toEqual({ status: 'free', refunded_amount: 3900 });
+    expect(withdrawn.json()).toEqual({
+      status: 'free',
+      refunded_amount: 3900,
+      fit_by: FIT_BY.toISOString(),
+    });
     expect(stripe.requests.map(({ method, path }) => `${method} ${path}`)).toEqual([
       'GET /v1/invoices',
       `DELETE /v1/subscriptions/${SUBSCRIPTION}`,
@@ -230,7 +243,7 @@ describe('the free plan and billing over HTTP', () => {
     expect(mail.accountNotices).toEqual([
       {
         email: OWNER_EMAIL,
-        notice: { kind: 'withdrawn_to_free', refundedAmount: 3900 },
+        notice: { kind: 'withdrawn_to_free', refundedAmount: 3900, fitBy: FIT_BY },
         language: 'pt-BR',
       },
     ]);

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { eventsPerMonthOf } from '../../domain/accounts/account-limits';
-import { fallsBackToFree } from '../../domain/accounts/free-plan-fallback';
+import { fallsBackToFree, fitsFreePlan } from '../../domain/accounts/free-plan-fallback';
 import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../domain/accounts/sign-up-settings';
 import {
   type AccountBillingState,
@@ -71,6 +71,20 @@ export class FallBackToFreePlanUseCase {
       }
     }
     return notified;
+  }
+
+  async settleFitDeadlines(now: Date): Promise<number> {
+    let ended = 0;
+    for (const { accountId, fit } of await this.fallbacks.fitDeadlinesDue(now)) {
+      if (fitsFreePlan(fit)) {
+        await this.fallbacks.clearFitDeadline(accountId);
+        continue;
+      }
+      await this.fallbacks.endUnfit(accountId, now);
+      ended += 1;
+      this.logger.log({ message: 'accounts.unfit_free_account_ended', accountId });
+    }
+    return ended;
   }
 
   private async notify(target: BackToFreeTarget): Promise<boolean> {

@@ -3,11 +3,13 @@ import type { EmailLanguage } from '../../domain/auth/email-language';
 import { SIGN_IN_CODE_EMAIL_MESSAGES } from './sign-in-code-email-messages';
 
 export const NO_REFUND = '';
+export const NO_DEADLINE = '';
 
 export interface AccountNoticeWords {
   readonly deletionOn: string;
   readonly refunded: string;
   readonly monthlyEvents: string;
+  readonly fitBy: string;
 }
 
 export interface AccountNoticeCopy {
@@ -65,7 +67,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'The automatic refund of the first payment did not go through: we are making it by hand within 2 business days and will write to you.'
             : `${w.refunded} was refunded to your card. It shows on your statement within the time your card company takes.`,
-          'The free plan’s limits apply again from now; the account page shows them.',
+          w.fitBy === NO_DEADLINE
+            ? 'The free plan’s limits apply again from now; the account page shows them.'
+            : `Your account has more projects or people than the free plan allows. Remove what is over on the account page by ${w.fitBy}, exporting first what you want to keep; if it still does not fit on that day, the account ends: its keys are revoked, and its data is deleted 30 days later.`,
         ],
       },
       back_to_free: {
@@ -131,7 +135,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'O estorno automático do primeiro pagamento não deu certo: vamos fazê-lo à mão em até 2 dias úteis e avisar você.'
             : `${w.refunded} foram devolvidos ao seu cartão. O valor aparece na fatura no prazo da administradora do cartão.`,
-          'Os limites do plano grátis voltam a valer a partir de agora; a página da conta mostra quais são.',
+          w.fitBy === NO_DEADLINE
+            ? 'Os limites do plano grátis voltam a valer a partir de agora; a página da conta mostra quais são.'
+            : `Sua conta tem mais projetos ou pessoas do que o plano grátis permite. Tire o que passar do limite pela página da conta até ${w.fitBy}, exportando antes o que quiser guardar; se nesse dia ela ainda não couber, a conta termina: as chaves são revogadas, e os dados são apagados 30 dias depois.`,
         ],
       },
       back_to_free: {
@@ -200,7 +206,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'La devolución automática del primer pago no se completó: la haremos a mano en un plazo de 2 días hábiles y te escribiremos.'
             : `Se devolvieron ${w.refunded} a tu tarjeta. Aparece en tu extracto en el plazo de la emisora de la tarjeta.`,
-          'Los límites del plan gratis vuelven a aplicarse desde ahora; la página de la cuenta los muestra.',
+          w.fitBy === NO_DEADLINE
+            ? 'Los límites del plan gratis vuelven a aplicarse desde ahora; la página de la cuenta los muestra.'
+            : `Tu cuenta tiene más proyectos o personas de los que permite el plan gratis. Quita lo que sobra desde la página de la cuenta a más tardar el ${w.fitBy}, exportando antes lo que quieras conservar; si ese día todavía no cabe, la cuenta termina: sus claves se revocan y sus datos se eliminan 30 días después.`,
         ],
       },
       back_to_free: {
@@ -271,7 +279,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'Die automatische Erstattung der ersten Zahlung hat nicht geklappt: Wir erstatten sie innerhalb von 2 Werktagen manuell und schreiben dir.'
             : `${w.refunded} wurden auf deine Karte zurückerstattet. Der Betrag erscheint auf deiner Abrechnung, sobald dein Kartenanbieter ihn bucht.`,
-          'Ab jetzt gelten wieder die Grenzen des kostenlosen Plans; die Kontoseite zeigt sie.',
+          w.fitBy === NO_DEADLINE
+            ? 'Ab jetzt gelten wieder die Grenzen des kostenlosen Plans; die Kontoseite zeigt sie.'
+            : `Dein Konto hat mehr Projekte oder Personen, als der kostenlose Plan erlaubt. Entferne bis zum ${w.fitBy} auf der Kontoseite, was zu viel ist, und exportiere vorher, was du behalten möchtest; passt das Konto an diesem Tag noch nicht, endet es: Seine Schlüssel werden widerrufen, und seine Daten werden 30 Tage später gelöscht.`,
         ],
       },
       back_to_free: {
@@ -341,7 +351,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'Le remboursement automatique du premier paiement n’a pas abouti\u00a0: nous le ferons à la main sous 2 jours ouvrés et vous écrirons.'
             : `${w.refunded} ont été remboursés sur votre carte. Le montant apparaît sur votre relevé dans le délai de votre banque.`,
-          'Les limites de la formule gratuite s’appliquent de nouveau dès maintenant\u00a0; la page du compte les indique.',
+          w.fitBy === NO_DEADLINE
+            ? 'Les limites de la formule gratuite s’appliquent de nouveau dès maintenant\u00a0; la page du compte les indique.'
+            : `Votre compte a plus de projets ou de personnes que la formule gratuite n’en permet. Retirez ce qui dépasse depuis la page du compte d’ici le ${w.fitBy}, en exportant d’abord ce que vous voulez garder\u00a0; si le compte ne rentre toujours pas ce jour-là, il prend fin\u00a0: ses clés sont révoquées et ses données sont supprimées 30 jours plus tard.`,
         ],
       },
       back_to_free: {
@@ -411,7 +423,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'Il rimborso automatico del primo pagamento non è andato a buon fine: lo faremo a mano entro 2 giorni lavorativi e ti scriveremo.'
             : `${w.refunded} sono stati rimborsati sulla tua carta. L’importo compare nell’estratto conto nei tempi del circuito della carta.`,
-          'Da ora valgono di nuovo i limiti del piano gratuito; la pagina dell’account li mostra.',
+          w.fitBy === NO_DEADLINE
+            ? 'Da ora valgono di nuovo i limiti del piano gratuito; la pagina dell’account li mostra.'
+            : `Il tuo account ha più progetti o persone di quanti ne consenta il piano gratuito. Togli ciò che è in più dalla pagina dell’account entro il giorno ${w.fitBy}, esportando prima ciò che vuoi conservare; se quel giorno non rientra ancora nei limiti, l’account termina: le sue chiavi vengono revocate e i suoi dati eliminati 30 giorni dopo.`,
         ],
       },
       back_to_free: {
@@ -480,7 +494,9 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           w.refunded === NO_REFUND
             ? 'De automatische terugbetaling van de eerste betaling is niet gelukt: we doen het binnen 2 werkdagen handmatig en laten het je weten.'
             : `${w.refunded} is teruggestort op je kaart. Het bedrag verschijnt op je afschrift binnen de termijn van je kaartuitgever.`,
-          'Vanaf nu gelden weer de limieten van het gratis abonnement; de accountpagina toont ze.',
+          w.fitBy === NO_DEADLINE
+            ? 'Vanaf nu gelden weer de limieten van het gratis abonnement; de accountpagina toont ze.'
+            : `Je account heeft meer projecten of mensen dan het gratis abonnement toestaat. Haal uiterlijk ${w.fitBy} via de accountpagina weg wat te veel is, en exporteer eerst wat je wilt houden; past het account er op die dag nog steeds niet in, dan eindigt het: de sleutels worden ingetrokken en de gegevens 30 dagen later verwijderd.`,
         ],
       },
       back_to_free: {
