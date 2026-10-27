@@ -19,6 +19,9 @@ import { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.us
 import { InMemorySubscriptionConfirmationRepository } from '../../test-utils/in-memory-subscription-confirmation.repository';
 import { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
 import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-free-plan-fallback.repository';
+import { InMemoryFreeAccountInactivityRepository } from '../../test-utils/in-memory-free-account-inactivity.repository';
+import { AccountDataDeletion } from './account-data-deletion';
+import { SweepInactiveFreeAccountsUseCase } from './sweep-inactive-free-accounts.usecase';
 import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
 import { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
@@ -66,6 +69,7 @@ function setup() {
   const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
   const confirmations = new InMemorySubscriptionConfirmationRepository();
   const fallbacks = new InMemoryFreePlanFallbackRepository();
+  const inactivity = new InMemoryFreeAccountInactivityRepository();
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
@@ -95,6 +99,11 @@ function setup() {
       trialOffered: false,
       freePlanTermsForEarlierAccountsFrom: null,
     }),
+    new SweepInactiveFreeAccountsUseCase(
+      inactivity,
+      new AccountDataDeletion(lifecycle, mail),
+      mail,
+    ),
   );
   return {
     lifecycle,
@@ -106,6 +115,7 @@ function setup() {
     accounts,
     confirmations,
     fallbacks,
+    inactivity,
     useCase,
   };
 }
@@ -142,6 +152,9 @@ describe('RunAccountLifecycleUseCase', () => {
       deleted: 0,
       partlyHeld: 0,
       incompleteRemoved: 0,
+      inactiveFreeNotices: 0,
+      inactiveFreeRevived: 0,
+      inactiveFreeDeleted: 0,
       peopleRemoved: 0,
       projectlessMarked: 0,
       projectlessRemoved: 0,
@@ -564,6 +577,47 @@ describe('RunAccountLifecycleUseCase', () => {
     expect(end.mock.invocationCallOrder[0]).toBeLessThan(
       revoke.mock.invocationCallOrder[0] ?? Number.NaN,
     );
+  });
+
+  it('sweeps the free accounts with no events, adding its deletions and failures to the run', async () => {
+    const { lifecycle, inactivity, mail, useCase } = setup();
+    const owner = {
+      ownerEmail: 'ana@example.com',
+      ownerLanguage: 'en' as const,
+      lastEventAt: null,
+    };
+    inactivity.add({
+      ...owner,
+      accountId: 'empty',
+      ownerAdminId: 'empty-owner',
+      freeSince: daysAgo(30),
+      inactivityNotifiedAt: null,
+    });
+    inactivity.add({
+      ...owner,
+      accountId: 'warned',
+      ownerAdminId: 'warned-owner',
+      freeSince: daysAgo(60),
+      inactivityNotifiedAt: daysAgo(7),
+    });
+    inactivity.add({
+      ...owner,
+      accountId: 'stuck',
+      ownerAdminId: 'stuck-owner',
+      freeSince: daysAgo(60),
+      inactivityNotifiedAt: daysAgo(7),
+    });
+    lifecycle.add({ accountId: 'warned', ownerAdminId: 'warned-owner', status: 'free' });
+    lifecycle.add({ accountId: 'stuck', ownerAdminId: 'stuck-owner', status: 'free' });
+    lifecycle.failingAccounts.add('stuck');
+
+    await expect(useCase.execute()).rejects.toEqual(new AccountLifecycleFailedError(['stuck']));
+
+    expect(lifecycle.account('warned')).toBeUndefined();
+    expect(mail.accountNotices.map(({ notice }) => notice.kind).sort()).toEqual([
+      'account_deleted',
+      'empty_free_account',
+    ]);
   });
 
   it('sends the back-to-free notices the webhook could not', async () => {
