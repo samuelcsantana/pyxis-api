@@ -3,7 +3,7 @@ import type { Project } from '../../../domain/entities/project.entity';
 import type { ArrivalsReport } from '../../../domain/queries/arrivals';
 import type { GetArrivalsUseCase } from '../../../usecases/queries/get-arrivals.usecase';
 import { ArrivalsController } from './arrivals.controller';
-import { arrivalsReportSchema } from './arrivals.schemas';
+import { arrivalsQuerySchema, arrivalsReportSchema } from './arrivals.schemas';
 
 const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
@@ -67,5 +67,17 @@ describe('ArrivalsController', () => {
     });
 
     expect(body.conversions).toEqual({ times: ['2026-10-23T17:04:59.000Z'], more: false });
+  });
+});
+
+describe('arrivalsQuerySchema', () => {
+  it.each([
+    ['a device', { device: 'mobile' }],
+    ['a channel', { channel: 'paid' }],
+    ['a page', { path: '/pricing' }],
+  ])('refuses %s: arrivals count the whole project', (_case, filter) => {
+    const asked = { from: '2026-10-23', to: '2026-10-23', since: '2026-10-23T17:00:00.000Z' };
+
+    expect(arrivalsQuerySchema.safeParse({ ...asked, ...filter }).success).toBe(false);
   });
 });

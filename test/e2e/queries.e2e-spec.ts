@@ -473,6 +473,43 @@ describe('dashboard queries', () => {
     expect(response.json()).toMatchObject({ error: 'invalid_request' });
   });
 
+  it('counts only the visits the filters select, on every report', async () => {
+    const range = 'from=2026-09-20&to=2026-10-05';
+    const visits = async (filters: string) =>
+      (await get(`/v1/projects/${SHOP_ID}/overview?${range}${filters}`)).json<{
+        kpis: { visits: { current: number } };
+      }>().kpis.visits.current;
+    const features = await get(
+      `/v1/projects/${SHOP_ID}/features?${range}&kind=events&device=desktop`,
+    );
+    const mobileFeatures = await get(
+      `/v1/projects/${SHOP_ID}/features?${range}&kind=events&device=mobile`,
+    );
+
+    expect(await visits('')).toBe(2);
+    expect(await visits('&device=mobile')).toBe(1);
+    expect(await visits('&device=mobile&channel=paid&source=google')).toBe(1);
+    expect(await visits('&device=desktop&channel=paid')).toBe(0);
+    expect(await visits('&event=signup_completed&failed=true')).toBe(1);
+    expect(features.json()).toMatchObject({ items: [{ name: 'signup_completed', visits: 1 }] });
+    expect(mobileFeatures.json()).toEqual({ items: [] });
+  });
+
+  it.each([
+    ['arrivals', 'arrivals?from=2026-10-05&to=2026-10-05&since=2026-10-05T14:00:00Z&device=mobile'],
+    ['the timeline', 'timeline?user_id=u-1&device=mobile'],
+    ['the overview, for a route', 'overview?from=2026-10-05&to=2026-10-05&route=POST%20/v1/plans'],
+    [
+      'the overview, for a property without an event',
+      'overview?from=2026-10-05&to=2026-10-05&property=plan%3Dpro',
+    ],
+  ])('answers 400 invalid_request to a filter on %s', async (_case, path) => {
+    const response = await get(`/v1/projects/${SHOP_ID}/${path}`);
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toMatchObject({ error: 'invalid_request' });
+  });
+
   it('answers the settings of the project with its live keys, never a secret one', async () => {
     const publicKey = `pyxis_pk_${'Q'.repeat(32)}`;
     const secretHash = 'b'.repeat(64);

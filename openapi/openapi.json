@@ -6449,6 +6449,172 @@
             }
           },
           {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -6763,6 +6929,172 @@
             }
           },
           {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -7015,6 +7347,172 @@
             "required": true,
             "schema": {
               "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
               "type": "string"
             }
           },
@@ -7288,6 +7786,172 @@
             }
           },
           {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -7398,6 +8062,172 @@
             "schema": {
               "description": "The named event to break down",
               "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
               "type": "string"
             }
           },
@@ -7526,6 +8356,172 @@
             }
           },
           {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -7645,6 +8641,172 @@
               "enum": [
                 "device",
                 "channel"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
               ],
               "type": "string"
             }
@@ -7770,6 +8932,172 @@
             "name": "steps",
             "required": true,
             "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
               "type": "string"
             }
           },
@@ -8169,6 +9497,172 @@
             }
           },
           {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -8546,6 +10040,172 @@
             }
           },
           {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -8718,6 +10378,172 @@
             "required": true,
             "schema": {
               "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
               "type": "string"
             }
           },
@@ -8935,7 +10761,7 @@
             }
           },
           {
-            "description": "A page the visit viewed; a star matches any characters. Repeat it, up to 3 times, for visits that viewed every one",
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
             "in": "query",
             "name": "path",
             "required": false,
@@ -8948,7 +10774,7 @@
             }
           },
           {
-            "description": "A named event the visit sent",
+            "description": "Only the visits that sent this named event",
             "in": "query",
             "name": "event",
             "required": false,
@@ -8966,6 +10792,7 @@
             }
           },
           {
+            "description": "Only the visits that came through this channel",
             "in": "query",
             "name": "channel",
             "required": false,
@@ -8983,6 +10810,7 @@
             }
           },
           {
+            "description": "Only the visits on this device type",
             "in": "query",
             "name": "device",
             "required": false,
@@ -8997,6 +10825,7 @@
             }
           },
           {
+            "description": "Only the visits in this browser family",
             "in": "query",
             "name": "browser",
             "required": false,
@@ -9014,7 +10843,7 @@
             }
           },
           {
-            "description": "The operating system",
+            "description": "Only the visits on this operating system family",
             "in": "query",
             "name": "os",
             "required": false,
@@ -9032,6 +10861,7 @@
             }
           },
           {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
             "in": "query",
             "name": "identity",
             "required": false,
@@ -9044,7 +10874,7 @@
             }
           },
           {
-            "description": "The two-letter country code of the visit",
+            "description": "Only the visits from this two-letter country code",
             "in": "query",
             "name": "country",
             "required": false,
@@ -9054,7 +10884,7 @@
             }
           },
           {
-            "description": "The region of the visit: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
             "in": "query",
             "name": "region",
             "required": false,
@@ -9064,7 +10894,7 @@
             }
           },
           {
-            "description": "The source of the visit as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
             "required": false,
@@ -9074,7 +10904,7 @@
             }
           },
           {
-            "description": "The campaign (utm_campaign) of the visit entry",
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
             "in": "query",
             "name": "campaign",
             "required": false,
@@ -9084,16 +10914,7 @@
             }
           },
           {
-            "description": "A request the visit made, as method and route: POST /orders/:id",
-            "in": "query",
-            "name": "route",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "true: the visit had a failed request (status 0 or 400 and above); with route, on that route",
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
             "in": "query",
             "name": "failed",
             "required": false,
@@ -9102,6 +10923,15 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that made this request, as method and route: POST /orders/:id; with failed=true, only those where a call to it failed",
+            "in": "query",
+            "name": "route",
+            "required": false,
+            "schema": {
               "type": "string"
             }
           },

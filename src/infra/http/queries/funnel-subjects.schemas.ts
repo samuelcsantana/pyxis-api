@@ -5,7 +5,7 @@ import {
   type FunnelSubjectCursor,
   MAX_FUNNEL_STEPS,
 } from '../../../domain/queries/funnel';
-import { funnelQuerySchema, reportTimezoneSchema } from './query.schemas';
+import { funnelFieldsSchema, propertyNeedsEvent, reportTimezoneSchema } from './query.schemas';
 
 const CURSOR_SEPARATOR = '~';
 const FIRST_STEP = 1;
@@ -25,20 +25,22 @@ const cursorSchema = z.string().transform((text, context): FunnelSubjectCursor =
   return { lastStepAt: new Date(lastStepAt.data), id };
 });
 
-export const funnelSubjectsQuerySchema = funnelQuerySchema
-  .extend({
-    step: z.coerce.number().int().min(FIRST_STEP).max(MAX_FUNNEL_STEPS),
-    outcome: z.enum(FUNNEL_OUTCOMES),
-    cursor: cursorSchema.optional(),
-  })
-  .refine((query) => query.step <= query.steps.length, {
-    message: 'step must be one of the steps',
-    path: ['step'],
-  })
-  .refine((query) => query.outcome === 'reached' || query.step > FIRST_STEP, {
-    message: 'nobody drops before the first step',
-    path: ['step'],
-  });
+export const funnelSubjectsQuerySchema = propertyNeedsEvent(
+  funnelFieldsSchema
+    .extend({
+      step: z.coerce.number().int().min(FIRST_STEP).max(MAX_FUNNEL_STEPS),
+      outcome: z.enum(FUNNEL_OUTCOMES),
+      cursor: cursorSchema.optional(),
+    })
+    .refine((query) => query.step <= query.steps.length, {
+      message: 'step must be one of the steps',
+      path: ['step'],
+    })
+    .refine((query) => query.outcome === 'reached' || query.step > FIRST_STEP, {
+      message: 'nobody drops before the first step',
+      path: ['step'],
+    }),
+);
 
 export const funnelSubjectsReportSchema = z
   .strictObject({

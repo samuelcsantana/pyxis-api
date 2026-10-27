@@ -1,20 +1,92 @@
 import { z } from 'zod';
-import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
+import {
+  BROWSER_FAMILIES,
+  CHANNELS,
+  DEVICE_TYPES,
+  OS_FAMILIES,
+} from '../../../domain/entities/tracked-event.entity';
+import { COUNTRY_CODE_PATTERN } from '../../../domain/events/country';
 import {
   EVENT_NAME_PATTERN,
   MAX_PATH_LENGTH,
+  MAX_PROPERTY_STRING_LENGTH,
+  MAX_REFERRER_HOST_LENGTH,
   MAX_ROUTE_LENGTH,
+  MAX_UTM_VALUE_LENGTH,
+  PROPERTY_KEY_PATTERN,
   USER_ID_PATTERN,
 } from '../../../domain/events/event-limits';
+import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import { API_REQUEST_METHODS } from '../../../domain/events/reserved-event-names';
 import { TOP_REGIONS } from '../../../domain/queries/devices';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
+import {
+  MAX_VISIT_PATH_FILTERS,
+  VISIT_IDENTITIES,
+  type VisitPropertyFilter,
+} from '../../../domain/queries/report-filters';
 import { REQUEST_KINDS, STATUS_CLASSES } from '../../../domain/queries/requests';
 import type { VisitRouteFilter } from '../../../domain/queries/visits';
 
 const MAX_SCREEN_LENGTH = 256;
 const ROUTE_SEPARATOR = ' ';
+const PROPERTY_SEPARATOR = '=';
+const FAILED_VALUES = ['true', 'false'] as const;
+
+const pathFilterSchema = z.string().startsWith('/').max(MAX_PATH_LENGTH);
+
+const pathFiltersSchema = z
+  .union([pathFilterSchema, z.array(pathFilterSchema).max(MAX_VISIT_PATH_FILTERS)])
+  .transform((paths) => (typeof paths === 'string' ? [paths] : paths));
+
+const propertyFilterSchema = z.string().transform((text, context): VisitPropertyFilter => {
+  const separator = text.indexOf(PROPERTY_SEPARATOR);
+  const key = text.slice(0, separator);
+  const value = text.slice(separator + 1);
+  if (
+    separator < 0 ||
+    !PROPERTY_KEY_PATTERN.test(key) ||
+    value.length === 0 ||
+    value.length > MAX_PROPERTY_STRING_LENGTH
+  ) {
+    context.addIssue({ code: 'custom', message: 'property must be key=value' });
+    return z.NEVER;
+  }
+  return { key, value };
+});
+
+export const reportFilterFields = {
+  path: pathFiltersSchema.optional(),
+  event: z.string().regex(EVENT_NAME_PATTERN).optional(),
+  property: propertyFilterSchema.optional(),
+  channel: z.enum(CHANNELS).optional(),
+  device: z.enum(DEVICE_TYPES).optional(),
+  browser: z.enum(BROWSER_FAMILIES).optional(),
+  os: z.enum(OS_FAMILIES).optional(),
+  identity: z.enum(VISIT_IDENTITIES).optional(),
+  country: z.string().regex(COUNTRY_CODE_PATTERN).optional(),
+  region: z.string().regex(REGION_CODE_PATTERN).optional(),
+  source: z.string().min(1).max(MAX_REFERRER_HOST_LENGTH).optional(),
+  campaign: z.string().min(1).max(MAX_UTM_VALUE_LENGTH).optional(),
+  failed: z
+    .enum(FAILED_VALUES)
+    .transform((value) => value === 'true')
+    .optional(),
+};
+
+export type ReportFilterParams = z.output<z.ZodObject<typeof reportFilterFields>>;
+
+type EventAndProperty = Pick<ReportFilterParams, 'event' | 'property'>;
+
+export function propertyNeedsEvent<Schema extends z.ZodType<EventAndProperty>>(
+  schema: Schema,
+): Schema {
+  return schema.refine((query) => query.property === undefined || query.event !== undefined, {
+    message: 'property needs an event',
+    path: ['property'],
+  });
+}
 
 const routePartsSchema = z.strictObject({
   method: z.enum(API_REQUEST_METHODS),
@@ -48,6 +120,10 @@ export const rangeQuerySchema = z.strictObject({
   from: z.iso.date().describe('First day, inclusive, in the project time zone'),
   to: z.iso.date().describe('Last day, inclusive, at most today in the project time zone'),
 });
+
+export const filteredRangeQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend(reportFilterFields),
+);
 
 const kpiSchema = z.strictObject({
   current: z.int(),
@@ -171,13 +247,18 @@ export const acquisitionReportSchema = z
       'campaign are left out of campaigns.',
   });
 
-export const featuresQuerySchema = rangeQuerySchema.extend({ kind: z.enum(FEATURE_KINDS) });
+export const featuresQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend({ kind: z.enum(FEATURE_KINDS), ...reportFilterFields }),
+);
 
-export const requestsQuerySchema = rangeQuerySchema.extend({
-  screen: z.string().startsWith('/').max(MAX_SCREEN_LENGTH).optional(),
-  kind: z.enum(REQUEST_KINDS).default('writes'),
-  route: routeFilterSchema.optional(),
-});
+export const requestsQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend({
+    screen: z.string().startsWith('/').max(MAX_SCREEN_LENGTH).optional(),
+    kind: z.enum(REQUEST_KINDS).default('writes'),
+    route: routeFilterSchema.optional(),
+    ...reportFilterFields,
+  }),
+);
 
 const funnelStepSchema = z.discriminatedUnion('type', [
   z.strictObject({
@@ -199,10 +280,13 @@ export const funnelStepsSchema = z
   })
   .pipe(z.array(funnelStepSchema).min(MIN_FUNNEL_STEPS).max(MAX_FUNNEL_STEPS));
 
-export const funnelQuerySchema = rangeQuerySchema.extend({
+export const funnelFieldsSchema = rangeQuerySchema.extend({
   mode: z.enum(FUNNEL_MODES),
   steps: funnelStepsSchema,
+  ...reportFilterFields,
 });
+
+export const funnelQuerySchema = propertyNeedsEvent(funnelFieldsSchema);
 
 export const funnelReportSchema = z
   .strictObject({
@@ -341,7 +425,7 @@ export const requestsReportSchema = z
       'in the project time zone, named in timezone; the failure times are UTC.',
   });
 
-export type RangeQuery = z.infer<typeof rangeQuerySchema>;
+export type FilteredRangeQuery = z.infer<typeof filteredRangeQuerySchema>;
 export type FeaturesQuery = z.infer<typeof featuresQuerySchema>;
 export type RequestsQuery = z.infer<typeof requestsQuerySchema>;
 export type FunnelQuery = z.infer<typeof funnelQuerySchema>;

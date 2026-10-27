@@ -1,57 +1,19 @@
 import { z } from 'zod';
-import {
-  BROWSER_FAMILIES,
-  CHANNELS,
-  DEVICE_TYPES,
-  OS_FAMILIES,
-} from '../../../domain/entities/tracked-event.entity';
-import { COUNTRY_CODE_PATTERN } from '../../../domain/events/country';
-import { REGION_CODE_PATTERN } from '../../../domain/events/region';
-import {
-  EVENT_NAME_PATTERN,
-  MAX_PATH_LENGTH,
-  MAX_PROPERTY_STRING_LENGTH,
-  MAX_REFERRER_HOST_LENGTH,
-  MAX_UTM_VALUE_LENGTH,
-  PROPERTY_KEY_PATTERN,
-} from '../../../domain/events/event-limits';
-import {
-  MAX_VISIT_PATH_FILTERS,
-  VISIT_IDENTITIES,
-  type VisitPropertyFilter,
-} from '../../../domain/queries/report-filters';
+import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
 import {
   MAX_VISIT_HIGHLIGHTS,
   VISIT_LIST_PAGE_SIZE,
   type VisitCursor,
 } from '../../../domain/queries/visits';
-import { rangeQuerySchema, reportTimezoneSchema, routeFilterSchema } from './query.schemas';
+import {
+  propertyNeedsEvent,
+  rangeQuerySchema,
+  reportFilterFields,
+  reportTimezoneSchema,
+  routeFilterSchema,
+} from './query.schemas';
 
 const CURSOR_SEPARATOR = '~';
-const PROPERTY_SEPARATOR = '=';
-const FAILED_VALUES = ['true', 'false'] as const;
-
-const pathFilterSchema = z.string().startsWith('/').max(MAX_PATH_LENGTH);
-
-const pathFiltersSchema = z
-  .union([pathFilterSchema, z.array(pathFilterSchema).max(MAX_VISIT_PATH_FILTERS)])
-  .transform((paths) => (typeof paths === 'string' ? [paths] : paths));
-
-const propertyFilterSchema = z.string().transform((text, context): VisitPropertyFilter => {
-  const separator = text.indexOf(PROPERTY_SEPARATOR);
-  const key = text.slice(0, separator);
-  const value = text.slice(separator + 1);
-  if (
-    separator < 0 ||
-    !PROPERTY_KEY_PATTERN.test(key) ||
-    value.length === 0 ||
-    value.length > MAX_PROPERTY_STRING_LENGTH
-  ) {
-    context.addIssue({ code: 'custom', message: 'property must be key=value' });
-    return z.NEVER;
-  }
-  return { key, value };
-});
 
 export function visitCursorText(cursor: VisitCursor): string {
   return `${cursor.startedAt.toISOString()}${CURSOR_SEPARATOR}${cursor.sessionId}`;
@@ -69,31 +31,13 @@ const cursorSchema = z.string().transform((text, context): VisitCursor => {
   return { startedAt: new Date(startedAt), sessionId };
 });
 
-export const visitsQuerySchema = rangeQuerySchema
-  .extend({
-    path: pathFiltersSchema.optional(),
-    event: z.string().regex(EVENT_NAME_PATTERN).optional(),
-    property: propertyFilterSchema.optional(),
-    channel: z.enum(CHANNELS).optional(),
-    device: z.enum(DEVICE_TYPES).optional(),
-    browser: z.enum(BROWSER_FAMILIES).optional(),
-    os: z.enum(OS_FAMILIES).optional(),
-    identity: z.enum(VISIT_IDENTITIES).optional(),
-    country: z.string().regex(COUNTRY_CODE_PATTERN).optional(),
-    region: z.string().regex(REGION_CODE_PATTERN).optional(),
-    source: z.string().min(1).max(MAX_REFERRER_HOST_LENGTH).optional(),
-    campaign: z.string().min(1).max(MAX_UTM_VALUE_LENGTH).optional(),
+export const visitsQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend({
+    ...reportFilterFields,
     route: routeFilterSchema.optional(),
-    failed: z
-      .enum(FAILED_VALUES)
-      .transform((value) => value === 'true')
-      .optional(),
     cursor: cursorSchema.optional(),
-  })
-  .refine((query) => query.property === undefined || query.event !== undefined, {
-    message: 'property needs an event',
-    path: ['property'],
-  });
+  }),
+);
 
 export const visitsReportSchema = z
   .strictObject({

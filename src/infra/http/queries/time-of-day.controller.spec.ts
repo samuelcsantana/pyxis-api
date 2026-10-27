@@ -1,8 +1,10 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
 import { weekdayHours } from '../../../domain/queries/time-of-day';
 import type { GetTimeOfDayUseCase } from '../../../usecases/queries/get-time-of-day.usecase';
 import { TimeOfDayController } from './time-of-day.controller';
+import { filteredRangeQuerySchema } from './query.schemas';
 import { timeOfDayReportSchema } from './time-of-day.schemas';
 
 const PROJECT: Project = {
@@ -26,9 +28,14 @@ describe('TimeOfDayController', () => {
     };
     const controller = new TimeOfDayController(useCase as unknown as GetTimeOfDayUseCase);
 
-    const body = await controller.timeOfDay({ project: PROJECT } as FastifyRequest, RANGE);
+    const body = await controller.timeOfDay(
+      { project: PROJECT } as FastifyRequest,
+      filteredRangeQuerySchema.parse({ ...RANGE, device: 'mobile' }),
+    );
 
-    expect(calls).toEqual([[PROJECT, RANGE]]);
+    expect(calls).toEqual([
+      [PROJECT, { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' } }],
+    ]);
     const parsed = timeOfDayReportSchema.parse(body);
     expect(parsed.weekdays).toHaveLength(7);
     expect(parsed.weekdays[6]).toMatchObject({ weekday: 7 });

@@ -1,8 +1,10 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
 import { visitLengthBuckets } from '../../../domain/queries/engagement';
 import type { GetEngagementUseCase } from '../../../usecases/queries/get-engagement.usecase';
 import { EngagementController } from './engagement.controller';
+import { filteredRangeQuerySchema } from './query.schemas';
 import { engagementReportSchema } from './engagement.schemas';
 
 const PROJECT: Project = {
@@ -33,9 +35,14 @@ describe('EngagementController', () => {
     };
     const controller = new EngagementController(useCase as unknown as GetEngagementUseCase);
 
-    const body = await controller.engagement({ project: PROJECT } as FastifyRequest, RANGE);
+    const body = await controller.engagement(
+      { project: PROJECT } as FastifyRequest,
+      filteredRangeQuerySchema.parse({ ...RANGE, device: 'mobile' }),
+    );
 
-    expect(calls).toEqual([[PROJECT, RANGE]]);
+    expect(calls).toEqual([
+      [PROJECT, { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' } }],
+    ]);
     const parsed = engagementReportSchema.parse(body);
     expect(parsed).toMatchObject({
       visits: 3,

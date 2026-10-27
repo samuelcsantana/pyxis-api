@@ -15,6 +15,7 @@ import {
   propertyBreakdownReportSchema,
 } from './property-breakdown.schemas';
 import { ApiRange } from './queries.controller';
+import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function propertyBreakdownBody(report: PropertyBreakdownReport): PropertyBreakdownReportBody {
@@ -48,6 +49,7 @@ export class PropertyBreakdownController {
 
   @Get('features/properties')
   @ApiRange()
+  @ApiReportFilters()
   @ApiOperation({ summary: 'How the property values of one named event break down' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: propertyBreakdownReportSchema })
   async properties(
@@ -58,8 +60,11 @@ export class PropertyBreakdownController {
     })
     query: PropertyBreakdownQuery,
   ): Promise<PropertyBreakdownReportBody> {
-    const range = { from: query.from, to: query.to };
-    const report = await this.getPropertyBreakdown.execute(projectOf(request), range, query.name);
+    const report = await this.getPropertyBreakdown.execute(
+      projectOf(request),
+      filteredRangeOf(query),
+      query.name,
+    );
     return propertyBreakdownBody(report);
   }
 }
