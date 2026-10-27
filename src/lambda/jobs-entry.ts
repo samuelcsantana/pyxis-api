@@ -10,6 +10,7 @@ import { DrizzleOverviewQuery } from '../infra/queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../infra/queries/drizzle-project-activity.query';
 import { DrizzleRequestsQuery } from '../infra/queries/drizzle-requests.query';
 import { DrizzleAccountBillingRepository } from '../infra/repositories/drizzle-account-billing.repository';
+import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.repository';
 import { DrizzleAccountLifecycleRepository } from '../infra/repositories/drizzle-account-lifecycle.repository';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleDemoTrafficRepository } from '../infra/repositories/drizzle-demo-traffic.repository';
@@ -21,6 +22,7 @@ import { PostgresDatabaseSizeProbe } from '../infra/repositories/postgres-databa
 import { HttpSiteIconFetcher } from '../infra/site-icons/http-site-icon-fetcher';
 import { ReportDatabaseSizeUseCase } from '../usecases/monitoring/report-database-size.usecase';
 import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account-usage.usecase';
+import { OpenFreePlacesUseCase } from '../usecases/accounts/open-free-places.usecase';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
 import { DrizzleProjectlessPeopleRepository } from '../infra/repositories/drizzle-projectless-people.repository';
 import { SweepProjectlessPeopleUseCase } from '../usecases/people/sweep-projectless-people.usecase';
@@ -106,6 +108,10 @@ export const handler = createJobsHandler({
           signUpSettingsFromEnv(env),
         ),
         new SweepProjectlessPeopleUseCase(new DrizzleProjectlessPeopleRepository(database), clock),
+        new OpenFreePlacesUseCase(
+          new DrizzleAccountRepository(database),
+          signUpSettingsFromEnv(env),
+        ),
       ).execute();
     }),
   processExport: (exportId) =>

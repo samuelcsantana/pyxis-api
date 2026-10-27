@@ -175,6 +175,37 @@ describe('accounts against a real Postgres', () => {
       );
     });
 
+    it('opens the places left to the waiting accounts that have waited longest', async () => {
+      await accounts.create({ ownerAdminId: STRANGER_ID, status: 'free' });
+      const later = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+      const sooner = await accounts.create({ ownerAdminId: GUEST_ID, status: 'incomplete' });
+      await owner`UPDATE accounts SET free_waitlisted_at = ${AT} WHERE id = ${later.id}`;
+      await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id = ${sooner.id}`;
+
+      expect(await accounts.openWaitingAccounts(2)).toBe(1);
+      expect(await accounts.findById(sooner.id)).toMatchObject({
+        status: 'free',
+        freeWaitlistedAt: null,
+      });
+      expect(await accounts.findById(later.id)).toMatchObject({
+        status: 'incomplete',
+        freeWaitlistedAt: AT,
+      });
+      expect(await accounts.openWaitingAccounts(2)).toBe(0);
+    });
+
+    it('opens no waiting account that subscribed, is held or is suspended', async () => {
+      const subscribed = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+      const held = await accounts.create({ ownerAdminId: GUEST_ID, status: 'incomplete' });
+      const suspended = await accounts.create({ ownerAdminId: STRANGER_ID, status: 'incomplete' });
+      await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER}`;
+      await owner`UPDATE accounts SET stripe_subscription_id = 'sub_pending' WHERE id = ${subscribed.id}`;
+      await owner`UPDATE accounts SET deletion_held_at = ${AT}, deletion_hold_reason = 'Court order' WHERE id = ${held.id}`;
+      await owner`UPDATE accounts SET suspended_at = ${AT}, suspension_reason = 'Abuse' WHERE id = ${suspended.id}`;
+
+      expect(await accounts.openWaitingAccounts(10)).toBe(0);
+    });
+
     it('counts only the accounts on the free plan', async () => {
       await accounts.create({ ownerAdminId: OWNER_ID, status: 'free' });
       await accounts.create({ ownerAdminId: GUEST_ID, status: 'free' });

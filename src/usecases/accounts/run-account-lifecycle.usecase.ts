@@ -18,8 +18,10 @@ import type { Clock } from '../../domain/services/clock';
 import type { MailSender } from '../../domain/services/mail-sender';
 import type { SweepProjectlessPeopleUseCase } from '../people/sweep-projectless-people.usecase';
 import type { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
+import type { OpenFreePlacesUseCase } from './open-free-places.usecase';
 
 export interface AccountLifecycleReport {
+  readonly freePlacesOpened: number;
   readonly welcomes: number;
   readonly reconciled: number;
   readonly statusChanges: number;
@@ -68,10 +70,12 @@ export class RunAccountLifecycleUseCase {
     private readonly clock: Clock,
     private readonly welcomes: WelcomeAccountsUseCase,
     private readonly projectless: SweepProjectlessPeopleUseCase,
+    private readonly freePlaces: OpenFreePlacesUseCase,
   ) {}
 
   async execute(): Promise<AccountLifecycleReport> {
     const now = this.clock.now();
+    const freePlacesOpened = await this.freePlaces.execute();
     const welcomes = await this.welcomes.welcomePending();
     const reconciliation = await this.reconcile(now);
     const keysRevoked = await this.lifecycle.revokeKeysOfEndedAccounts(now);
@@ -89,6 +93,7 @@ export class RunAccountLifecycleUseCase {
     const incomplete = await this.removeStaleIncomplete(now);
     const sweep = await this.projectless.execute();
     const report: AccountLifecycleReport = {
+      freePlacesOpened,
       welcomes,
       ...reconciliation,
       keysRevoked,

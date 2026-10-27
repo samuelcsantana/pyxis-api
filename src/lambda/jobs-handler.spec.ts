@@ -17,6 +17,7 @@ const EXPORTS = { done: 1, failed: 0 };
 const NOTICES = { sent: 3, failed: 0 };
 const DEMO_TRAFFIC = { projects: 1, inserted: 480 };
 const LIFECYCLE = {
+  freePlacesOpened: 0,
   welcomes: 1,
   reconciled: 4,
   statusChanges: 1,
