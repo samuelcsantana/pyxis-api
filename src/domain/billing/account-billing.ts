@@ -68,6 +68,13 @@ export function keepsTheFreePlan(
   return current.status === 'free' && !hasAccess(statusFor(subscription));
 }
 
+export function endsARunningSubscription(
+  current: AccountBillingState,
+  update: AccountBillingUpdate,
+): boolean {
+  return update.status === 'ended' && hasRunningSubscription(current.status);
+}
+
 export function billingUpdateFor(
   subscription: BillingSubscription,
   current: AccountBillingState,

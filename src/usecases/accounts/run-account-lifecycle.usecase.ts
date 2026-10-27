@@ -20,11 +20,13 @@ import type { SweepProjectlessPeopleUseCase } from '../people/sweep-projectless-
 import type { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 import type { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import type { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.usecase';
+import type { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
 
 export interface AccountLifecycleReport {
   readonly freePlacesOpened: number;
   readonly welcomes: number;
   readonly subscriptionsConfirmed: number;
+  readonly backToFreeNotices: number;
   readonly reconciled: number;
   readonly statusChanges: number;
   readonly reconcileFailures: number;
@@ -74,6 +76,7 @@ export class RunAccountLifecycleUseCase {
     private readonly projectless: SweepProjectlessPeopleUseCase,
     private readonly freePlaces: OpenFreePlacesUseCase,
     private readonly confirmations: ConfirmSubscriptionsUseCase,
+    private readonly fallbacks: FallBackToFreePlanUseCase,
   ) {}
 
   async execute(): Promise<AccountLifecycleReport> {
@@ -81,6 +84,7 @@ export class RunAccountLifecycleUseCase {
     const freePlacesOpened = await this.freePlaces.execute();
     const welcomes = await this.welcomes.welcomePending();
     const subscriptionsConfirmed = await this.confirmations.confirmPending();
+    const backToFreeNotices = await this.fallbacks.notifyPending();
     const reconciliation = await this.reconcile(now);
     const keysRevoked = await this.lifecycle.revokeKeysOfEndedAccounts(now);
     const endedNotices = await this.notifyEach(
@@ -100,6 +104,7 @@ export class RunAccountLifecycleUseCase {
       freePlacesOpened,
       welcomes,
       subscriptionsConfirmed,
+      backToFreeNotices,
       ...reconciliation,
       keysRevoked,
       endedNotices,
@@ -128,15 +133,19 @@ export class RunAccountLifecycleUseCase {
       try {
         const subscription = await this.gateway.subscription(account.subscriptionId);
         const update = billingUpdateFor(subscription, account, now);
-        await this.billing.apply(account.accountId, update);
+        const fellBack = await this.fallbacks.tryFallBack(account, update);
+        if (!fellBack) {
+          await this.billing.apply(account.accountId, update);
+        }
+        const status = fellBack ? 'free' : update.status;
         reconciled += 1;
-        if (update.status !== account.status) {
+        if (status !== account.status) {
           statusChanges += 1;
           this.logger.warn({
             message: 'accounts.reconciled_status',
             accountId: account.accountId,
             from: account.status,
-            to: update.status,
+            to: status,
           });
         }
       } catch (error) {

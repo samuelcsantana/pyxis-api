@@ -15,6 +15,9 @@ import {
 } from '../../test-utils/in-memory-account-billing.repository';
 import { InMemorySubscriptionConfirmationRepository } from '../../test-utils/in-memory-subscription-confirmation.repository';
 import { InMemoryTrialCardRepository } from '../../test-utils/in-memory-trial-card.repository';
+import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-free-plan-fallback.repository';
+import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
+import { FallBackToFreePlanUseCase } from './fall-back-to-free-plan.usecase';
 import { ConfirmSubscriptionsUseCase } from './confirm-subscriptions.usecase';
 import { DetectRepeatedTrialUseCase } from './detect-repeated-trial.usecase';
 import { HandleBillingEventUseCase } from './handle-billing-event.usecase';
@@ -92,6 +95,7 @@ function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
     termsVersion: '2026-11-01',
   });
   const trialCards = new InMemoryTrialCardRepository();
+  const fallbacks = new InMemoryFreePlanFallbackRepository();
   const useCase = new HandleBillingEventUseCase(
     gateway,
     events,
@@ -100,8 +104,18 @@ function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
     welcomes,
     new DetectRepeatedTrialUseCase(trialCards, clock),
     new ConfirmSubscriptionsUseCase(confirmationRepository, mail, settings),
+    new FallBackToFreePlanUseCase(fallbacks, mail, clock, { ...settings, freePlanOpen: true }),
   );
-  return { gateway, events, accounts, mail, trialCards, confirmationRepository, useCase };
+  return {
+    gateway,
+    events,
+    accounts,
+    mail,
+    trialCards,
+    confirmationRepository,
+    fallbacks,
+    useCase,
+  };
 }
 
 describe('HandleBillingEventUseCase', () => {
@@ -206,6 +220,37 @@ describe('HandleBillingEventUseCase', () => {
 
     expect(running.mail.welcomes).toEqual([]);
     expect(ending.mail.welcomes).toEqual([]);
+  });
+
+  it('puts an ended subscription that fits back on free instead of ending the account', async () => {
+    const { gateway, events, accounts, fallbacks, mail, useCase } = setup('active');
+    fallbacks.add({
+      accountId: ACCOUNT_ID,
+      ownerEmail: 'owner@example.com',
+      ownerLanguage: 'pt-BR',
+      eventsPerMonthLimit: null,
+      status: 'active',
+      fit: {
+        ...NO_LIMIT_OVERRIDES,
+        projects: 1,
+        people: 1,
+        acceptedTermsVersions: ['1.3'],
+        ownerHasAnotherFreeAccount: false,
+      },
+    });
+    gateway.addSubscription({ ...TRIALING, status: 'canceled', cardFingerprint: 'fp_1' });
+    gateway.willReceive(event({ type: 'customer.subscription.deleted' }));
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+
+    expect(await useCase.execute(COMMAND)).toBe('applied');
+
+    expect(accounts.updates).toEqual([]);
+    expect(fallbacks.statusOf(ACCOUNT_ID)).toBe('free');
+    expect(mail.accountNotices.map(({ notice }) => notice.kind)).toEqual(['back_to_free']);
+    expect(await events.claim({ ...event(), id: 'evt_1' })).toBe(false);
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'billing.event_applied', status: 'free' }),
+    );
   });
 
   it('applies an event once, however many times Stripe sends it', async () => {
