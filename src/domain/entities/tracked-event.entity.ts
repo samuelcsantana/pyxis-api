@@ -6,10 +6,29 @@ export const DEVICE_TYPES = ['mobile', 'tablet', 'desktop', 'other'] as const;
 
 export type DeviceType = (typeof DEVICE_TYPES)[number];
 
-export type BrowserFamily =
-  'chrome' | 'safari' | 'firefox' | 'edge' | 'samsung' | 'opera' | 'other';
+export const BROWSER_FAMILIES = [
+  'chrome',
+  'safari',
+  'firefox',
+  'edge',
+  'samsung',
+  'opera',
+  'other',
+] as const;
 
-export type OsFamily = 'android' | 'ios' | 'windows' | 'macos' | 'linux' | 'chromeos' | 'other';
+export type BrowserFamily = (typeof BROWSER_FAMILIES)[number];
+
+export const OS_FAMILIES = [
+  'android',
+  'ios',
+  'windows',
+  'macos',
+  'linux',
+  'chromeos',
+  'other',
+] as const;
+
+export type OsFamily = (typeof OS_FAMILIES)[number];
 
 export const CHANNELS = [
   'paid',
