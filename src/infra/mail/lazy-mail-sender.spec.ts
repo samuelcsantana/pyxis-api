@@ -27,7 +27,11 @@ describe('LazyMailSender', () => {
       'en',
     );
     await sender.sendAccountNotice('ana@example.com', { kind: 'account_deleted' }, 'en');
-    await sender.sendWelcome('ana@example.com', { trialEndsAt: null, terms: null }, 'en');
+    await sender.sendWelcome(
+      'ana@example.com',
+      { plan: { kind: 'subscription' }, terms: null },
+      'en',
+    );
     await sender.sendExportReady(
       'ana@example.com',
       {

@@ -2,6 +2,17 @@ import type { AcceptedTerms } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import { SIGN_IN_CODE_EMAIL_MESSAGES } from './sign-in-code-email-messages';
 
+export interface FreePlanText {
+  readonly events: string;
+  readonly projects: number;
+  readonly people: number;
+  readonly pauseAt: string;
+}
+
+function counted(count: number, one: string, other: string): string {
+  return `${String(count)} ${count === 1 ? one : other}`;
+}
+
 export interface WelcomeEmailMessages {
   readonly language: EmailLanguage;
   readonly subject: string;
@@ -10,6 +21,9 @@ export interface WelcomeEmailMessages {
   readonly activePreheader: string;
   readonly trialConfirmed: (trialEndsOn: string) => string;
   readonly activeConfirmed: string;
+  readonly freePreheader: string;
+  readonly freeConfirmed: (plan: FreePlanText) => string;
+  readonly freeReason: string;
   readonly nextStep: string;
   readonly terms: (terms: AcceptedTerms) => string;
   readonly openDashboard: string;
@@ -38,6 +52,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'You accepted the Terms of Use, the Data Processing Agreement and the Privacy Policy, ' +
       `version ${terms.version}, written in Brazilian Portuguese: ${terms.url}`,
+    freePreheader: 'Your account is on the free plan.',
+    freeConfirmed: (plan) =>
+      `Your account is on the free plan, with no card: up to ${plan.events} events a month, ` +
+      `${counted(plan.projects, 'project', 'projects')} and ` +
+      `${counted(plan.people, 'person', 'people')}, with every feature. Measuring pauses when ` +
+      `the month reaches ${plan.pauseAt} events and comes back on the 1st. You can subscribe ` +
+      'to the paid plan at any time, in Account and billing.',
+    freeReason: 'You received this email because you created a Pyxis account.',
     openDashboard: 'Open the dashboard',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.en.about,
     reason: 'You received this email because you subscribed to Pyxis.',
@@ -62,6 +84,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'Você aceitou os Termos de Uso, o Acordo de Tratamento de Dados e a Política de ' +
       `Privacidade, versão ${terms.version}: ${terms.url}`,
+    freePreheader: 'Sua conta está no plano grátis.',
+    freeConfirmed: (plan) =>
+      `Sua conta está no plano grátis, sem cartão: até ${plan.events} eventos por mês, ` +
+      `${counted(plan.projects, 'projeto', 'projetos')} e ` +
+      `${counted(plan.people, 'pessoa', 'pessoas')}, com todas as funções. A medição pausa ` +
+      `quando o mês chega a ${plan.pauseAt} eventos e volta no dia 1º. Você pode assinar o ` +
+      'plano pago quando quiser, em Conta e cobrança.',
+    freeReason: 'Você recebeu este e-mail porque criou uma conta no Pyxis.',
     openDashboard: 'Abrir o painel',
     about: SIGN_IN_CODE_EMAIL_MESSAGES['pt-BR'].about,
     reason: 'Você recebeu este e-mail porque assinou o Pyxis.',
@@ -86,6 +116,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'Aceptaste los Términos de Uso, el Acuerdo de Tratamiento de Datos y la Política de ' +
       `Privacidad, versión ${terms.version}, redactados en portugués de Brasil: ${terms.url}`,
+    freePreheader: 'Tu cuenta está en el plan gratis.',
+    freeConfirmed: (plan) =>
+      `Tu cuenta está en el plan gratis, sin tarjeta: hasta ${plan.events} eventos al mes, ` +
+      `${counted(plan.projects, 'proyecto', 'proyectos')} y ` +
+      `${counted(plan.people, 'persona', 'personas')}, con todas las funciones. La medición se ` +
+      `pausa cuando el mes llega a ${plan.pauseAt} eventos y vuelve el día 1. Puedes ` +
+      'suscribirte al plan de pago cuando quieras, en Cuenta y facturación.',
+    freeReason: 'Recibiste este correo porque creaste una cuenta en Pyxis.',
     openDashboard: 'Abrir el panel',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.es.about,
     reason: 'Recibiste este correo porque te suscribiste a Pyxis.',
@@ -113,6 +151,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       'Du hast die Nutzungsbedingungen, den Auftragsverarbeitungsvertrag und die ' +
       `Datenschutzerklärung in Version ${terms.version} akzeptiert, verfasst auf brasilianischem ` +
       `Portugiesisch: ${terms.url}`,
+    freePreheader: 'Dein Konto ist im kostenlosen Plan.',
+    freeConfirmed: (plan) =>
+      `Dein Konto ist im kostenlosen Plan, ohne Karte: bis zu ${plan.events} Ereignisse im ` +
+      `Monat, ${counted(plan.projects, 'Projekt', 'Projekte')} und ` +
+      `${counted(plan.people, 'Person', 'Personen')}, mit allen Funktionen. Die Messung ` +
+      `pausiert, wenn der Monat ${plan.pauseAt} Ereignisse erreicht, und läuft am 1. wieder ` +
+      'an. Du kannst den kostenpflichtigen Plan jederzeit unter Konto und Abrechnung abonnieren.',
+    freeReason: 'Du hast diese E-Mail bekommen, weil du ein Pyxis-Konto erstellt hast.',
     openDashboard: 'Dashboard öffnen',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
     reason: 'Du hast diese E-Mail bekommen, weil du Pyxis abonniert hast.',
@@ -140,6 +186,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `Politique de confidentialité, version ${terms.version}, rédigés en portugais du ` +
       `Brésil\u00a0: ` +
       terms.url,
+    freePreheader: 'Votre compte est sur la formule gratuite.',
+    freeConfirmed: (plan) =>
+      `Votre compte est sur la formule gratuite, sans carte\u00a0: jusqu’à ${plan.events} ` +
+      `événements par mois, ${counted(plan.projects, 'projet', 'projets')} et ` +
+      `${counted(plan.people, 'personne', 'personnes')}, avec toutes les fonctions. La mesure ` +
+      `se met en pause quand le mois atteint ${plan.pauseAt} événements et reprend le 1er. ` +
+      'Vous pouvez souscrire à la formule payante à tout moment, dans Compte et facturation.',
+    freeReason: 'Vous recevez cet e-mail parce que vous avez créé un compte Pyxis.',
     openDashboard: 'Ouvrir le tableau de bord',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
     reason: 'Vous recevez cet e-mail parce que vous vous êtes abonné à Pyxis.',
@@ -166,6 +220,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'Hai accettato i Termini di utilizzo, l’Accordo sul trattamento dei dati e l’Informativa ' +
       `sulla privacy, versione ${terms.version}, redatti in portoghese brasiliano: ${terms.url}`,
+    freePreheader: 'Il tuo account è nel piano gratuito.',
+    freeConfirmed: (plan) =>
+      `Il tuo account è nel piano gratuito, senza carta: fino a ${plan.events} eventi al mese, ` +
+      `${counted(plan.projects, 'progetto', 'progetti')} e ` +
+      `${counted(plan.people, 'persona', 'persone')}, con tutte le funzioni. La misurazione va ` +
+      `in pausa quando il mese arriva a ${plan.pauseAt} eventi e riprende il giorno 1. Puoi ` +
+      'abbonarti al piano a pagamento quando vuoi, in Account e fatturazione.',
+    freeReason: 'Hai ricevuto questa email perché hai creato un account Pyxis.',
     openDashboard: 'Apri la dashboard',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
     reason: 'Hai ricevuto questa email perché hai sottoscritto un abbonamento a Pyxis.',
@@ -192,6 +254,14 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       'Je bent akkoord gegaan met de Gebruiksvoorwaarden, de Verwerkersovereenkomst en het ' +
       `Privacybeleid, versie ${terms.version}, opgesteld in het Braziliaans-Portugees: ` +
       terms.url,
+    freePreheader: 'Je account staat op het gratis abonnement.',
+    freeConfirmed: (plan) =>
+      `Je account staat op het gratis abonnement, zonder kaart: maximaal ${plan.events} events ` +
+      `per maand, ${counted(plan.projects, 'project', 'projecten')} en ` +
+      `${counted(plan.people, 'persoon', 'personen')}, met alle functies. Het meten pauzeert ` +
+      `wanneer de maand ${plan.pauseAt} events bereikt en gaat op de 1e weer verder. Je kunt ` +
+      'op elk moment het betaalde abonnement nemen, onder Account en facturering.',
+    freeReason: 'Je ontvangt deze e-mail omdat je een Pyxis-account hebt aangemaakt.',
     openDashboard: 'Dashboard openen',
     about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
     reason: 'Je ontvangt deze e-mail omdat je je hebt geabonneerd op Pyxis.',

@@ -65,6 +65,9 @@ function setup(before: 'incomplete' | 'active' = 'incomplete') {
     status: 'trialing',
     trialEndsAt: TRIAL_END,
     termsVersion: '2026-11-01',
+    eventsPerMonthLimit: null,
+    projectsLimit: null,
+    peopleLimit: null,
   });
   const mail = new RecordingMailSender();
   const welcomes = new WelcomeAccountsUseCase(welcomeRepository, mail, clock, {
@@ -128,7 +131,7 @@ describe('HandleBillingEventUseCase', () => {
       {
         email: 'owner@example.com',
         welcome: {
-          trialEndsAt: TRIAL_END,
+          plan: { kind: 'trial', trialEndsAt: TRIAL_END },
           terms: { version: '2026-11-01', url: 'https://example.com/termos' },
         },
         language: 'pt-BR',

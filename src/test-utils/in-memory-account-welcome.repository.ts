@@ -9,6 +9,7 @@ const WELCOMED_STATUSES: ReadonlySet<AccountStatus> = new Set([
   'active',
   'past_due',
   'ending',
+  'free',
 ]);
 
 interface StoredWelcome {

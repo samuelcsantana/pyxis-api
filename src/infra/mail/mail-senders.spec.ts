@@ -176,7 +176,7 @@ describe('ResendMailSender', () => {
 
   it('sends the welcome with replies going to the support address', async () => {
     const send = okResend();
-    const welcome = { trialEndsAt: null, terms: null };
+    const welcome = { plan: { kind: 'subscription' as const }, terms: null };
 
     await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendWelcome(
       'owner@example.com',
@@ -347,7 +347,7 @@ describe('SesMailSender', () => {
 
     await new SesMailSender(FROM, LINKS, send).sendWelcome(
       'owner@example.com',
-      { trialEndsAt: null, terms: null },
+      { plan: { kind: 'subscription' as const }, terms: null },
       'en',
     );
 
@@ -550,7 +550,7 @@ describe('LoggingMailSender', () => {
     ]);
   });
 
-  it('logs whether a welcome has a trial and terms, never the address', async () => {
+  it('logs the plan a welcome is for and whether it has terms, never the address', async () => {
     const logs: unknown[] = [];
     jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
       logs.push(message);
@@ -558,12 +558,12 @@ describe('LoggingMailSender', () => {
 
     await new LoggingMailSender().sendWelcome(
       'owner@example.com',
-      { trialEndsAt: new Date('2026-11-15T00:00:00.000Z'), terms: null },
+      { plan: { kind: 'trial', trialEndsAt: new Date('2026-11-15T00:00:00.000Z') }, terms: null },
       'en',
     );
 
     expect(logs).toEqual([
-      { message: 'mail.welcome', trial: true, withTerms: false, language: 'en' },
+      { message: 'mail.welcome', plan: 'trial', withTerms: false, language: 'en' },
     ]);
   });
 

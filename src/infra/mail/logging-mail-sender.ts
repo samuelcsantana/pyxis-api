@@ -53,7 +53,7 @@ export class LoggingMailSender implements MailSender {
   sendWelcome(_email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
     this.logger.log({
       message: 'mail.welcome',
-      trial: welcome.trialEndsAt !== null,
+      plan: welcome.plan.kind,
       withTerms: welcome.terms !== null,
       language,
     });

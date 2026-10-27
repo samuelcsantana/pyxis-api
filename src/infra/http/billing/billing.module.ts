@@ -60,6 +60,6 @@ import { BillingWebhookController } from './billing-webhook.controller';
         }),
     },
   ],
-  exports: [BILLING_GATEWAY, SIGN_UP_SETTINGS],
+  exports: [BILLING_GATEWAY, SIGN_UP_SETTINGS, WelcomeAccountsUseCase],
 })
 export class BillingModule {}

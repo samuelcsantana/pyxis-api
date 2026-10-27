@@ -23,6 +23,9 @@ const TARGET: WelcomeTarget = {
   status: 'trialing',
   trialEndsAt: TRIAL_END,
   termsVersion: '2026-11-01',
+  eventsPerMonthLimit: null,
+  projectsLimit: null,
+  peopleLimit: null,
 };
 
 function setup(settings: SignUpSettings = SETTINGS) {
@@ -55,7 +58,7 @@ describe('WelcomeAccountsUseCase', () => {
       {
         email: 'ana@example.com',
         welcome: {
-          trialEndsAt: TRIAL_END,
+          plan: { kind: 'trial', trialEndsAt: TRIAL_END },
           terms: { version: '2026-11-01', url: 'https://example.com/termos' },
         },
         language: 'pt-BR',
@@ -73,8 +76,24 @@ describe('WelcomeAccountsUseCase', () => {
     await withoutAddress.useCase.tryWelcome('acc-1');
     await withoutVersion.useCase.tryWelcome('acc-1');
 
-    expect(withoutAddress.mail.welcomes[0]?.welcome).toEqual({ trialEndsAt: null, terms: null });
+    expect(withoutAddress.mail.welcomes[0]?.welcome).toEqual({
+      plan: { kind: 'subscription' },
+      terms: null,
+    });
     expect(withoutVersion.mail.welcomes[0]?.welcome.terms).toBeNull();
+  });
+
+  it('welcomes an account on the free plan with its limits and its pause point', async () => {
+    const { welcomes, mail, useCase } = setup();
+    welcomes.add({ ...TARGET, status: 'free', trialEndsAt: null });
+
+    expect(await useCase.tryWelcome('acc-1')).toBe(true);
+
+    expect(mail.welcomes[0]?.welcome.plan).toEqual({
+      kind: 'free',
+      limits: { eventsPerMonth: 10_000, projects: 1, people: 1 },
+      pauseAtEvents: 10_000,
+    });
   });
 
   it('welcomes nobody for an account it does not know or that has no access', async () => {

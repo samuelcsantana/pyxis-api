@@ -1,7 +1,8 @@
+import type { PlanLimitOverrides } from '../accounts/account-limits';
 import type { AccountStatus } from '../accounts/account-status';
 import type { EmailLanguage } from '../auth/email-language';
 
-export interface WelcomeTarget {
+export interface WelcomeTarget extends PlanLimitOverrides {
   readonly accountId: string;
   readonly ownerEmail: string;
   readonly ownerLanguage: EmailLanguage;
