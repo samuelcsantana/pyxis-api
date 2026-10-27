@@ -45,7 +45,7 @@ describe('buildAccountNoticeEmail', () => {
     expect(email.subject).toBe('Your Pyxis subscription has ended');
     expect(email.html).toContain('its keys were revoked');
     expect(email.html).toContain('The reports stay readable until December 14, 2026.');
-    expect(email.text).toContain('export it from the account page');
+    expect(email.html).toContain('export it from each project’s Settings before then');
   });
 
   it('reminds the owner of the deletion date, in their language', () => {
@@ -79,10 +79,14 @@ describe('buildAccountNoticeEmail', () => {
     const portuguese = buildAccountNoticeEmail(WITHDRAWN_OVER_THE_LIMITS, 'pt-BR', LINKS, null);
     const fitting = buildAccountNoticeEmail(WITHDRAWN, 'en', LINKS, null);
 
-    expect(english.html).toContain('Remove what is over on the account page by December 20, 2026');
+    expect(english.html).toContain(
+      'Remove what is over in each project’s Settings by December 20, 2026',
+    );
     expect(english.html).toContain('its data is deleted 30 days later');
     expect(english.html).not.toContain('apply again from now');
-    expect(portuguese.html).toContain('pela página da conta até 20 de dezembro de 2026');
+    expect(portuguese.html).toContain(
+      'nas Configurações de cada projeto até 20 de dezembro de 2026',
+    );
     expect(fitting.html).toContain('The free plan’s limits apply again from now');
     expect(fitting.html).not.toContain('Remove what is over');
   });
