@@ -1,6 +1,8 @@
 export type AccountNotice =
   | { readonly kind: 'access_ended'; readonly deletionOn: Date }
   | { readonly kind: 'deletion_reminder'; readonly deletionOn: Date }
+  | { readonly kind: 'empty_free_account'; readonly deletionOn: Date }
+  | { readonly kind: 'idle_free_account'; readonly deletionOn: Date }
   | { readonly kind: 'account_deleted' }
   | {
       readonly kind: 'withdrawn_to_free';

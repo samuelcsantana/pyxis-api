@@ -83,6 +83,28 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'To measure more, subscribe again from the account page. To leave Pyxis instead, close the account there.',
         ],
       },
+      empty_free_account: {
+        subject: (w) => `Your free Pyxis account will be deleted on ${w.deletionOn}`,
+        preheader: () => 'It has stored no events since it started on the free plan.',
+        heading: () => 'No events yet',
+        paragraphs: (w) => [
+          'Your free Pyxis account has stored no events in the 30 days since it started on the free plan.',
+          `If it still stores none, on ${w.deletionOn} the account, its projects and their keys are deleted for good, and we will email you once it is done.`,
+          'To keep it, install Pyxis on your site from the Install page so that it sends events, or subscribe from the account page.',
+          `To ask a person to review this deletion, reply to this email before ${w.deletionOn}.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Your free Pyxis account will be deleted on ${w.deletionOn}`,
+        preheader: () => 'It has stored no events for 90 days.',
+        heading: () => 'No events for 90 days',
+        paragraphs: (w) => [
+          'Your free Pyxis account has stored no events for 90 days in a row on the free plan.',
+          `If it still stores none, on ${w.deletionOn} the account, its projects, their events and their keys are deleted for good, and we will email you once it is done.`,
+          'To keep it, check that your site still sends events to Pyxis, or subscribe from the account page. To keep the data, export it from each project’s Settings before then.',
+          `To ask a person to review this deletion, reply to this email before ${w.deletionOn}.`,
+        ],
+      },
       account_deleted: {
         subject: () => 'Your Pyxis account was deleted',
         preheader: () => 'Its projects, their events and their keys are gone.',
@@ -149,6 +171,28 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Sua assinatura paga terminou, e sua conta voltou ao plano grátis, com os projetos, os dados e as chaves: seus sites continuam enviando eventos ao Pyxis.',
           `O plano grátis mede até ${w.monthlyEvents} eventos por mês. Se este mês já chegou a esse número, a medição pausa até o dia 1º e depois volta sozinha.`,
           'Para medir mais, assine de novo pela página da conta. Se preferir sair do Pyxis, encerre a conta por lá.',
+        ],
+      },
+      empty_free_account: {
+        subject: (w) => `Sua conta grátis do Pyxis será apagada em ${w.deletionOn}`,
+        preheader: () => 'Ela não guardou nenhum evento desde que entrou no plano grátis.',
+        heading: () => 'Nenhum evento ainda',
+        paragraphs: (w) => [
+          'Sua conta grátis do Pyxis não guardou nenhum evento nos 30 dias desde que entrou no plano grátis.',
+          `Se continuar sem eventos, em ${w.deletionOn} a conta, os projetos e as chaves serão apagados de vez, e avisaremos você por e-mail quando isso acontecer.`,
+          'Para mantê-la, instale o Pyxis no seu site pela página Instalação, para que ele envie eventos, ou assine pela página da conta.',
+          `Para pedir que uma pessoa reveja essa exclusão, responda a este e-mail antes de ${w.deletionOn}.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Sua conta grátis do Pyxis será apagada em ${w.deletionOn}`,
+        preheader: () => 'Ela está há 90 dias sem guardar nenhum evento.',
+        heading: () => '90 dias sem eventos',
+        paragraphs: (w) => [
+          'Sua conta grátis do Pyxis está há 90 dias seguidos sem guardar nenhum evento no plano grátis.',
+          `Se continuar sem eventos, em ${w.deletionOn} a conta, os projetos, os eventos e as chaves serão apagados de vez, e avisaremos você por e-mail quando isso acontecer.`,
+          'Para mantê-la, confira se o seu site ainda envia eventos ao Pyxis, ou assine pela página da conta. Para guardar os dados, exporte-os nas Configurações de cada projeto antes disso.',
+          `Para pedir que uma pessoa reveja essa exclusão, responda a este e-mail antes de ${w.deletionOn}.`,
         ],
       },
       account_deleted: {
@@ -220,6 +264,28 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Tu suscripción de pago terminó y tu cuenta volvió al plan gratis, con sus proyectos, sus datos y sus claves: tus sitios siguen enviando eventos a Pyxis.',
           `El plan gratis mide hasta ${w.monthlyEvents} eventos al mes. Si este mes ya llegó a esa cifra, la medición se pausa hasta el día 1 y luego vuelve sola.`,
           'Para medir más, suscríbete de nuevo desde la página de la cuenta. Si prefieres dejar Pyxis, cierra la cuenta allí.',
+        ],
+      },
+      empty_free_account: {
+        subject: (w) => `Tu cuenta gratis de Pyxis se eliminará el ${w.deletionOn}`,
+        preheader: () => 'No guardó ningún evento desde que empezó en el plan gratis.',
+        heading: () => 'Todavía sin eventos',
+        paragraphs: (w) => [
+          'Tu cuenta gratis de Pyxis no guardó ningún evento en los 30 días desde que empezó en el plan gratis.',
+          `Si sigue sin eventos, el ${w.deletionOn} la cuenta, sus proyectos y sus claves se eliminarán definitivamente, y te escribiremos cuando se haga.`,
+          'Para conservarla, instala Pyxis en tu sitio desde la página Instalación para que envíe eventos, o suscríbete desde la página de la cuenta.',
+          `Para pedir que una persona revise esta eliminación, responde a este correo antes del ${w.deletionOn}.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Tu cuenta gratis de Pyxis se eliminará el ${w.deletionOn}`,
+        preheader: () => 'Lleva 90 días sin guardar ningún evento.',
+        heading: () => '90 días sin eventos',
+        paragraphs: (w) => [
+          'Tu cuenta gratis de Pyxis lleva 90 días seguidos sin guardar ningún evento en el plan gratis.',
+          `Si sigue sin eventos, el ${w.deletionOn} la cuenta, sus proyectos, sus eventos y sus claves se eliminarán definitivamente, y te escribiremos cuando se haga.`,
+          'Para conservarla, comprueba que tu sitio sigue enviando eventos a Pyxis, o suscríbete desde la página de la cuenta. Para conservar los datos, expórtalos desde la Configuración de cada proyecto antes de esa fecha.',
+          `Para pedir que una persona revise esta eliminación, responde a este correo antes del ${w.deletionOn}.`,
         ],
       },
       account_deleted: {
@@ -295,6 +361,28 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Um mehr zu messen, schließ auf der Kontoseite erneut ein Abo ab. Wenn du Pyxis lieber verlassen möchtest, schließ dort das Konto.',
         ],
       },
+      empty_free_account: {
+        subject: (w) => `Dein kostenloses Pyxis-Konto wird am ${w.deletionOn} gelöscht`,
+        preheader: () => 'Es hat seit dem Start im kostenlosen Plan keine Ereignisse gespeichert.',
+        heading: () => 'Noch keine Ereignisse',
+        paragraphs: (w) => [
+          'Dein kostenloses Pyxis-Konto hat in den 30 Tagen seit dem Start im kostenlosen Plan keine Ereignisse gespeichert.',
+          `Bleibt es ohne Ereignisse, werden am ${w.deletionOn} das Konto, seine Projekte und ihre Schlüssel endgültig gelöscht; wir schreiben dir, sobald es geschehen ist.`,
+          'Um es zu behalten, installiere Pyxis über die Seite „Installieren“ auf deiner Website, damit sie Ereignisse sendet, oder schließ auf der Kontoseite ein Abo ab.',
+          `Wenn eine Person diese Löschung prüfen soll, antworte vor dem ${w.deletionOn} auf diese E-Mail.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Dein kostenloses Pyxis-Konto wird am ${w.deletionOn} gelöscht`,
+        preheader: () => 'Es hat seit 90 Tagen keine Ereignisse gespeichert.',
+        heading: () => '90 Tage ohne Ereignisse',
+        paragraphs: (w) => [
+          'Dein kostenloses Pyxis-Konto hat 90 Tage am Stück im kostenlosen Plan keine Ereignisse gespeichert.',
+          `Bleibt es ohne Ereignisse, werden am ${w.deletionOn} das Konto, seine Projekte, ihre Ereignisse und ihre Schlüssel endgültig gelöscht; wir schreiben dir, sobald es geschehen ist.`,
+          'Um es zu behalten, prüfe, ob deine Website noch Ereignisse an Pyxis sendet, oder schließ auf der Kontoseite ein Abo ab. Um die Daten zu behalten, exportiere sie vorher in den Einstellungen jedes Projekts.',
+          `Wenn eine Person diese Löschung prüfen soll, antworte vor dem ${w.deletionOn} auf diese E-Mail.`,
+        ],
+      },
       account_deleted: {
         subject: () => 'Dein Pyxis-Konto wurde gelöscht',
         preheader: () => 'Seine Projekte, ihre Ereignisse und ihre Schlüssel gibt es nicht mehr.',
@@ -365,6 +453,29 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Votre abonnement payant est terminé et votre compte est revenu à la formule gratuite, avec ses projets, leurs données et leurs clés\u00a0: vos sites continuent d’envoyer des événements à Pyxis.',
           `La formule gratuite mesure jusqu’à ${w.monthlyEvents} événements par mois. Si ce mois a déjà atteint ce nombre, la mesure est suspendue jusqu’au 1er, puis reprend d’elle-même.`,
           'Pour mesurer davantage, abonnez-vous à nouveau depuis la page du compte. Pour quitter Pyxis, fermez le compte depuis cette même page.',
+        ],
+      },
+      empty_free_account: {
+        subject: (w) => `Votre compte gratuit Pyxis sera supprimé le ${w.deletionOn}`,
+        preheader: () =>
+          'Il n’a enregistré aucun événement depuis son arrivée sur la formule gratuite.',
+        heading: () => 'Aucun événement pour l’instant',
+        paragraphs: (w) => [
+          'Votre compte gratuit Pyxis n’a enregistré aucun événement dans les 30 jours qui ont suivi son arrivée sur la formule gratuite.',
+          `S’il n’en enregistre toujours aucun, le ${w.deletionOn}, le compte, ses projets et leurs clés seront définitivement supprimés, et nous vous écrirons une fois la suppression faite.`,
+          'Pour le garder, installez Pyxis sur votre site depuis la page Installation afin qu’il envoie des événements, ou abonnez-vous depuis la page du compte.',
+          `Pour demander qu’une personne réexamine cette suppression, répondez à cet e-mail avant le ${w.deletionOn}.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Votre compte gratuit Pyxis sera supprimé le ${w.deletionOn}`,
+        preheader: () => 'Il n’a enregistré aucun événement depuis 90 jours.',
+        heading: () => '90 jours sans événements',
+        paragraphs: (w) => [
+          'Votre compte gratuit Pyxis n’a enregistré aucun événement pendant 90 jours d’affilée sur la formule gratuite.',
+          `S’il n’en enregistre toujours aucun, le ${w.deletionOn}, le compte, ses projets, leurs événements et leurs clés seront définitivement supprimés, et nous vous écrirons une fois la suppression faite.`,
+          'Pour le garder, vérifiez que votre site envoie toujours des événements à Pyxis, ou abonnez-vous depuis la page du compte. Pour garder les données, exportez-les depuis les Paramètres de chaque projet d’ici là.',
+          `Pour demander qu’une personne réexamine cette suppression, répondez à cet e-mail avant le ${w.deletionOn}.`,
         ],
       },
       account_deleted: {
@@ -439,6 +550,28 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Per misurare di più, abbonati di nuovo dalla pagina dell’account. Se preferisci lasciare Pyxis, chiudi l’account da lì.',
         ],
       },
+      empty_free_account: {
+        subject: (w) => `Il tuo account gratuito Pyxis verrà eliminato il giorno ${w.deletionOn}`,
+        preheader: () => 'Non ha registrato nessun evento da quando è entrato nel piano gratuito.',
+        heading: () => 'Ancora nessun evento',
+        paragraphs: (w) => [
+          'Il tuo account gratuito Pyxis non ha registrato nessun evento nei 30 giorni da quando è entrato nel piano gratuito.',
+          `Se continua a non registrarne, il giorno ${w.deletionOn} l’account, i suoi progetti e le loro chiavi verranno eliminati per sempre, e ti scriveremo quando sarà fatto.`,
+          'Per tenerlo, installa Pyxis sul tuo sito dalla pagina Installazione perché invii eventi, oppure abbonati dalla pagina dell’account.',
+          `Per chiedere che una persona riesamini questa eliminazione, rispondi a questa email prima del giorno ${w.deletionOn}.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Il tuo account gratuito Pyxis verrà eliminato il giorno ${w.deletionOn}`,
+        preheader: () => 'Non registra nessun evento da 90 giorni.',
+        heading: () => '90 giorni senza eventi',
+        paragraphs: (w) => [
+          'Il tuo account gratuito Pyxis non registra nessun evento da 90 giorni di fila nel piano gratuito.',
+          `Se continua a non registrarne, il giorno ${w.deletionOn} l’account, i suoi progetti, i loro eventi e le loro chiavi verranno eliminati per sempre, e ti scriveremo quando sarà fatto.`,
+          'Per tenerlo, controlla che il tuo sito invii ancora eventi a Pyxis, oppure abbonati dalla pagina dell’account. Per conservare i dati, esportali dalle Impostazioni di ogni progetto prima di quella data.',
+          `Per chiedere che una persona riesamini questa eliminazione, rispondi a questa email prima del giorno ${w.deletionOn}.`,
+        ],
+      },
       account_deleted: {
         subject: () => 'Il tuo account Pyxis è stato eliminato',
         preheader: () => 'I suoi progetti, i loro eventi e le loro chiavi non esistono più.',
@@ -508,6 +641,29 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Je betaalde abonnement is beëindigd en je account staat weer op het gratis abonnement, met de projecten, hun gegevens en hun sleutels: je sites blijven events naar Pyxis sturen.',
           `Het gratis abonnement meet tot ${w.monthlyEvents} events per maand. Heeft deze maand dat aantal al bereikt, dan pauzeert het meten tot de 1e en gaat het daarna vanzelf weer verder.`,
           'Wil je meer meten? Neem opnieuw een abonnement via de accountpagina. Wil je Pyxis liever verlaten? Sluit dan daar het account.',
+        ],
+      },
+      empty_free_account: {
+        subject: (w) => `Je gratis Pyxis-account wordt op ${w.deletionOn} verwijderd`,
+        preheader: () =>
+          'Het heeft nog geen enkel event opgeslagen sinds het op het gratis abonnement begon.',
+        heading: () => 'Nog geen events',
+        paragraphs: (w) => [
+          'Je gratis Pyxis-account heeft in de 30 dagen sinds het op het gratis abonnement begon geen enkel event opgeslagen.',
+          `Blijft het zonder events, dan worden op ${w.deletionOn} het account, de projecten en hun sleutels definitief verwijderd; we mailen je zodra dat is gebeurd.`,
+          'Wil je het houden? Installeer Pyxis op je site via de pagina Installeren, zodat die events stuurt, of neem een abonnement via de accountpagina.',
+          `Wil je dat een persoon deze verwijdering bekijkt? Beantwoord deze e-mail vóór ${w.deletionOn}.`,
+        ],
+      },
+      idle_free_account: {
+        subject: (w) => `Je gratis Pyxis-account wordt op ${w.deletionOn} verwijderd`,
+        preheader: () => 'Het heeft al 90 dagen geen enkel event opgeslagen.',
+        heading: () => '90 dagen zonder events',
+        paragraphs: (w) => [
+          'Je gratis Pyxis-account heeft 90 dagen achter elkaar op het gratis abonnement geen enkel event opgeslagen.',
+          `Blijft het zonder events, dan worden op ${w.deletionOn} het account, de projecten, hun events en hun sleutels definitief verwijderd; we mailen je zodra dat is gebeurd.`,
+          'Wil je het houden? Controleer of je site nog events naar Pyxis stuurt, of neem een abonnement via de accountpagina. Wil je de gegevens houden? Exporteer ze vóór die datum via de Instellingen van elk project.',
+          `Wil je dat een persoon deze verwijdering bekijkt? Beantwoord deze e-mail vóór ${w.deletionOn}.`,
         ],
       },
       account_deleted: {
