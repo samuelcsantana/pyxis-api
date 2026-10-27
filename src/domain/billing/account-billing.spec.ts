@@ -1,4 +1,4 @@
-import { type AccountBillingState, billingUpdateFor } from './account-billing';
+import { type AccountBillingState, billingUpdateFor, keepsTheFreePlan } from './account-billing';
 import type { BillingSubscription } from './billing-gateway';
 
 const NOW = new Date('2026-10-20T12:00:00.000Z');
@@ -36,7 +36,21 @@ describe('billingUpdateFor', () => {
       currentPeriodEndsAt: TRIAL_END,
       accessEndsAt: null,
       restoresAccess: true,
+      leavesFreePlanInMonth: null,
     });
+  });
+
+  it('names the month whose pause and notices to reset when a free account starts paying', () => {
+    const free = { ...CURRENT, status: 'free' as const };
+
+    expect(
+      billingUpdateFor(subscription({ status: 'active', trialEndsAt: null }), free, NOW)
+        .leavesFreePlanInMonth,
+    ).toBe('2026-10');
+    expect(
+      billingUpdateFor(subscription({ status: 'active', trialEndsAt: null }), CURRENT, NOW)
+        .leavesFreePlanInMonth,
+    ).toBeNull();
   });
 
   it('restores access while the subscription runs, and not once it has ended', () => {
@@ -91,5 +105,25 @@ describe('billingUpdateFor', () => {
 
     expect(ended.accessEndsAt).toEqual(NOW);
     expect(later.accessEndsAt).toEqual(NOW);
+  });
+});
+
+describe('keepsTheFreePlan', () => {
+  const FREE: AccountBillingState = { ...CURRENT, status: 'free' };
+
+  it.each(['canceled', 'incomplete', 'incomplete_expired', 'unpaid'])(
+    'keeps a free account free when its subscription is %s',
+    (status) => {
+      expect(keepsTheFreePlan(subscription({ status }), FREE)).toBe(true);
+    },
+  );
+
+  it('lets a running or failing subscription move a free account onto the paid plan', () => {
+    expect(keepsTheFreePlan(subscription({ status: 'active' }), FREE)).toBe(false);
+    expect(keepsTheFreePlan(subscription({ status: 'past_due' }), FREE)).toBe(false);
+  });
+
+  it('keeps nothing for an account that is not free', () => {
+    expect(keepsTheFreePlan(subscription({ status: 'canceled' }), CURRENT)).toBe(false);
   });
 });

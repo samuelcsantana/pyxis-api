@@ -1,4 +1,5 @@
-import { type AccountStatus, hasAccess } from '../accounts/account-status';
+import { type AccountStatus, hasAccess, hasRunningSubscription } from '../accounts/account-status';
+import { monthLabelOf } from '../queries/project-usage';
 import type { BillingInterval, BillingSubscription } from './billing-gateway';
 
 export interface AccountBillingState {
@@ -16,6 +17,7 @@ export interface AccountBillingUpdate {
   readonly currentPeriodEndsAt: Date | null;
   readonly accessEndsAt: Date | null;
   readonly restoresAccess: boolean;
+  readonly leavesFreePlanInMonth: string | null;
 }
 
 const RUNNING_STATUSES: ReadonlySet<string> = new Set(['trialing', 'active']);
@@ -54,6 +56,13 @@ function accessEndFor(
   return null;
 }
 
+export function keepsTheFreePlan(
+  subscription: BillingSubscription,
+  current: AccountBillingState,
+): boolean {
+  return current.status === 'free' && !hasAccess(statusFor(subscription));
+}
+
 export function billingUpdateFor(
   subscription: BillingSubscription,
   current: AccountBillingState,
@@ -69,5 +78,7 @@ export function billingUpdateFor(
     currentPeriodEndsAt: subscription.currentPeriodEndsAt,
     accessEndsAt: accessEndFor(status, subscription, current, now),
     restoresAccess: hasAccess(status),
+    leavesFreePlanInMonth:
+      current.status === 'free' && hasRunningSubscription(status) ? monthLabelOf(now) : null,
   };
 }

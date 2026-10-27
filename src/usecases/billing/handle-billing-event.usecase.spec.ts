@@ -45,7 +45,7 @@ function event(overrides: Partial<BillingEvent> = {}): BillingEvent {
   };
 }
 
-function setup(before: 'incomplete' | 'active' = 'incomplete') {
+function setup(before: 'incomplete' | 'active' | 'free' = 'incomplete') {
   const gateway = new FakeBillingGateway();
   const events = new InMemoryBillingEventRepository();
   const accounts = new InMemoryAccountBillingRepository();
@@ -116,9 +116,38 @@ describe('HandleBillingEventUseCase', () => {
           currentPeriodEndsAt: TRIAL_END,
           accessEndsAt: null,
           restoresAccess: true,
+          leavesFreePlanInMonth: null,
         },
       },
     ]);
+  });
+
+  it('moves a free account onto the paid plan, naming the month to clear, with no new welcome', async () => {
+    const { gateway, accounts, mail, useCase } = setup('free');
+    gateway.addSubscription({ ...TRIALING, status: 'active', trialEndsAt: null });
+    gateway.willReceive(event());
+
+    expect(await useCase.execute(COMMAND)).toBe('applied');
+
+    expect(accounts.updates[0]?.update).toMatchObject({
+      status: 'active',
+      leavesFreePlanInMonth: NOW.toISOString().slice(0, 7),
+    });
+    expect(mail.welcomes).toEqual([]);
+  });
+
+  it('keeps a free account free when its subscription ended or never ran, and completes the event', async () => {
+    const { gateway, accounts, trialCards, useCase } = setup('free');
+    gateway.addSubscription({ ...TRIALING, status: 'canceled', cardFingerprint: 'fp_1' });
+    gateway.willReceive(event());
+
+    expect(await useCase.execute(COMMAND)).toBe('ignored');
+    gateway.willReceive(event());
+    expect(await useCase.execute(COMMAND)).toBe('duplicate');
+
+    expect(accounts.updates).toEqual([]);
+    expect(accounts.stored(ACCOUNT_ID)?.status).toBe('free');
+    expect(trialCards.cards).toEqual([]);
   });
 
   it('welcomes the owner when the account gains access for the first time', async () => {

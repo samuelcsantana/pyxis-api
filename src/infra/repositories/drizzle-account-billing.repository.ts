@@ -15,7 +15,7 @@ import type {
 } from '../../domain/repositories/billing-event.repository';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
-import { accounts, billingEvents } from '../database/schema/accounts';
+import { accounts, accountUsageMonths, billingEvents } from '../database/schema/accounts';
 
 const END_OF_ACCESS_CLEARED = {
   keysRevokedAt: null,
@@ -56,12 +56,29 @@ export class DrizzleAccountBillingRepository implements AccountBillingRepository
     return row ?? null;
   }
 
-  async apply(accountId: string, update: AccountBillingUpdate): Promise<void> {
-    const { restoresAccess, ...columns } = update;
-    await this.db
-      .update(accounts)
-      .set({ ...columns, ...(restoresAccess ? END_OF_ACCESS_CLEARED : {}) })
-      .where(eq(accounts.id, accountId));
+  apply(accountId: string, update: AccountBillingUpdate): Promise<void> {
+    const { restoresAccess, leavesFreePlanInMonth, ...columns } = update;
+    return this.db.transaction(async (transaction) => {
+      await transaction
+        .update(accounts)
+        .set({
+          ...columns,
+          ...(restoresAccess ? END_OF_ACCESS_CLEARED : {}),
+          ...(leavesFreePlanInMonth === null ? {} : { ingestionPausedUntil: null }),
+        })
+        .where(eq(accounts.id, accountId));
+      if (leavesFreePlanInMonth !== null) {
+        await transaction
+          .update(accountUsageMonths)
+          .set({ notifiedLevel: 0 })
+          .where(
+            and(
+              eq(accountUsageMonths.accountId, accountId),
+              eq(accountUsageMonths.month, leavesFreePlanInMonth),
+            ),
+          );
+      }
+    });
   }
 }
 
