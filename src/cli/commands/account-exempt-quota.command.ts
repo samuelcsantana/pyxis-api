@@ -48,7 +48,7 @@ export const accountExemptQuotaCommand: CliCommand<AccountExemptQuotaArgs> = {
     output.stderr(
       until === null
         ? 'The exemption is over: the next daily measurement pauses the account again if it ' +
-            'is past 150% of the plan.'
+            "is past its plan's pause point."
         : 'Within a minute a pause in place is lifted; until that day the daily measurement ' +
             'neither pauses the account nor tells its owner of a pause.',
     );
