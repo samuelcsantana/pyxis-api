@@ -86,7 +86,12 @@ describe('sign-up while it is closed', () => {
       terms_version: TERMS,
     });
 
-    expect(status.json()).toEqual({ open: false, terms_version: null, terms_url: null });
+    expect(status.json()).toEqual({
+      open: false,
+      terms_version: null,
+      terms_url: null,
+      free_plan: 'closed',
+    });
     expect(code.statusCode).toBe(404);
     expect(code.json()).toMatchObject({ error: 'sign_up_closed' });
     expect(verify.statusCode).toBe(404);
@@ -173,6 +178,7 @@ describe('sign-up while it is open', () => {
       open: true,
       terms_version: TERMS,
       terms_url: 'https://pyxis.example.com/terms',
+      free_plan: 'closed',
     });
   });
 

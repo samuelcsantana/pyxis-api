@@ -8,6 +8,7 @@ import { TERMS_ACCEPTANCE_REPOSITORY } from '../../../domain/repositories/terms-
 import { RANDOM_SOURCE } from '../../../domain/services/random-source';
 import { CloseAccountUseCase } from '../../../usecases/accounts/close-account.usecase';
 import { CompleteSignUpUseCase } from '../../../usecases/accounts/complete-sign-up.usecase';
+import { ReadSignUpStatusUseCase } from '../../../usecases/accounts/read-sign-up-status.usecase';
 import { ListMyAccountsUseCase } from '../../../usecases/accounts/list-my-accounts.usecase';
 import { OpenBillingPortalUseCase } from '../../../usecases/accounts/open-billing-portal.usecase';
 import { RequestSignUpCodeUseCase } from '../../../usecases/accounts/request-sign-up-code.usecase';
@@ -31,6 +32,7 @@ import { SignUpController } from './sign-up.controller';
   providers: [
     RequestSignUpCodeUseCase,
     CompleteSignUpUseCase,
+    ReadSignUpStatusUseCase,
     ListMyAccountsUseCase,
     StartCheckoutUseCase,
     OpenBillingPortalUseCase,

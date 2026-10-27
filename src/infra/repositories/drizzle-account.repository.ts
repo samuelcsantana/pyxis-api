@@ -45,7 +45,9 @@ type DrizzleTransaction = Parameters<Parameters<DrizzleDatabase['transaction']>[
 
 export const FREE_PLACES_LOCK_KEY = 4_901_067;
 
-async function freeAccountCount(transaction: DrizzleTransaction): Promise<number> {
+async function freeAccountCount(
+  transaction: DrizzleDatabase | DrizzleTransaction,
+): Promise<number> {
   const { free } = aggregateRow(
     await transaction.select({ free: count() }).from(accounts).where(eq(accounts.status, 'free')),
   );
@@ -110,6 +112,10 @@ export class DrizzleAccountRepository implements AccountRepository {
         ? insertClaim(transaction, claim, hasAPlace)
         : updateClaim(transaction, claim, claim.accountId, hasAPlace);
     });
+  }
+
+  freeAccountCount(): Promise<number> {
+    return freeAccountCount(this.db);
   }
 
   async findById(accountId: string): Promise<Account | null> {

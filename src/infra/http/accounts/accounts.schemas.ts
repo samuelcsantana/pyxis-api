@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ACCOUNT_STATUSES } from '../../../domain/accounts/account-status';
+import { FREE_PLAN_STATES } from '../../../domain/accounts/free-plan-sign-up';
 import { MAX_TERMS_VERSION_LENGTH } from '../../../domain/accounts/sign-up-policy';
 import { SESSION_TOKEN_PATTERN } from '../../../domain/auth/session-policy';
 import { BILLING_INTERVALS } from '../../../domain/billing/billing-gateway';
@@ -16,6 +17,13 @@ export const signUpStatusSchema = z
       .url()
       .nullable()
       .describe('Where the terms of that version are published; null while closed.'),
+    free_plan: z
+      .enum(FREE_PLAN_STATES)
+      .describe(
+        'open: a new owner starts on the free plan, with no card; full: the free plan holds its ' +
+          'maximum of accounts, so a new owner subscribes or waits for a place; closed: sign-up ' +
+          'goes through Checkout, as before the free plan.',
+      ),
   })
   .meta({ id: 'SignUpStatus', description: 'Whether anyone can create an account now.' });
 

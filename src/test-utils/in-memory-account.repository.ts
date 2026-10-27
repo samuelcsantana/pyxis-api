@@ -95,6 +95,10 @@ export class InMemoryAccountRepository
     return claimed;
   }
 
+  freeAccountCount(): Promise<number> {
+    return Promise.resolve(this.stored.filter((account) => account.status === 'free').length);
+  }
+
   suspend(accountId: string, reason: string, at: Date): Promise<Account | null> {
     return Promise.resolve(this.change(accountId, { suspendedAt: at, suspensionReason: reason }));
   }

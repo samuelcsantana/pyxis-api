@@ -1,19 +1,9 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Inject,
-  Post,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
-import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../../domain/accounts/sign-up-settings';
 import { CompleteSignUpUseCase } from '../../../usecases/accounts/complete-sign-up.usecase';
+import { ReadSignUpStatusUseCase } from '../../../usecases/accounts/read-sign-up-status.usecase';
 import { RequestSignUpCodeUseCase } from '../../../usecases/accounts/request-sign-up-code.usecase';
 import { clientOf } from '../auth/auth.controller';
 import { DashboardOriginGuard } from '../auth/auth.guards';
@@ -39,22 +29,23 @@ export class SignUpController {
   constructor(
     private readonly requestSignUpCode: RequestSignUpCodeUseCase,
     private readonly completeSignUp: CompleteSignUpUseCase,
-    @Inject(SIGN_UP_SETTINGS) private readonly settings: SignUpSettings,
+    private readonly readSignUpStatus: ReadSignUpStatusUseCase,
   ) {}
 
   @Get()
   @ApiOperation({
-    summary: 'Whether sign-up is open, and the version of the terms a new owner accepts',
+    summary:
+      'Whether sign-up is open, the version of the terms a new owner accepts, and whether the ' +
+      'free plan takes new owners',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: signUpStatusSchema })
-  status(): SignUpStatusBody {
-    if (!this.settings.open) {
-      return { open: false, terms_version: null, terms_url: null };
-    }
+  async status(): Promise<SignUpStatusBody> {
+    const status = await this.readSignUpStatus.execute();
     return {
-      open: true,
-      terms_version: this.settings.termsVersion,
-      terms_url: this.settings.termsUrl,
+      open: status.open,
+      terms_version: status.termsVersion,
+      terms_url: status.termsUrl,
+      free_plan: status.freePlan,
     };
   }
 

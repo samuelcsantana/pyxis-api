@@ -175,6 +175,14 @@ describe('accounts against a real Postgres', () => {
       );
     });
 
+    it('counts only the accounts on the free plan', async () => {
+      await accounts.create({ ownerAdminId: OWNER_ID, status: 'free' });
+      await accounts.create({ ownerAdminId: GUEST_ID, status: 'free' });
+      await accounts.create({ ownerAdminId: STRANGER_ID, status: 'active' });
+
+      expect(await accounts.freeAccountCount()).toBe(2);
+    });
+
     it('gives the last place to only one of two owners claiming it at the same time', async () => {
       await accounts.create({ ownerAdminId: STRANGER_ID, status: 'free' });
 
