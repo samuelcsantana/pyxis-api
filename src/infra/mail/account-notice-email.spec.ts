@@ -10,7 +10,15 @@ const REMINDER: AccountNotice = { kind: 'deletion_reminder', deletionOn: DELETIO
 const DELETED: AccountNotice = { kind: 'account_deleted' };
 const WITHDRAWN: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 3900 };
 const WITHDRAWN_BY_HAND: AccountNotice = { kind: 'withdrawn_to_free', refundedAmount: 0 };
-const NOTICES: readonly AccountNotice[] = [ENDED, REMINDER, DELETED, WITHDRAWN, WITHDRAWN_BY_HAND];
+const BACK_TO_FREE: AccountNotice = { kind: 'back_to_free', eventsPerMonth: 10_000 };
+const NOTICES: readonly AccountNotice[] = [
+  ENDED,
+  REMINDER,
+  DELETED,
+  WITHDRAWN,
+  WITHDRAWN_BY_HAND,
+  BACK_TO_FREE,
+];
 
 function longestLine(content: string): number {
   return Math.max(...content.split('\n').map((line) => line.length));
@@ -57,6 +65,17 @@ describe('buildAccountNoticeEmail', () => {
 
     expect(email.html).toContain('we are making it by hand within 2 business days');
     expect(email.html).not.toContain('was refunded to your card');
+  });
+
+  it('tells the owner the account is back on free, with the monthly events in their number format', () => {
+    const english = buildAccountNoticeEmail(BACK_TO_FREE, 'en', LINKS, null);
+    const portuguese = buildAccountNoticeEmail(BACK_TO_FREE, 'pt-BR', LINKS, null);
+
+    expect(english.subject).toBe('Your Pyxis account is back on the free plan');
+    expect(english.html).toContain('your sites keep sending events to Pyxis');
+    expect(english.html).toContain('The free plan measures up to 10,000 events a month.');
+    expect(english.text).toContain('close the account there');
+    expect(portuguese.html).toContain('O plano grátis mede até 10.000 eventos por mês.');
   });
 
   it('names the support address only when there is one', () => {

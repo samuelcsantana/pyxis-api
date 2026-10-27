@@ -7,6 +7,7 @@ export const NO_REFUND = '';
 export interface AccountNoticeWords {
   readonly deletionOn: string;
   readonly refunded: string;
+  readonly monthlyEvents: string;
 }
 
 export interface AccountNoticeCopy {
@@ -67,6 +68,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'The free plan’s limits apply again from now; the account page shows them.',
         ],
       },
+      back_to_free: {
+        subject: () => 'Your Pyxis account is back on the free plan',
+        preheader: () =>
+          'Your subscription ended. Your sites keep sending events, within the free plan.',
+        heading: () => 'Back on the free plan',
+        paragraphs: (w) => [
+          'Your paid subscription has ended, and your account is back on the free plan, with its projects, their data and their keys: your sites keep sending events to Pyxis.',
+          `The free plan measures up to ${w.monthlyEvents} events a month. If this month has already reached that, measuring pauses until the 1st and then comes back on its own.`,
+          'To measure more, subscribe again from the account page. To leave Pyxis instead, close the account there.',
+        ],
+      },
       account_deleted: {
         subject: () => 'Your Pyxis account was deleted',
         preheader: () => 'Its projects, their events and their keys are gone.',
@@ -120,6 +132,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             ? 'O estorno automático do primeiro pagamento não deu certo: vamos fazê-lo à mão em até 2 dias úteis e avisar você.'
             : `${w.refunded} foram devolvidos ao seu cartão. O valor aparece na fatura no prazo da administradora do cartão.`,
           'Os limites do plano grátis voltam a valer a partir de agora; a página da conta mostra quais são.',
+        ],
+      },
+      back_to_free: {
+        subject: () => 'Sua conta do Pyxis voltou ao plano grátis',
+        preheader: () =>
+          'Sua assinatura terminou. Seus sites continuam enviando eventos, dentro do plano grátis.',
+        heading: () => 'De volta ao plano grátis',
+        paragraphs: (w) => [
+          'Sua assinatura paga terminou, e sua conta voltou ao plano grátis, com os projetos, os dados e as chaves: seus sites continuam enviando eventos ao Pyxis.',
+          `O plano grátis mede até ${w.monthlyEvents} eventos por mês. Se este mês já chegou a esse número, a medição pausa até o dia 1º e depois volta sozinha.`,
+          'Para medir mais, assine de novo pela página da conta. Se preferir sair do Pyxis, encerre a conta por lá.',
         ],
       },
       account_deleted: {
@@ -178,6 +201,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             ? 'La devolución automática del primer pago no se completó: la haremos a mano en un plazo de 2 días hábiles y te escribiremos.'
             : `Se devolvieron ${w.refunded} a tu tarjeta. Aparece en tu extracto en el plazo de la emisora de la tarjeta.`,
           'Los límites del plan gratis vuelven a aplicarse desde ahora; la página de la cuenta los muestra.',
+        ],
+      },
+      back_to_free: {
+        subject: () => 'Tu cuenta de Pyxis volvió al plan gratis',
+        preheader: () =>
+          'Tu suscripción terminó. Tus sitios siguen enviando eventos, dentro del plan gratis.',
+        heading: () => 'De vuelta al plan gratis',
+        paragraphs: (w) => [
+          'Tu suscripción de pago terminó y tu cuenta volvió al plan gratis, con sus proyectos, sus datos y sus claves: tus sitios siguen enviando eventos a Pyxis.',
+          `El plan gratis mide hasta ${w.monthlyEvents} eventos al mes. Si este mes ya llegó a esa cifra, la medición se pausa hasta el día 1 y luego vuelve sola.`,
+          'Para medir más, suscríbete de nuevo desde la página de la cuenta. Si prefieres dejar Pyxis, cierra la cuenta allí.',
         ],
       },
       account_deleted: {
@@ -240,6 +274,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Ab jetzt gelten wieder die Grenzen des kostenlosen Plans; die Kontoseite zeigt sie.',
         ],
       },
+      back_to_free: {
+        subject: () => 'Dein Pyxis-Konto ist wieder im kostenlosen Plan',
+        preheader: () =>
+          'Dein Abo ist beendet. Deine Websites senden weiter Ereignisse, im Rahmen des kostenlosen Plans.',
+        heading: () => 'Zurück im kostenlosen Plan',
+        paragraphs: (w) => [
+          'Dein kostenpflichtiges Abo ist beendet, und dein Konto ist wieder im kostenlosen Plan, mit seinen Projekten, ihren Daten und ihren Schlüsseln: Deine Websites senden weiter Ereignisse an Pyxis.',
+          `Der kostenlose Plan misst bis zu ${w.monthlyEvents} Ereignisse im Monat. Hat dieser Monat diese Zahl schon erreicht, pausiert die Messung bis zum 1. und läuft dann von selbst wieder an.`,
+          'Um mehr zu messen, schließ auf der Kontoseite erneut ein Abo ab. Wenn du Pyxis lieber verlassen möchtest, schließ dort das Konto.',
+        ],
+      },
       account_deleted: {
         subject: () => 'Dein Pyxis-Konto wurde gelöscht',
         preheader: () => 'Seine Projekte, ihre Ereignisse und ihre Schlüssel gibt es nicht mehr.',
@@ -297,6 +342,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             ? 'Le remboursement automatique du premier paiement n’a pas abouti\u00a0: nous le ferons à la main sous 2 jours ouvrés et vous écrirons.'
             : `${w.refunded} ont été remboursés sur votre carte. Le montant apparaît sur votre relevé dans le délai de votre banque.`,
           'Les limites de la formule gratuite s’appliquent de nouveau dès maintenant\u00a0; la page du compte les indique.',
+        ],
+      },
+      back_to_free: {
+        subject: () => 'Votre compte Pyxis est revenu à la formule gratuite',
+        preheader: () =>
+          'Votre abonnement est terminé. Vos sites continuent d’envoyer des événements, dans la formule gratuite.',
+        heading: () => 'De retour sur la formule gratuite',
+        paragraphs: (w) => [
+          'Votre abonnement payant est terminé et votre compte est revenu à la formule gratuite, avec ses projets, leurs données et leurs clés\u00a0: vos sites continuent d’envoyer des événements à Pyxis.',
+          `La formule gratuite mesure jusqu’à ${w.monthlyEvents} événements par mois. Si ce mois a déjà atteint ce nombre, la mesure est suspendue jusqu’au 1er, puis reprend d’elle-même.`,
+          'Pour mesurer davantage, abonnez-vous à nouveau depuis la page du compte. Pour quitter Pyxis, fermez le compte depuis cette même page.',
         ],
       },
       account_deleted: {
@@ -358,6 +414,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
           'Da ora valgono di nuovo i limiti del piano gratuito; la pagina dell’account li mostra.',
         ],
       },
+      back_to_free: {
+        subject: () => 'Il tuo account Pyxis è tornato al piano gratuito',
+        preheader: () =>
+          'Il tuo abbonamento è terminato. I tuoi siti continuano a inviare eventi, nel piano gratuito.',
+        heading: () => 'Di nuovo nel piano gratuito',
+        paragraphs: (w) => [
+          'Il tuo abbonamento a pagamento è terminato e il tuo account è tornato al piano gratuito, con i suoi progetti, i loro dati e le loro chiavi: i tuoi siti continuano a inviare eventi a Pyxis.',
+          `Il piano gratuito misura fino a ${w.monthlyEvents} eventi al mese. Se questo mese ha già raggiunto quel numero, la misurazione si ferma fino al giorno 1 e poi riprende da sola.`,
+          'Per misurare di più, abbonati di nuovo dalla pagina dell’account. Se preferisci lasciare Pyxis, chiudi l’account da lì.',
+        ],
+      },
       account_deleted: {
         subject: () => 'Il tuo account Pyxis è stato eliminato',
         preheader: () => 'I suoi progetti, i loro eventi e le loro chiavi non esistono più.',
@@ -414,6 +481,17 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
             ? 'De automatische terugbetaling van de eerste betaling is niet gelukt: we doen het binnen 2 werkdagen handmatig en laten het je weten.'
             : `${w.refunded} is teruggestort op je kaart. Het bedrag verschijnt op je afschrift binnen de termijn van je kaartuitgever.`,
           'Vanaf nu gelden weer de limieten van het gratis abonnement; de accountpagina toont ze.',
+        ],
+      },
+      back_to_free: {
+        subject: () => 'Je Pyxis-account staat weer op het gratis abonnement',
+        preheader: () =>
+          'Je abonnement is beëindigd. Je sites blijven events sturen, binnen het gratis abonnement.',
+        heading: () => 'Terug op het gratis abonnement',
+        paragraphs: (w) => [
+          'Je betaalde abonnement is beëindigd en je account staat weer op het gratis abonnement, met de projecten, hun gegevens en hun sleutels: je sites blijven events naar Pyxis sturen.',
+          `Het gratis abonnement meet tot ${w.monthlyEvents} events per maand. Heeft deze maand dat aantal al bereikt, dan pauzeert het meten tot de 1e en gaat het daarna vanzelf weer verder.`,
+          'Wil je meer meten? Neem opnieuw een abonnement via de accountpagina. Wil je Pyxis liever verlaten? Sluit dan daar het account.',
         ],
       },
       account_deleted: {
