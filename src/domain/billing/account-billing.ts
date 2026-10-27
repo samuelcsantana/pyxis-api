@@ -17,7 +17,12 @@ export interface AccountBillingUpdate {
   readonly currentPeriodEndsAt: Date | null;
   readonly accessEndsAt: Date | null;
   readonly restoresAccess: boolean;
-  readonly leavesFreePlanInMonth: string | null;
+  readonly leavesFreePlan: LeftFreePlan | null;
+}
+
+export interface LeftFreePlan {
+  readonly at: Date;
+  readonly month: string;
 }
 
 const RUNNING_STATUSES: ReadonlySet<string> = new Set(['trialing', 'active']);
@@ -78,7 +83,9 @@ export function billingUpdateFor(
     currentPeriodEndsAt: subscription.currentPeriodEndsAt,
     accessEndsAt: accessEndFor(status, subscription, current, now),
     restoresAccess: hasAccess(status),
-    leavesFreePlanInMonth:
-      current.status === 'free' && hasRunningSubscription(status) ? monthLabelOf(now) : null,
+    leavesFreePlan:
+      current.status === 'free' && hasRunningSubscription(status)
+        ? { at: now, month: monthLabelOf(now) }
+        : null,
   };
 }

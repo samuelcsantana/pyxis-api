@@ -116,7 +116,7 @@ describe('HandleBillingEventUseCase', () => {
           currentPeriodEndsAt: TRIAL_END,
           accessEndsAt: null,
           restoresAccess: true,
-          leavesFreePlanInMonth: null,
+          leavesFreePlan: null,
         },
       },
     ]);
@@ -131,7 +131,7 @@ describe('HandleBillingEventUseCase', () => {
 
     expect(accounts.updates[0]?.update).toMatchObject({
       status: 'active',
-      leavesFreePlanInMonth: NOW.toISOString().slice(0, 7),
+      leavesFreePlan: { at: NOW, month: NOW.toISOString().slice(0, 7) },
     });
     expect(mail.welcomes).toEqual([]);
   });

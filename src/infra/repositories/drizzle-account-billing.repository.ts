@@ -57,24 +57,26 @@ export class DrizzleAccountBillingRepository implements AccountBillingRepository
   }
 
   apply(accountId: string, update: AccountBillingUpdate): Promise<void> {
-    const { restoresAccess, leavesFreePlanInMonth, ...columns } = update;
+    const { restoresAccess, leavesFreePlan, ...columns } = update;
     return this.db.transaction(async (transaction) => {
       await transaction
         .update(accounts)
         .set({
           ...columns,
           ...(restoresAccess ? END_OF_ACCESS_CLEARED : {}),
-          ...(leavesFreePlanInMonth === null ? {} : { ingestionPausedUntil: null }),
+          ...(leavesFreePlan === null
+            ? {}
+            : { ingestionPausedUntil: null, subscriptionConfirmationDueAt: leavesFreePlan.at }),
         })
         .where(eq(accounts.id, accountId));
-      if (leavesFreePlanInMonth !== null) {
+      if (leavesFreePlan !== null) {
         await transaction
           .update(accountUsageMonths)
           .set({ notifiedLevel: 0 })
           .where(
             and(
               eq(accountUsageMonths.accountId, accountId),
-              eq(accountUsageMonths.month, leavesFreePlanInMonth),
+              eq(accountUsageMonths.month, leavesFreePlan.month),
             ),
           );
       }

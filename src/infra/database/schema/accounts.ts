@@ -46,6 +46,9 @@ export const accounts = pgTable(
     deletionRemindedAt: timestamp('deletion_reminded_at', { withTimezone: true }),
     welcomedAt: timestamp('welcomed_at', { withTimezone: true }),
     freeWaitlistedAt: timestamp('free_waitlisted_at', { withTimezone: true }),
+    subscriptionConfirmationDueAt: timestamp('subscription_confirmation_due_at', {
+      withTimezone: true,
+    }),
     suspendedAt: timestamp('suspended_at', { withTimezone: true }),
     suspensionReason: varchar('suspension_reason', { length: MAX_SUSPENSION_REASON_LENGTH }),
     deletionHeldAt: timestamp('deletion_held_at', { withTimezone: true }),
