@@ -4,7 +4,10 @@ import type {
   CompleteSignUpCommand,
   CompleteSignUpUseCase,
 } from '../../../usecases/accounts/complete-sign-up.usecase';
+import { ReadSignUpStatusUseCase } from '../../../usecases/accounts/read-sign-up-status.usecase';
 import type { RequestSignUpCodeUseCase } from '../../../usecases/accounts/request-sign-up-code.usecase';
+import { InMemoryAccountRepository } from '../../../test-utils/in-memory-account.repository';
+import { InMemoryAdminUserRepository } from '../../../test-utils/in-memory-admin-user.repository';
 import { SignUpController } from './sign-up.controller';
 
 const EMAIL = 'founder@example.com';
@@ -31,7 +34,10 @@ function signUpController(settings: SignUpSettings) {
         });
       },
     } as unknown as CompleteSignUpUseCase,
-    settings,
+    new ReadSignUpStatusUseCase(
+      new InMemoryAccountRepository(new InMemoryAdminUserRepository()),
+      settings,
+    ),
   );
   return { controller, codeRequests, completions };
 }
@@ -46,19 +52,24 @@ const OPEN: SignUpSettings = {
 };
 
 describe('SignUpController', () => {
-  it('tells the dashboard sign-up is open and which terms to show', () => {
-    expect(signUpController(OPEN).controller.status()).toEqual({
+  it('tells the dashboard sign-up is open, which terms to show and whether the free plan takes new owners', async () => {
+    expect(await signUpController(OPEN).controller.status()).toEqual({
       open: true,
       terms_version: '2026-11-01',
       terms_url: 'https://example.com/terms',
+      free_plan: 'closed',
     });
+    expect(
+      (await signUpController({ ...OPEN, freePlanOpen: true }).controller.status()).free_plan,
+    ).toBe('open');
   });
 
-  it('tells the dashboard sign-up is closed, without a terms version', () => {
-    expect(signUpController({ ...OPEN, open: false }).controller.status()).toEqual({
+  it('tells the dashboard sign-up is closed, without a terms version', async () => {
+    expect(await signUpController({ ...OPEN, open: false }).controller.status()).toEqual({
       open: false,
       terms_version: null,
       terms_url: null,
+      free_plan: 'closed',
     });
   });
 

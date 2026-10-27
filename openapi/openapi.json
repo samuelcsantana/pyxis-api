@@ -3816,6 +3816,15 @@
         "additionalProperties": false,
         "description": "Whether anyone can create an account now.",
         "properties": {
+          "free_plan": {
+            "description": "open: a new owner starts on the free plan, with no card; full: the free plan holds its maximum of accounts, so a new owner subscribes or waits for a place; closed: sign-up goes through Checkout, as before the free plan.",
+            "enum": [
+              "open",
+              "full",
+              "closed"
+            ],
+            "type": "string"
+          },
           "open": {
             "type": "boolean"
           },
@@ -3842,7 +3851,8 @@
         "required": [
           "open",
           "terms_version",
-          "terms_url"
+          "terms_url",
+          "free_plan"
         ],
         "type": "object"
       },
@@ -5323,7 +5333,7 @@
             "description": ""
           }
         },
-        "summary": "Whether sign-up is open, and the version of the terms a new owner accepts",
+        "summary": "Whether sign-up is open, the version of the terms a new owner accepts, and whether the free plan takes new owners",
         "tags": [
           "sign-up"
         ]
