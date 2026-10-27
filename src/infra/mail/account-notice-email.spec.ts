@@ -20,6 +20,8 @@ const WITHDRAWN_OVER_THE_LIMITS: AccountNotice = {
   fitBy: new Date('2026-12-20T15:00:00.000Z'),
 };
 const BACK_TO_FREE: AccountNotice = { kind: 'back_to_free', eventsPerMonth: 10_000 };
+const EMPTY: AccountNotice = { kind: 'empty_free_account', deletionOn: DELETION_ON };
+const IDLE: AccountNotice = { kind: 'idle_free_account', deletionOn: DELETION_ON };
 const NOTICES: readonly AccountNotice[] = [
   ENDED,
   REMINDER,
@@ -28,6 +30,8 @@ const NOTICES: readonly AccountNotice[] = [
   WITHDRAWN_BY_HAND,
   WITHDRAWN_OVER_THE_LIMITS,
   BACK_TO_FREE,
+  EMPTY,
+  IDLE,
 ];
 
 function longestLine(content: string): number {
@@ -99,6 +103,20 @@ describe('buildAccountNoticeEmail', () => {
     expect(english.html).toContain('The free plan measures up to 10,000 events a month.');
     expect(english.text).toContain('close the account there');
     expect(portuguese.html).toContain('O plano grátis mede até 10.000 eventos por mês.');
+  });
+
+  it('warns the owner of a free account with no events: the criterion, the date and how to keep it', () => {
+    const empty = buildAccountNoticeEmail(EMPTY, 'en', LINKS, null);
+    const idle = buildAccountNoticeEmail(IDLE, 'pt-BR', LINKS, null);
+
+    expect(empty.subject).toBe('Your free Pyxis account will be deleted on December 14, 2026');
+    expect(empty.html).toContain('in the 30 days since it started on the free plan');
+    expect(empty.html).toContain('install Pyxis on your site from the Install page');
+    expect(empty.html).toContain('reply to this email before December 14, 2026');
+    expect(idle.subject).toBe('Sua conta grátis do Pyxis será apagada em 14 de dezembro de 2026');
+    expect(idle.html).toContain('está há 90 dias seguidos sem guardar nenhum evento');
+    expect(idle.html).toContain('exporte-os nas Configurações de cada projeto antes disso');
+    expect(idle.html).toContain('responda a este e-mail antes de 14 de dezembro de 2026');
   });
 
   it('names the support address only when there is one', () => {

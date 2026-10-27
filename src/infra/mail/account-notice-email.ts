@@ -82,6 +82,8 @@ function wordsOf(notice: AccountNotice, language: EmailLanguage): AccountNoticeW
       };
     case 'access_ended':
     case 'deletion_reminder':
+    case 'empty_free_account':
+    case 'idle_free_account':
       return {
         ...NO_WORDS,
         deletionOn: longDateOf(notice.deletionOn, locale),
