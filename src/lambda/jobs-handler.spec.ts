@@ -18,6 +18,7 @@ const NOTICES = { sent: 3, failed: 0 };
 const DEMO_TRAFFIC = { projects: 1, inserted: 480 };
 const LIFECYCLE = {
   freePlacesOpened: 0,
+  backToFreeNotices: 0,
   welcomes: 1,
   subscriptionsConfirmed: 0,
   reconciled: 4,

@@ -25,6 +25,8 @@ import { MeasureAccountUsageUseCase } from '../usecases/accounts/measure-account
 import { OpenFreePlacesUseCase } from '../usecases/accounts/open-free-places.usecase';
 import { ConfirmSubscriptionsUseCase } from '../usecases/billing/confirm-subscriptions.usecase';
 import { DrizzleSubscriptionConfirmationRepository } from '../infra/repositories/drizzle-subscription-confirmation.repository';
+import { FallBackToFreePlanUseCase } from '../usecases/billing/fall-back-to-free-plan.usecase';
+import { DrizzleFreePlanFallbackRepository } from '../infra/repositories/drizzle-free-plan-fallback.repository';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
 import { DrizzleProjectlessPeopleRepository } from '../infra/repositories/drizzle-projectless-people.repository';
 import { SweepProjectlessPeopleUseCase } from '../usecases/people/sweep-projectless-people.usecase';
@@ -117,6 +119,12 @@ export const handler = createJobsHandler({
         new ConfirmSubscriptionsUseCase(
           new DrizzleSubscriptionConfirmationRepository(database),
           mail,
+          signUpSettingsFromEnv(env),
+        ),
+        new FallBackToFreePlanUseCase(
+          new DrizzleFreePlanFallbackRepository(database),
+          mail,
+          clock,
           signUpSettingsFromEnv(env),
         ),
       ).execute();

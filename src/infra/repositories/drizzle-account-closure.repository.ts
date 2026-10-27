@@ -24,7 +24,13 @@ export class DrizzleAccountClosureRepository implements AccountClosureRepository
     return this.db.transaction(async (transaction) => {
       await transaction
         .update(accounts)
-        .set({ status: 'ended', accessEndsAt: at, keysRevokedAt: at })
+        .set({
+          status: 'ended',
+          accessEndsAt: at,
+          keysRevokedAt: at,
+          backToFreeNoticeDueAt: null,
+          freePlanFitDueAt: null,
+        })
         .where(eq(accounts.id, accountId));
       await transaction
         .update(projectKeys)

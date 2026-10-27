@@ -17,6 +17,9 @@ import {
 } from './run-account-lifecycle.usecase';
 import { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.usecase';
 import { InMemorySubscriptionConfirmationRepository } from '../../test-utils/in-memory-subscription-confirmation.repository';
+import { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
+import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-free-plan-fallback.repository';
+import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
 import { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 
@@ -62,6 +65,7 @@ function setup() {
   const projectless = new InMemoryProjectlessPeopleRepository();
   const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
   const confirmations = new InMemorySubscriptionConfirmationRepository();
+  const fallbacks = new InMemoryFreePlanFallbackRepository();
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
@@ -81,6 +85,16 @@ function setup() {
       trialOffered: true,
       freePlanTermsForEarlierAccountsFrom: null,
     }),
+    new FallBackToFreePlanUseCase(fallbacks, mail, clock, {
+      open: true,
+      termsVersion: '1.3',
+      termsUrl: null,
+      dashboardOrigin: 'https://app.example.com',
+      freePlanOpen: true,
+      freeAccountsMax: 200,
+      trialOffered: false,
+      freePlanTermsForEarlierAccountsFrom: null,
+    }),
   );
   return {
     lifecycle,
@@ -91,6 +105,7 @@ function setup() {
     projectless,
     accounts,
     confirmations,
+    fallbacks,
     useCase,
   };
 }
@@ -116,6 +131,7 @@ describe('RunAccountLifecycleUseCase', () => {
       freePlacesOpened: 0,
       welcomes: 0,
       subscriptionsConfirmed: 0,
+      backToFreeNotices: 0,
       reconciled: 0,
       statusChanges: 0,
       reconcileFailures: 0,
@@ -191,6 +207,45 @@ describe('RunAccountLifecycleUseCase', () => {
     expect(warn).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'accounts.reconcile_failed', accountId: 'acc-3' }),
     );
+  });
+
+  it('puts a subscription Stripe ended back on free when it fits, instead of ending it', async () => {
+    const { lifecycle, billing, gateway, fallbacks, mail, useCase } = setup();
+    lifecycle.add({ accountId: 'acc-1', status: 'ending', subscriptionId: 'sub_1' });
+    gateway.addSubscription(subscription({ status: 'canceled' }));
+    fallbacks.add({
+      accountId: 'acc-1',
+      ownerEmail: 'ana@example.com',
+      ownerLanguage: 'es',
+      eventsPerMonthLimit: null,
+      status: 'ending',
+      fit: {
+        ...NO_LIMIT_OVERRIDES,
+        projects: 1,
+        people: 1,
+        acceptedTermsVersions: ['1.3'],
+        ownerHasAnotherFreeAccount: false,
+      },
+    });
+
+    const report = await useCase.execute();
+
+    expect(report).toMatchObject({ reconciled: 1, statusChanges: 1, backToFreeNotices: 0 });
+    expect(billing.updates).toEqual([]);
+    expect(fallbacks.statusOf('acc-1')).toBe('free');
+    expect(mail.accountNotices).toEqual([
+      {
+        email: 'ana@example.com',
+        notice: { kind: 'back_to_free', eventsPerMonth: 10_000 },
+        language: 'es',
+      },
+    ]);
+    expect(warn).toHaveBeenCalledWith({
+      message: 'accounts.reconciled_status',
+      accountId: 'acc-1',
+      from: 'ending',
+      to: 'free',
+    });
   });
 
   it("revokes an ended account's keys once its access is over, once", async () => {
@@ -479,6 +534,30 @@ describe('RunAccountLifecycleUseCase', () => {
 
     expect(report.freePlacesOpened).toBe(1);
     expect(accounts.stored[0]?.status).toBe('free');
+  });
+
+  it('sends the back-to-free notices the webhook could not', async () => {
+    const { fallbacks, mail, useCase } = setup();
+    fallbacks.add({
+      accountId: 'fell-back',
+      ownerEmail: 'bia@example.com',
+      ownerLanguage: 'en',
+      eventsPerMonthLimit: null,
+      status: 'active',
+      fit: {
+        ...NO_LIMIT_OVERRIDES,
+        projects: 0,
+        people: 0,
+        acceptedTermsVersions: ['1.3'],
+        ownerHasAnotherFreeAccount: false,
+      },
+    });
+    await fallbacks.fallBack('fell-back', NOW);
+
+    const report = await useCase.execute();
+
+    expect(report.backToFreeNotices).toBe(1);
+    expect(mail.accountNotices.map(({ notice }) => notice.kind)).toEqual(['back_to_free']);
   });
 
   it('sends the subscription confirmations the webhook could not', async () => {

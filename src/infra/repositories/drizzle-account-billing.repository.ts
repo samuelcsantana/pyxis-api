@@ -66,7 +66,12 @@ export class DrizzleAccountBillingRepository implements AccountBillingRepository
           ...(restoresAccess ? END_OF_ACCESS_CLEARED : {}),
           ...(leavesFreePlan === null
             ? {}
-            : { ingestionPausedUntil: null, subscriptionConfirmationDueAt: leavesFreePlan.at }),
+            : {
+                ingestionPausedUntil: null,
+                subscriptionConfirmationDueAt: leavesFreePlan.at,
+                backToFreeNoticeDueAt: null,
+                freePlanFitDueAt: null,
+              }),
         })
         .where(eq(accounts.id, accountId));
       if (leavesFreePlan !== null) {

@@ -1,6 +1,9 @@
 import { SUBSCRIPTION_CONFIRMATION_REPOSITORY } from '../../../domain/repositories/subscription-confirmation.repository';
 import { DrizzleSubscriptionConfirmationRepository } from '../../repositories/drizzle-subscription-confirmation.repository';
 import { ConfirmSubscriptionsUseCase } from '../../../usecases/billing/confirm-subscriptions.usecase';
+import { FallBackToFreePlanUseCase } from '../../../usecases/billing/fall-back-to-free-plan.usecase';
+import { FREE_PLAN_FALLBACK_REPOSITORY } from '../../../domain/repositories/free-plan-fallback.repository';
+import { DrizzleFreePlanFallbackRepository } from '../../repositories/drizzle-free-plan-fallback.repository';
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SIGN_UP_SETTINGS } from '../../../domain/accounts/sign-up-settings';
@@ -33,6 +36,8 @@ import { BillingWebhookController } from './billing-webhook.controller';
     HandleBillingEventUseCase,
     WelcomeAccountsUseCase,
     ConfirmSubscriptionsUseCase,
+    FallBackToFreePlanUseCase,
+    { provide: FREE_PLAN_FALLBACK_REPOSITORY, useClass: DrizzleFreePlanFallbackRepository },
     {
       provide: SUBSCRIPTION_CONFIRMATION_REPOSITORY,
       useClass: DrizzleSubscriptionConfirmationRepository,

@@ -1,7 +1,16 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { hasAccess } from '../../domain/accounts/account-status';
-import { billingUpdateFor, keepsTheFreePlan } from '../../domain/billing/account-billing';
-import { BILLING_GATEWAY, type BillingGateway } from '../../domain/billing/billing-gateway';
+import {
+  type AccountBillingState,
+  type AccountBillingUpdate,
+  billingUpdateFor,
+  keepsTheFreePlan,
+} from '../../domain/billing/account-billing';
+import {
+  BILLING_GATEWAY,
+  type BillingGateway,
+  type BillingSubscription,
+} from '../../domain/billing/billing-gateway';
 import {
   ACCOUNT_BILLING_REPOSITORY,
   type AccountBillingRepository,
@@ -14,6 +23,7 @@ import { CLOCK, type Clock } from '../../domain/services/clock';
 import { WelcomeAccountsUseCase } from '../accounts/welcome-accounts.usecase';
 import { ConfirmSubscriptionsUseCase } from './confirm-subscriptions.usecase';
 import { DetectRepeatedTrialUseCase } from './detect-repeated-trial.usecase';
+import { FallBackToFreePlanUseCase } from './fall-back-to-free-plan.usecase';
 
 export interface HandleBillingEventCommand {
   readonly rawBody: Buffer;
@@ -34,6 +44,7 @@ export class HandleBillingEventUseCase {
     private readonly welcomes: WelcomeAccountsUseCase,
     private readonly repeatedTrials: DetectRepeatedTrialUseCase,
     private readonly confirmations: ConfirmSubscriptionsUseCase,
+    private readonly fallbacks: FallBackToFreePlanUseCase,
   ) {}
 
   async execute(command: HandleBillingEventCommand): Promise<BillingEventOutcome> {
@@ -73,6 +84,26 @@ export class HandleBillingEventUseCase {
       return 'ignored';
     }
     const update = billingUpdateFor(subscription, account, now);
+    const fellBack = await this.fallbacks.tryFallBack(account, update);
+    if (!fellBack) {
+      await this.applySubscription(account, update, subscription);
+    }
+    await this.events.complete(event.id, now);
+    this.logger.log({
+      message: 'billing.event_applied',
+      eventId: event.id,
+      type: event.type,
+      accountId: account.accountId,
+      status: fellBack ? 'free' : update.status,
+    });
+    return 'applied';
+  }
+
+  private async applySubscription(
+    account: AccountBillingState,
+    update: AccountBillingUpdate,
+    subscription: BillingSubscription,
+  ): Promise<void> {
     await this.accounts.apply(account.accountId, update);
     if (update.restoresAccess && !hasAccess(account.status)) {
       await this.welcomes.tryWelcome(account.accountId);
@@ -81,14 +112,5 @@ export class HandleBillingEventUseCase {
       await this.confirmations.tryConfirm(account.accountId);
     }
     await this.repeatedTrials.tryDetect(account.accountId, subscription);
-    await this.events.complete(event.id, now);
-    this.logger.log({
-      message: 'billing.event_applied',
-      eventId: event.id,
-      type: event.type,
-      accountId: account.accountId,
-      status: update.status,
-    });
-    return 'applied';
   }
 }
