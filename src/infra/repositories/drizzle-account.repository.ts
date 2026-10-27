@@ -46,6 +46,7 @@ export function toAccount(row: AccountRow): Account {
     deletionHoldReason: row.deletionHoldReason,
     quotaPauseExemptUntil: row.quotaPauseExemptUntil,
     freeWaitlistedAt: row.freeWaitlistedAt,
+    freePlanFitDueAt: row.freePlanFitDueAt,
     eventsPerMonthLimit: row.eventsPerMonthLimit,
     projectsLimit: row.projectsLimit,
     peopleLimit: row.peopleLimit,

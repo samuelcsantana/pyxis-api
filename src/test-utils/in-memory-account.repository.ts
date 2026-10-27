@@ -65,6 +65,7 @@ export class InMemoryAccountRepository
       deletionHoldReason: null,
       quotaPauseExemptUntil: null,
       freeWaitlistedAt: null,
+      freePlanFitDueAt: null,
       eventsPerMonthLimit: null,
       projectsLimit: null,
       peopleLimit: null,

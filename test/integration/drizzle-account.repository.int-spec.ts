@@ -64,6 +64,7 @@ describe('accounts against a real Postgres', () => {
       deletionHoldReason: null,
       quotaPauseExemptUntil: null,
       freeWaitlistedAt: null,
+      freePlanFitDueAt: null,
       eventsPerMonthLimit: null,
       projectsLimit: null,
       peopleLimit: null,
@@ -114,6 +115,7 @@ describe('accounts against a real Postgres', () => {
         ownerAdminId: OWNER_ID,
         status: 'free',
         freeWaitlistedAt: null,
+        freePlanFitDueAt: null,
       });
     });
 

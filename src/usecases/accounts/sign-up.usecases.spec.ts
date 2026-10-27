@@ -128,6 +128,7 @@ function accountOf(overrides: Partial<Account> & Pick<Account, 'ownerAdminId'>):
     deletionHoldReason: null,
     quotaPauseExemptUntil: null,
     freeWaitlistedAt: null,
+    freePlanFitDueAt: null,
     eventsPerMonthLimit: null,
     projectsLimit: null,
     peopleLimit: null,
@@ -354,6 +355,7 @@ describe('CompleteSignUpUseCase', () => {
         id: signedUp.accountId,
         status: 'free',
         freeWaitlistedAt: null,
+        freePlanFitDueAt: null,
       });
       expect(context.terms.recorded).toEqual([
         expect.objectContaining({ accountId: signedUp.accountId, version: TERMS }),
@@ -774,7 +776,7 @@ describe('ListMyAccountsUseCase', () => {
     const context = setup();
     const owner = await context.admins.findOrCreateByEmail(EMAIL);
     const owned = accountOf({ ownerAdminId: owner.id, status: 'trialing' });
-    context.accounts.add(owned);
+    context.accounts.add(owned, { projects: [], people: 1 });
     const other = await context.admins.findOrCreateByEmail('other@example.com');
     const joined = accountOf({
       id: 'acc00000-0000-4000-a000-000000000098',
@@ -799,6 +801,7 @@ describe('ListMyAccountsUseCase', () => {
         usage: { month: '2026-11', events: 4200, updatedAt: NOW },
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: { projects: 0, people: 1 },
       },
       {
         account: joined,
@@ -807,6 +810,7 @@ describe('ListMyAccountsUseCase', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       },
     ]);
   });

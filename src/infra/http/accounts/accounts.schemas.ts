@@ -116,6 +116,23 @@ export const myAccountsSchema = z
             'nothing of it is deleted, and its projects cannot be deleted, until it is released. ' +
             'Null for members.',
         ),
+        free_plan_fit_due_at: isoDate.describe(
+          'Set after a withdrawal left the account on the free plan with more projects or people ' +
+            'than it holds: on that day the account ends unless it fits by then. Null for members.',
+        ),
+        project_count: z
+          .number()
+          .int()
+          .nullable()
+          .describe('How many projects the account holds now; null for members.'),
+        people_count: z
+          .number()
+          .int()
+          .nullable()
+          .describe(
+            'How many people, the owner included, read a project of the account now; null for ' +
+              'members.',
+          ),
         month: z.string().describe('The calendar month in UTC the usage is counted in, YYYY-MM.'),
         events_this_month: z
           .number()

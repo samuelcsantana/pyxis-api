@@ -47,6 +47,7 @@ const ACCOUNT: Account = {
   deletionHoldReason: null,
   quotaPauseExemptUntil: null,
   freeWaitlistedAt: null,
+  freePlanFitDueAt: null,
   eventsPerMonthLimit: null,
   projectsLimit: null,
   peopleLimit: null,
@@ -110,6 +111,7 @@ describe('myAccountBody', () => {
         usage: { month: '2026-11', events: 4200, updatedAt: MEASURED_AT },
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: { projects: 2, people: 1 },
       }),
     ).toEqual({
       id: ACCOUNT.id,
@@ -125,6 +127,9 @@ describe('myAccountBody', () => {
       suspended_at: null,
       suspension_reason: null,
       deletion_held_at: null,
+      free_plan_fit_due_at: null,
+      project_count: 2,
+      people_count: 1,
       month: '2026-11',
       events_this_month: 4200,
       measured_at: MEASURED_AT.toISOString(),
@@ -141,6 +146,7 @@ describe('myAccountBody', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       }),
     ).toEqual(
       expect.objectContaining({
@@ -152,8 +158,31 @@ describe('myAccountBody', () => {
         ingestion_paused_until: null,
         events_this_month: null,
         measured_at: null,
+        project_count: null,
+        people_count: null,
       }),
     );
+  });
+
+  it('shows the owner, and only the owner, the day an account over the free plan must fit by', () => {
+    const overTheLimits = {
+      ...ACCOUNT,
+      status: 'free' as const,
+      freePlanFitDueAt: new Date('2026-12-20T15:00:00.000Z'),
+    };
+    const body = (role: 'owner' | 'member') =>
+      myAccountBody({
+        account: overTheLimits,
+        role,
+        month: '2026-11',
+        usage: null,
+        limits: HOSTED_PLAN_LIMITS,
+        pauseAtEvents: 10_000,
+        held: null,
+      }).free_plan_fit_due_at;
+
+    expect(body('owner')).toBe('2026-12-20T15:00:00.000Z');
+    expect(body('member')).toBeNull();
   });
 
   it('shows everyone that the account is suspended, and only the owner why', () => {
@@ -170,6 +199,7 @@ describe('myAccountBody', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       });
 
     expect(body('owner')).toEqual(
@@ -197,6 +227,7 @@ describe('myAccountBody', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       }).quota_pause_exempt_until,
     ).toBe('2027-01-15T00:00:00.000Z');
   });
@@ -215,6 +246,7 @@ describe('myAccountBody', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       }).free_waitlisted_at;
 
     expect(body('owner')).toBe('2026-11-20T09:00:00.000Z');
@@ -231,6 +263,7 @@ describe('myAccountBody', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       });
 
     expect(body('owner').deletion_held_at).toBe('2026-11-21T10:00:00.000Z');
@@ -252,6 +285,7 @@ describe('myAccountBody', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       }),
     ).toEqual(
       expect.objectContaining({
@@ -273,6 +307,7 @@ describe('AccountsController', () => {
         usage: null,
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
+        held: null,
       },
     ]);
 

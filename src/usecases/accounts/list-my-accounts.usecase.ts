@@ -7,6 +7,7 @@ import {
 import type { Account } from '../../domain/entities/account.entity';
 import { monthLabelOf } from '../../domain/queries/project-usage';
 import {
+  type AccountMembership,
   ACCOUNT_REPOSITORY,
   type AccountRepository,
   type AccountRole,
@@ -25,6 +26,12 @@ export interface MyAccount {
   readonly usage: RecordedUsage | null;
   readonly limits: PlanLimits;
   readonly pauseAtEvents: number;
+  readonly held: AccountHoldings | null;
+}
+
+export interface AccountHoldings {
+  readonly projects: number;
+  readonly people: number;
 }
 
 @Injectable()
@@ -46,7 +53,19 @@ export class ListMyAccountsUseCase {
         usage: await this.usage.recordedFor(account.id, month),
         limits: planLimitsOf(account),
         pauseAtEvents: ingestionPauseThresholdOf(account),
+        held: await this.holdingsFor({ account, role }),
       })),
     );
+  }
+
+  private async holdingsFor({ account, role }: AccountMembership): Promise<AccountHoldings | null> {
+    if (role !== 'owner') {
+      return null;
+    }
+    const [projects, people] = await Promise.all([
+      this.accounts.projectsOf(account.id),
+      this.accounts.peopleCount(account.id),
+    ]);
+    return { projects: projects.length, people };
   }
 }
