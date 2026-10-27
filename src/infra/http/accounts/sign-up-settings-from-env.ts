@@ -3,7 +3,12 @@ import type { SignUpSettings } from '../../../domain/accounts/sign-up-settings';
 
 export type SignUpEnv = Pick<
   EnvConfig,
-  'SIGNUP_OPEN' | 'TERMS_VERSION' | 'TERMS_URL' | 'DASHBOARD_ORIGIN'
+  | 'SIGNUP_OPEN'
+  | 'TERMS_VERSION'
+  | 'TERMS_URL'
+  | 'DASHBOARD_ORIGIN'
+  | 'FREE_PLAN_OPEN'
+  | 'FREE_ACCOUNTS_MAX'
 >;
 
 export function signUpSettingsFromEnv(env: SignUpEnv): SignUpSettings {
@@ -14,5 +19,7 @@ export function signUpSettingsFromEnv(env: SignUpEnv): SignUpSettings {
     termsVersion,
     termsUrl,
     dashboardOrigin: env.DASHBOARD_ORIGIN ?? null,
+    freePlanOpen: env.FREE_PLAN_OPEN === 'true',
+    freeAccountsMax: env.FREE_ACCOUNTS_MAX,
   };
 }

@@ -13,6 +13,8 @@ const SETTINGS: SignUpSettings = {
   termsVersion: '2026-11-01',
   termsUrl: 'https://example.com/termos',
   dashboardOrigin: 'https://app.example.com',
+  freePlanOpen: false,
+  freeAccountsMax: 200,
 };
 const TARGET: WelcomeTarget = {
   accountId: 'acc-1',

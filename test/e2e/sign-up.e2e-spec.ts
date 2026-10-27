@@ -145,6 +145,8 @@ describe('sign-up while it is open', () => {
           termsVersion: TERMS,
           termsUrl: 'https://pyxis.example.com/terms',
           dashboardOrigin: E2E_DASHBOARD_ORIGIN,
+          freePlanOpen: false,
+          freeAccountsMax: 200,
         })
         .overrideProvider(BILLING_GATEWAY)
         .useValue(new StripeBillingGateway(stripe.stripe, null)),

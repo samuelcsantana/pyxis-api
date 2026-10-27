@@ -49,6 +49,8 @@ function setup() {
     termsVersion: '2026-11-01',
     termsUrl: null,
     dashboardOrigin: 'https://app.example.com',
+    freePlanOpen: false,
+    freeAccountsMax: 200,
   });
   const projectless = new InMemoryProjectlessPeopleRepository();
   const useCase = new RunAccountLifecycleUseCase(
