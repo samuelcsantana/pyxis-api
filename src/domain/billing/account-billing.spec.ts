@@ -36,20 +36,20 @@ describe('billingUpdateFor', () => {
       currentPeriodEndsAt: TRIAL_END,
       accessEndsAt: null,
       restoresAccess: true,
-      leavesFreePlanInMonth: null,
+      leavesFreePlan: null,
     });
   });
 
-  it('names the month whose pause and notices to reset when a free account starts paying', () => {
+  it('says when and in which month a free account starts paying, and nothing for another account', () => {
     const free = { ...CURRENT, status: 'free' as const };
 
     expect(
       billingUpdateFor(subscription({ status: 'active', trialEndsAt: null }), free, NOW)
-        .leavesFreePlanInMonth,
-    ).toBe('2026-10');
+        .leavesFreePlan,
+    ).toEqual({ at: NOW, month: '2026-10' });
     expect(
       billingUpdateFor(subscription({ status: 'active', trialEndsAt: null }), CURRENT, NOW)
-        .leavesFreePlanInMonth,
+        .leavesFreePlan,
     ).toBeNull();
   });
 

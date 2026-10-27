@@ -66,13 +66,14 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: new Date('2026-11-20T12:00:00.000Z'),
       accessEndsAt: null,
       restoresAccess: true,
-      leavesFreePlanInMonth: '2026-10',
+      leavesFreePlan: { at: NOW, month: '2026-10' },
     });
 
-    const [account] = await owner<{ status: string; paused: Date | null }[]>`
-      SELECT status, ingestion_paused_until AS paused FROM accounts WHERE id = ${ACCOUNT_ID}
+    const [account] = await owner<{ status: string; paused: Date | null; due: Date | null }[]>`
+      SELECT status, ingestion_paused_until AS paused, subscription_confirmation_due_at AS due
+      FROM accounts WHERE id = ${ACCOUNT_ID}
     `;
-    expect(account).toEqual({ status: 'active', paused: null });
+    expect(account).toEqual({ status: 'active', paused: null, due: NOW });
     expect(
       await owner<{ month: string; level: number }[]>`
         SELECT month, notified_level AS level FROM account_usage_months
@@ -94,7 +95,7 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: TRIAL_END,
       accessEndsAt: null,
       restoresAccess: true,
-      leavesFreePlanInMonth: null,
+      leavesFreePlan: null,
     });
 
     const expected = { accountId: ACCOUNT_ID, status: 'trialing', accessEndsAt: null };
@@ -123,7 +124,7 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: null,
       accessEndsAt: null,
       restoresAccess: true,
-      leavesFreePlanInMonth: null,
+      leavesFreePlan: null,
     };
     await accounts.apply(ACCOUNT_ID, update);
 
@@ -156,7 +157,7 @@ describe('account billing and billing events against a real Postgres', () => {
       currentPeriodEndsAt: null,
       accessEndsAt: marked,
       restoresAccess: false,
-      leavesFreePlanInMonth: null,
+      leavesFreePlan: null,
     };
 
     await accounts.apply(ACCOUNT_ID, ended);
@@ -169,7 +170,7 @@ describe('account billing and billing events against a real Postgres', () => {
       status: 'active',
       accessEndsAt: null,
       restoresAccess: true,
-      leavesFreePlanInMonth: null,
+      leavesFreePlan: null,
     });
     expect(await marks()).toEqual([
       { keys_revoked_at: null, ended_notified_at: null, deletion_reminded_at: null },

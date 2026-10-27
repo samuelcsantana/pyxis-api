@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ADD COLUMN "subscription_confirmation_due_at" timestamp with time zone;
