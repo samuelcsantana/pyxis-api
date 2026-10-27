@@ -1,4 +1,5 @@
 import type { FastifyRequest } from 'fastify';
+import { FixedClock } from '../../../test-utils/fixed-clock';
 import type { SignUpSettings } from '../../../domain/accounts/sign-up-settings';
 import type {
   CompleteSignUpCommand,
@@ -37,6 +38,7 @@ function signUpController(settings: SignUpSettings) {
     new ReadSignUpStatusUseCase(
       new InMemoryAccountRepository(new InMemoryAdminUserRepository()),
       settings,
+      new FixedClock(new Date('2026-11-20T12:00:00.000Z')),
     ),
   );
   return { controller, codeRequests, completions };
