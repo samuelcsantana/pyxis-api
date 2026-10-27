@@ -122,7 +122,10 @@ describe('POST /v1/billing/stripe/webhook', () => {
     expect(mail.welcomes).toEqual([
       {
         email: 'billing-owner@example.com',
-        welcome: { trialEndsAt: new Date(TRIAL_END_SECONDS * 1000), terms: null },
+        welcome: {
+          plan: { kind: 'trial', trialEndsAt: new Date(TRIAL_END_SECONDS * 1000) },
+          terms: null,
+        },
         language: 'en',
       },
     ]);

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../domain/accounts/sign-up-settings';
-import type { AcceptedTerms } from '../../domain/accounts/welcome';
+import { type AcceptedTerms, welcomePlanOf } from '../../domain/accounts/welcome';
 import {
   ACCOUNT_WELCOME_REPOSITORY,
   type AccountWelcomeRepository,
@@ -43,10 +43,7 @@ export class WelcomeAccountsUseCase {
   private async welcome(target: WelcomeTarget): Promise<boolean> {
     await this.mail.sendWelcome(
       target.ownerEmail,
-      {
-        trialEndsAt: target.status === 'trialing' ? target.trialEndsAt : null,
-        terms: this.termsOf(target),
-      },
+      { plan: welcomePlanOf(target), terms: this.termsOf(target) },
       target.ownerLanguage,
     );
     await this.welcomes.markWelcomed(target.accountId, this.clock.now());

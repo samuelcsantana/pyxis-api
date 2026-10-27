@@ -1,4 +1,4 @@
-import type { Welcome } from '../../domain/accounts/welcome';
+import type { Welcome, WelcomePlan } from '../../domain/accounts/welcome';
 import type { EmailLanguage } from '../../domain/auth/email-language';
 import {
   actionButton,
@@ -32,27 +32,57 @@ interface WelcomeText {
   readonly preheader: string;
   readonly paragraphs: readonly string[];
   readonly terms: string | null;
+  readonly reason: string;
+}
+
+function planText(
+  plan: WelcomePlan,
+  messages: WelcomeEmailMessages,
+): Pick<WelcomeText, 'preheader' | 'paragraphs' | 'reason'> {
+  const intlLocale = INTL_LOCALES[messages.language];
+  switch (plan.kind) {
+    case 'subscription':
+      return {
+        preheader: messages.activePreheader,
+        paragraphs: [messages.activeConfirmed, messages.nextStep],
+        reason: messages.reason,
+      };
+    case 'trial': {
+      const day = new Intl.DateTimeFormat(intlLocale, {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }).format(plan.trialEndsAt);
+      return {
+        preheader: messages.trialPreheader(day),
+        paragraphs: [messages.trialConfirmed(day), messages.nextStep],
+        reason: messages.reason,
+      };
+    }
+    case 'free': {
+      const count = new Intl.NumberFormat(intlLocale);
+      return {
+        preheader: messages.freePreheader,
+        paragraphs: [
+          messages.freeConfirmed({
+            events: count.format(plan.limits.eventsPerMonth),
+            projects: plan.limits.projects,
+            people: plan.limits.people,
+            pauseAt: count.format(plan.pauseAtEvents),
+          }),
+          messages.nextStep,
+        ],
+        reason: messages.freeReason,
+      };
+    }
+  }
 }
 
 function textOf(welcome: Welcome, messages: WelcomeEmailMessages): WelcomeText {
-  const terms = welcome.terms === null ? null : messages.terms(welcome.terms);
-  if (welcome.trialEndsAt === null) {
-    return {
-      preheader: messages.activePreheader,
-      paragraphs: [messages.activeConfirmed, messages.nextStep],
-      terms,
-    };
-  }
-  const day = new Intl.DateTimeFormat(INTL_LOCALES[messages.language], {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  }).format(welcome.trialEndsAt);
   return {
-    preheader: messages.trialPreheader(day),
-    paragraphs: [messages.trialConfirmed(day), messages.nextStep],
-    terms,
+    ...planText(welcome.plan, messages),
+    terms: welcome.terms === null ? null : messages.terms(welcome.terms),
   };
 }
 
@@ -74,7 +104,7 @@ function buildHtml(text: WelcomeText, messages: WelcomeEmailMessages, links: Ema
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
       paragraph(FOOTNOTE, escapeHtml(messages.about)),
-      paragraph(FOOTNOTE, escapeHtml(messages.reason)),
+      paragraph(FOOTNOTE, escapeHtml(text.reason)),
       paragraph(
         { ...FOOTNOTE, margin: '0' },
         `${escapeHtml(messages.dashboard)}: ${inkLink(links.dashboardUrl, links.dashboardHost)}`,
@@ -95,7 +125,7 @@ function buildText(text: WelcomeText, messages: WelcomeEmailMessages, links: Ema
     ...(text.terms === null ? [] : ['', ...wrapped(text.terms)]),
     '',
     ...wrapped(messages.about),
-    ...wrapped(messages.reason),
+    ...wrapped(text.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,
   ].join('\n');
 }

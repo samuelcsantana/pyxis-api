@@ -17,6 +17,8 @@ import { BillingUnavailableError } from '../../domain/errors/billing.errors';
 import { FakeBillingGateway } from '../../test-utils/fake-billing-gateway';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccountUsageRepository } from '../../test-utils/in-memory-account-usage.repository';
+import { InMemoryAccountWelcomeRepository } from '../../test-utils/in-memory-account-welcome.repository';
+import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminSessionRepository } from '../../test-utils/in-memory-admin-session.repository';
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
@@ -60,7 +62,14 @@ function setup(settings: SignUpSettings = OPEN) {
   const terms = new InMemoryTermsAcceptanceRepository();
   const mail = new RecordingMailSender();
   const gateway = new FakeBillingGateway();
+  const welcome = new WelcomeAccountsUseCase(
+    new InMemoryAccountWelcomeRepository(),
+    mail,
+    clock,
+    settings,
+  );
   return {
+    welcome,
     clock,
     admins,
     accounts,
@@ -80,6 +89,7 @@ function setup(settings: SignUpSettings = OPEN) {
       clock,
       random,
       settings,
+      welcome,
     ),
     startCheckout: new StartCheckoutUseCase(accounts, gateway, settings),
     openPortal: new OpenBillingPortalUseCase(accounts, gateway, settings),
@@ -346,6 +356,24 @@ describe('CompleteSignUpUseCase', () => {
       expect(context.terms.recorded).toEqual([
         expect.objectContaining({ accountId: signedUp.accountId, version: TERMS }),
       ]);
+    });
+
+    it('welcomes an owner who starts on the free plan, after recording the terms', async () => {
+      const context = setup(FREE_PLAN_OPEN);
+      const tryWelcome = jest.spyOn(context.welcome, 'tryWelcome');
+
+      const signedUp = await signUp(context);
+
+      expect(tryWelcome).toHaveBeenCalledWith(signedUp.accountId);
+    });
+
+    it('welcomes nobody yet when the owner has to wait for a place', async () => {
+      const context = setup({ ...FREE_PLAN_OPEN, freeAccountsMax: 0 });
+      const tryWelcome = jest.spyOn(context.welcome, 'tryWelcome');
+
+      await signUp(context);
+
+      expect(tryWelcome).not.toHaveBeenCalled();
     });
 
     it('makes a new owner wait for a place, marked since now, once the free plan is full', async () => {

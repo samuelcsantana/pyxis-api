@@ -9,7 +9,7 @@ import type { DrizzleDatabase } from '../database/drizzle.types';
 import { accounts, termsAcceptances } from '../database/schema/accounts';
 import { adminUsers } from '../database/schema/admins';
 
-const STATUSES_WITH_ACCESS = ['trialing', 'active', 'past_due', 'ending'] as const;
+const WELCOMED_STATUSES = ['trialing', 'active', 'past_due', 'ending', 'free'] as const;
 
 @Injectable()
 export class DrizzleAccountWelcomeRepository implements AccountWelcomeRepository {
@@ -49,6 +49,9 @@ export class DrizzleAccountWelcomeRepository implements AccountWelcomeRepository
         ownerLanguage: adminUsers.emailLanguage,
         status: accounts.status,
         trialEndsAt: accounts.trialEndsAt,
+        eventsPerMonthLimit: accounts.eventsPerMonthLimit,
+        projectsLimit: accounts.projectsLimit,
+        peopleLimit: accounts.peopleLimit,
         termsVersion: sql<string | null>`(${latestVersion})`,
       })
       .from(accounts)
@@ -56,7 +59,7 @@ export class DrizzleAccountWelcomeRepository implements AccountWelcomeRepository
       .where(
         and(
           isNull(accounts.welcomedAt),
-          inArray(accounts.status, [...STATUSES_WITH_ACCESS]),
+          inArray(accounts.status, [...WELCOMED_STATUSES]),
           condition,
         ),
       );

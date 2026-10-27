@@ -121,6 +121,9 @@ describe('RunAccountLifecycleUseCase', () => {
       status: 'active',
       trialEndsAt: new Date('2026-11-15T00:00:00.000Z'),
       termsVersion: '2026-11-01',
+      eventsPerMonthLimit: null,
+      projectsLimit: null,
+      peopleLimit: null,
     });
 
     const first = await useCase.execute();
@@ -129,7 +132,11 @@ describe('RunAccountLifecycleUseCase', () => {
     expect(first.welcomes).toBe(1);
     expect(second.welcomes).toBe(0);
     expect(mail.welcomes).toEqual([
-      { email: 'ana@example.com', welcome: { trialEndsAt: null, terms: null }, language: 'es' },
+      {
+        email: 'ana@example.com',
+        welcome: { plan: { kind: 'subscription' }, terms: null },
+        language: 'es',
+      },
     ]);
   });
 

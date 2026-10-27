@@ -60,6 +60,9 @@ describe('welcomes against a real Postgres', () => {
       status: 'trialing',
       trialEndsAt: TRIAL_END,
       termsVersion: '2026-11-01',
+      eventsPerMonthLimit: null,
+      projectsLimit: null,
+      peopleLimit: null,
     });
     expect(await welcomes.toWelcome(LINKED)).toEqual(
       expect.objectContaining({ accountId: LINKED, termsVersion: null }),
@@ -72,6 +75,20 @@ describe('welcomes against a real Postgres', () => {
     await welcomes.markWelcomed(SIGNED_UP, NOW);
 
     expect(await welcomes.toWelcome(SIGNED_UP)).toBeNull();
+  });
+
+  it('welcomes an account on the free plan, with the limits Pyxis set for it', async () => {
+    await owner`
+      UPDATE accounts SET status = 'free', projects_limit = 2 WHERE id = ${PENDING}
+    `;
+
+    expect(await welcomes.toWelcome(PENDING)).toMatchObject({
+      status: 'free',
+      eventsPerMonthLimit: null,
+      projectsLimit: 2,
+      peopleLimit: null,
+    });
+    expect((await welcomes.pendingWelcomes()).map(({ accountId }) => accountId)).toContain(PENDING);
   });
 
   it('lists as pending only the signed-up accounts with access that were not welcomed', async () => {

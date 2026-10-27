@@ -33,6 +33,7 @@ import {
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { RANDOM_SOURCE, type RandomSource } from '../../domain/services/random-source';
 import { consumeCode } from '../auth/consume-code';
+import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 import type { SignInClient } from '../auth/verify-sign-in-code.usecase';
 
 export interface CompleteSignUpCommand {
@@ -62,6 +63,7 @@ export class CompleteSignUpUseCase {
     @Inject(CLOCK) private readonly clock: Clock,
     @Inject(RANDOM_SOURCE) private readonly random: RandomSource,
     @Inject(SIGN_UP_SETTINGS) private readonly settings: SignUpSettings,
+    private readonly welcomes: WelcomeAccountsUseCase,
   ) {}
 
   async execute(command: CompleteSignUpCommand): Promise<SignedUp> {
@@ -88,6 +90,9 @@ export class CompleteSignUpUseCase {
       version: termsVersion,
       acceptedAt: now,
     });
+    if (account.status === 'free') {
+      await this.welcomes.tryWelcome(account.id);
+    }
     const sessionToken = generateSessionToken(this.random);
     await this.sessions.create({
       adminUserId: admin.id,
