@@ -259,7 +259,8 @@ Shipping now:
   subscription paid through a payment link to an account
   ([ADR 0018](docs/adr/0018-billing-follows-stripe-through-its-webhook.md))
 - Repeated free trials: the subscription is read with its card, and the card's Stripe
-  fingerprint (never the number) is recorded once per account when it starts a trial; a card that
+  fingerprint (never the number) is recorded once per account while the subscription is trialing
+  (never after, though Stripe keeps the trial's end date on the subscription); a card that
   already started a trial in another account is logged as `billing.repeated_trial` and raises an
   alarm, and nothing else happens. The records outlive their account and are deleted after twelve
   months ([ADR 0026](docs/adr/0026-repeated-trials-are-detected-not-blocked.md))

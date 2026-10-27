@@ -60,6 +60,15 @@ describe('DetectRepeatedTrialUseCase', () => {
     expect(trialCards.cards).toEqual([]);
   });
 
+  it('does not record the card again after the retention purge removed it, once the trial is over', async () => {
+    const { trialCards, useCase, logs } = setup();
+
+    await useCase.tryDetect(ACCOUNT_ID, { ...TRIALING, status: 'active' });
+
+    expect(trialCards.cards).toEqual([]);
+    expect(logs).toEqual([]);
+  });
+
   it('warns once, with the earlier accounts, when a card starts a trial in another account', async () => {
     const { trialCards, useCase, logs } = setup();
     await trialCards.record({
@@ -74,7 +83,7 @@ describe('DetectRepeatedTrialUseCase', () => {
     });
 
     await useCase.tryDetect(ACCOUNT_ID, TRIALING);
-    await useCase.tryDetect(ACCOUNT_ID, { ...TRIALING, status: 'active' });
+    await useCase.tryDetect(ACCOUNT_ID, { ...TRIALING, cancelAtPeriodEnd: true });
 
     expect(logs).toEqual([
       {
