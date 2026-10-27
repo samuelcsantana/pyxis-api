@@ -9,6 +9,7 @@ import type {
   AccountMembership,
   AccountOverview,
   AccountRepository,
+  FreePlaceClaim,
   NewAccount,
 } from '../domain/repositories/account.repository';
 import type { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
@@ -63,6 +64,7 @@ export class InMemoryAccountRepository
       deletionHeldAt: null,
       deletionHoldReason: null,
       quotaPauseExemptUntil: null,
+      freeWaitlistedAt: null,
       eventsPerMonthLimit: null,
       projectsLimit: null,
       peopleLimit: null,
@@ -71,6 +73,26 @@ export class InMemoryAccountRepository
     };
     this.add(created);
     return Promise.resolve(created);
+  }
+
+  async claimFreePlace(claim: FreePlaceClaim): Promise<Account> {
+    const hasAPlace =
+      this.stored.filter((account) => account.status === 'free').length < claim.freeAccountsMax;
+    const account =
+      claim.accountId === null
+        ? await this.create({ ownerAdminId: claim.ownerAdminId, status: 'incomplete' })
+        : this.accounts.get(claim.accountId);
+    if (account === undefined) {
+      throw new Error('The account claiming a free place no longer exists.');
+    }
+    if (account.status !== 'incomplete') {
+      return account;
+    }
+    const claimed: Account = hasAPlace
+      ? { ...account, status: 'free', freeWaitlistedAt: null }
+      : { ...account, freeWaitlistedAt: account.freeWaitlistedAt ?? claim.at };
+    this.accounts.set(claimed.id, claimed);
+    return claimed;
   }
 
   suspend(accountId: string, reason: string, at: Date): Promise<Account | null> {

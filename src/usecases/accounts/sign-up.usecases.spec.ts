@@ -115,6 +115,7 @@ function accountOf(overrides: Partial<Account> & Pick<Account, 'ownerAdminId'>):
     deletionHeldAt: null,
     deletionHoldReason: null,
     quotaPauseExemptUntil: null,
+    freeWaitlistedAt: null,
     eventsPerMonthLimit: null,
     projectsLimit: null,
     peopleLimit: null,
@@ -297,6 +298,110 @@ describe('CompleteSignUpUseCase', () => {
     expect(second.accountId).toBe(first.accountId);
     expect(accounts.stored).toHaveLength(1);
     expect(terms.recorded).toHaveLength(2);
+  });
+
+  it('answers the status of the account it gives, waiting for its subscription while the free plan is closed', async () => {
+    const { requestCode, completeSignUp, mail } = setup();
+
+    const signedUp = await completeSignUp.execute({
+      email: EMAIL,
+      code: await sentCode(requestCode, mail),
+      termsVersion: TERMS,
+      client: CLIENT,
+    });
+
+    expect(signedUp.accountStatus).toBe('incomplete');
+  });
+
+  describe('with the free plan open', () => {
+    const FREE_PLAN_OPEN: SignUpSettings = { ...OPEN, freePlanOpen: true, freeAccountsMax: 2 };
+
+    async function signUp(context: ReturnType<typeof setup>) {
+      return context.completeSignUp.execute({
+        email: EMAIL,
+        code: await sentCode(context.requestCode, context.mail),
+        termsVersion: TERMS,
+        client: CLIENT,
+      });
+    }
+
+    it('starts a new owner on the free plan while it has a place', async () => {
+      const context = setup(FREE_PLAN_OPEN);
+      context.accounts.add(
+        accountOf({
+          id: 'acc00000-0000-4000-a000-000000000090',
+          ownerAdminId: MISSING_ID,
+          status: 'free',
+        }),
+      );
+
+      const signedUp = await signUp(context);
+
+      expect(signedUp.accountStatus).toBe('free');
+      expect(context.accounts.stored.at(-1)).toMatchObject({
+        id: signedUp.accountId,
+        status: 'free',
+        freeWaitlistedAt: null,
+      });
+      expect(context.terms.recorded).toEqual([
+        expect.objectContaining({ accountId: signedUp.accountId, version: TERMS }),
+      ]);
+    });
+
+    it('makes a new owner wait for a place, marked since now, once the free plan is full', async () => {
+      const context = setup({ ...FREE_PLAN_OPEN, freeAccountsMax: 0 });
+
+      const signedUp = await signUp(context);
+
+      expect(signedUp.accountStatus).toBe('incomplete');
+      expect(context.accounts.stored).toEqual([
+        expect.objectContaining({ id: signedUp.accountId, freeWaitlistedAt: NOW }),
+      ]);
+    });
+
+    it('moves an unfinished sign-up onto the free plan when its owner comes back', async () => {
+      const context = setup(FREE_PLAN_OPEN);
+      const owner = await context.admins.findOrCreateByEmail(EMAIL);
+      context.accounts.add(accountOf({ ownerAdminId: owner.id, status: 'incomplete' }));
+
+      const signedUp = await signUp(context);
+
+      expect(signedUp).toMatchObject({
+        accountId: 'acc00000-0000-4000-a000-000000000099',
+        accountStatus: 'free',
+      });
+      expect(context.accounts.stored).toHaveLength(1);
+    });
+
+    it('keeps a waiting owner in their place in the queue when the plan is still full', async () => {
+      const context = setup({ ...FREE_PLAN_OPEN, freeAccountsMax: 0 });
+      const owner = await context.admins.findOrCreateByEmail(EMAIL);
+      const waitingSince = new Date('2026-11-01T08:00:00.000Z');
+      context.accounts.add(
+        accountOf({ ownerAdminId: owner.id, status: 'incomplete', freeWaitlistedAt: waitingSince }),
+      );
+
+      const signedUp = await signUp(context);
+
+      expect(signedUp.accountStatus).toBe('incomplete');
+      expect(context.accounts.stored).toEqual([
+        expect.objectContaining({ freeWaitlistedAt: waitingSince }),
+      ]);
+    });
+
+    it.each(['free', 'trialing', 'active', 'comped'] as const)(
+      'gives a returning owner their %s account as it is',
+      async (status) => {
+        const context = setup(FREE_PLAN_OPEN);
+        const owner = await context.admins.findOrCreateByEmail(EMAIL);
+        context.accounts.add(accountOf({ ownerAdminId: owner.id, status }));
+
+        const signedUp = await signUp(context);
+
+        expect(signedUp.accountStatus).toBe(status);
+        expect(context.accounts.stored).toHaveLength(1);
+      },
+    );
   });
 
   it('opens no session for a suspended person, the code spent', async () => {

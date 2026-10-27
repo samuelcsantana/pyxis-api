@@ -63,6 +63,7 @@ describe('accounts against a real Postgres', () => {
       deletionHeldAt: null,
       deletionHoldReason: null,
       quotaPauseExemptUntil: null,
+      freeWaitlistedAt: null,
       eventsPerMonthLimit: null,
       projectsLimit: null,
       peopleLimit: null,
@@ -95,6 +96,100 @@ describe('accounts against a real Postgres', () => {
     await expect(
       accounts.create({ ownerAdminId: GUEST_ID, status: 'free' }),
     ).resolves.toMatchObject({ status: 'free' });
+  });
+
+  describe('claiming a place on the free plan', () => {
+    const AT = new Date('2026-11-20T12:00:00.000Z');
+    const EARLIER = new Date('2026-11-18T09:00:00.000Z');
+
+    it('starts a new owner on the free plan while there is a place', async () => {
+      const claimed = await accounts.claimFreePlace({
+        ownerAdminId: OWNER_ID,
+        accountId: null,
+        freeAccountsMax: 1,
+        at: AT,
+      });
+
+      expect(claimed).toMatchObject({
+        ownerAdminId: OWNER_ID,
+        status: 'free',
+        freeWaitlistedAt: null,
+      });
+    });
+
+    it('makes a new owner wait, marked since the claim, once the plan holds its maximum', async () => {
+      await accounts.create({ ownerAdminId: GUEST_ID, status: 'free' });
+
+      const claimed = await accounts.claimFreePlace({
+        ownerAdminId: OWNER_ID,
+        accountId: null,
+        freeAccountsMax: 1,
+        at: AT,
+      });
+
+      expect(claimed).toMatchObject({ status: 'incomplete', freeWaitlistedAt: AT });
+    });
+
+    it('moves an unfinished account onto the free plan, clearing its wait', async () => {
+      const unfinished = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+      await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id = ${unfinished.id}`;
+
+      const claimed = await accounts.claimFreePlace({
+        ownerAdminId: OWNER_ID,
+        accountId: unfinished.id,
+        freeAccountsMax: 1,
+        at: AT,
+      });
+
+      expect(claimed).toMatchObject({ id: unfinished.id, status: 'free', freeWaitlistedAt: null });
+    });
+
+    it('keeps the first moment an unfinished account started waiting', async () => {
+      await accounts.create({ ownerAdminId: GUEST_ID, status: 'free' });
+      const unfinished = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+      const first = await accounts.claimFreePlace({
+        ownerAdminId: OWNER_ID,
+        accountId: unfinished.id,
+        freeAccountsMax: 1,
+        at: EARLIER,
+      });
+
+      const again = await accounts.claimFreePlace({
+        ownerAdminId: OWNER_ID,
+        accountId: unfinished.id,
+        freeAccountsMax: 1,
+        at: AT,
+      });
+
+      expect(first.freeWaitlistedAt).toEqual(EARLIER);
+      expect(again).toMatchObject({ status: 'incomplete', freeWaitlistedAt: EARLIER });
+    });
+
+    it('leaves an account that is no longer unfinished as it is, and refuses one that is gone', async () => {
+      const running = await accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
+      const claim = { ownerAdminId: OWNER_ID, freeAccountsMax: 5, at: AT };
+
+      expect(await accounts.claimFreePlace({ ...claim, accountId: running.id })).toEqual(running);
+      await expect(accounts.claimFreePlace({ ...claim, accountId: MISSING_ID })).rejects.toThrow(
+        'no longer exists',
+      );
+    });
+
+    it('gives the last place to only one of two owners claiming it at the same time', async () => {
+      await accounts.create({ ownerAdminId: STRANGER_ID, status: 'free' });
+
+      const claims = await Promise.all(
+        [OWNER_ID, GUEST_ID].map((ownerAdminId) =>
+          accounts.claimFreePlace({ ownerAdminId, accountId: null, freeAccountsMax: 2, at: AT }),
+        ),
+      );
+
+      expect(claims.map((claim) => claim.status).sort()).toEqual(['free', 'incomplete']);
+      const rows = await owner<{ free: number }[]>`
+        SELECT count(*)::int AS free FROM accounts WHERE status = 'free'
+      `;
+      expect(rows).toEqual([{ free: 2 }]);
+    });
   });
 
   it('lists the projects of an account, oldest first, and counts the people who read them', async () => {

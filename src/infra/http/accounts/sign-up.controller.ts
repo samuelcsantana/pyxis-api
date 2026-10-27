@@ -83,10 +83,12 @@ export class SignUpController {
   @UseGuards(DashboardOriginGuard, ClientAddressThrottlerGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Exchange a sign-up code for a session and an account waiting for its subscription',
+    summary: 'Exchange a sign-up code for a session and an account',
     description:
       'Records the acceptance of the terms version given, which must be the current one (409 ' +
-      'otherwise). An owner who already has a live account gets that account back.',
+      'otherwise). An owner who already has a live account gets that account back. While the ' +
+      'free plan is open and has a place, the account starts on it; when it is full, the account ' +
+      'waits for its subscription or for a place.',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: signedUpSchema })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
@@ -109,6 +111,7 @@ export class SignUpController {
       email: signedUp.email,
       session_token: signedUp.sessionToken,
       account_id: signedUp.accountId,
+      account_status: signedUp.accountStatus,
     };
   }
 }

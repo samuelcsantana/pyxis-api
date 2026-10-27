@@ -26,4 +26,15 @@ describe('InMemoryAccountRepository', () => {
     ]);
     expect(await accounts.membershipsOf('carla')).toEqual([]);
   });
+
+  it('claims a free place like the database: an account that is no longer unfinished stays as it is', async () => {
+    const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
+    const running = await accounts.create({ ownerAdminId: 'ana', status: 'active' });
+    const claim = { ownerAdminId: 'ana', freeAccountsMax: 5, at: new Date('2026-11-02T00:00:00Z') };
+
+    expect(await accounts.claimFreePlace({ ...claim, accountId: running.id })).toEqual(running);
+    await expect(
+      accounts.claimFreePlace({ ...claim, accountId: 'acc00000-0000-4000-a000-000000000404' }),
+    ).rejects.toThrow('no longer exists');
+  });
 });

@@ -7,6 +7,13 @@ export interface NewAccount {
   readonly status: AccountStatus;
 }
 
+export interface FreePlaceClaim {
+  readonly ownerAdminId: string;
+  readonly accountId: string | null;
+  readonly freeAccountsMax: number;
+  readonly at: Date;
+}
+
 export interface AccountOverview {
   readonly account: Account;
   readonly ownerEmail: string;
@@ -23,6 +30,7 @@ export interface AccountMembership {
 
 export interface AccountRepository {
   create(account: NewAccount): Promise<Account>;
+  claimFreePlace(claim: FreePlaceClaim): Promise<Account>;
   findById(accountId: string): Promise<Account | null>;
   projectsOf(accountId: string): Promise<readonly Project[]>;
   peopleCount(accountId: string): Promise<number>;
