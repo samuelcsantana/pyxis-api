@@ -1,56 +1,19 @@
-import type { Channel, DeviceType } from '../entities/tracked-event.entity';
+import type { Channel } from '../entities/tracked-event.entity';
 import type { ApiRequestMethod } from '../events/reserved-event-names';
 import type { QueryScope } from './query-scope';
+import { NO_REPORT_FILTERS, type ReportFilters } from './report-filters';
 
 export const VISIT_LIST_PAGE_SIZE = 50;
-export const MAX_VISIT_PATH_FILTERS = 3;
 export const MAX_VISIT_HIGHLIGHTS = 5;
-
-export const VISIT_IDENTITIES = ['identified', 'anonymous'] as const;
-export type VisitIdentity = (typeof VISIT_IDENTITIES)[number];
-
-export interface VisitPropertyFilter {
-  readonly key: string;
-  readonly value: string;
-}
-
-export interface VisitEventFilter {
-  readonly name: string;
-  readonly property: VisitPropertyFilter | null;
-}
 
 export interface VisitRouteFilter {
   readonly method: ApiRequestMethod;
   readonly route: string;
 }
 
-export interface VisitFilters {
-  readonly paths: readonly string[];
-  readonly event: VisitEventFilter | null;
-  readonly channel: Channel | null;
-  readonly deviceType: DeviceType | null;
-  readonly identity: VisitIdentity | null;
-  readonly country: string | null;
-  readonly region: string | null;
-  readonly source: string | null;
-  readonly campaign: string | null;
-  readonly route: VisitRouteFilter | null;
-  readonly failed: boolean;
-}
+export type VisitFilters = ReportFilters & { readonly route: VisitRouteFilter | null };
 
-export const NO_VISIT_FILTERS: VisitFilters = {
-  paths: [],
-  event: null,
-  channel: null,
-  deviceType: null,
-  identity: null,
-  country: null,
-  region: null,
-  source: null,
-  campaign: null,
-  route: null,
-  failed: false,
-};
+export const NO_VISIT_FILTERS: VisitFilters = { ...NO_REPORT_FILTERS, route: null };
 
 export interface VisitCursor {
   readonly startedAt: Date;

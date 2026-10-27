@@ -14,12 +14,8 @@ import {
   MAX_REFERRER_HOST_LENGTH,
   MAX_UTM_VALUE_LENGTH,
 } from '../../../domain/events/event-limits';
-import {
-  MAX_VISIT_PATH_FILTERS,
-  VISIT_IDENTITIES,
-  type VisitFilters,
-  type VisitsReport,
-} from '../../../domain/queries/visits';
+import { MAX_VISIT_PATH_FILTERS, VISIT_IDENTITIES } from '../../../domain/queries/report-filters';
+import { type VisitFilters, type VisitsReport } from '../../../domain/queries/visits';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';

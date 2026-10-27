@@ -2,14 +2,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
 import type { Channel } from '../../domain/entities/tracked-event.entity';
 import { API_REQUEST } from '../../domain/events/reserved-event-names';
-import { likePattern } from '../../domain/queries/funnel';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import {
   MAX_VISIT_HIGHLIGHTS,
   type VisitCursor,
-  type VisitEventFilter,
   type VisitFilters,
-  type VisitIdentity,
   type VisitListItem,
   type VisitMatches,
   type VisitsQuery,
@@ -26,6 +23,7 @@ import {
   isNamedEvent,
   isPageView,
 } from './definitions';
+import { reportFilterConditions } from './report-filters';
 
 const inVisitOrder = sql`ORDER BY ${events.occurredAt}, ${events.id}`;
 
@@ -41,57 +39,23 @@ function allOf(conditions: readonly SQL[]): SQL {
   return sql.join([sql`true`, ...conditions], sql` AND `);
 }
 
-function pageConditions(paths: readonly string[]): readonly SQL[] {
-  return paths.map(
-    (path) => sql`bool_or(${isPageView} AND ${events.path} LIKE ${likePattern(path)} ESCAPE '\\')`,
-  );
-}
-
-function eventConditions(event: VisitEventFilter | null): readonly SQL[] {
-  if (event === null) {
+function routeConditions(filters: VisitFilters): readonly SQL[] {
+  if (filters.route === null) {
     return [];
   }
-  const carries =
-    event.property === null
-      ? sql``
-      : sql` AND ${events.properties}->>${event.property.key} = ${event.property.value}`;
-  return [sql`bool_or(${events.name} = ${event.name}${carries})`];
-}
-
-function requestConditions(filters: VisitFilters): readonly SQL[] {
-  if (filters.route === null && !filters.failed) {
-    return [];
-  }
-  const toRoute =
-    filters.route === null
-      ? sql``
-      : sql` AND ${events.properties}->>'method' = ${filters.route.method}
-          AND ${events.properties}->>'route' = ${filters.route.route}`;
   const failing = filters.failed ? sql` AND ${hasFailed}` : sql``;
-  return [sql`bool_or(${events.name} = ${API_REQUEST}${toRoute}${failing})`];
-}
-
-function activityConditions(filters: VisitFilters): readonly SQL[] {
   return [
-    ...pageConditions(filters.paths),
-    ...eventConditions(filters.event),
-    ...requestConditions(filters),
+    sql`bool_or(${events.name} = ${API_REQUEST}
+      AND ${events.properties}->>'method' = ${filters.route.method}
+      AND ${events.properties}->>'route' = ${filters.route.route}${failing})`,
   ];
 }
 
-function identityCondition(identity: VisitIdentity): SQL {
-  return identity === 'identified' ? sql`"userId" IS NOT NULL` : sql`"userId" IS NULL`;
-}
-
-function visitConditions(filters: VisitFilters): readonly SQL[] {
+function matchConditions(filters: VisitFilters): readonly SQL[] {
+  const failedAnywhere = filters.failed && filters.route === null;
   return [
-    ...(filters.channel === null ? [] : [sql`"channel" = ${filters.channel}`]),
-    ...(filters.deviceType === null ? [] : [sql`"deviceType" = ${filters.deviceType}`]),
-    ...(filters.identity === null ? [] : [identityCondition(filters.identity)]),
-    ...(filters.country === null ? [] : [sql`"country" = ${filters.country}`]),
-    ...(filters.region === null ? [] : [sql`"region" = ${filters.region}`]),
-    ...(filters.source === null ? [] : [sql`"source" = ${filters.source}`]),
-    ...(filters.campaign === null ? [] : [sql`"campaign" = ${filters.campaign}`]),
+    ...reportFilterConditions({ ...filters, failed: failedAnywhere }),
+    ...routeConditions(filters),
   ];
 }
 
@@ -182,7 +146,7 @@ export class DrizzleVisitsQuery implements VisitsQuery {
         FROM ${events}
         WHERE ${inScope(scope)}
         GROUP BY ${events.sessionId}
-        HAVING ${allOf(activityConditions(filters))}
+        HAVING ${allOf(matchConditions(filters))}
       ),
       named AS (
         SELECT ${events.sessionId} AS "sessionId", ${events.name} AS "name",
@@ -191,17 +155,14 @@ export class DrizzleVisitsQuery implements VisitsQuery {
         WHERE ${inScope(scope)} AND ${isNamedEvent}
         GROUP BY 1, 2
       ),
-      matching AS (
-        SELECT * FROM visits WHERE ${allOf(visitConditions(filters))}
-      ),
       page AS (
-        SELECT * FROM matching
+        SELECT * FROM visits
         WHERE ${allOf(cursorConditions(after))}
         ORDER BY "startedAtValue" DESC, "sessionId" DESC
         LIMIT ${limit}
       ),
       totals AS (
-        SELECT count(*)::int AS "total" FROM matching
+        SELECT count(*)::int AS "total" FROM visits
       )
       SELECT totals."total", page."sessionId", page."entryPath", page."pageViews",
         page."failedRequests", page."deviceType", page."browser", page."os", page."country",
