@@ -16,6 +16,7 @@ const SETTINGS: SignUpSettings = {
   freePlanOpen: false,
   freeAccountsMax: 200,
   trialOffered: true,
+  freePlanTermsForEarlierAccountsFrom: null,
 };
 const TARGET: WelcomeTarget = {
   accountId: 'acc-1',

@@ -13,6 +13,7 @@ const SETTINGS: SignUpSettings = {
   freePlanOpen: true,
   freeAccountsMax: 200,
   trialOffered: false,
+  freePlanTermsForEarlierAccountsFrom: null,
 };
 const TARGET: SubscriptionConfirmationTarget = {
   accountId: 'acc-1',

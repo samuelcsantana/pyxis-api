@@ -13,3 +13,5 @@ free_accounts_max     = 200
 trial_offered         = true
 remote_mcp_open       = false
 promotion_codes_open  = false
+
+free_plan_terms_for_earlier_accounts_from = "<optional: when terms 1.3 bind earlier accounts, such as 2026-12-20T00:00:00-03:00>"

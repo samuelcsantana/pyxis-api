@@ -49,6 +49,7 @@ const OPEN: SignUpSettings = {
   freePlanOpen: false,
   freeAccountsMax: 200,
   trialOffered: true,
+  freePlanTermsForEarlierAccountsFrom: null,
 };
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
 
