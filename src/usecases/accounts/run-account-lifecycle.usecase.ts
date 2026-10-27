@@ -21,6 +21,7 @@ import type { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import type { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.usecase';
 import type { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
 import { AccountDataDeletion } from './account-data-deletion';
+import type { SweepInactiveFreeAccountsUseCase } from './sweep-inactive-free-accounts.usecase';
 
 export interface AccountLifecycleReport {
   readonly freePlacesOpened: number;
@@ -37,6 +38,9 @@ export interface AccountLifecycleReport {
   readonly deleted: number;
   readonly partlyHeld: number;
   readonly incompleteRemoved: number;
+  readonly inactiveFreeNotices: number;
+  readonly inactiveFreeRevived: number;
+  readonly inactiveFreeDeleted: number;
   readonly peopleRemoved: number;
   readonly projectlessMarked: number;
   readonly projectlessRemoved: number;
@@ -74,6 +78,7 @@ export class RunAccountLifecycleUseCase {
     private readonly freePlaces: OpenFreePlacesUseCase,
     private readonly confirmations: ConfirmSubscriptionsUseCase,
     private readonly fallbacks: FallBackToFreePlanUseCase,
+    private readonly inactiveFreeAccounts: SweepInactiveFreeAccountsUseCase,
   ) {
     this.deletion = new AccountDataDeletion(lifecycle, mail);
   }
@@ -99,6 +104,7 @@ export class RunAccountLifecycleUseCase {
     );
     const deletion = await this.deleteEnded(now);
     const incomplete = await this.removeStaleIncomplete(now);
+    const inactive = await this.inactiveFreeAccounts.execute(now);
     const sweep = await this.projectless.execute();
     const report: AccountLifecycleReport = {
       freePlacesOpened,
@@ -111,13 +117,16 @@ export class RunAccountLifecycleUseCase {
       endedNotices,
       reminders,
       deleted: deletion.removed,
-      partlyHeld: deletion.partlyHeld,
+      partlyHeld: deletion.partlyHeld + inactive.partlyHeld,
       incompleteRemoved: incomplete.removed,
-      peopleRemoved: deletion.peopleRemoved + incomplete.peopleRemoved,
+      inactiveFreeNotices: inactive.notified,
+      inactiveFreeRevived: inactive.revived,
+      inactiveFreeDeleted: inactive.deleted,
+      peopleRemoved: deletion.peopleRemoved + incomplete.peopleRemoved + inactive.peopleRemoved,
       ...sweep,
     };
     this.logger.log({ message: 'accounts.lifecycle_done', ...report });
-    const failed = [...deletion.failed, ...incomplete.failed];
+    const failed = [...deletion.failed, ...incomplete.failed, ...inactive.failed];
     if (failed.length > 0) {
       throw new AccountLifecycleFailedError(failed);
     }

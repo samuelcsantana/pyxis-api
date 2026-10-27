@@ -26,6 +26,9 @@ import { OpenFreePlacesUseCase } from '../usecases/accounts/open-free-places.use
 import { ConfirmSubscriptionsUseCase } from '../usecases/billing/confirm-subscriptions.usecase';
 import { DrizzleSubscriptionConfirmationRepository } from '../infra/repositories/drizzle-subscription-confirmation.repository';
 import { FallBackToFreePlanUseCase } from '../usecases/billing/fall-back-to-free-plan.usecase';
+import { SweepInactiveFreeAccountsUseCase } from '../usecases/accounts/sweep-inactive-free-accounts.usecase';
+import { AccountDataDeletion } from '../usecases/accounts/account-data-deletion';
+import { DrizzleFreeAccountInactivityRepository } from '../infra/repositories/drizzle-free-account-inactivity.repository';
 import { DrizzleFreePlanFallbackRepository } from '../infra/repositories/drizzle-free-plan-fallback.repository';
 import { RunAccountLifecycleUseCase } from '../usecases/accounts/run-account-lifecycle.usecase';
 import { DrizzleProjectlessPeopleRepository } from '../infra/repositories/drizzle-projectless-people.repository';
@@ -99,8 +102,9 @@ export const handler = createJobsHandler({
       const env = validateEnv(process.env);
       const mail = new LazyMailSender(() => createMailSender(env));
       const clock = new SystemClock();
+      const lifecycle = new DrizzleAccountLifecycleRepository(database);
       return new RunAccountLifecycleUseCase(
-        new DrizzleAccountLifecycleRepository(database),
+        lifecycle,
         new DrizzleAccountBillingRepository(database),
         createBillingGateway(env),
         mail,
@@ -126,6 +130,11 @@ export const handler = createJobsHandler({
           mail,
           clock,
           signUpSettingsFromEnv(env),
+        ),
+        new SweepInactiveFreeAccountsUseCase(
+          new DrizzleFreeAccountInactivityRepository(database),
+          new AccountDataDeletion(lifecycle, mail),
+          mail,
         ),
       ).execute();
     }),
