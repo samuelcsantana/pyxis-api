@@ -18,6 +18,7 @@ describe('validateEnv', () => {
       SIGNUP_OPEN: 'false',
       FREE_PLAN_OPEN: 'false',
       FREE_ACCOUNTS_MAX: DEFAULT_FREE_ACCOUNTS_MAX,
+      TRIAL_OFFERED: 'true',
       PROMOTION_CODES_OPEN: 'false',
       REMOTE_MCP_OPEN: 'false',
     });
@@ -34,6 +35,12 @@ describe('validateEnv', () => {
     expect(() => validateEnv({ FREE_PLAN_OPEN: 'yes' })).toThrow(/FREE_PLAN_OPEN/);
     expect(() => validateEnv({ FREE_ACCOUNTS_MAX: '-1' })).toThrow(/FREE_ACCOUNTS_MAX/);
     expect(() => validateEnv({ FREE_ACCOUNTS_MAX: '2.5' })).toThrow(/FREE_ACCOUNTS_MAX/);
+  });
+
+  it('reads whether Checkout still offers the trial, offered unless set to false', () => {
+    expect(validateEnv({ TRIAL_OFFERED: 'false' }).TRIAL_OFFERED).toBe('false');
+    expect(validateEnv({ TRIAL_OFFERED: '' }).TRIAL_OFFERED).toBe('true');
+    expect(() => validateEnv({ TRIAL_OFFERED: 'no' })).toThrow(/TRIAL_OFFERED/);
   });
 
   it('reads the switch that lets Checkout take a promotion code', () => {

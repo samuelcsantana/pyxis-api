@@ -77,6 +77,7 @@ function setup(before: 'incomplete' | 'active' = 'incomplete') {
     dashboardOrigin: 'https://app.example.com',
     freePlanOpen: false,
     freeAccountsMax: 200,
+    trialOffered: true,
   });
   const trialCards = new InMemoryTrialCardRepository();
   const useCase = new HandleBillingEventUseCase(

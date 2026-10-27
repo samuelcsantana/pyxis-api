@@ -49,6 +49,7 @@ const OPEN: SignUpSettings = {
   dashboardOrigin: 'https://app.example.com',
   freePlanOpen: false,
   freeAccountsMax: 200,
+  trialOffered: true,
 };
 
 describe('SignUpController', () => {

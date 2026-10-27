@@ -9,6 +9,7 @@ export type SignUpEnv = Pick<
   | 'DASHBOARD_ORIGIN'
   | 'FREE_PLAN_OPEN'
   | 'FREE_ACCOUNTS_MAX'
+  | 'TRIAL_OFFERED'
 >;
 
 export function signUpSettingsFromEnv(env: SignUpEnv): SignUpSettings {
@@ -21,5 +22,6 @@ export function signUpSettingsFromEnv(env: SignUpEnv): SignUpSettings {
     dashboardOrigin: env.DASHBOARD_ORIGIN ?? null,
     freePlanOpen: env.FREE_PLAN_OPEN === 'true',
     freeAccountsMax: env.FREE_ACCOUNTS_MAX,
+    trialOffered: env.TRIAL_OFFERED === 'true',
   };
 }
