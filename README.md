@@ -243,6 +243,14 @@ Shipping now:
   welcomed at sign-up with its limits and the terms accepted. `GET /v1/auth/sign-up` answers
   `free_plan` (`open`, `full`, `closed`) and the verify answer the `account_status`
   ([ADR 0049](docs/adr/0049-sign-up-without-a-card.md))
+- Subscribing from the free plan, never with a trial (the trial of an unfinished sign-up follows
+  `TRIAL_OFFERED`): when it pays, the webhook lifts the month's pause at once, resets the month's
+  notices and confirms the subscription by e-mail (the daily job sends any still due); a
+  subscription that never ran or was cancelled leaves a free account free.
+  `POST /v1/accounts/{accountId}/withdraw` withdraws within 7 days of the first payment: it cancels
+  at once, refunds that payment and puts the account back on the free plan with its data, with an
+  e-mail; `409 withdrawal_window_closed` after the 7 days
+  ([ADR 0050](docs/adr/0050-subscribing-from-the-free-plan-and-withdrawing-back-to-it.md))
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
@@ -852,6 +860,7 @@ What differs from the hosted service:
 | [0047](docs/adr/0047-a-filter-selects-visits.md)                                      | A filter selects visits, and every report counts their events              |
 | [0048](docs/adr/0048-a-free-plan-is-a-status-with-its-own-limits.md)                  | A free plan is a status with its own limits                                |
 | [0049](docs/adr/0049-sign-up-without-a-card.md)                                       | Sign-up without a card                                                     |
+| [0050](docs/adr/0050-subscribing-from-the-free-plan-and-withdrawing-back-to-it.md)    | Subscribing from the free plan, and withdrawing back to it                 |
 
 ## Roadmap
 
@@ -896,7 +905,8 @@ What differs from the hosted service:
 - [x] Demo traffic: invented visits added every day to a project of the operator
 - [x] The free plan's status, limits and pause at 100%
 - [x] Sign-up into the free plan, behind a switch, with a waiting list at the cap
-- [ ] Subscribing from the free plan and falling back to it
+- [x] Subscribing from the free plan, and withdrawing back to it within 7 days
+- [ ] Falling back to the free plan when a paid subscription ends
 
 ## Contributing and license
 

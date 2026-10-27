@@ -332,8 +332,10 @@ Account and billing (a Checkout with no trial; coming back is not a new sign-up)
 The free plan takes no new owner until `free_plan_open = true`. Publish the terms that describe it
 first: the version a new owner accepts must say there is a free plan. To open it, set
 `free_plan_open = true` (and, if needed, `free_accounts_max`, 200 by default) in
-`terraform.tfvars`, apply, and start fresh containers so both functions read them. Check
-`GET /v1/auth/sign-up` answers `"free_plan":"open"`. To close it again, set it back to `false`:
+`terraform.tfvars`, apply, and start fresh containers so both functions read them. The same
+day, set `trial_offered = false`: the terms of the free plan have no trial, and the trial must not
+come back if the free plan closes again later. Check `GET /v1/auth/sign-up` answers
+`"free_plan":"open"`. To close it again, set it back to `false`:
 accounts already free keep working, a new owner goes through Checkout again, and the daily job
 stops opening places to waiting accounts.
 
