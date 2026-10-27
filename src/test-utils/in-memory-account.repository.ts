@@ -99,6 +99,25 @@ export class InMemoryAccountRepository
     return Promise.resolve(this.stored.filter((account) => account.status === 'free').length);
   }
 
+  openWaitingAccounts(freeAccountsMax: number): Promise<number> {
+    const places =
+      freeAccountsMax - this.stored.filter((account) => account.status === 'free').length;
+    const waiting = this.stored
+      .filter(
+        (account) =>
+          account.status === 'incomplete' &&
+          account.freeWaitlistedAt !== null &&
+          account.deletionHeldAt === null &&
+          account.suspendedAt === null,
+      )
+      .sort((first, second) => Number(first.freeWaitlistedAt) - Number(second.freeWaitlistedAt))
+      .slice(0, Math.max(places, 0));
+    for (const account of waiting) {
+      this.accounts.set(account.id, { ...account, status: 'free', freeWaitlistedAt: null });
+    }
+    return Promise.resolve(waiting.length);
+  }
+
   suspend(accountId: string, reason: string, at: Date): Promise<Account | null> {
     return Promise.resolve(this.change(accountId, { suspendedAt: at, suspensionReason: reason }));
   }

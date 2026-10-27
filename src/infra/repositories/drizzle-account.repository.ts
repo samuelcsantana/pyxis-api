@@ -1,5 +1,17 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, asc, count, countDistinct, desc, eq, ne, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  count,
+  countDistinct,
+  desc,
+  eq,
+  inArray,
+  isNotNull,
+  isNull,
+  ne,
+  sql,
+} from 'drizzle-orm';
 import type { Account } from '../../domain/entities/account.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import type {
@@ -116,6 +128,36 @@ export class DrizzleAccountRepository implements AccountRepository {
 
   freeAccountCount(): Promise<number> {
     return freeAccountCount(this.db);
+  }
+
+  openWaitingAccounts(freeAccountsMax: number): Promise<number> {
+    return this.db.transaction(async (transaction) => {
+      await transaction.execute(sql`select pg_advisory_xact_lock(${FREE_PLACES_LOCK_KEY})`);
+      const places = freeAccountsMax - (await freeAccountCount(transaction));
+      if (places <= 0) {
+        return 0;
+      }
+      const oldestWaiting = transaction
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.status, 'incomplete'),
+            isNotNull(accounts.freeWaitlistedAt),
+            isNull(accounts.stripeSubscriptionId),
+            isNull(accounts.deletionHeldAt),
+            isNull(accounts.suspendedAt),
+          ),
+        )
+        .orderBy(asc(accounts.freeWaitlistedAt), asc(accounts.id))
+        .limit(places);
+      const opened = await transaction
+        .update(accounts)
+        .set({ status: 'free', freeWaitlistedAt: null })
+        .where(inArray(accounts.id, oldestWaiting))
+        .returning({ id: accounts.id });
+      return opened.length;
+    });
   }
 
   async findById(accountId: string): Promise<Account | null> {

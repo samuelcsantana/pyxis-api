@@ -5,6 +5,8 @@ import { FakeBillingGateway } from '../../test-utils/fake-billing-gateway';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccountBillingRepository } from '../../test-utils/in-memory-account-billing.repository';
 import { InMemoryAccountLifecycleRepository } from '../../test-utils/in-memory-account-lifecycle.repository';
+import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
+import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryAccountWelcomeRepository } from '../../test-utils/in-memory-account-welcome.repository';
 import { InMemoryProjectlessPeopleRepository } from '../../test-utils/in-memory-projectless-people.repository';
 import { RecordingMailSender } from '../../test-utils/recording-mail-sender';
@@ -13,6 +15,7 @@ import {
   AccountLifecycleFailedError,
   RunAccountLifecycleUseCase,
 } from './run-account-lifecycle.usecase';
+import { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 
 const NOW = new Date('2026-12-01T03:00:00.000Z');
@@ -53,6 +56,7 @@ function setup() {
     freeAccountsMax: 200,
   });
   const projectless = new InMemoryProjectlessPeopleRepository();
+  const accounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
@@ -61,8 +65,9 @@ function setup() {
     clock,
     welcomes,
     new SweepProjectlessPeopleUseCase(projectless, clock),
+    new OpenFreePlacesUseCase(accounts, { freePlanOpen: true, freeAccountsMax: 1 }),
   );
-  return { lifecycle, billing, gateway, mail, welcomeRepository, projectless, useCase };
+  return { lifecycle, billing, gateway, mail, welcomeRepository, projectless, accounts, useCase };
 }
 
 describe('RunAccountLifecycleUseCase', () => {
@@ -83,6 +88,7 @@ describe('RunAccountLifecycleUseCase', () => {
     const { useCase, mail } = setup();
 
     await expect(useCase.execute()).resolves.toEqual({
+      freePlacesOpened: 0,
       welcomes: 0,
       reconciled: 0,
       statusChanges: 0,
@@ -436,6 +442,17 @@ describe('RunAccountLifecycleUseCase', () => {
     expect(lifecycle.hasAdmin('bia')).toBe(true);
     expect(lifecycle.account('fresh')).toBeDefined();
     expect(lifecycle.account('paying')).toBeDefined();
+  });
+
+  it('opens the free places left before welcoming, so a newly opened account is welcomed the same day', async () => {
+    const { accounts, useCase } = setup();
+    const account = await accounts.create({ ownerAdminId: 'waiting', status: 'incomplete' });
+    accounts.add({ ...account, freeWaitlistedAt: daysAgo(2) });
+
+    const report = await useCase.execute();
+
+    expect(report.freePlacesOpened).toBe(1);
+    expect(accounts.stored[0]?.status).toBe('free');
   });
 
   it('keeps a sign-up waiting for a free place for sixty days from when it started waiting', async () => {
