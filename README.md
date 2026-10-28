@@ -11,6 +11,7 @@ queries and erases a person's events on request, without cookies or personal dat
 [![CI](https://github.com/samuelcsantana/pyxis-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/samuelcsantana/pyxis-api/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/samuelcsantana/pyxis-api/graph/badge.svg)](https://codecov.io/gh/samuelcsantana/pyxis-api)
 [![CodeQL](https://github.com/samuelcsantana/pyxis-api/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/samuelcsantana/pyxis-api/actions/workflows/codeql.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/samuelcsantana/pyxis-api/badge)](https://scorecard.dev/viewer/?uri=github.com/samuelcsantana/pyxis-api)
 <br>
 [![License: MIT](https://img.shields.io/github/license/samuelcsantana/pyxis-api)](LICENSE)
 [![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)](tsconfig.json)
@@ -444,8 +445,8 @@ flowchart LR
 
 TypeScript 6 (strict) · NestJS 12 on Fastify 5 · Zod 4 · Drizzle ORM with postgres-js on
 PostgreSQL 18 · the MCP TypeScript SDK through `pyxis-mcp` · AWS Lambda behind CloudFront,
-provisioned with Terraform · Jest · Docker · GitHub Actions with CodeQL, Dependabot, Codecov and
-release-please.
+provisioned with Terraform · Jest · Docker · GitHub Actions with CodeQL, OpenSSF Scorecard,
+Dependabot, Codecov and release-please.
 
 ## Getting started
 
