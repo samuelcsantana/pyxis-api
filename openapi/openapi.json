@@ -3357,6 +3357,115 @@
         ],
         "type": "object"
       },
+      "PropertySummaryReport": {
+        "additionalProperties": false,
+        "description": "The median and the 25th and 75th percentiles of one numeric property of a named event in the range. Only events whose property is a JSON number count; overall.events says how many, and the figures are null when none does. With by, groups are the 10 values of that other property carried by the most of those events, by events then value, each with the same figures, and other_count counts the events of every other value; events without it are in overall only. Without by, groups is empty and other_count is 0.",
+        "properties": {
+          "by": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groups": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "events": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "median": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "p25": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "p75": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "events",
+                "median",
+                "p25",
+                "p75",
+                "value"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "other_count": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "overall": {
+            "additionalProperties": false,
+            "properties": {
+              "events": {
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "median": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "p25": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "p75": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "events",
+              "median",
+              "p25",
+              "p75"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "name",
+          "key",
+          "by",
+          "overall",
+          "groups",
+          "other_count"
+        ],
+        "type": "object"
+      },
       "ProtectedResourceMetadata": {
         "additionalProperties": false,
         "description": "RFC 9728 metadata of the MCP endpoint, the same at both addresses.",
@@ -8517,6 +8626,308 @@
           }
         ],
         "summary": "How the property values of one named event break down",
+        "tags": [
+          "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/features/properties/summary": {
+      "get": {
+        "operationId": "PropertyBreakdownController_summary",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The named event whose property to sum up",
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "The named event whose property to sum up",
+              "pattern": "^[a-z][a-z0-9_]{0,63}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The property whose numbers to sum up, such as seconds",
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "description": "The property whose numbers to sum up, such as seconds",
+              "pattern": "^[a-z0-9_]{1,40}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Another property of the same event to split the numbers by, such as post",
+            "in": "query",
+            "name": "by",
+            "required": false,
+            "schema": {
+              "description": "Another property of the same event to split the numbers by, such as post",
+              "pattern": "^[a-z0-9_]{1,40}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PropertySummaryReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "access_token": []
+          },
+          {
+            "connection_token": []
+          },
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The median of one numeric property of a named event, split by another",
         "tags": [
           "dashboard queries"
         ]
