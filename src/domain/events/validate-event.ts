@@ -40,6 +40,7 @@ interface Screened<T> {
 
 const NO_PROPERTIES: Screened<PropertyMap> = { value: {}, dropped: [] };
 const WWW_PREFIX = /^www\./;
+const ERROR_CODE_FIELD = 'properties.error_code';
 
 function reject(reason: EventRejectionReason): EventValidation {
   return { ok: false, reason };
@@ -72,7 +73,13 @@ function screenApiRequestProperties(
   }
   const { method, status, duration_ms, error_code } = parsed.data;
   const value = { method, route, status, duration_ms };
-  return { value: error_code === undefined ? value : { ...value, error_code }, dropped: [] };
+  if (error_code === undefined) {
+    return { value, dropped: [] };
+  }
+  const reason = looksPersonal(error_code);
+  return reason === null
+    ? { value: { ...value, error_code }, dropped: [] }
+    : { value, dropped: [{ field: ERROR_CODE_FIELD, reason }] };
 }
 
 function screenPropertiesByName(
