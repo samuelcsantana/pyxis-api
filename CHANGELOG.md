@@ -1,5 +1,56 @@
 # Changelog
 
+## [0.32.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.31.0...v0.32.0) (2026-10-28)
+
+
+### Features
+
+* **accounts:** decide when a free account is empty or idle ([a01bfa7](https://github.com/samuelcsantana/pyxis-api/commit/a01bfa7b6a523b12646e8735ed68dd3d92575490))
+* **accounts:** decide when an ended subscription falls back to free ([0921a3f](https://github.com/samuelcsantana/pyxis-api/commit/0921a3fc05df6ae29ca0bfa7fb86ad8d9c6621b4))
+* **accounts:** delete free accounts with no events after a notice ([a2d098e](https://github.com/samuelcsantana/pyxis-api/commit/a2d098e97a1810e9ca8b72558b9a90e8c753776c))
+* **accounts:** give a withdrawn account over the free plan 30 days to fit ([07a664d](https://github.com/samuelcsantana/pyxis-api/commit/07a664df834c158352f86ea8e2bc4503284c7924))
+* **accounts:** read the versions of the terms an account accepted ([ed83c50](https://github.com/samuelcsantana/pyxis-api/commit/ed83c50042b46fb0fc494f465ae4845e4147bb78))
+* **accounts:** record when an account enters the free plan ([4851361](https://github.com/samuelcsantana/pyxis-api/commit/4851361efb96844da6e375f511252203dfa2395d))
+* **accounts:** tell a quota notice which plan it is about ([9eca577](https://github.com/samuelcsantana/pyxis-api/commit/9eca577d2093ad390261fcbb55826ca0bb85be3c))
+* **accounts:** tell the owner what the account holds and when it must fit ([539e201](https://github.com/samuelcsantana/pyxis-api/commit/539e20131d3b6d0285e67d7fc389d4ecc90c8710))
+* **accounts:** tell the owner whether terms with the free plan bind the account ([a78f9ee](https://github.com/samuelcsantana/pyxis-api/commit/a78f9ee192f486742b0376f63837b2a2f92a46c0))
+* **billing:** fall back to the free plan when a subscription ends ([7c616fd](https://github.com/samuelcsantana/pyxis-api/commit/7c616fd6018b51adc8804f667fcb169459c839d6))
+* **config:** add when the free plan terms bind earlier accounts ([76dbadc](https://github.com/samuelcsantana/pyxis-api/commit/76dbadceb8e33fe8dffaa76fca473c930f1e1bdd))
+* **db:** mark the back-to-free notice and the deadline to fit ([b12136a](https://github.com/samuelcsantana/pyxis-api/commit/b12136a1f132546a85f46210c6612930703345f7))
+* **db:** mark when an account entered the free plan and its inactivity notice ([0ee9d76](https://github.com/samuelcsantana/pyxis-api/commit/0ee9d76f80307d5d2b04a5b742847bff3388c1df))
+* **http:** serve the numeric property summary to the dashboard ([488f121](https://github.com/samuelcsantana/pyxis-api/commit/488f121bcc150da8bb5d0b807fe94cebeabc7bfb))
+* **mail:** speak of the free plan in the quota e-mails ([cd49d7d](https://github.com/samuelcsantana/pyxis-api/commit/cd49d7d6c9658bc70404e39ca1bd2b11293874c6))
+* **mail:** tell the owner the account is back on the free plan ([445d7a3](https://github.com/samuelcsantana/pyxis-api/commit/445d7a35d13c97aa0a3026a7a3b07253dbe6c48d))
+* **mail:** warn the owner of a free account with no events ([26d1560](https://github.com/samuelcsantana/pyxis-api/commit/26d1560e74d7b4954b44d040bc3be1b5eff6d74b))
+* **queries:** sum up a numeric event property, split by another ([f7aa8c5](https://github.com/samuelcsantana/pyxis-api/commit/f7aa8c5ee084eda581306483fd2a58fb66fe2a39))
+
+
+### Bug Fixes
+
+* **billing:** record a trial card only while the subscription is trialing ([c32bc97](https://github.com/samuelcsantana/pyxis-api/commit/c32bc97df5cfe7ce7d291647e5d51249637cc6fc))
+* **mail:** align the free-plan e-mails with the dashboard and tell of the deletion ([5032e1e](https://github.com/samuelcsantana/pyxis-api/commit/5032e1e07f2a8b9c7804f1fe7bb204ba5a1beb15))
+* **mail:** send the owner to each project's Settings to export or remove ([91a3a03](https://github.com/samuelcsantana/pyxis-api/commit/91a3a03ffd590e0a7cf4fce25dc00d11d3cd6314))
+
+
+### Performance
+
+* **accounts:** count the free accounts at most once a minute for the sign-up status ([bbb184d](https://github.com/samuelcsantana/pyxis-api/commit/bbb184db1dd3a2f2df086f91a92f233b305f6652))
+
+
+### Refactoring
+
+* **accounts:** decide the binding of the free plan's terms from the accepted versions ([ea4422c](https://github.com/samuelcsantana/pyxis-api/commit/ea4422c082726b06ee7d368d9027ba7df3eb8232))
+* **accounts:** move the deletion of an account's data into its own class ([359404b](https://github.com/samuelcsantana/pyxis-api/commit/359404b53bec29601e624cd2efe8ba0000751501))
+
+
+### Documentation
+
+* describe the free plan's quota e-mails and the cached free account count ([42f9eb3](https://github.com/samuelcsantana/pyxis-api/commit/42f9eb35ebcd10e5db2d8a21dfe4e83a2ecef831))
+* describe the numeric property summary among the dashboard queries ([0c4dab6](https://github.com/samuelcsantana/pyxis-api/commit/0c4dab68d96ff92263c9c73aca9c610ff5aa4ddc))
+* list bound_by_free_plan_terms among the owner's account fields ([9aa04df](https://github.com/samuelcsantana/pyxis-api/commit/9aa04df5796aa25b18f6172639e1ec5892e573fa))
+* record the deletion of free accounts with no events ([62f1377](https://github.com/samuelcsantana/pyxis-api/commit/62f13770e84baeec943b6c8f557a4ec2be0b5677))
+* record the fall back to the free plan ([253b4c0](https://github.com/samuelcsantana/pyxis-api/commit/253b4c0f9dd9630ee88c7c2d4c2bf85dd0ff12f3))
+
 ## [0.31.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.30.0...v0.31.0) (2026-10-27)
 
 
