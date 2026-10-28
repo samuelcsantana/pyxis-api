@@ -207,9 +207,15 @@ describe('the remote MCP endpoint', () => {
     const listed = await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, withBearer(token));
     const tools = listed.json<{ result: { tools: { name: string }[] } }>().result.tools;
     expect(tools.map(({ name }) => name)).toEqual(
-      expect.arrayContaining(['list_projects', 'overview', 'funnel', 'visit_timeline']),
+      expect.arrayContaining([
+        'list_projects',
+        'overview',
+        'funnel',
+        'visit_timeline',
+        'property_summary',
+      ]),
     );
-    expect(tools).toHaveLength(15);
+    expect(tools).toHaveLength(16);
 
     const projects = await post(toolCall('list_projects'), withBearer(token));
     expect(projects.statusCode).toBe(200);
@@ -239,6 +245,36 @@ describe('the remote MCP endpoint', () => {
 
     expect(projects.statusCode).toBe(200);
     expect(toolText(projects.json<ToolAnswer>())).toContain(SHOP_ID);
+  });
+
+  it('sums up a numeric event property through the median tool', async () => {
+    const token = await personalToken('Median');
+
+    const summary = await post(
+      toolCall('property_summary', {
+        project_id: SHOP_ID,
+        from: '2026-10-09',
+        to: '2026-10-15',
+        event: 'article_read_100',
+        key: 'seconds',
+        by: 'post',
+        device: 'desktop',
+      }),
+      withBearer(token),
+    );
+
+    const answer = summary.json<ToolAnswer>();
+    expect(answer.result.isError).toBeUndefined();
+    expect(JSON.parse(toolText(answer))).toMatchObject({
+      report: {
+        name: 'article_read_100',
+        key: 'seconds',
+        by: 'post',
+        overall: { events: 0, median: null, p25: null, p75: null },
+        groups: [],
+        other_count: 0,
+      },
+    });
   });
 
   it('answers times in the project time zone, the same instants the API answers in UTC', async () => {
