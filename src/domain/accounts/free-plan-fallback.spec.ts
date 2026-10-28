@@ -67,26 +67,21 @@ describe('isFreePlanTermsVersion', () => {
 
 describe('boundByFreePlanTerms', () => {
   it('binds an owner who accepted terms with the free plan, whatever the date', () => {
-    expect(
-      boundByFreePlanTerms({ ...FITTING, acceptedTermsVersions: ['1.2', '1.3'] }, OPEN, NOW),
-    ).toBe(true);
+    expect(boundByFreePlanTerms(['1.2', '1.3'], OPEN, NOW)).toBe(true);
   });
 
   it('binds an earlier owner only from the instant the new terms reach earlier accounts', () => {
-    const earlier = { ...FITTING, acceptedTermsVersions: ['1.2'] };
-    const policy = { ...OPEN, freePlanTermsForEarlierAccountsFrom: EARLIER_ACCOUNTS_FROM };
+    const policy = { freePlanTermsForEarlierAccountsFrom: EARLIER_ACCOUNTS_FROM };
 
-    expect(boundByFreePlanTerms(earlier, policy, EARLIER_ACCOUNTS_FROM)).toBe(true);
+    expect(boundByFreePlanTerms(['1.2'], policy, EARLIER_ACCOUNTS_FROM)).toBe(true);
     expect(
-      boundByFreePlanTerms(earlier, policy, new Date(EARLIER_ACCOUNTS_FROM.getTime() - 1)),
+      boundByFreePlanTerms(['1.2'], policy, new Date(EARLIER_ACCOUNTS_FROM.getTime() - 1)),
     ).toBe(false);
   });
 
   it('does not bind an earlier owner while that instant is not set', () => {
-    expect(boundByFreePlanTerms({ ...FITTING, acceptedTermsVersions: ['1.2'] }, OPEN, NOW)).toBe(
-      false,
-    );
-    expect(boundByFreePlanTerms({ ...FITTING, acceptedTermsVersions: [] }, OPEN, NOW)).toBe(false);
+    expect(boundByFreePlanTerms(['1.2'], OPEN, NOW)).toBe(false);
+    expect(boundByFreePlanTerms([], OPEN, NOW)).toBe(false);
   });
 });
 
