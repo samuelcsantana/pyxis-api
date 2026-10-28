@@ -113,7 +113,11 @@ Shipping now:
   sent the conversion event at least once) are given, so a conversion rate never passes 100 %,
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
   `/features/properties?name=` (how one named event's property values break down: per key, the
-  ten most frequent values with their count and visits, and the count of the rest) and
+  ten most frequent values with their count and visits, and the count of the rest),
+  `/features/properties/summary?name=&key=&by=` (the median and the 25th and 75th percentiles
+  of one property of a named event, counting only the events where it is a JSON number, such
+  as the seconds of `article_read_100`, and with `by` the same per value of another property of
+  the event, the ten most carried values first, with the count of the rest) and
   `/requests?screen=&kind=&route=` (writes per route: failures, statuses, median and 95th
   percentile duration, the screens they came from and the latest failures with their error code,
   plus the calls of every day by status class, and with `route` that route day by day; with
