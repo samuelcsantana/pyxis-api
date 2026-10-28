@@ -14,9 +14,12 @@ export interface FreePlanFit extends PlanLimitOverrides {
   readonly ownerHasAnotherFreeAccount: boolean;
 }
 
-export interface FreePlanFallbackPolicy {
-  readonly freePlanOpen: boolean;
+export interface FreePlanTermsPolicy {
   readonly freePlanTermsForEarlierAccountsFrom: Date | null;
+}
+
+export interface FreePlanFallbackPolicy extends FreePlanTermsPolicy {
+  readonly freePlanOpen: boolean;
 }
 
 export function fitsFreePlan(fit: FreePlanFit): boolean {
@@ -38,11 +41,11 @@ export function isFreePlanTermsVersion(version: string): boolean {
 }
 
 export function boundByFreePlanTerms(
-  fit: FreePlanFit,
-  policy: FreePlanFallbackPolicy,
+  acceptedTermsVersions: readonly string[],
+  policy: FreePlanTermsPolicy,
   now: Date,
 ): boolean {
-  if (fit.acceptedTermsVersions.some(isFreePlanTermsVersion)) {
+  if (acceptedTermsVersions.some(isFreePlanTermsVersion)) {
     return true;
   }
   const earlierAccountsFrom = policy.freePlanTermsForEarlierAccountsFrom;
@@ -57,7 +60,7 @@ export function fallsBackToFree(
   return (
     policy.freePlanOpen &&
     !fit.ownerHasAnotherFreeAccount &&
-    boundByFreePlanTerms(fit, policy, now) &&
+    boundByFreePlanTerms(fit.acceptedTermsVersions, policy, now) &&
     fitsFreePlan(fit)
   );
 }
