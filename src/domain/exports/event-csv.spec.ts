@@ -1,3 +1,4 @@
+import { readCsvRecord } from '../../test-utils/csv-reader';
 import { csvField, EVENT_CSV_HEADER, eventCsvLine } from './event-csv';
 import type { ExportedEvent } from './exported-event';
 
@@ -23,28 +24,6 @@ const EVENT: ExportedEvent = {
   properties: { plan: 'yearly', seats: 3 },
 };
 
-function parseCsvLine(line: string): string[] {
-  const fields: string[] = [];
-  let field = '';
-  let quoted = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line.charAt(index);
-    if (quoted && char === '"' && line.charAt(index + 1) === '"') {
-      field += '"';
-      index += 1;
-    } else if (char === '"') {
-      quoted = !quoted;
-    } else if (char === ',' && !quoted) {
-      fields.push(field);
-      field = '';
-    } else {
-      field += char;
-    }
-  }
-  fields.push(field);
-  return fields;
-}
-
 describe('the events CSV', () => {
   it('names one column per field, ending the line as RFC 4180 says', () => {
     expect(EVENT_CSV_HEADER).toBe(
@@ -65,9 +44,9 @@ describe('the events CSV', () => {
 
   it('round-trips a value with a quote, a comma and a line break', () => {
     const value = 'say "hi",\nthen leave';
-    const line = eventCsvLine({ ...EVENT, utmCampaign: value }).replace(/\r\n$/, '');
+    const line = eventCsvLine({ ...EVENT, utmCampaign: value });
 
-    expect(parseCsvLine(line)[9]).toBe(value);
+    expect(readCsvRecord(line)[9]).toBe(value);
   });
 
   it('keeps a spreadsheet from running a value as a formula', () => {
