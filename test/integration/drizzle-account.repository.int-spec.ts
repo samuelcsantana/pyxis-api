@@ -353,6 +353,22 @@ describe('accounts against a real Postgres', () => {
     expect(await owner`SELECT 1 FROM terms_acceptances`).toHaveLength(0);
   });
 
+  it('reads the versions of the terms an account accepted, once each, and none for another', async () => {
+    const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
+    const other = await accounts.create({ ownerAdminId: GUEST_ID, status: 'active' });
+    for (const version of ['1.3', '1.2', '1.3']) {
+      await terms.record({
+        adminUserId: OWNER_ID,
+        accountId: account.id,
+        version,
+        acceptedAt: new Date('2026-11-02T13:00:00.000Z'),
+      });
+    }
+
+    expect(await terms.versionsAcceptedFor(account.id)).toEqual(['1.2', '1.3']);
+    expect(await terms.versionsAcceptedFor(other.id)).toEqual([]);
+  });
+
   it('keeps an account while it has projects, and its owner while it exists', async () => {
     const account = await accounts.create({ ownerAdminId: OWNER_ID, status: 'comped' });
     await owner`INSERT INTO projects (id, name, account_id) VALUES (${SHOP_ID}, 'Shop', ${account.id})`;
