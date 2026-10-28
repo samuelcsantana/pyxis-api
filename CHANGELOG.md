@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.33.0...v0.34.0) (2026-10-28)
+
+
+### Features
+
+* **infra:** give the HTTP function the support address ([b2a9498](https://github.com/samuelcsantana/pyxis-api/commit/b2a94989a67d49704805ff554c1a51a3e9786a6c))
+* **mail:** name the support address in the footer of every e-mail ([04c46b6](https://github.com/samuelcsantana/pyxis-api/commit/04c46b6296ab958024a80f9c793499fd4ae9d4c5))
+
 ## [0.33.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.32.0...v0.33.0) (2026-10-28)
 
 
