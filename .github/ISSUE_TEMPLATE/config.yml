@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question
+    url: https://github.com/samuelcsantana/pyxis-sdk/issues/new?template=question.yml
+    about: Installation and usage questions go to the pyxis-sdk repository, in public.
   - name: Report a security vulnerability
     url: https://github.com/samuelcsantana/pyxis-api/security/advisories/new
     about: Report vulnerabilities privately, never in a public issue.
