@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.34.0...v0.34.1) (2026-10-28)
+
+
+### Documentation
+
+* **readme:** add the OpenSSF Scorecard badge ([9951982](https://github.com/samuelcsantana/pyxis-api/commit/99519820f8fc128b1e212c190c67177d02b99a55))
+* **readme:** bring the README up to the free plan ([346ddd8](https://github.com/samuelcsantana/pyxis-api/commit/346ddd8f3c0ab0757a0e402e0da01331a03e2c99))
+
 ## [0.34.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.33.0...v0.34.0) (2026-10-28)
 
 
