@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.33.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.32.0...v0.33.0) (2026-10-28)
+
+
+### Features
+
+* **mcp:** serve the property summary tool of pyxis-mcp 0.5.0 ([cd07661](https://github.com/samuelcsantana/pyxis-api/commit/cd076614ad8580f4e6d392b10557ffb13abedbb1))
+
+
+### Documentation
+
+* **readme:** count sixteen tools on the MCP server ([084329a](https://github.com/samuelcsantana/pyxis-api/commit/084329a46821e9df16615ad941c5a5af0e9eccd9))
+
 ## [0.32.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.31.0...v0.32.0) (2026-10-28)
 
 
