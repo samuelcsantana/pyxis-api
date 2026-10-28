@@ -449,8 +449,8 @@ flowchart LR
 
 TypeScript 6 (strict) · NestJS 12 on Fastify 5 · Zod 4 · Drizzle ORM with postgres-js on
 PostgreSQL 18 · the MCP TypeScript SDK through `pyxis-mcp` · AWS Lambda behind CloudFront,
-provisioned with Terraform · Jest · Docker · GitHub Actions with CodeQL, OpenSSF Scorecard,
-Dependabot, Codecov and release-please.
+provisioned with Terraform · Jest and fast-check · Docker · GitHub Actions with CodeQL,
+OpenSSF Scorecard, Dependabot, Codecov and release-please.
 
 ## Getting started
 
@@ -623,6 +623,23 @@ production; queries return lists as `jsonb`. Files outside the measurement, and 
 | `src/migrate.ts`            | Command-line entry point; the compose stack and CI's image job run it                           |
 | `src/**/*.module.ts`        | Nest module declarations: wiring without logic                                                  |
 | `eslint-rules/`, `scripts/` | Tooling outside `src/`, tested on Node's test runner instead                                    |
+
+### Property-based tests
+
+The rules that must hold for anything a stranger can send are also checked with
+[fast-check](https://fast-check.dev), over generated inputs instead of chosen examples. The
+`*.property.spec.ts` files run with the unit suite (`npm test`), so CI and the pre-commit hook run
+them too. They share one fixed seed and run count (`src/test-utils/property-testing.ts`): every run
+sees the same inputs, and a failure prints the seed and the shrunk counterexample.
+
+| Module                  | Properties                                                                                                                                                                                                                                                  |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `validateIncomingEvent` | Never throws, for any value; no kept property, campaign or user id value looks personal; nothing outside the domain shape is kept; every sent property and campaign value is kept or reported dropped; the path and route are stored as their own templates |
+| `looksPersonal`         | Any text with an email address in it is flagged; ten or more digits written with phone or document separators are flagged and fewer are kept; UUIDs are kept; a number is flagged by the digits of its integer part                                         |
+| `templatePath`          | No identifier-shaped segment survives; templating twice changes nothing; a path without identifiers comes back as it was                                                                                                                                    |
+| Events CSV              | Any value reads back through a strict RFC 4180 reader, guarded when it starts with a formula character; no field starts a formula; every event is one record with one field per column                                                                      |
+| `correctOccurredAt`     | The corrected time is never after reception nor older than the maximum age                                                                                                                                                                                  |
+| Date ranges             | `previousRange` has the same length and ends the day before; `checkedRange` accepts exactly the ranges in order, at most 400 days, ending today at the latest, and fails only with its own error                                                            |
 
 ### Load test
 
