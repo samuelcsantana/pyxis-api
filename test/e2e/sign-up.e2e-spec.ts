@@ -262,6 +262,7 @@ describe('sign-up while it is open', () => {
           events_this_month: null,
           project_count: 0,
           people_count: 0,
+          bound_by_free_plan_terms: false,
           free_plan_fit_due_at: null,
           limits: {
             events_per_month: 100_000,

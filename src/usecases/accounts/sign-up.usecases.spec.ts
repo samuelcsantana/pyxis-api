@@ -95,7 +95,7 @@ function setup(settings: SignUpSettings = OPEN) {
     ),
     startCheckout: new StartCheckoutUseCase(accounts, gateway, settings),
     openPortal: new OpenBillingPortalUseCase(accounts, gateway, settings),
-    listAccounts: new ListMyAccountsUseCase(accounts, usage, clock),
+    listAccounts: new ListMyAccountsUseCase(accounts, usage, terms, settings, clock),
   };
 }
 
@@ -802,6 +802,7 @@ describe('ListMyAccountsUseCase', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: { projects: 0, people: 1 },
+        boundByFreePlanTerms: false,
       },
       {
         account: joined,
@@ -811,8 +812,42 @@ describe('ListMyAccountsUseCase', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       },
     ]);
+  });
+
+  async function termsBindingWith(settings: SignUpSettings, acceptedVersions: readonly string[]) {
+    const context = setup(settings);
+    const owner = await context.admins.findOrCreateByEmail(EMAIL);
+    const owned = accountOf({ ownerAdminId: owner.id, status: 'active' });
+    context.accounts.add(owned);
+    for (const version of acceptedVersions) {
+      await context.terms.record({
+        adminUserId: owner.id,
+        accountId: owned.id,
+        version,
+        acceptedAt: NOW,
+      });
+    }
+    const [listed] = await context.listAccounts.execute(owner.id);
+    return listed?.boundByFreePlanTerms;
+  }
+
+  it('tells the owner that terms with the free plan bind an account whose owner accepted them', async () => {
+    expect(await termsBindingWith(OPEN, ['1.2', '1.3'])).toBe(true);
+  });
+
+  it('tells the owner that the earlier terms still bind the account until the day set for it', async () => {
+    const tomorrow = new Date(NOW.getTime() + 24 * 60 * 60 * 1000);
+
+    expect(await termsBindingWith(OPEN, ['1.2'])).toBe(false);
+    expect(
+      await termsBindingWith({ ...OPEN, freePlanTermsForEarlierAccountsFrom: tomorrow }, ['1.2']),
+    ).toBe(false);
+    expect(
+      await termsBindingWith({ ...OPEN, freePlanTermsForEarlierAccountsFrom: NOW }, ['1.2']),
+    ).toBe(true);
   });
 
   it('gives an account on the free plan its own limits and pauses it at 100%', async () => {

@@ -1952,6 +1952,13 @@
                     }
                   ]
                 },
+                "bound_by_free_plan_terms": {
+                  "description": "Whether terms with the free plan bind the account now: its owner accepted them, or the day they reach earlier accounts has passed. Only then does a subscription that ends fall back to the free plan, when the plan is open and the account fits it; otherwise it ends as the earlier terms say. Null for members.",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
                 "current_period_ends_at": {
                   "anyOf": [
                     {
@@ -2191,6 +2198,7 @@
                 "free_plan_fit_due_at",
                 "project_count",
                 "people_count",
+                "bound_by_free_plan_terms",
                 "month",
                 "events_this_month",
                 "measured_at",

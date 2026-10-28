@@ -133,6 +133,15 @@ export const myAccountsSchema = z
             'How many people, the owner included, read a project of the account now; null for ' +
               'members.',
           ),
+        bound_by_free_plan_terms: z
+          .boolean()
+          .nullable()
+          .describe(
+            'Whether terms with the free plan bind the account now: its owner accepted them, or ' +
+              'the day they reach earlier accounts has passed. Only then does a subscription that ' +
+              'ends fall back to the free plan, when the plan is open and the account fits it; ' +
+              'otherwise it ends as the earlier terms say. Null for members.',
+          ),
         month: z.string().describe('The calendar month in UTC the usage is counted in, YYYY-MM.'),
         events_this_month: z
           .number()
