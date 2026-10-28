@@ -6,6 +6,7 @@ import { ENGAGEMENT_QUERY } from '../../../domain/queries/engagement';
 import { FEATURES_QUERY } from '../../../domain/queries/features';
 import { FUNNEL_QUERY } from '../../../domain/queries/funnel';
 import { PROPERTY_BREAKDOWN_QUERY } from '../../../domain/queries/property-breakdown';
+import { PROPERTY_SUMMARY_QUERY } from '../../../domain/queries/property-summary';
 import { REQUESTS_QUERY } from '../../../domain/queries/requests';
 import { TIMELINE_QUERY } from '../../../domain/queries/timeline';
 import { TIME_OF_DAY_QUERY } from '../../../domain/queries/time-of-day';
@@ -26,6 +27,7 @@ import { GetFunnelSubjectsUseCase } from '../../../usecases/queries/get-funnel-s
 import { GetFunnelSegmentsUseCase } from '../../../usecases/queries/get-funnel-segments.usecase';
 import { GetFunnelUseCase } from '../../../usecases/queries/get-funnel.usecase';
 import { GetPropertyBreakdownUseCase } from '../../../usecases/queries/get-property-breakdown.usecase';
+import { GetPropertySummaryUseCase } from '../../../usecases/queries/get-property-summary.usecase';
 import { GetRequestsUseCase } from '../../../usecases/queries/get-requests.usecase';
 import { GetTimelineUseCase } from '../../../usecases/queries/get-timeline.usecase';
 import { GetTimeOfDayUseCase } from '../../../usecases/queries/get-time-of-day.usecase';
@@ -40,6 +42,7 @@ import { DrizzleEngagementQuery } from '../../queries/drizzle-engagement.query';
 import { DrizzleFeaturesQuery } from '../../queries/drizzle-features.query';
 import { DrizzleFunnelQuery } from '../../queries/drizzle-funnel.query';
 import { DrizzlePropertyBreakdownQuery } from '../../queries/drizzle-property-breakdown.query';
+import { DrizzlePropertySummaryQuery } from '../../queries/drizzle-property-summary.query';
 import { DrizzleRequestsQuery } from '../../queries/drizzle-requests.query';
 import { DrizzleTimelineQuery } from '../../queries/drizzle-timeline.query';
 import { DrizzleTimeOfDayQuery } from '../../queries/drizzle-time-of-day.query';
@@ -94,7 +97,9 @@ import { VisitsController } from './visits.controller';
     GetFeaturesUseCase,
     { provide: FEATURES_QUERY, useClass: DrizzleFeaturesQuery },
     GetPropertyBreakdownUseCase,
+    GetPropertySummaryUseCase,
     { provide: PROPERTY_BREAKDOWN_QUERY, useClass: DrizzlePropertyBreakdownQuery },
+    { provide: PROPERTY_SUMMARY_QUERY, useClass: DrizzlePropertySummaryQuery },
     GetRequestsUseCase,
     { provide: REQUESTS_QUERY, useClass: DrizzleRequestsQuery },
     GetFunnelUseCase,
