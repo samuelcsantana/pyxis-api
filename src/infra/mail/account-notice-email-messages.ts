@@ -22,7 +22,6 @@ export interface AccountNoticeCopy {
 export interface AccountNoticeEmailMessages {
   readonly language: EmailLanguage;
   readonly notices: Readonly<Record<AccountNoticeKind, AccountNoticeCopy>>;
-  readonly support: (address: string) => string;
   readonly about: string;
   readonly reason: string;
   readonly dashboard: string;
@@ -116,7 +115,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) => `To ask anything, reply to this email or write to ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES.en.about,
     reason: 'You received this email because you own a Pyxis account.',
     dashboard: 'Dashboard',
@@ -206,8 +204,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) =>
-      `Para perguntar qualquer coisa, responda a este e-mail ou escreva para ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES['pt-BR'].about,
     reason: 'Você recebeu este e-mail porque é o responsável por uma conta do Pyxis.',
     dashboard: 'Painel',
@@ -299,8 +295,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) =>
-      `Para preguntar lo que sea, responde a este correo o escribe a ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES.es.about,
     reason: 'Recibiste este correo porque eres el titular de una cuenta de Pyxis.',
     dashboard: 'Panel',
@@ -394,8 +388,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) =>
-      `Wenn du Fragen hast, antworte auf diese E-Mail oder schreib an ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
     reason: 'Du hast diese E-Mail bekommen, weil du Inhaber eines Pyxis-Kontos bist.',
     dashboard: 'Dashboard',
@@ -490,7 +482,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) => `Pour toute question, répondez à cet e-mail ou écrivez à ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
     reason: 'Vous recevez cet e-mail parce que vous êtes propriétaire d’un compte Pyxis.',
     dashboard: 'Tableau de bord',
@@ -583,7 +574,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) => `Per qualsiasi domanda, rispondi a questa email o scrivi a ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
     reason: 'Hai ricevuto questa email perché possiedi un account Pyxis.',
     dashboard: 'Dashboard',
@@ -677,7 +667,6 @@ export const ACCOUNT_NOTICE_EMAIL_MESSAGES: Readonly<
         ],
       },
     },
-    support: (address) => `Heb je een vraag? Beantwoord deze e-mail of mail naar ${address}.`,
     about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
     reason: 'Je ontvangt deze e-mail omdat je eigenaar bent van een Pyxis-account.',
     dashboard: 'Dashboard',

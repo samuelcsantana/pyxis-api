@@ -20,6 +20,7 @@ import {
   NO_DEADLINE,
   NO_REFUND,
 } from './account-notice-email-messages';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 
 const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   en: 'en-US',
@@ -91,21 +92,14 @@ function wordsOf(notice: AccountNotice, language: EmailLanguage): AccountNoticeW
   }
 }
 
-function textOf(
-  notice: AccountNotice,
-  messages: AccountNoticeEmailMessages,
-  supportEmail: string | null,
-): NoticeText {
+function textOf(notice: AccountNotice, messages: AccountNoticeEmailMessages): NoticeText {
   const copy = messages.notices[notice.kind];
   const words = wordsOf(notice, messages.language);
   return {
     subject: copy.subject(words),
     preheader: copy.preheader(words),
     heading: copy.heading(words),
-    paragraphs: [
-      ...copy.paragraphs(words),
-      ...(supportEmail === null ? [] : [messages.support(supportEmail)]),
-    ],
+    paragraphs: copy.paragraphs(words),
   };
 }
 
@@ -113,6 +107,7 @@ function buildHtml(
   text: NoticeText,
   messages: AccountNoticeEmailMessages,
   links: EmailLinks,
+  support: string | null,
 ): string {
   return emailDocument({
     language: messages.language,
@@ -126,6 +121,7 @@ function buildHtml(
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
+      ...supportFootnote(support, FOOTNOTE),
       paragraph(FOOTNOTE, escapeHtml(messages.about)),
       paragraph(FOOTNOTE, escapeHtml(messages.reason)),
       paragraph(
@@ -143,11 +139,13 @@ function buildText(
   text: NoticeText,
   messages: AccountNoticeEmailMessages,
   links: EmailLinks,
+  support: string | null,
 ): string {
   return [
     ...wrapped(text.heading),
     ...text.paragraphs.flatMap((line) => ['', ...wrapped(line)]),
     '',
+    ...supportTextLines(support),
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,
@@ -161,10 +159,11 @@ export function buildAccountNoticeEmail(
   supportEmail: string | null,
 ): EmailContent {
   const messages = ACCOUNT_NOTICE_EMAIL_MESSAGES[language];
-  const text = textOf(notice, messages, supportEmail);
+  const text = textOf(notice, messages);
+  const support = supportSentence(language, supportEmail);
   return {
     subject: text.subject,
-    html: buildHtml(text, messages, links),
-    text: buildText(text, messages, links),
+    html: buildHtml(text, messages, links, support),
+    text: buildText(text, messages, links, support),
   };
 }

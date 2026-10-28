@@ -15,6 +15,7 @@ import {
 } from './email-layout';
 import { escapeHtml } from './escape-html';
 import { SUBSCRIPTION_CONFIRMED_EMAIL_MESSAGES } from './subscription-confirmed-email-messages';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 import { WELCOME_EMAIL_MESSAGES } from './welcome-email-messages';
 
 const BODY: TextBlock = { tone: 'ink', size: 'body', margin: '16px 0 0 0' };
@@ -40,7 +41,12 @@ function textOf(confirmation: SubscriptionConfirmation, language: EmailLanguage)
   };
 }
 
-function buildHtml(text: ConfirmationText, language: EmailLanguage, links: EmailLinks): string {
+function buildHtml(
+  text: ConfirmationText,
+  language: EmailLanguage,
+  links: EmailLinks,
+  support: string | null,
+): string {
   const messages = SUBSCRIPTION_CONFIRMED_EMAIL_MESSAGES[language];
   const welcome = WELCOME_EMAIL_MESSAGES[language];
   return emailDocument({
@@ -59,6 +65,7 @@ function buildHtml(text: ConfirmationText, language: EmailLanguage, links: Email
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
+      ...supportFootnote(support, FOOTNOTE),
       paragraph(FOOTNOTE, escapeHtml(welcome.about)),
       paragraph(FOOTNOTE, escapeHtml(welcome.reason)),
       paragraph(
@@ -72,7 +79,12 @@ function buildHtml(text: ConfirmationText, language: EmailLanguage, links: Email
   });
 }
 
-function buildText(text: ConfirmationText, language: EmailLanguage, links: EmailLinks): string {
+function buildText(
+  text: ConfirmationText,
+  language: EmailLanguage,
+  links: EmailLinks,
+  support: string | null,
+): string {
   const messages = SUBSCRIPTION_CONFIRMED_EMAIL_MESSAGES[language];
   const welcome = WELCOME_EMAIL_MESSAGES[language];
   return [
@@ -82,6 +94,7 @@ function buildText(text: ConfirmationText, language: EmailLanguage, links: Email
     `${welcome.openDashboard}: ${links.dashboardUrl}`,
     ...(text.terms === null ? [] : ['', ...wrapped(text.terms)]),
     '',
+    ...supportTextLines(support),
     ...wrapped(welcome.about),
     ...wrapped(welcome.reason),
     `${welcome.dashboard}: ${links.dashboardUrl}`,
@@ -92,11 +105,13 @@ export function buildSubscriptionConfirmedEmail(
   confirmation: SubscriptionConfirmation,
   language: EmailLanguage,
   links: EmailLinks,
+  supportEmail: string | null,
 ): EmailContent {
   const text = textOf(confirmation, language);
+  const support = supportSentence(language, supportEmail);
   return {
     subject: SUBSCRIPTION_CONFIRMED_EMAIL_MESSAGES[language].subject,
-    html: buildHtml(text, language, links),
-    text: buildText(text, language, links),
+    html: buildHtml(text, language, links, support),
+    text: buildText(text, language, links, support),
   };
 }

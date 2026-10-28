@@ -34,15 +34,27 @@ export class ResendMailSender implements MailSender {
   ) {}
 
   sendSignInCode(email: string, code: string, language: EmailLanguage): Promise<void> {
-    return this.deliver(email, buildSignInCodeEmail(code, language, this.links));
+    return this.deliver(
+      email,
+      buildSignInCodeEmail(code, language, this.links, this.supportEmail),
+      this.supportEmail,
+    );
   }
 
   sendSignUpCode(email: string, code: string, language: EmailLanguage): Promise<void> {
-    return this.deliver(email, buildSignUpCodeEmail(code, language, this.links));
+    return this.deliver(
+      email,
+      buildSignUpCodeEmail(code, language, this.links, this.supportEmail),
+      this.supportEmail,
+    );
   }
 
   sendWeeklyDigest(email: string, digest: WeeklyDigest, language: EmailLanguage): Promise<void> {
-    return this.deliver(email, buildWeeklyDigestEmail(digest, language, this.links));
+    return this.deliver(
+      email,
+      buildWeeklyDigestEmail(digest, language, this.links, this.supportEmail),
+      this.supportEmail,
+    );
   }
 
   sendQuotaNotice(email: string, notice: QuotaNotice, language: EmailLanguage): Promise<void> {
@@ -56,7 +68,7 @@ export class ResendMailSender implements MailSender {
   sendInvitation(email: string, invitation: Invitation, language: EmailLanguage): Promise<void> {
     return this.deliver(
       email,
-      buildInvitationEmail(invitation, language, this.links),
+      buildInvitationEmail(invitation, language, this.links, this.supportEmail),
       invitation.inviterEmail,
     );
   }
@@ -70,7 +82,11 @@ export class ResendMailSender implements MailSender {
   }
 
   sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
-    return this.deliver(email, buildWelcomeEmail(welcome, language, this.links), this.supportEmail);
+    return this.deliver(
+      email,
+      buildWelcomeEmail(welcome, language, this.links, this.supportEmail),
+      this.supportEmail,
+    );
   }
 
   sendSubscriptionConfirmed(
@@ -80,7 +96,7 @@ export class ResendMailSender implements MailSender {
   ): Promise<void> {
     return this.deliver(
       email,
-      buildSubscriptionConfirmedEmail(confirmation, language, this.links),
+      buildSubscriptionConfirmedEmail(confirmation, language, this.links, this.supportEmail),
       this.supportEmail,
     );
   }
@@ -88,7 +104,7 @@ export class ResendMailSender implements MailSender {
   sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void> {
     return this.deliver(
       email,
-      buildExportReadyEmail(ready, language, this.links),
+      buildExportReadyEmail(ready, language, this.links, this.supportEmail),
       this.supportEmail,
     );
   }
@@ -104,7 +120,7 @@ export class ResendMailSender implements MailSender {
   private async deliver(
     email: string,
     content: EmailContent,
-    replyTo: string | null = null,
+    replyTo: string | null,
   ): Promise<void> {
     const response = await this.send(RESEND_EMAILS_URL, {
       method: 'POST',

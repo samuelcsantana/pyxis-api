@@ -14,6 +14,7 @@ import {
   wrapped,
 } from './email-layout';
 import { escapeHtml } from './escape-html';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 
 const BODY: TextBlock = { tone: 'ink', size: 'body', margin: '16px 0 0 0' };
 const FOOTNOTE: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
@@ -25,10 +26,7 @@ export function buildOperatorNoticeEmail(
   supportEmail: string | null,
 ): EmailContent {
   const messages = ACCOUNT_NOTICE_EMAIL_MESSAGES[language];
-  const paragraphs = [
-    ...notice.paragraphs,
-    ...(supportEmail === null ? [] : [messages.support(supportEmail)]),
-  ];
+  const support = supportSentence(language, supportEmail);
   const html = emailDocument({
     language,
     title: notice.subject,
@@ -37,10 +35,11 @@ export function buildOperatorNoticeEmail(
       ...brandHeader(messages.logoAlt, links),
       ...cardRow([
         heading(notice.subject),
-        ...paragraphs.map((line) => paragraph(BODY, escapeHtml(line))),
+        ...notice.paragraphs.map((line) => paragraph(BODY, escapeHtml(line))),
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
+      ...supportFootnote(support, FOOTNOTE),
       paragraph(FOOTNOTE, escapeHtml(messages.about)),
       paragraph(FOOTNOTE, escapeHtml(messages.reason)),
       paragraph(
@@ -54,8 +53,9 @@ export function buildOperatorNoticeEmail(
   });
   const text = [
     ...wrapped(notice.subject),
-    ...paragraphs.flatMap((line) => ['', ...wrapped(line)]),
+    ...notice.paragraphs.flatMap((line) => ['', ...wrapped(line)]),
     '',
+    ...supportTextLines(support),
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,

@@ -21,6 +21,7 @@ import {
   type QuotaPauseWords,
   type QuotaWarningWords,
 } from './quota-notice-email-messages';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 
 const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   en: 'en-US',
@@ -64,8 +65,7 @@ function copyOf(
 ): QuotaNoticeCopy {
   const format = formatters(messages.language);
   const free = notice.plan === 'free';
-  const supportOf = free ? messages.free.support : messages.support;
-  const support = supportEmail === null ? [] : [supportOf(supportEmail)];
+  const support = free || supportEmail === null ? [] : [messages.support(supportEmail)];
   const accountLink = free ? messages.free.accountLink : null;
   const shared = {
     events: format.count(notice.events),
@@ -133,6 +133,7 @@ function buildHtml(
   copy: QuotaNoticeCopy,
   messages: QuotaNoticeEmailMessages,
   links: EmailLinks,
+  footerSupport: string | null,
 ): string {
   const body: TextBlock = { tone: 'ink', size: 'body', margin: '16px 0 0 0' };
   const footnote: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
@@ -157,6 +158,7 @@ function buildHtml(
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
+      ...supportFootnote(footerSupport, footnote),
       paragraph(footnote, escapeHtml(messages.about)),
       paragraph(footnote, escapeHtml(messages.reason)),
       paragraph(
@@ -174,6 +176,7 @@ function buildText(
   copy: QuotaNoticeCopy,
   messages: QuotaNoticeEmailMessages,
   links: EmailLinks,
+  footerSupport: string | null,
 ): string {
   return [
     copy.heading,
@@ -181,6 +184,7 @@ function buildText(
     ...(copy.accountLink === null ? [] : ['', `${copy.accountLink}: ${accountUrlOf(links)}`]),
     ...copy.support.flatMap((text) => ['', ...wrapped(text)]),
     '',
+    ...supportTextLines(footerSupport),
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,
@@ -195,9 +199,10 @@ export function buildQuotaNoticeEmail(
 ): EmailContent {
   const messages = QUOTA_NOTICE_EMAIL_MESSAGES[language];
   const copy = copyOf(notice, messages, supportEmail);
+  const footerSupport = supportSentence(language, supportEmail);
   return {
     subject: copy.subject,
-    html: buildHtml(copy, messages, links),
-    text: buildText(copy, messages, links),
+    html: buildHtml(copy, messages, links, footerSupport),
+    text: buildText(copy, messages, links, footerSupport),
   };
 }

@@ -14,7 +14,7 @@ const READY: ExportReady = {
 
 describe('buildExportReadyEmail', () => {
   it('names the project, the number of events and the day the file goes', () => {
-    const email = buildExportReadyEmail(READY, 'en', LINKS);
+    const email = buildExportReadyEmail(READY, 'en', LINKS, null);
 
     expect(email.subject).toBe('Your export of My Shop is ready');
     expect(email.html).toContain('12,345 events, one per line.');
@@ -23,7 +23,7 @@ describe('buildExportReadyEmail', () => {
   });
 
   it('links to the export page of the dashboard, not to the file itself', () => {
-    const email = buildExportReadyEmail(READY, 'en', LINKS);
+    const email = buildExportReadyEmail(READY, 'en', LINKS, null);
 
     expect(exportPageUrl(READY, LINKS)).toBe('https://dashboard.example.com/p-1/exports/e-1');
     expect(email.html).toContain('href="https://dashboard.example.com/p-1/exports/e-1"');
@@ -31,17 +31,17 @@ describe('buildExportReadyEmail', () => {
   });
 
   it('writes the numbers and the date in the reader’s language', () => {
-    expect(buildExportReadyEmail(READY, 'pt-BR', LINKS).html).toContain(
+    expect(buildExportReadyEmail(READY, 'pt-BR', LINKS, null).html).toContain(
       '12.345 eventos, um por linha.',
     );
-    expect(buildExportReadyEmail(READY, 'es', LINKS).subject).toBe(
+    expect(buildExportReadyEmail(READY, 'es', LINKS, null).subject).toBe(
       'La exportación de My Shop está lista',
     );
   });
 
   it('declares its language and keeps every line but the link short', () => {
     for (const language of EMAIL_LANGUAGES) {
-      const email = buildExportReadyEmail(READY, language, LINKS);
+      const email = buildExportReadyEmail(READY, language, LINKS, null);
       const prose = email.text.split('\n').filter((line) => !line.startsWith('https://'));
       expect(email.html).toContain(`<html lang="${language}" dir="ltr">`);
       expect(Math.max(...prose.map((line) => line.length))).toBeLessThanOrEqual(TEXT_LINE_WIDTH);
