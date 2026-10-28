@@ -21,6 +21,7 @@ queries and erases a person's events on request, without cookies or personal dat
 **[API reference](https://samuelcsantana.github.io/pyxis-api/)** — every route, built from
 `openapi/openapi.json` on each push to `main`.
 
+**[Pyxis](https://pyxis-analytics.dev)** · **[Live demo](https://demo.pyxis-analytics.dev)** ·
 **[Dashboard Storybook](https://samuelcsantana.github.io/pyxis-web/)** ·
 **[SDK playground](https://samuelcsantana.github.io/pyxis-sdk/)**
 
@@ -28,19 +29,20 @@ queries and erases a person's events on request, without cookies or personal dat
 
 > **Status:** in production since 2026-10-06 at `api.pyxis-analytics.dev` (AWS Lambda behind
 > CloudFront, sa-east-1): ingestion, dashboard sign-in and queries, erasure, retention and the
-> weekly digest. Since 2026-10-15 it opens sign-up for the hosted plan, billed through Stripe, and
+> weekly digest. Since 2026-10-15 it opens sign-up for the hosted plan, billed through Stripe;
 > since 2026-10-16 it is also the remote MCP server that Claude connects to, at
-> `https://api.pyxis-analytics.dev/mcp`. `main` is deployed by the deploy script on request (see
-> [Roadmap](#roadmap)).
+> `https://api.pyxis-analytics.dev/mcp`; and since 2026-10-28 a new account starts on the free
+> plan, without a card and without a trial. `main` is deployed by the deploy script on request
+> (see [Deployment](#deployment)).
 
 ## Ecosystem
 
-| Repository                                               | Role                                                             |
-| -------------------------------------------------------- | ---------------------------------------------------------------- |
-| **pyxis-api** (this one)                                 | Ingestion, dashboard sign-in and queries, erasure, retention     |
-| [pyxis-sdk](https://github.com/samuelcsantana/pyxis-sdk) | Browser tracker published to npm as `pyxis-analytics`            |
-| [pyxis-web](https://github.com/samuelcsantana/pyxis-web) | The dashboard: overview, funnels, features, requests, timelines  |
-| [pyxis-mcp](https://github.com/samuelcsantana/pyxis-mcp) | MCP server: Claude and other agents read the dashboard's numbers |
+| Repository                                               | Role                                                                                   |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **pyxis-api** (this one)                                 | Ingestion, sign-in, dashboard queries, accounts and billing, erasure, the MCP endpoint |
+| [pyxis-sdk](https://github.com/samuelcsantana/pyxis-sdk) | Browser tracker published to npm as `pyxis-analytics`                                  |
+| [pyxis-web](https://github.com/samuelcsantana/pyxis-web) | The dashboard and the home page                                                        |
+| [pyxis-mcp](https://github.com/samuelcsantana/pyxis-mcp) | MCP server: Claude and other agents read the dashboard's numbers                       |
 
 ## Why it exists
 
@@ -85,8 +87,8 @@ Shipping now:
   `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
   the admin's projects, each with when its first and its latest events happened (null before
   any), so the dashboard can tell a project still waiting for its first event from a quiet
-  period. There is no sign-up: `admin:grant` is the only way in
-  ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
+  period. A person gets in through sign-up, an account owner's invitation or the operator's
+  `admin:grant` ([ADR 0007](docs/adr/0007-email-code-sign-in-with-opaque-sessions.md))
 - A branded sign-in email with a plain-text twin: the code first in the subject and in the
   hidden inbox preview, then in a large monospace block a double-click copies whole; how long it
   lasts, that it works once, never to share it, and what to do if the sign-in was not yours.
@@ -214,9 +216,10 @@ Shipping now:
   ([ADR 0038](docs/adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md))
 
 - Accounts for the hosted plan: an account is who pays, with one owner and the projects it holds
-  (3 at most, counted under a lock so two requests cannot both take the last place). A project
-  without an account is the operator's own, as every project was before, with no plan and no
-  quota ([ADR 0016](docs/adr/0016-accounts-own-projects.md))
+  (3 at most on the paid plan and 1 on the free plan, counted under a lock so two requests cannot
+  both take the last place). A project without an account is the operator's own, as every
+  project was before, with no plan and no quota
+  ([ADR 0016](docs/adr/0016-accounts-own-projects.md))
 - A monthly quota for those accounts: the daily job counts each account's events in the current
   calendar month (UTC) and keeps the figure; an account past its plan's pause point (150% of the
   paid plan's 100,000 events, 100% of the free plan's 10,000) is paused until the month turns, and
@@ -295,25 +298,26 @@ Shipping now:
   accepted (`409 terms_outdated` if it is not the current one), records the acceptance and answers
   a session and an `incomplete` account. `GET /v1/me/accounts` lists the admin's accounts with
   their billing state and the month measured; `POST /v1/accounts/{accountId}/checkout` opens
-  Stripe Checkout (with the 14-day trial the first time, a line above the button saying it is
-  one per customer, and a field for a promotion code made in Stripe while `PROMOTION_CODES_OPEN`
-  is `true`) and `.../portal` the billing portal, for
+  Stripe Checkout (while `TRIAL_OFFERED` is `true`, with the 14-day trial the first time and a
+  line above the button saying it is one per customer; with a field for a promotion code made in
+  Stripe while `PROMOTION_CODES_OPEN` is `true`) and `.../portal` the billing portal, for
   the owner only. An ended account not yet deleted subscribes again through the same Checkout, with
   no trial, even while sign-up is closed, and leaving that Checkout goes back to `/account`
   ([ADR 0019](docs/adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
-  required): `POST /v1/accounts/{accountId}/projects` (the plan's three), `PATCH
+  required): `POST /v1/accounts/{accountId}/projects` (within the plan's projects), `PATCH
 /v1/projects/{projectId}` (name, up to five origins, time zone, conversion event),
   `POST /v1/projects/{projectId}/delete` (the name typed again), `POST
 /v1/projects/{projectId}/keys` (a secret key is shown once; five live keys of each kind) and
   `DELETE /v1/projects/{projectId}/keys/{keyId}` (only a key of that project; the last public key
-  stays). Anyone else gets 404; an account without a running subscription gets
-  `409 subscription_required`. The project settings say the admin's `role`
+  stays). Anyone else gets 404; an account without access (no running subscription, and neither
+  free nor comped) gets `409 subscription_required`. The project settings say the admin's `role`
   ([ADR 0020](docs/adr/0020-owners-manage-their-projects-from-the-dashboard.md))
 - People of a project: `GET /v1/projects/{projectId}/people` for anyone who reads it; the owner
   adds an address (`POST`, with an invitation e-mail in the language of the page) and takes
-  someone off (`DELETE .../people/{adminUserId}`). The plan's three people are counted across the
-  account's projects, the owner included, under the account lock; the owner always stays
+  someone off (`DELETE .../people/{adminUserId}`). The plan's people (3 on the paid plan, 1 on the
+  free plan) are counted across the account's projects, the owner included, under the account
+  lock; the owner always stays
   ([ADR 0021](docs/adr/0021-people-are-counted-across-the-account.md))
 - The end of a hosted account, run by the daily job: subscriptions reconciled with Stripe, keys
   revoked when access ends, the owner told and reminded by e-mail, everything deleted thirty days
@@ -420,7 +424,7 @@ flowchart LR
   Claude["Claude · Claude Code<br>(MCP client)"]
   subgraph AWS["AWS · sa-east-1"]
     CF["CloudFront"] --> Lambda["Lambda<br>NestJS + Fastify"]
-    Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · icons · weekly digest"]
+    Scheduler["EventBridge Scheduler"] --> Jobs["Lambda jobs<br>retention · quota · accounts · exports · icons · digest"]
   end
   DB[("Postgres<br>(Neon)")]
   Mail["Resend or Amazon SES"]
@@ -483,7 +487,7 @@ They connect with `MIGRATION_DATABASE_URL` (or `DATABASE_URL`) and print `key=va
 
 | Command                                                                                                                                                         | What it does                                                                                                                                                                                                    |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>] [--account <id>]`                          | Creates a project and its first public key, printed for the site to embed; with `--account`, inside that account (readable by its owner, 3 at most)                                                             |
+| `npm run -s project:create -- --name <name> --origin <origin>… [--timezone <IANA zone>] [--conversion-event <event>] [--account <id>]`                          | Creates a project and its first public key, printed for the site to embed; with `--account`, inside that account (readable by its owner, within its plan's projects)                                            |
 | `npm run -s project:update -- --project <id> [--name <name>] [--origin <origin>…] [--timezone <zone>] [--conversion-event <event> \| --clear-conversion-event]` | Replaces the settings it is given; `--origin` replaces the whole list                                                                                                                                           |
 | `npm run -s project:delete -- --project <id> --confirm-name <name>`                                                                                             | Deletes the project with its events, keys, grants, icon and digest records in one transaction, only when the name matches exactly; prints how many events and keys went                                         |
 | `npm run -s key:create -- --project <id> --kind <public\|secret>`                                                                                               | Prints the new key alone on stdout; a secret key is shown only then and stored as a hash                                                                                                                        |
@@ -562,7 +566,7 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](src/config/env.
 | `SIGNUP_OPEN`                               | `false`                                                       | `true` lets anyone create an account and subscribe, once `TERMS_VERSION` and `TERMS_URL` are set too                                                                                                                                                                                                      |
 | `TERMS_VERSION`                             | unset                                                         | The version of the published terms a new owner accepts (at most 32 characters); sign-up stays closed without it                                                                                                                                                                                           |
 | `TERMS_URL`                                 | unset                                                         | Where the published terms are (http or https); sign-up stays closed without it, and the welcome e-mail links to it                                                                                                                                                                                        |
-| `FREE_PLAN_OPEN`                            | `false`                                                       | `true` lets a new owner start on the free plan without a card, while sign-up is open; `false` keeps today's sign-up into Checkout                                                                                                                                                                         |
+| `FREE_PLAN_OPEN`                            | `false`                                                       | `true` lets a new owner start on the free plan without a card, while sign-up is open; `false` sends sign-up straight to Checkout                                                                                                                                                                          |
 | `FREE_ACCOUNTS_MAX`                         | `200`                                                         | How many accounts the free plan holds at most; past it, a new owner waits for a place                                                                                                                                                                                                                     |
 | `TRIAL_OFFERED`                             | `true`                                                        | `true` offers Checkout's 14-day trial to a customer Stripe does not know yet; `false` from the day terms without a trial take effect. A free account never gets a trial                                                                                                                                   |
 | `FREE_PLAN_TERMS_FOR_EARLIER_ACCOUNTS_FROM` | unset                                                         | The instant, with its offset (`2026-12-20T00:00:00-03:00`), from which the terms with the free plan bind the accounts created before them; until then a cancelled subscription of an account that never accepted those terms ends instead of falling back to free                                         |
@@ -679,9 +683,10 @@ Migrations live in `drizzle/`, generated by `npx drizzle-kit generate` from the 
 
 ## Contract
 
-`openapi/openapi.json` is the source of truth for the other two repositories: the SDK and the
-dashboard copy it from `main` and test against it. CI regenerates it on every pull request and
-fails when the committed file differs from the code ([ADR 0003](docs/adr/0003-openapi-from-zod.md)).
+`openapi/openapi.json` is the source of truth for the other three repositories: the SDK, the
+dashboard and the MCP server copy it from `main` and test against it. CI regenerates it on every
+pull request and fails when the committed file differs from the code
+([ADR 0003](docs/adr/0003-openapi-from-zod.md)).
 
 ## Deployment
 
