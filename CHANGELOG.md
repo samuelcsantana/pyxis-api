@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.34.2](https://github.com/samuelcsantana/pyxis-api/compare/v0.34.1...v0.34.2) (2026-10-28)
+
+
+### Bug Fixes
+
+* **events:** drop an api_request error_code that looks personal ([f50773b](https://github.com/samuelcsantana/pyxis-api/commit/f50773b1563b7a2b26615733d0b43df4e7a1bae6))
+
+
+### Documentation
+
+* **readme:** describe the property-based tests ([32bd60c](https://github.com/samuelcsantana/pyxis-api/commit/32bd60cf4a8e333079b4e018c51f7ef5538bdc95))
+
 ## [0.34.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.34.0...v0.34.1) (2026-10-28)
 
 
