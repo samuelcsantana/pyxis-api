@@ -83,7 +83,7 @@ variable "mail_provider" {
 }
 
 variable "support_email" {
-  description = "Address the account e-mails (quota notices) name and send replies to, such as hello@example.com. Leave unset to name none."
+  description = "Address every e-mail names in its footer and sends replies to, such as hello@example.com. Leave unset to name none."
   type        = string
   default     = null
 }

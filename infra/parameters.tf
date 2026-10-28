@@ -186,7 +186,15 @@ resource "aws_ssm_parameter" "jobs_support_email" {
   name        = "/${var.project}/jobs/SUPPORT_EMAIL"
   type        = "String"
   value       = var.support_email
-  description = "The address the quota notices name and send replies to."
+  description = "The address every e-mail sent by the daily jobs names and sends replies to."
+}
+
+resource "aws_ssm_parameter" "app_support_email" {
+  count       = var.support_email == null ? 0 : 1
+  name        = "/${var.project}/app/SUPPORT_EMAIL"
+  type        = "String"
+  value       = var.support_email
+  description = "The address every e-mail sent by the HTTP function names and sends replies to."
 }
 
 resource "aws_ssm_parameter" "jobs_dashboard_origin" {
