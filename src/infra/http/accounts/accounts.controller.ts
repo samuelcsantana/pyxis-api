@@ -58,6 +58,7 @@ export function myAccountBody({
   limits,
   pauseAtEvents,
   held,
+  boundByFreePlanTerms,
 }: MyAccount): MyAccountBody {
   const owner = role === 'owner';
   return {
@@ -77,6 +78,7 @@ export function myAccountBody({
     free_plan_fit_due_at: owner ? isoOrNull(account.freePlanFitDueAt) : null,
     project_count: held?.projects ?? null,
     people_count: held?.people ?? null,
+    bound_by_free_plan_terms: boundByFreePlanTerms,
     month,
     events_this_month: usage === null ? null : usage.events,
     measured_at: usage === null ? null : usage.updatedAt.toISOString(),

@@ -4,6 +4,8 @@ import {
   type PlanLimits,
   planLimitsOf,
 } from '../../domain/accounts/account-limits';
+import { boundByFreePlanTerms } from '../../domain/accounts/free-plan-fallback';
+import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../domain/accounts/sign-up-settings';
 import type { Account } from '../../domain/entities/account.entity';
 import { monthLabelOf } from '../../domain/queries/project-usage';
 import {
@@ -17,6 +19,10 @@ import {
   type AccountUsageRepository,
   type RecordedUsage,
 } from '../../domain/repositories/account-usage.repository';
+import {
+  TERMS_ACCEPTANCE_REPOSITORY,
+  type TermsAcceptanceRepository,
+} from '../../domain/repositories/terms-acceptance.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 
 export interface MyAccount {
@@ -27,6 +33,7 @@ export interface MyAccount {
   readonly limits: PlanLimits;
   readonly pauseAtEvents: number;
   readonly held: AccountHoldings | null;
+  readonly boundByFreePlanTerms: boolean | null;
 }
 
 export interface AccountHoldings {
@@ -39,11 +46,14 @@ export class ListMyAccountsUseCase {
   constructor(
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
     @Inject(ACCOUNT_USAGE_REPOSITORY) private readonly usage: AccountUsageRepository,
+    @Inject(TERMS_ACCEPTANCE_REPOSITORY) private readonly terms: TermsAcceptanceRepository,
+    @Inject(SIGN_UP_SETTINGS) private readonly settings: SignUpSettings,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
   async execute(adminUserId: string): Promise<readonly MyAccount[]> {
-    const month = monthLabelOf(this.clock.now());
+    const now = this.clock.now();
+    const month = monthLabelOf(now);
     const memberships = await this.accounts.membershipsOf(adminUserId);
     return Promise.all(
       memberships.map(async ({ account, role }) => ({
@@ -54,6 +64,7 @@ export class ListMyAccountsUseCase {
         limits: planLimitsOf(account),
         pauseAtEvents: ingestionPauseThresholdOf(account),
         held: await this.holdingsFor({ account, role }),
+        boundByFreePlanTerms: await this.termsBindingFor({ account, role }, now),
       })),
     );
   }
@@ -67,5 +78,16 @@ export class ListMyAccountsUseCase {
       this.accounts.peopleCount(account.id),
     ]);
     return { projects: projects.length, people };
+  }
+
+  private async termsBindingFor(
+    { account, role }: AccountMembership,
+    now: Date,
+  ): Promise<boolean | null> {
+    if (role !== 'owner') {
+      return null;
+    }
+    const accepted = await this.terms.versionsAcceptedFor(account.id);
+    return boundByFreePlanTerms(accepted, this.settings, now);
   }
 }

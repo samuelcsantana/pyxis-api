@@ -112,6 +112,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: { projects: 2, people: 1 },
+        boundByFreePlanTerms: true,
       }),
     ).toEqual({
       id: ACCOUNT.id,
@@ -130,6 +131,7 @@ describe('myAccountBody', () => {
       free_plan_fit_due_at: null,
       project_count: 2,
       people_count: 1,
+      bound_by_free_plan_terms: true,
       month: '2026-11',
       events_this_month: 4200,
       measured_at: MEASURED_AT.toISOString(),
@@ -147,6 +149,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       }),
     ).toEqual(
       expect.objectContaining({
@@ -160,6 +163,7 @@ describe('myAccountBody', () => {
         measured_at: null,
         project_count: null,
         people_count: null,
+        bound_by_free_plan_terms: null,
       }),
     );
   });
@@ -179,6 +183,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 10_000,
         held: null,
+        boundByFreePlanTerms: null,
       }).free_plan_fit_due_at;
 
     expect(body('owner')).toBe('2026-12-20T15:00:00.000Z');
@@ -200,6 +205,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       });
 
     expect(body('owner')).toEqual(
@@ -228,6 +234,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       }).quota_pause_exempt_until,
     ).toBe('2027-01-15T00:00:00.000Z');
   });
@@ -247,6 +254,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       }).free_waitlisted_at;
 
     expect(body('owner')).toBe('2026-11-20T09:00:00.000Z');
@@ -264,6 +272,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       });
 
     expect(body('owner').deletion_held_at).toBe('2026-11-21T10:00:00.000Z');
@@ -286,6 +295,7 @@ describe('myAccountBody', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       }),
     ).toEqual(
       expect.objectContaining({
@@ -308,6 +318,7 @@ describe('AccountsController', () => {
         limits: HOSTED_PLAN_LIMITS,
         pauseAtEvents: 150_000,
         held: null,
+        boundByFreePlanTerms: null,
       },
     ]);
 
