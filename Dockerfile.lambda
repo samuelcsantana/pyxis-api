@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/nodejs:24 AS build
+FROM public.ecr.aws/lambda/nodejs:24@sha256:be4c68f4a679e86ff3539675f27aedb3fada5bd2bbf885875c0ca7c32ac6f2bd AS build
 WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -6,12 +6,12 @@ COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 RUN npm run build
 
-FROM public.ecr.aws/lambda/nodejs:24 AS production-dependencies
+FROM public.ecr.aws/lambda/nodejs:24@sha256:be4c68f4a679e86ff3539675f27aedb3fada5bd2bbf885875c0ca7c32ac6f2bd AS production-dependencies
 WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
-FROM public.ecr.aws/lambda/nodejs:24
+FROM public.ecr.aws/lambda/nodejs:24@sha256:be4c68f4a679e86ff3539675f27aedb3fada5bd2bbf885875c0ca7c32ac6f2bd
 ENV NODE_ENV=production
 ENV NODE_OPTIONS=--experimental-require-module
 COPY --from=production-dependencies /build/node_modules ${LAMBDA_TASK_ROOT}/node_modules
