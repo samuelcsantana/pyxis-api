@@ -7,6 +7,7 @@ export interface TermsAcceptance {
 
 export interface TermsAcceptanceRepository {
   record(acceptance: TermsAcceptance): Promise<void>;
+  versionsAcceptedFor(accountId: string): Promise<readonly string[]>;
 }
 
 export const TERMS_ACCEPTANCE_REPOSITORY = Symbol('TermsAcceptanceRepository');

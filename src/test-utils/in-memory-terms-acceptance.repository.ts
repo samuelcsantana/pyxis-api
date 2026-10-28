@@ -10,4 +10,11 @@ export class InMemoryTermsAcceptanceRepository implements TermsAcceptanceReposit
     this.recorded.push(acceptance);
     return Promise.resolve();
   }
+
+  versionsAcceptedFor(accountId: string): Promise<readonly string[]> {
+    const versions = this.recorded
+      .filter((acceptance) => acceptance.accountId === accountId)
+      .map((acceptance) => acceptance.version);
+    return Promise.resolve([...new Set(versions)]);
+  }
 }
