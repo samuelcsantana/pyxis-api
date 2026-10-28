@@ -1,0 +1,3 @@
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+reason = "deepmerge is reached only through jest-config, a test dependency. The Lambda image installs with npm ci --omit=dev, so it never ships, and no fixed version exists."
