@@ -164,6 +164,21 @@ describe('validateIncomingEvent', () => {
       );
     });
 
+    it.each([
+      ['a phone number', '11987654321', 'long_number'],
+      ['a CPF written with dots', '123.456.789.09', 'long_number'],
+    ])(
+      'drops an api_request error_code that is %s and says so, keeping the request',
+      (_, errorCode, reason) => {
+        const result = accepted(
+          validateIncomingEvent(apiRequest({ ...VALID_API_REQUEST, error_code: errorCode })),
+        );
+
+        expect(result.event.properties).toEqual(VALID_API_REQUEST);
+        expect(result.dropped).toEqual([{ field: 'properties.error_code', reason }]);
+      },
+    );
+
     it('re-templates the route of an api_request on the server', () => {
       const result = accepted(
         validateIncomingEvent(apiRequest({ ...VALID_API_REQUEST, route: '/orders/1234/items/' })),

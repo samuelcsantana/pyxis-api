@@ -36,6 +36,7 @@ const ACCEPTED_EVENT_FIELDS = [
   'userId',
 ];
 const API_REQUEST_FIELDS = ['duration_ms', 'error_code', 'method', 'route', 'status'];
+const ROUTE_PROPERTY = 'route';
 const UTM_FIELDS = ['source', 'medium', 'campaign'] as const;
 const PROPERTIES_PREFIX = 'properties.';
 const UTM_PREFIX = 'utm.';
@@ -186,8 +187,9 @@ function acceptedOnly(
 }
 
 function screenedValues(event: AcceptedEvent): (string | number)[] {
-  const propertyValues: PropertyValue[] =
-    event.name === API_REQUEST ? [] : Object.values(event.properties);
+  const propertyValues: PropertyValue[] = Object.entries(event.properties)
+    .filter(([key]) => event.name !== API_REQUEST || key !== ROUTE_PROPERTY)
+    .map(([, value]) => value);
   const values = [
     ...propertyValues,
     event.attribution?.utmSource,
@@ -267,8 +269,7 @@ describe('validateIncomingEvent, for any input', () => {
           const sentCampaign = UTM_FIELDS.filter(
             (field) => sent.attribution?.utm?.[field] !== undefined,
           );
-          const sentProperties =
-            event.name === API_REQUEST ? [] : Object.keys(sent.properties ?? {});
+          const sentProperties = Object.keys(sent.properties ?? {});
 
           expect(
             sentProperties.filter(
