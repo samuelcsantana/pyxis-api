@@ -11,19 +11,19 @@ function longestLine(content: string): number {
 
 describe('buildInvitationEmail', () => {
   it('names who added the reader and to which project, in each language', () => {
-    expect(buildInvitationEmail(INVITATION, 'en', LINKS).subject).toBe(
+    expect(buildInvitationEmail(INVITATION, 'en', LINKS, null).subject).toBe(
       'ana@example.com added you to Shop on Pyxis',
     );
-    expect(buildInvitationEmail(INVITATION, 'pt-BR', LINKS).subject).toBe(
+    expect(buildInvitationEmail(INVITATION, 'pt-BR', LINKS, null).subject).toBe(
       'ana@example.com adicionou você ao projeto Shop no Pyxis',
     );
-    expect(buildInvitationEmail(INVITATION, 'es', LINKS).subject).toBe(
+    expect(buildInvitationEmail(INVITATION, 'es', LINKS, null).subject).toBe(
       'ana@example.com te agregó al proyecto Shop en Pyxis',
     );
   });
 
   it('explains how to sign in without a password, with a button to the dashboard', () => {
-    const email = buildInvitationEmail(INVITATION, 'en', LINKS);
+    const email = buildInvitationEmail(INVITATION, 'en', LINKS, null);
 
     expect(email.html).toContain('You can now see Shop');
     expect(email.html).toContain('only the owner of the account changes its settings.');
@@ -35,7 +35,7 @@ describe('buildInvitationEmail', () => {
   });
 
   it('declares its language', () => {
-    expect(buildInvitationEmail(INVITATION, 'pt-BR', LINKS).html).toContain(
+    expect(buildInvitationEmail(INVITATION, 'pt-BR', LINKS, null).html).toContain(
       '<html lang="pt-BR" dir="ltr">',
     );
   });
@@ -45,6 +45,7 @@ describe('buildInvitationEmail', () => {
       { projectName: '<b>Shop</b>\n & Co', inviterEmail: 'ana@example.com' },
       'en',
       LINKS,
+      null,
     );
 
     expect(email.subject).toBe('ana@example.com added you to <b>Shop</b> & Co on Pyxis');
@@ -55,7 +56,7 @@ describe('buildInvitationEmail', () => {
   it('keeps every plain-text line short enough for mail servers and plain-text readers', () => {
     for (const language of EMAIL_LANGUAGES) {
       expect(
-        longestLine(buildInvitationEmail(INVITATION, language, LINKS).text),
+        longestLine(buildInvitationEmail(INVITATION, language, LINKS, null).text),
       ).toBeLessThanOrEqual(TEXT_LINE_WIDTH);
     }
   });

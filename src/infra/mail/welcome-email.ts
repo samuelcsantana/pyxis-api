@@ -14,6 +14,7 @@ import {
   wrapped,
 } from './email-layout';
 import { escapeHtml } from './escape-html';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 import { WELCOME_EMAIL_MESSAGES, type WelcomeEmailMessages } from './welcome-email-messages';
 
 const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
@@ -87,7 +88,12 @@ function textOf(welcome: Welcome, messages: WelcomeEmailMessages): WelcomeText {
   };
 }
 
-function buildHtml(text: WelcomeText, messages: WelcomeEmailMessages, links: EmailLinks): string {
+function buildHtml(
+  text: WelcomeText,
+  messages: WelcomeEmailMessages,
+  links: EmailLinks,
+  support: string | null,
+): string {
   return emailDocument({
     language: messages.language,
     title: messages.subject,
@@ -104,6 +110,7 @@ function buildHtml(text: WelcomeText, messages: WelcomeEmailMessages, links: Ema
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
+      ...supportFootnote(support, FOOTNOTE),
       paragraph(FOOTNOTE, escapeHtml(messages.about)),
       paragraph(FOOTNOTE, escapeHtml(text.reason)),
       paragraph(
@@ -117,7 +124,12 @@ function buildHtml(text: WelcomeText, messages: WelcomeEmailMessages, links: Ema
   });
 }
 
-function buildText(text: WelcomeText, messages: WelcomeEmailMessages, links: EmailLinks): string {
+function buildText(
+  text: WelcomeText,
+  messages: WelcomeEmailMessages,
+  links: EmailLinks,
+  support: string | null,
+): string {
   return [
     messages.heading,
     ...text.paragraphs.flatMap((line) => ['', ...wrapped(line)]),
@@ -125,6 +137,7 @@ function buildText(text: WelcomeText, messages: WelcomeEmailMessages, links: Ema
     `${messages.openDashboard}: ${links.dashboardUrl}`,
     ...(text.terms === null ? [] : ['', ...wrapped(text.terms)]),
     '',
+    ...supportTextLines(support),
     ...wrapped(messages.about),
     ...wrapped(text.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,
@@ -135,12 +148,14 @@ export function buildWelcomeEmail(
   welcome: Welcome,
   language: EmailLanguage,
   links: EmailLinks,
+  supportEmail: string | null,
 ): EmailContent {
   const messages = WELCOME_EMAIL_MESSAGES[language];
   const text = textOf(welcome, messages);
+  const support = supportSentence(language, supportEmail);
   return {
     subject: messages.subject,
-    html: buildHtml(text, messages, links),
-    text: buildText(text, messages, links),
+    html: buildHtml(text, messages, links, support),
+    text: buildText(text, messages, links, support),
   };
 }

@@ -19,6 +19,7 @@ import {
   type ExportReadyEmailMessages,
   type ExportReadyWords,
 } from './export-ready-email-messages';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 
 const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   en: 'en-US',
@@ -56,6 +57,7 @@ function buildHtml(
   messages: ExportReadyEmailMessages,
   pageUrl: string,
   links: EmailLinks,
+  support: string | null,
 ): string {
   return emailDocument({
     language: messages.language,
@@ -71,6 +73,7 @@ function buildHtml(
       ]),
       '<tr>',
       '<td style="padding:24px 8px 0 8px;">',
+      ...supportFootnote(support, FOOTNOTE),
       paragraph(FOOTNOTE, escapeHtml(messages.about)),
       paragraph(FOOTNOTE, escapeHtml(messages.reason)),
       paragraph(
@@ -89,6 +92,7 @@ function buildText(
   messages: ExportReadyEmailMessages,
   pageUrl: string,
   links: EmailLinks,
+  support: string | null,
 ): string {
   return [
     messages.heading,
@@ -100,6 +104,7 @@ function buildText(
     `${messages.download}:`,
     pageUrl,
     '',
+    ...supportTextLines(support),
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,
@@ -110,13 +115,15 @@ export function buildExportReadyEmail(
   ready: ExportReady,
   language: EmailLanguage,
   links: EmailLinks,
+  supportEmail: string | null,
 ): EmailContent {
   const messages = EXPORT_READY_EMAIL_MESSAGES[language];
+  const support = supportSentence(language, supportEmail);
   const words = wordsOf(ready, language);
   const pageUrl = exportPageUrl(ready, links);
   return {
     subject: messages.subject(words),
-    html: buildHtml(words, messages, pageUrl, links),
-    text: buildText(words, messages, pageUrl, links),
+    html: buildHtml(words, messages, pageUrl, links, support),
+    text: buildText(words, messages, pageUrl, links, support),
   };
 }

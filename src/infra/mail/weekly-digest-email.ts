@@ -21,6 +21,7 @@ import {
   wrapped,
 } from './email-layout';
 import { escapeHtml } from './escape-html';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 import {
   WEEKLY_DIGEST_EMAIL_MESSAGES,
   type WeeklyDigestEmailMessages,
@@ -452,11 +453,16 @@ function card(wording: Wording, links: EmailLinks): readonly string[] {
   ]);
 }
 
-function footer({ digest, messages }: Wording, links: EmailLinks): readonly string[] {
+function footer(
+  { digest, messages }: Wording,
+  links: EmailLinks,
+  support: string | null,
+): readonly string[] {
   const footnote: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
   return [
     '<tr>',
     '<td style="padding:24px 8px 0 8px;">',
+    ...supportFootnote(support, footnote),
     paragraph(footnote, escapeHtml(messages.reason(digest.projectName))),
     paragraph(
       footnote,
@@ -469,7 +475,12 @@ ${inkLink(settingsUrl(digest, links), messages.settings)}.`,
   ];
 }
 
-function buildHtml(wording: Wording, subject: string, links: EmailLinks): string {
+function buildHtml(
+  wording: Wording,
+  subject: string,
+  links: EmailLinks,
+  support: string | null,
+): string {
   return emailDocument({
     language: wording.messages.language,
     title: subject,
@@ -477,7 +488,7 @@ function buildHtml(wording: Wording, subject: string, links: EmailLinks): string
     rows: [
       ...brandHeader(wording.messages.logoAlt, links),
       ...card(wording, links),
-      ...footer(wording, links),
+      ...footer(wording, links, support),
     ],
     darkRules: DIGEST_DARK_RULES,
     narrowRules: DIGEST_NARROW_RULES,
@@ -492,7 +503,7 @@ function textTable(rows: readonly ListRow[], empty: string): readonly string[] {
   return rows.map((row) => `${TEXT_INDENT}${row.name.padEnd(width)}${row.count}`);
 }
 
-function buildText(wording: Wording, links: EmailLinks): string {
+function buildText(wording: Wording, links: EmailLinks, support: string | null): string {
   const { digest, messages, formats } = wording;
   const tileLines = tiles(wording).map((tile) => {
     const note = tile.note === null ? '' : ` (${tile.note})`;
@@ -524,6 +535,7 @@ function buildText(wording: Wording, links: EmailLinks): string {
     '',
     `${messages.openWeek}: ${overviewUrl(digest, links)}`,
     '',
+    ...supportTextLines(support),
     ...wrapped(messages.reason(digest.projectName)),
     `${messages.turnOff} ${messages.settings}: ${settingsUrl(digest, links)}`,
     ...wrapped(messages.about),
@@ -546,18 +558,29 @@ export function renderWeeklyDigestEmail(
   digest: WeeklyDigest,
   messages: WeeklyDigestEmailMessages,
   links: EmailLinks,
+  support: string | null,
 ): EmailContent {
   const wording = wordingFor(digest, messages);
   const subject = subjectOf(wording);
-  return { subject, html: buildHtml(wording, subject, links), text: buildText(wording, links) };
+  return {
+    subject,
+    html: buildHtml(wording, subject, links, support),
+    text: buildText(wording, links, support),
+  };
 }
 
 export function buildWeeklyDigestEmail(
   digest: WeeklyDigest,
   language: EmailLanguage,
   links: EmailLinks,
+  supportEmail: string | null,
 ): EmailContent {
-  return renderWeeklyDigestEmail(digest, WEEKLY_DIGEST_EMAIL_MESSAGES[language], links);
+  return renderWeeklyDigestEmail(
+    digest,
+    WEEKLY_DIGEST_EMAIL_MESSAGES[language],
+    links,
+    supportSentence(language, supportEmail),
+  );
 }
 
 export function weeklyDigestSubject(digest: WeeklyDigest, language: EmailLanguage): string {

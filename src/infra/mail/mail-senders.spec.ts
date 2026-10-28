@@ -76,7 +76,7 @@ describe('ResendMailSender', () => {
     expect(JSON.parse(init?.body as string)).toEqual({
       from: FROM,
       to: 'ana@example.com',
-      ...buildSignInCodeEmail('123456', 'pt-BR', LINKS),
+      ...buildSignInCodeEmail('123456', 'pt-BR', LINKS, null),
     });
   });
 
@@ -95,7 +95,7 @@ describe('ResendMailSender', () => {
     expect(JSON.parse(init?.body as string)).toEqual({
       from: FROM,
       to: 'bia@example.com',
-      ...buildSignUpCodeEmail('654321', 'es', LINKS),
+      ...buildSignUpCodeEmail('654321', 'es', LINKS, null),
     });
   });
 
@@ -115,7 +115,7 @@ describe('ResendMailSender', () => {
     expect(JSON.parse(init?.body as string)).toEqual({
       from: FROM,
       to: 'ana@example.com',
-      ...buildWeeklyDigestEmail(DIGEST, 'pt-BR', LINKS),
+      ...buildWeeklyDigestEmail(DIGEST, 'pt-BR', LINKS, null),
     });
   });
 
@@ -130,6 +130,37 @@ describe('ResendMailSender', () => {
         'en',
       ),
     ).rejects.toThrow(/^Resend answered 422$/);
+  });
+
+  it('sends the codes and the digest with replies going to the support address, when one is set', async () => {
+    const send = okResend();
+    const sender = new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT);
+
+    await sender.sendSignInCode('ana@example.com', '123456', 'en');
+    await sender.sendSignUpCode('bia@example.com', '654321', 'en');
+    await sender.sendWeeklyDigest('ana@example.com', DIGEST, 'en');
+
+    const bodies = send.mock.calls.map(([, init]) => JSON.parse(init.body as string) as unknown);
+    expect(bodies).toEqual([
+      {
+        from: FROM,
+        to: 'ana@example.com',
+        reply_to: SUPPORT,
+        ...buildSignInCodeEmail('123456', 'en', LINKS, SUPPORT),
+      },
+      {
+        from: FROM,
+        to: 'bia@example.com',
+        reply_to: SUPPORT,
+        ...buildSignUpCodeEmail('654321', 'en', LINKS, SUPPORT),
+      },
+      {
+        from: FROM,
+        to: 'ana@example.com',
+        reply_to: SUPPORT,
+        ...buildWeeklyDigestEmail(DIGEST, 'en', LINKS, SUPPORT),
+      },
+    ]);
   });
 
   it('sends the export notice with replies going to the support address', async () => {
@@ -153,7 +184,7 @@ describe('ResendMailSender', () => {
       from: FROM,
       to: 'owner@example.com',
       reply_to: SUPPORT,
-      ...buildExportReadyEmail(ready, 'en', LINKS),
+      ...buildExportReadyEmail(ready, 'en', LINKS, SUPPORT),
     });
   });
 
@@ -191,7 +222,7 @@ describe('ResendMailSender', () => {
       from: FROM,
       to: 'owner@example.com',
       reply_to: SUPPORT,
-      ...buildWelcomeEmail(welcome, 'es', LINKS),
+      ...buildWelcomeEmail(welcome, 'es', LINKS, SUPPORT),
     });
   });
 
@@ -210,7 +241,7 @@ describe('ResendMailSender', () => {
       from: FROM,
       to: 'owner@example.com',
       reply_to: SUPPORT,
-      ...buildSubscriptionConfirmedEmail(confirmation, 'pt-BR', LINKS),
+      ...buildSubscriptionConfirmedEmail(confirmation, 'pt-BR', LINKS, SUPPORT),
     });
   });
 
@@ -248,7 +279,7 @@ describe('ResendMailSender', () => {
       from: FROM,
       to: 'guest@example.com',
       reply_to: 'owner@example.com',
-      ...buildInvitationEmail(invitation, 'pt-BR', LINKS),
+      ...buildInvitationEmail(invitation, 'pt-BR', LINKS, null),
     });
   });
 
@@ -303,7 +334,7 @@ describe('SesMailSender', () => {
 
     await new SesMailSender(FROM, LINKS, send).sendSignInCode('ana@example.com', '123456', 'es');
 
-    const email = buildSignInCodeEmail('123456', 'es', LINKS);
+    const email = buildSignInCodeEmail('123456', 'es', LINKS, null);
     expect(sent).toEqual([
       {
         FromEmailAddress: FROM,
@@ -327,7 +358,7 @@ describe('SesMailSender', () => {
     await new SesMailSender(FROM, LINKS, send).sendSignUpCode('bia@example.com', '654321', 'en');
 
     expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe(
-      buildSignUpCodeEmail('654321', 'en', LINKS).subject,
+      buildSignUpCodeEmail('654321', 'en', LINKS, null).subject,
     );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['bia@example.com'] });
   });
@@ -421,13 +452,42 @@ describe('SesMailSender', () => {
     );
   });
 
+  it('sends the codes and the digest with replies going to the support address, when one is set', async () => {
+    const { sent, send } = recordingSes();
+    const sender = new SesMailSender(FROM, LINKS, send, SUPPORT);
+
+    await sender.sendSignInCode('ana@example.com', '123456', 'en');
+    await sender.sendSignUpCode('bia@example.com', '654321', 'en');
+    await sender.sendWeeklyDigest('ana@example.com', DIGEST, 'en');
+
+    expect(sent.map((input) => input.ReplyToAddresses)).toEqual([[SUPPORT], [SUPPORT], [SUPPORT]]);
+    expect(sent[0]?.Content?.Simple?.Body?.Text?.Data).toBe(
+      buildSignInCodeEmail('123456', 'en', LINKS, SUPPORT).text,
+    );
+  });
+
+  it('keeps replies to an invitation going to the person who invited, even with a support address', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send, SUPPORT).sendInvitation(
+      'guest@example.com',
+      { projectName: 'Shop', inviterEmail: 'owner@example.com' },
+      'en',
+    );
+
+    expect(sent[0]?.ReplyToAddresses).toEqual(['owner@example.com']);
+    expect(sent[0]?.Content?.Simple?.Body?.Text?.Data).toContain(
+      `To ask Pyxis anything, write to ${SUPPORT}.`,
+    );
+  });
+
   it('sends the weekly digest the same way', async () => {
     const { sent, send } = recordingSes();
 
     await new SesMailSender(FROM, LINKS, send).sendWeeklyDigest('ana@example.com', DIGEST, 'en');
 
     expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe(
-      buildWeeklyDigestEmail(DIGEST, 'en', LINKS).subject,
+      buildWeeklyDigestEmail(DIGEST, 'en', LINKS, null).subject,
     );
   });
 
@@ -518,7 +578,7 @@ describe('LoggingMailSender', () => {
         projectId: DIGEST.projectId,
         week: DIGEST.week,
         language: 'en',
-        subject: buildWeeklyDigestEmail(DIGEST, 'en', LINKS).subject,
+        subject: buildWeeklyDigestEmail(DIGEST, 'en', LINKS, null).subject,
       },
     ]);
     expect(JSON.stringify(logs)).not.toContain('ana@example.com');

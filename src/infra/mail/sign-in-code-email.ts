@@ -17,6 +17,7 @@ import {
   wrapped,
 } from './email-layout';
 import { escapeHtml } from './escape-html';
+import { supportFootnote, supportSentence, supportTextLines } from './support-line';
 import { SIGN_UP_CODE_EMAIL_MESSAGES } from './sign-up-code-email-messages';
 import {
   SIGN_IN_CODE_EMAIL_MESSAGES,
@@ -68,11 +69,16 @@ function card(code: string, messages: SignInCodeEmailMessages): readonly string[
   ]);
 }
 
-function footer(messages: SignInCodeEmailMessages, links: EmailLinks): readonly string[] {
+function footer(
+  messages: SignInCodeEmailMessages,
+  links: EmailLinks,
+  support: string | null,
+): readonly string[] {
   const footnote: TextBlock = { tone: 'muted', size: 'small', margin: '0 0 8px 0' };
   return [
     '<tr>',
     '<td style="padding:24px 8px 0 8px;">',
+    ...supportFootnote(support, footnote),
     paragraph(footnote, escapeHtml(messages.about)),
     paragraph(footnote, escapeHtml(messages.reason)),
     paragraph(
@@ -84,7 +90,12 @@ function footer(messages: SignInCodeEmailMessages, links: EmailLinks): readonly 
   ];
 }
 
-function buildHtml(code: string, messages: SignInCodeEmailMessages, links: EmailLinks): string {
+function buildHtml(
+  code: string,
+  messages: SignInCodeEmailMessages,
+  links: EmailLinks,
+  support: string | null,
+): string {
   return emailDocument({
     language: messages.language,
     title: messages.subject(code),
@@ -92,13 +103,18 @@ function buildHtml(code: string, messages: SignInCodeEmailMessages, links: Email
     rows: [
       ...brandHeader(messages.logoAlt, links),
       ...card(code, messages),
-      ...footer(messages, links),
+      ...footer(messages, links, support),
     ],
     darkRules: CODE_DARK_RULES,
   });
 }
 
-function buildText(code: string, messages: SignInCodeEmailMessages, links: EmailLinks): string {
+function buildText(
+  code: string,
+  messages: SignInCodeEmailMessages,
+  links: EmailLinks,
+  support: string | null,
+): string {
   return [
     messages.heading,
     '',
@@ -111,6 +127,7 @@ function buildText(code: string, messages: SignInCodeEmailMessages, links: Email
     ...wrapped(messages.neverShare),
     ...wrapped(messages.notRequested),
     '',
+    ...supportTextLines(support),
     ...wrapped(messages.about),
     ...wrapped(messages.reason),
     `${messages.dashboard}: ${links.dashboardUrl}`,
@@ -121,11 +138,12 @@ export function renderSignInCodeEmail(
   code: string,
   messages: SignInCodeEmailMessages,
   links: EmailLinks,
+  support: string | null,
 ): EmailContent {
   return {
     subject: messages.subject(code),
-    html: buildHtml(code, messages, links),
-    text: buildText(code, messages, links),
+    html: buildHtml(code, messages, links, support),
+    text: buildText(code, messages, links, support),
   };
 }
 
@@ -133,14 +151,26 @@ export function buildSignUpCodeEmail(
   code: string,
   language: EmailLanguage,
   links: EmailLinks,
+  supportEmail: string | null,
 ): EmailContent {
-  return renderSignInCodeEmail(code, SIGN_UP_CODE_EMAIL_MESSAGES[language], links);
+  return renderSignInCodeEmail(
+    code,
+    SIGN_UP_CODE_EMAIL_MESSAGES[language],
+    links,
+    supportSentence(language, supportEmail),
+  );
 }
 
 export function buildSignInCodeEmail(
   code: string,
   language: EmailLanguage,
   links: EmailLinks,
+  supportEmail: string | null,
 ): EmailContent {
-  return renderSignInCodeEmail(code, SIGN_IN_CODE_EMAIL_MESSAGES[language], links);
+  return renderSignInCodeEmail(
+    code,
+    SIGN_IN_CODE_EMAIL_MESSAGES[language],
+    links,
+    supportSentence(language, supportEmail),
+  );
 }

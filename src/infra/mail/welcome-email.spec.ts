@@ -25,7 +25,7 @@ function longestLine(content: string): number {
 
 describe('buildWelcomeEmail', () => {
   it('confirms the subscription, the end of the trial and the terms accepted, with a button', () => {
-    const email = buildWelcomeEmail(TRIAL, 'en', LINKS);
+    const email = buildWelcomeEmail(TRIAL, 'en', LINKS, null);
 
     expect(email.subject).toBe('Welcome to Pyxis');
     expect(email.html).toContain('Your free trial runs until November 15, 2026.');
@@ -37,7 +37,7 @@ describe('buildWelcomeEmail', () => {
   });
 
   it('confirms an active subscription without a trial, and leaves out terms it does not have', () => {
-    const email = buildWelcomeEmail(ACTIVE, 'pt-BR', LINKS);
+    const email = buildWelcomeEmail(ACTIVE, 'pt-BR', LINKS, null);
 
     expect(email.subject).toBe('Boas-vindas ao Pyxis');
     expect(email.html).toContain('Sua assinatura está ativa.');
@@ -47,13 +47,13 @@ describe('buildWelcomeEmail', () => {
   });
 
   it('writes the trial end in the reader’s language', () => {
-    expect(buildWelcomeEmail(TRIAL, 'es', LINKS).html).toContain(
+    expect(buildWelcomeEmail(TRIAL, 'es', LINKS, null).html).toContain(
       'La prueba gratuita dura hasta el 15 de noviembre de 2026;',
     );
   });
 
   it('welcomes an account on the free plan with its limits, the pause and how to subscribe', () => {
-    const email = buildWelcomeEmail(FREE, 'en', LINKS);
+    const email = buildWelcomeEmail(FREE, 'en', LINKS, null);
 
     expect(email.subject).toBe('Welcome to Pyxis');
     expect(email.html).toContain('Your account is on the free plan.');
@@ -78,17 +78,17 @@ describe('buildWelcomeEmail', () => {
       },
     };
 
-    expect(buildWelcomeEmail(wider, 'en', LINKS).html).toContain('2 projects and 3 people');
-    expect(buildWelcomeEmail(FREE, 'pt-BR', LINKS).html).toContain(
+    expect(buildWelcomeEmail(wider, 'en', LINKS, null).html).toContain('2 projects and 3 people');
+    expect(buildWelcomeEmail(FREE, 'pt-BR', LINKS, null).html).toContain(
       'até 10.000 eventos por mês, 1 projeto e 1 pessoa',
     );
-    expect(buildWelcomeEmail(wider, 'de', LINKS).html).toContain('2 Projekte und 3 Personen');
+    expect(buildWelcomeEmail(wider, 'de', LINKS, null).html).toContain('2 Projekte und 3 Personen');
   });
 
   it('declares its language and keeps every plain-text line short', () => {
     for (const language of EMAIL_LANGUAGES) {
       for (const welcome of [TRIAL, ACTIVE, FREE]) {
-        const email = buildWelcomeEmail(welcome, language, LINKS);
+        const email = buildWelcomeEmail(welcome, language, LINKS, null);
         expect(email.html).toContain(`<html lang="${language}" dir="ltr">`);
         expect(longestLine(email.text)).toBeLessThanOrEqual(TEXT_LINE_WIDTH);
       }

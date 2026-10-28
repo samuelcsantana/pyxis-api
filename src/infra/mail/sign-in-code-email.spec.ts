@@ -40,7 +40,7 @@ function occurrences(content: string, fragment: string): number {
 }
 
 describe('buildSignInCodeEmail in English', () => {
-  const email = buildSignInCodeEmail(CODE, 'en', LINKS);
+  const email = buildSignInCodeEmail(CODE, 'en', LINKS, null);
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 is your Pyxis sign-in code');
@@ -72,7 +72,7 @@ describe('buildSignInCodeEmail in English', () => {
 });
 
 describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
-  const email = buildSignInCodeEmail(CODE, 'pt-BR', LINKS);
+  const email = buildSignInCodeEmail(CODE, 'pt-BR', LINKS, null);
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 é o seu código para entrar no Pyxis');
@@ -111,7 +111,7 @@ describe('buildSignInCodeEmail in Brazilian Portuguese', () => {
 });
 
 describe('buildSignInCodeEmail in Spanish', () => {
-  const email = buildSignInCodeEmail(CODE, 'es', LINKS);
+  const email = buildSignInCodeEmail(CODE, 'es', LINKS, null);
 
   it('keeps the code first in the subject', () => {
     expect(email.subject).toBe('123456 es tu código para iniciar sesión en Pyxis');
@@ -156,7 +156,7 @@ describe('buildSignInCodeEmail in German, French, Italian and Dutch', () => {
   ] as const)(
     'writes the %s e-mail in its language, the code first in the subject',
     (language, subject, instruction) => {
-      const email = buildSignInCodeEmail(CODE, language, LINKS);
+      const email = buildSignInCodeEmail(CODE, language, LINKS, null);
 
       expect(email.subject).toBe(subject);
       expect(email.html).toContain(`<html lang="${language}" dir="ltr">`);
@@ -166,7 +166,7 @@ describe('buildSignInCodeEmail in German, French, Italian and Dutch', () => {
 });
 
 describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
-  const email = buildSignInCodeEmail(CODE, language, LINKS);
+  const email = buildSignInCodeEmail(CODE, language, LINKS, null);
 
   it('puts the code in the HTML and on a line of its own in the plain text', () => {
     expect(email.html).toContain('>123456</td>');
@@ -220,14 +220,14 @@ describe.each(EMAIL_LANGUAGES)('the %s sign-in email', (language) => {
 
 describe('renderSignInCodeEmail', () => {
   it('escapes the code and every message before they reach the HTML', () => {
-    const { html } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES, LINKS);
+    const { html } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES, LINKS, null);
 
     expect(html).not.toContain('<i>');
     expect(occurrences(html, ESCAPED_HOSTILE)).toBe(HTML_SLOTS_IN_HOSTILE_MESSAGES);
   });
 
   it('leaves the plain text as written, since no client reads it as markup', () => {
-    const { subject, text } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES, LINKS);
+    const { subject, text } = renderSignInCodeEmail(HOSTILE, HOSTILE_MESSAGES, LINKS, null);
 
     expect(subject).toBe(HOSTILE);
     expect(text).toContain(`    ${HOSTILE}`);
@@ -236,7 +236,7 @@ describe('renderSignInCodeEmail', () => {
 
 describe('buildSignInCodeEmail for another dashboard', () => {
   const elsewhere = 'https://pyxis.example.org:8443';
-  const email = buildSignInCodeEmail(CODE, 'en', emailLinksFor(elsewhere));
+  const email = buildSignInCodeEmail(CODE, 'en', emailLinksFor(elsewhere), null);
 
   it('links to the dashboard it is given, named by its host', () => {
     expect(email.html).toContain(`href="${elsewhere}/"`);
@@ -251,31 +251,31 @@ describe('buildSignInCodeEmail for another dashboard', () => {
 
 describe('buildSignUpCodeEmail', () => {
   it('says the code creates an account, in each language, keeping the code first', () => {
-    expect(buildSignUpCodeEmail(CODE, 'en', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'en', LINKS, null).subject).toBe(
       '123456 is your code to create a Pyxis account',
     );
-    expect(buildSignUpCodeEmail(CODE, 'pt-BR', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'pt-BR', LINKS, null).subject).toBe(
       '123456 é o seu código para criar a conta no Pyxis',
     );
-    expect(buildSignUpCodeEmail(CODE, 'es', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'es', LINKS, null).subject).toBe(
       '123456 es tu código para crear una cuenta de Pyxis',
     );
-    expect(buildSignUpCodeEmail(CODE, 'de', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'de', LINKS, null).subject).toBe(
       '123456 ist dein Code, um ein Pyxis-Konto anzulegen',
     );
-    expect(buildSignUpCodeEmail(CODE, 'fr', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'fr', LINKS, null).subject).toBe(
       '123456 est votre code pour créer un compte Pyxis',
     );
-    expect(buildSignUpCodeEmail(CODE, 'it', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'it', LINKS, null).subject).toBe(
       '123456 è il tuo codice per creare un account Pyxis',
     );
-    expect(buildSignUpCodeEmail(CODE, 'nl', LINKS).subject).toBe(
+    expect(buildSignUpCodeEmail(CODE, 'nl', LINKS, null).subject).toBe(
       '123456 is je code om een Pyxis-account aan te maken',
     );
   });
 
   it('tells someone who did not ask that nothing is created without the code', () => {
-    const email = buildSignUpCodeEmail(CODE, 'en', LINKS);
+    const email = buildSignUpCodeEmail(CODE, 'en', LINKS, null);
 
     expect(email.html).toContain('Your code to create an account');
     expect(email.html).toContain('nothing is created without this code.');
@@ -289,7 +289,7 @@ describe('buildSignUpCodeEmail', () => {
   });
 
   it('keeps the expiry and the warning of the sign-in code, in the language asked', () => {
-    const email = buildSignUpCodeEmail(CODE, 'pt-BR', LINKS);
+    const email = buildSignUpCodeEmail(CODE, 'pt-BR', LINKS, null);
 
     expect(email.text).toContain('Ele expira em 10 minutos e só vale uma vez.');
     expect(email.text).toContain('Nunca compartilhe este código.');
@@ -298,9 +298,9 @@ describe('buildSignUpCodeEmail', () => {
 
   it('keeps every plain-text line within the width of the sign-in code e-mail', () => {
     for (const language of EMAIL_LANGUAGES) {
-      expect(longestLine(buildSignUpCodeEmail(CODE, language, LINKS).text)).toBeLessThanOrEqual(
-        TEXT_LINE_WIDTH,
-      );
+      expect(
+        longestLine(buildSignUpCodeEmail(CODE, language, LINKS, null).text),
+      ).toBeLessThanOrEqual(TEXT_LINE_WIDTH);
     }
   });
 });

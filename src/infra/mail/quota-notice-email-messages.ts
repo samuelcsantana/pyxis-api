@@ -29,7 +29,6 @@ export interface FreeQuotaNoticeMessages {
   readonly pausedCount: (words: QuotaPausedWords) => string;
   readonly pausedSubscribe: string;
   readonly accountLink: string;
-  readonly support: (address: string) => string;
 }
 
 export interface QuotaNoticeEmailMessages {
@@ -92,7 +91,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'To measure again before then, subscribe in Account and billing: measuring resumes within a minute.',
       accountLink: 'Account and billing',
-      support: (address) => `To ask anything, reply to this e-mail or write to ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES.en.about,
     reason: 'You received this e-mail because you own a Pyxis account.',
@@ -134,8 +132,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'Para voltar a medir antes disso, assine em Conta e cobrança: a medição volta em até um minuto.',
       accountLink: 'Conta e cobrança',
-      support: (address) =>
-        `Para perguntar qualquer coisa, responda a este e-mail ou escreva para ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES['pt-BR'].about,
     reason: 'Você recebeu este e-mail porque é o responsável por uma conta do Pyxis.',
@@ -178,8 +174,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'Para volver a medir antes, suscríbete en Cuenta y facturación: la medición se reanuda en menos de un minuto.',
       accountLink: 'Cuenta y facturación',
-      support: (address) =>
-        `Para preguntar lo que sea, responde a este correo o escribe a ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES.es.about,
     reason: 'Recibiste este correo porque eres el titular de una cuenta de Pyxis.',
@@ -230,8 +224,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'Um schon vorher wieder zu messen, schließ unter „Konto und Abrechnung“ ein Abo ab: Die Messung läuft innerhalb einer Minute wieder an.',
       accountLink: 'Konto und Abrechnung',
-      support: (address) =>
-        `Wenn du Fragen hast, antworte auf diese E-Mail oder schreib an ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES.de.about,
     reason: 'Du hast diese E-Mail bekommen, weil du Inhaber eines Pyxis-Kontos bist.',
@@ -284,7 +276,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'Pour reprendre la mesure plus tôt, abonnez-vous depuis Compte et facturation\u00a0: la mesure reprend en moins d’une minute.',
       accountLink: 'Compte et facturation',
-      support: (address) => `Pour toute question, répondez à cet e-mail ou écrivez à ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES.fr.about,
     reason: 'Vous recevez cet e-mail parce que vous êtes propriétaire d’un compte Pyxis.',
@@ -332,7 +323,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'Per tornare a misurare prima, abbonati da Account e fatturazione: la misurazione riprende entro un minuto.',
       accountLink: 'Account e fatturazione',
-      support: (address) => `Per qualsiasi domanda, rispondi a questa email o scrivi a ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES.it.about,
     reason: 'Hai ricevuto questa email perché possiedi un account Pyxis.',
@@ -382,7 +372,6 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       pausedSubscribe:
         'Wil je eerder weer meten? Neem een abonnement via Account en facturatie: het meten wordt binnen een minuut hervat.',
       accountLink: 'Account en facturatie',
-      support: (address) => `Heb je een vraag? Beantwoord deze e-mail of mail naar ${address}.`,
     },
     about: SIGN_IN_CODE_EMAIL_MESSAGES.nl.about,
     reason: 'Je ontvangt deze e-mail omdat je eigenaar bent van een Pyxis-account.',
