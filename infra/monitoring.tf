@@ -135,6 +135,22 @@ resource "aws_cloudwatch_metric_alarm" "function_errors" {
   ok_actions          = [aws_sns_topic.alerts.arn]
 }
 
+resource "aws_cloudwatch_metric_alarm" "jobs_function_errors" {
+  alarm_name          = "${var.project}-jobs-function-errors"
+  alarm_description   = "${var.jobs_function_errors_alarm_threshold} or more invocations of the jobs function failed or timed out within five minutes: a step of the daily jobs threw (retention, the cities a project turned off included, account usage, account deletions, stalled exports, notices), or the weekly digest or an export failed. The rest of that run did not happen and nothing retries it before the next schedule; read the log lines of the run, fix the cause and run the jobs again (docs/RUNBOOK.md, The daily jobs)."
+  namespace           = "AWS/Lambda"
+  metric_name         = "Errors"
+  dimensions          = { FunctionName = aws_lambda_function.jobs.function_name }
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = var.jobs_function_errors_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
+
 resource "aws_cloudwatch_metric_alarm" "function_throttles" {
   alarm_name          = "${var.project}-function-throttles"
   alarm_description   = "${var.function_throttles_alarm_threshold} or more requests were refused within five minutes because every execution environment of the HTTP function was busy: raise http_reserved_concurrency or look for abuse."
