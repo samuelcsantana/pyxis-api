@@ -331,7 +331,8 @@ What differs from the hosted service:
 
 - **No cookie on ingestion, no personal data in events.** The only cookie is the dashboard's
   session. The IP address and the user agent are classified and discarded, never stored, and the
-  city is never read ([ADR 0014](docs/adr/0014-store-the-region-never-the-city.md)).
+  city is read only for a project that turns it on, off by default
+  ([ADR 0054](docs/adr/0054-city-as-a-per-project-option.md)).
 - **A second barrier behind the browser's.** A property or campaign value that looks like an
   email, a phone number or a tax id is dropped, a user id that looks personal rejects its event,
   and paths are re-templated with the SDK's rules.
@@ -418,6 +419,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0051](docs/adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md)            | An ended subscription falls back to the free plan                          |
 | [0052](docs/adr/0052-free-accounts-with-no-events-are-deleted.md)                     | Free accounts with no events are deleted after a notice                    |
 | [0053](docs/adr/0053-one-free-account-per-mailbox.md)                                 | One free account per mailbox, not per address                              |
+| [0054](docs/adr/0054-city-as-a-per-project-option.md)                                 | The city as a per-project option, off by default                           |
 
 ## Roadmap
 

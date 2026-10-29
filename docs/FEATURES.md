@@ -21,8 +21,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
 - A server-side barrier that drops any property or campaign value that looks like an email, a
   phone number or a tax id, and re-templates paths
 - Device, browser, operating system, channel, country and region derived on the server; the user
-  agent and the address are read, classified and discarded, and the city is never read
-  ([ADR 0014](adr/0014-store-the-region-never-the-city.md))
+  agent and the address are read, classified and discarded, and the city is read only for a
+  project that turns it on ([ADR 0054](adr/0054-city-as-a-per-project-option.md))
 - Dashboard sign-in with a six-digit code sent by email, exchanged for an opaque session in an
   `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
   the admin's projects, each with when its first and its latest events happened (null before
@@ -381,7 +381,11 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   email addresses become `:id`), a second layer behind the browser's
 - Device, browser and operating system are classified by own code from the user agent and client
   hints, then the user agent is discarded; the country and the region (`BR-SP`) come from
-  CloudFront, never from the IP, and the city is never read. The network number CloudFront
+  CloudFront, never from the IP. The city (`CloudFront-Viewer-City`) is read only for a project
+  with `city_enabled` (off by default; owners change it in Settings, the operator with
+  `project:update --city-on`), and kept only when the region came too; turning it off stops the
+  reading within a minute and the daily job erases the cities kept, in batches, within a day.
+  Postal code, coordinates and metro code are never read. The network number CloudFront
   reports is read only to refuse batches from cloud data centers, and never stored
 - Strict response headers: a CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default
