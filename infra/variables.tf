@@ -226,6 +226,12 @@ variable "daily_jobs_missed_after_hours" {
   }
 }
 
+variable "daily_job_step_failures_alarm_threshold" {
+  description = "Failed steps logged by the jobs function within an hour, at which the alarm fires."
+  type        = number
+  default     = 1
+}
+
 variable "function_throttles_alarm_threshold" {
   description = "Throttled requests to the HTTP function within five minutes at which the alarm fires."
   type        = number

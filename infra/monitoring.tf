@@ -179,6 +179,34 @@ resource "aws_cloudwatch_metric_alarm" "daily_jobs_missed" {
   ok_actions          = [aws_sns_topic.alerts.arn]
 }
 
+resource "aws_cloudwatch_log_metric_filter" "daily_job_step_failures" {
+  name           = "${var.project}-daily-job-step-failures"
+  log_group_name = aws_cloudwatch_log_group.function["${var.project}-jobs"].name
+  pattern        = "{ $.message.message = \"retention.step_failed\" || $.message.message = \"jobs.project_icons_failed\" || $.message.message = \"jobs.demo_traffic_failed\" || $.message.message = \"accounts.reconcile_failed\" || $.message.message = \"account_usage.notice_failed\" || $.message.message = \"exports.failed\" }"
+
+  metric_transformation {
+    name          = "DailyJobStepFailures"
+    namespace     = var.metrics_namespace
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "daily_job_step_failures" {
+  alarm_name          = "${var.project}-daily-job-step-failures"
+  alarm_description   = "${var.daily_job_step_failures_alarm_threshold} or more steps of the jobs function failed within an hour: retention.step_failed (its step field names it; cities means the erase promised within 48 hours did not happen), jobs.project_icons_failed, jobs.demo_traffic_failed, accounts.reconcile_failed (Stripe unreadable for an account), account_usage.notice_failed (an owner not told of the monthly limit) or exports.failed. Most are swallowed, so the run goes on and no other alarm fires; read the line in the jobs function's logs."
+  namespace           = var.metrics_namespace
+  metric_name         = "DailyJobStepFailures"
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.daily_job_step_failures_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
+
 resource "aws_cloudwatch_metric_alarm" "function_throttles" {
   alarm_name          = "${var.project}-function-throttles"
   alarm_description   = "${var.function_throttles_alarm_threshold} or more requests were refused within five minutes because every execution environment of the HTTP function was busy: raise http_reserved_concurrency or look for abuse."
