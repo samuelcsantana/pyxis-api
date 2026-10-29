@@ -264,6 +264,7 @@ describe('sign-up while it is open', () => {
           project_count: 0,
           people_count: 0,
           bound_by_free_plan_terms: false,
+          mailbox_has_another_free_account: false,
           free_plan_fit_due_at: null,
           limits: {
             events_per_month: 100_000,
