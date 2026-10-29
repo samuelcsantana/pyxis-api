@@ -243,3 +243,63 @@ resource "aws_cloudwatch_metric_alarm" "account_notice_failures" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
   ok_actions          = [aws_sns_topic.alerts.arn]
 }
+
+resource "aws_cloudwatch_log_metric_filter" "sign_up_daily_cap" {
+  name           = "${var.project}-sign-up-daily-cap"
+  log_group_name = aws_cloudwatch_log_group.function[var.project].name
+  pattern        = "{ $.message.message = \"auth.sign_up_daily_cap\" }"
+
+  metric_transformation {
+    name          = "SignUpDailyCapReached"
+    namespace     = var.metrics_namespace
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "sign_up_daily_cap" {
+  alarm_name          = "${var.project}-sign-up-daily-cap"
+  alarm_description   = "${var.sign_up_daily_cap_alarm_threshold} or more sign-up code requests were refused within an hour because the day's sign-up codes ran out: new owners cannot sign up until the oldest codes leave the 24-hour window. Many codes sent to made-up addresses also raise the SES bounce rate."
+  namespace           = var.metrics_namespace
+  metric_name         = "SignUpDailyCapReached"
+  statistic           = "Sum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.sign_up_daily_cap_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "ses_bounce_rate" {
+  count               = local.ses_enabled ? 1 : 0
+  alarm_name          = "${var.project}-ses-bounce-rate"
+  alarm_description   = "The SES account's bounce rate reached ${var.ses_bounce_rate_alarm_threshold * 100}%. AWS reviews an account from 5% and can pause its sending from 10%, which stops every e-mail, sign-in codes included: look for sign-up codes sent to made-up addresses."
+  namespace           = "AWS/SES"
+  metric_name         = "Reputation.BounceRate"
+  statistic           = "Maximum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.ses_bounce_rate_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
+
+resource "aws_cloudwatch_metric_alarm" "ses_complaint_rate" {
+  count               = local.ses_enabled ? 1 : 0
+  alarm_name          = "${var.project}-ses-complaint-rate"
+  alarm_description   = "The SES account's complaint rate reached ${var.ses_complaint_rate_alarm_threshold * 100}%. AWS reviews an account from 0.1% and can pause its sending from 0.5%, which stops every e-mail, sign-in codes included."
+  namespace           = "AWS/SES"
+  metric_name         = "Reputation.ComplaintRate"
+  statistic           = "Maximum"
+  period              = 3600
+  evaluation_periods  = 1
+  threshold           = var.ses_complaint_rate_alarm_threshold
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}

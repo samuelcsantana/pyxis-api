@@ -232,3 +232,21 @@ variable "account_notice_failures_alarm_threshold" {
   type        = number
   default     = 1
 }
+
+variable "sign_up_daily_cap_alarm_threshold" {
+  description = "Sign-up code requests refused within an hour because the day's sign-up codes ran out, at which the alarm fires."
+  type        = number
+  default     = 1
+}
+
+variable "ses_bounce_rate_alarm_threshold" {
+  description = "The SES account's bounce rate, as a fraction, at which the alarm fires (AWS reviews an account from 0.05)."
+  type        = number
+  default     = 0.02
+}
+
+variable "ses_complaint_rate_alarm_threshold" {
+  description = "The SES account's complaint rate, as a fraction, at which the alarm fires (AWS reviews an account from 0.001)."
+  type        = number
+  default     = 0.0008
+}
