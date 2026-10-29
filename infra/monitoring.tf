@@ -11,12 +11,12 @@ resource "aws_sns_topic_subscription" "alerts_email" {
 resource "aws_cloudwatch_log_metric_filter" "database_size_ratio" {
   name           = "${var.project}-database-size-ratio"
   log_group_name = aws_cloudwatch_log_group.function["${var.project}-jobs"].name
-  pattern        = "{ $.message = \"database.size\" }"
+  pattern        = "{ $.message.message = \"database.size\" }"
 
   metric_transformation {
     name      = "DatabaseSizeRatio"
     namespace = var.metrics_namespace
-    value     = "$.ratio"
+    value     = "$.message.ratio"
   }
 }
 
