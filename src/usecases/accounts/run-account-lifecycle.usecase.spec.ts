@@ -22,6 +22,8 @@ import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-f
 import { InMemoryFreeAccountInactivityRepository } from '../../test-utils/in-memory-free-account-inactivity.repository';
 import { AccountDataDeletion } from './account-data-deletion';
 import { SweepInactiveFreeAccountsUseCase } from './sweep-inactive-free-accounts.usecase';
+import { ReportSharedFreeSitesUseCase } from './report-shared-free-sites.usecase';
+import { InMemoryFreeSiteSharingRepository } from '../../test-utils/in-memory-free-site-sharing.repository';
 import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
 import { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
@@ -70,6 +72,7 @@ function setup() {
   const confirmations = new InMemorySubscriptionConfirmationRepository();
   const fallbacks = new InMemoryFreePlanFallbackRepository();
   const inactivity = new InMemoryFreeAccountInactivityRepository();
+  const sharing = new InMemoryFreeSiteSharingRepository();
   const useCase = new RunAccountLifecycleUseCase(
     lifecycle,
     billing,
@@ -104,6 +107,7 @@ function setup() {
       new AccountDataDeletion(lifecycle, mail),
       mail,
     ),
+    new ReportSharedFreeSitesUseCase(sharing),
   );
   return {
     lifecycle,
@@ -116,6 +120,7 @@ function setup() {
     confirmations,
     fallbacks,
     inactivity,
+    sharing,
     useCase,
   };
 }
@@ -158,8 +163,27 @@ describe('RunAccountLifecycleUseCase', () => {
       peopleRemoved: 0,
       projectlessMarked: 0,
       projectlessRemoved: 0,
+      freeAccountsSharingASite: 0,
     });
     expect(mail.accountNotices).toEqual([]);
+  });
+
+  it('reports the free accounts that measure a site another account measures too, after the sweeps', async () => {
+    const { sharing, useCase } = setup();
+    sharing.overlap({
+      accountId: 'acc-free',
+      projectId: 'shop',
+      origin: 'https://shop.example.com',
+      otherProjectId: 'other-shop',
+    });
+
+    await expect(useCase.execute()).resolves.toMatchObject({ freeAccountsSharingASite: 1 });
+    expect(warn).toHaveBeenCalledWith({
+      message: 'accounts.free_site_shared',
+      accountId: 'acc-free',
+      projectId: 'shop',
+      otherProjectIds: ['other-shop'],
+    });
   });
 
   it('reports the people it marked and removed for having no project left', async () => {

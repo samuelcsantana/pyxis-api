@@ -37,6 +37,7 @@ const LIFECYCLE = {
   peopleRemoved: 2,
   projectlessMarked: 1,
   projectlessRemoved: 0,
+  freeAccountsSharingASite: 0,
 };
 const ACCOUNT_USAGE = {
   month: '2026-10',

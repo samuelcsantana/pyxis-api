@@ -22,6 +22,7 @@ import type { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptio
 import type { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
 import { AccountDataDeletion } from './account-data-deletion';
 import type { SweepInactiveFreeAccountsUseCase } from './sweep-inactive-free-accounts.usecase';
+import type { ReportSharedFreeSitesUseCase } from './report-shared-free-sites.usecase';
 
 export interface AccountLifecycleReport {
   readonly freePlacesOpened: number;
@@ -44,6 +45,7 @@ export interface AccountLifecycleReport {
   readonly peopleRemoved: number;
   readonly projectlessMarked: number;
   readonly projectlessRemoved: number;
+  readonly freeAccountsSharingASite: number;
 }
 
 export class AccountLifecycleFailedError extends Error {
@@ -79,6 +81,7 @@ export class RunAccountLifecycleUseCase {
     private readonly confirmations: ConfirmSubscriptionsUseCase,
     private readonly fallbacks: FallBackToFreePlanUseCase,
     private readonly inactiveFreeAccounts: SweepInactiveFreeAccountsUseCase,
+    private readonly sharedFreeSites: ReportSharedFreeSitesUseCase,
   ) {
     this.deletion = new AccountDataDeletion(lifecycle, mail);
   }
@@ -106,6 +109,7 @@ export class RunAccountLifecycleUseCase {
     const incomplete = await this.removeStaleIncomplete(now);
     const inactive = await this.inactiveFreeAccounts.execute(now);
     const sweep = await this.projectless.execute();
+    const freeAccountsSharingASite = await this.sharedFreeSites.execute();
     const report: AccountLifecycleReport = {
       freePlacesOpened,
       welcomes,
@@ -124,6 +128,7 @@ export class RunAccountLifecycleUseCase {
       inactiveFreeDeleted: inactive.deleted,
       peopleRemoved: deletion.peopleRemoved + incomplete.peopleRemoved + inactive.peopleRemoved,
       ...sweep,
+      freeAccountsSharingASite,
     };
     this.logger.log({ message: 'accounts.lifecycle_done', ...report });
     const failed = [...deletion.failed, ...incomplete.failed, ...inactive.failed];
