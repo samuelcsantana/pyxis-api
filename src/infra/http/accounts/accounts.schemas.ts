@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { ACCOUNT_STATUSES } from '../../../domain/accounts/account-status';
-import { FREE_PLAN_STATES } from '../../../domain/accounts/free-plan-sign-up';
+import { FREE_PLACES, FREE_PLAN_STATES } from '../../../domain/accounts/free-plan-sign-up';
 import { MAX_TERMS_VERSION_LENGTH } from '../../../domain/accounts/sign-up-policy';
 import { SESSION_TOKEN_PATTERN } from '../../../domain/auth/session-policy';
 import { BILLING_INTERVALS } from '../../../domain/billing/billing-gateway';
@@ -60,6 +60,15 @@ export const signedUpSchema = z
         'free when the owner starts on the free plan; incomplete when the account waits for its ' +
           'subscription (the free plan closed or full); another status when a returning owner ' +
           'gets an account that already runs.',
+      ),
+    free_place: z
+      .enum(FREE_PLACES)
+      .describe(
+        'placed when the account took a place on the free plan; waitlisted when it waits for one; ' +
+          'taken_by_same_mailbox when the mailbox behind the address (the address without its ' +
+          '+tag, and on Gmail without dots) already has an account on the free plan or waiting ' +
+          'for one, so this account waits for its subscription; not_offered when the free plan ' +
+          'is closed or a returning owner gets an account that already runs.',
       ),
   })
   .meta({
