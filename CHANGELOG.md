@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.39.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.38.0...v0.39.0) (2026-10-29)
+
+
+### Features
+
+* **infra:** alarm when a step of the jobs function fails ([6878192](https://github.com/samuelcsantana/pyxis-api/commit/6878192d0f240d983d8afb6e9e7197a88a9fea56))
+* **infra:** alarm when no daily run of the jobs finished for a day ([e805361](https://github.com/samuelcsantana/pyxis-api/commit/e80536156a27ce55a1298e331df96b4a8a3570a6))
+* **infra:** alarm when the jobs function fails ([6e950ea](https://github.com/samuelcsantana/pyxis-api/commit/6e950ea62674fb56ec8c6f1c1098c7934de1d10e))
+* **jobs:** log the end of the daily jobs ([a35fed2](https://github.com/samuelcsantana/pyxis-api/commit/a35fed2b9368cf23f6138b33a55fb6beaaba28f7))
+* **mcp:** describe the cities and the reach on /mcp with pyxis-mcp 0.6.0 ([6eb8916](https://github.com/samuelcsantana/pyxis-api/commit/6eb8916f1fe7b5e7046893a8230e24d610cf54d1))
+
+
+### Bug Fixes
+
+* **infra:** read the database size from the nested log message ([c5bfc90](https://github.com/samuelcsantana/pyxis-api/commit/c5bfc90e330e2bd7ec8d3d50f931a74774568f0d))
+
+
+### Documentation
+
+* **runbook:** describe the alarms of the jobs function ([2f8c50e](https://github.com/samuelcsantana/pyxis-api/commit/2f8c50e0381652a532f5a83d560d6efbbd7d1ab3))
+
 ## [0.38.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.37.0...v0.38.0) (2026-10-29)
 
 
