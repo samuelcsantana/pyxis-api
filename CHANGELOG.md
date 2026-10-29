@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.37.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.36.0...v0.37.0) (2026-10-29)
+
+
+### Features
+
+* **demo-traffic:** give each invented visit a city of its region ([88e82f2](https://github.com/samuelcsantana/pyxis-api/commit/88e82f24e1ebdab970fc96fb8bb12d32e80951e5))
+* **exports:** carry the city in the project export and the person's copy ([6e6cae4](https://github.com/samuelcsantana/pyxis-api/commit/6e6cae40a223a1b45db04642ea6260a9cd289ca1))
+* **ingest:** keep the visitor's city for projects that turned it on ([1e80a60](https://github.com/samuelcsantana/pyxis-api/commit/1e80a6000be3340ba754ef0d3d57b535f6ad1ed2))
+* **projects:** let a project keep the visitor's city, off by default ([40cb5ea](https://github.com/samuelcsantana/pyxis-api/commit/40cb5ea7b358b501ba2508948933ffe6ec8695b1))
+* **queries:** show the visitor's city in the reports ([ebf29b0](https://github.com/samuelcsantana/pyxis-api/commit/ebf29b0f6b0c4d404c17e4db115dbba86c8a6f52))
+* **retention:** erase the cities of a project that turned them off ([610e699](https://github.com/samuelcsantana/pyxis-api/commit/610e699ee30fbcc15826229aa84d50ced7200c97))
+
+
+### Refactoring
+
+* **events:** share the decoding of CloudFront location names ([00351af](https://github.com/samuelcsantana/pyxis-api/commit/00351aff2b7135cea783eee7e94e2e87f8a53b32))
+
+
+### Documentation
+
+* **adr:** record the city as a per-project option ([7c58cb0](https://github.com/samuelcsantana/pyxis-api/commit/7c58cb0e0c1ecc77d11577ee06ceb7a9e19a0cfe))
+
 ## [0.36.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.35.0...v0.36.0) (2026-10-29)
 
 
