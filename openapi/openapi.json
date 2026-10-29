@@ -978,7 +978,7 @@
       },
       "DevicesReport": {
         "additionalProperties": false,
-        "description": "Visits, conversion events and converting visits (both null without a conversion event) per value, sorted by visits: the top five values and \"other\" for the rest, unknown countries included. regions lists the top 10 regions (the first subdivision of the country, as an ISO 3166-2 code such as BR-SP, with the name CloudFront gave it), then \"other\" for the rest, then a null value for visits without a region.",
+        "description": "Visits, conversion events and converting visits (both null without a conversion event) per value, sorted by visits: the top five values and \"other\" for the rest, unknown countries included. regions lists the top 10 regions (the first subdivision of the country, as an ISO 3166-2 code such as BR-SP, with the name CloudFront gave it), then \"other\" for the rest, then a null value for visits without a region. cities lists the top 20 approximate cities with their region, kept only for projects that turned the city on, then \"other\", then a null value for the visits without a city (every visit, for a project with the city off).",
         "properties": {
           "browsers": {
             "items": {
@@ -1019,6 +1019,70 @@
               },
               "required": [
                 "value",
+                "visits",
+                "conversions",
+                "converting_visits"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "cities": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "converting_visits": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "region": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "region_name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "value": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "value",
+                "region",
+                "region_name",
                 "visits",
                 "conversions",
                 "converting_visits"
@@ -1231,7 +1295,8 @@
           "browsers",
           "operating_systems",
           "countries",
-          "regions"
+          "regions",
+          "cities"
         ],
         "type": "object"
       },
@@ -4253,6 +4318,12 @@
                     }
                   ]
                 },
+                "city": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "country": {
                   "type": [
                     "string",
@@ -4354,6 +4425,7 @@
                 "country",
                 "region",
                 "region_name",
+                "city",
                 "channel",
                 "user_id",
                 "events"
@@ -4484,6 +4556,12 @@
                     }
                   ]
                 },
+                "city": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "country": {
                   "type": [
                     "string",
@@ -4573,6 +4651,7 @@
                 "country",
                 "region",
                 "region_name",
+                "city",
                 "channel",
                 "source",
                 "campaign",
@@ -6942,6 +7021,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -7422,6 +7512,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -7840,6 +7941,17 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             }
           },
@@ -8279,6 +8391,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -8555,6 +8678,17 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             }
           },
@@ -8861,6 +8995,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -9147,6 +9292,17 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             }
           },
@@ -9441,6 +9597,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -9727,6 +9894,17 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             }
           },
@@ -10292,6 +10470,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -10835,6 +11024,17 @@
             }
           },
           {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
             "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
             "in": "query",
             "name": "source",
@@ -11173,6 +11373,17 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             }
           },
@@ -11552,6 +11763,17 @@
             "required": false,
             "schema": {
               "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
               "type": "string"
             }
           },

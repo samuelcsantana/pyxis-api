@@ -54,6 +54,7 @@ const SEEDED: readonly TrackedEvent[] = [
   event(ANONYMOUS_VISIT, '2026-10-04T12:00:00.000Z', 'page_view', {
     path: '/calculator',
     channel: 'paid',
+    city: 'Campinas',
   }),
   event(ANONYMOUS_VISIT, '2026-10-04T12:03:00.000Z', 'calculator_used', {
     properties: { plan: 'mei' },
@@ -112,6 +113,7 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
         country: null,
         region: null,
         regionName: null,
+        city: null,
         channel: null,
         userId: 'ana',
       },
@@ -125,6 +127,7 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
         country: 'BR',
         region: 'BR-SP',
         regionName: 'São Paulo',
+        city: 'Campinas',
         channel: 'paid',
         userId: 'ana',
       },

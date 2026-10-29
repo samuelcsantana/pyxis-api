@@ -116,6 +116,14 @@ function devicesBody(report: DevicesReport): DevicesReportBody {
       conversions: share.conversions,
       converting_visits: share.convertingVisits,
     })),
+    cities: report.cities.map((share) => ({
+      value: share.value,
+      region: share.region,
+      region_name: share.regionName,
+      visits: share.visits,
+      conversions: share.conversions,
+      converting_visits: share.convertingVisits,
+    })),
   };
 }
 
@@ -207,6 +215,7 @@ function timelineBody(report: TimelineReport, timezone: string): TimelineReportB
       country: visit.country,
       region: visit.region,
       region_name: visit.regionName,
+      city: visit.city,
       channel: visit.channel,
       user_id: visit.userId,
       events: visit.events.map((event) => ({

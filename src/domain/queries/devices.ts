@@ -4,6 +4,7 @@ export type DeviceDimension = 'deviceType' | 'browser' | 'os' | 'country';
 
 export const TOP_DEVICE_VALUES = 5;
 export const TOP_REGIONS = 10;
+export const TOP_CITIES = 20;
 export const OTHER_VALUE = 'other';
 
 export interface ValueCount {
@@ -21,9 +22,19 @@ export interface RegionCount {
   readonly convertingVisits: number;
 }
 
+export interface CityCount {
+  readonly city: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
+  readonly visits: number;
+  readonly conversions: number;
+  readonly convertingVisits: number;
+}
+
 export interface DevicesQuery {
   breakdown(scope: QueryScope, dimension: DeviceDimension): Promise<readonly ValueCount[]>;
   regions(scope: QueryScope): Promise<readonly RegionCount[]>;
+  cities(scope: QueryScope): Promise<readonly CityCount[]>;
 }
 
 export const DEVICES_QUERY = Symbol('DevicesQuery');
@@ -43,8 +54,18 @@ export interface RegionShare {
   readonly convertingVisits: number | null;
 }
 
+export interface CityShare {
+  readonly value: string | null;
+  readonly region: string | null;
+  readonly regionName: string | null;
+  readonly visits: number;
+  readonly conversions: number | null;
+  readonly convertingVisits: number | null;
+}
+
 export type DevicesReport = Readonly<Record<DeviceDimension, readonly ValueShare[]>> & {
   readonly regions: readonly RegionShare[];
+  readonly cities: readonly CityShare[];
 };
 
 export function topValuesAndOther(
@@ -85,6 +106,43 @@ export function topRegionsAndRest(
   return shares.map((share) => ({
     value: share.value,
     name: share.name,
+    ...conversionCounts(share, countConversions),
+  }));
+}
+
+type PlacedCityCount = CityCount & { readonly city: string; readonly region: string };
+
+function isPlaced(count: CityCount): count is PlacedCityCount {
+  return count.city !== null && count.region !== null;
+}
+
+export function topCitiesAndRest(
+  counts: readonly CityCount[],
+  countConversions: boolean,
+): readonly CityShare[] {
+  const placed = counts
+    .filter(isPlaced)
+    .toSorted(
+      (left, right) =>
+        right.visits - left.visits ||
+        left.city.localeCompare(right.city) ||
+        left.region.localeCompare(right.region),
+    );
+  const unplaced = counts.filter((count) => !isPlaced(count));
+  const rest = placed.slice(TOP_CITIES);
+  const shares: readonly CityShare[] = [
+    ...placed.slice(0, TOP_CITIES).map((count) => ({ ...count, value: count.city })),
+    ...(rest.length === 0
+      ? []
+      : [{ value: OTHER_VALUE, region: null, regionName: null, ...sum(rest) }]),
+    ...(unplaced.length === 0
+      ? []
+      : [{ value: null, region: null, regionName: null, ...sum(unplaced) }]),
+  ];
+  return shares.map((share) => ({
+    value: share.value,
+    region: share.region,
+    regionName: share.regionName,
     ...conversionCounts(share, countConversions),
   }));
 }

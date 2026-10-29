@@ -60,10 +60,10 @@ const LAPTOP = {
 } as const;
 
 const SEEDED: readonly TrackedEvent[] = [
-  event(1, 'page_view', IPHONE),
-  event(1, 'page_view', IPHONE),
-  event(1, 'signup_completed', IPHONE),
-  event(1, 'signup_completed', IPHONE),
+  event(1, 'page_view', IPHONE, { city: 'Campinas' }),
+  event(1, 'page_view', IPHONE, { city: 'Campinas' }),
+  event(1, 'signup_completed', IPHONE, { city: 'Campinas' }),
+  event(1, 'signup_completed', IPHONE, { city: 'Campinas' }),
   event(2, 'page_view', IPHONE),
   event(3, 'page_view', LAPTOP),
   event(3, 'signup_completed', LAPTOP, { occurredAt: new Date('2026-09-01T12:00:00.000Z') }),
@@ -142,6 +142,40 @@ describe('DrizzleDevicesQuery against a real Postgres', () => {
       { region: 'BR-SP', name: 'São Paulo', visits: 2, conversions: 2, convertingVisits: 1 },
       { region: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
     ]);
+  });
+
+  it('groups by region and city, and keeps the visits without a city apart', async () => {
+    const rows = await query.cities(SCOPE);
+
+    expect(rows).toHaveLength(3);
+    expect(rows).toEqual(
+      expect.arrayContaining([
+        {
+          city: 'Campinas',
+          region: 'BR-SP',
+          regionName: 'São Paulo',
+          visits: 1,
+          conversions: 2,
+          convertingVisits: 1,
+        },
+        {
+          city: null,
+          region: 'BR-SP',
+          regionName: 'São Paulo',
+          visits: 1,
+          conversions: 0,
+          convertingVisits: 0,
+        },
+        {
+          city: null,
+          region: null,
+          regionName: null,
+          visits: 1,
+          conversions: 0,
+          convertingVisits: 0,
+        },
+      ]),
+    );
   });
 
   it('never counts another project', async () => {

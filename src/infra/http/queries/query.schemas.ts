@@ -5,6 +5,7 @@ import {
   DEVICE_TYPES,
   OS_FAMILIES,
 } from '../../../domain/entities/tracked-event.entity';
+import { MAX_CITY_NAME_LENGTH } from '../../../domain/events/city';
 import { COUNTRY_CODE_PATTERN } from '../../../domain/events/country';
 import {
   EVENT_NAME_PATTERN,
@@ -18,7 +19,7 @@ import {
 } from '../../../domain/events/event-limits';
 import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import { API_REQUEST_METHODS } from '../../../domain/events/reserved-event-names';
-import { TOP_REGIONS } from '../../../domain/queries/devices';
+import { TOP_CITIES, TOP_REGIONS } from '../../../domain/queries/devices';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
 import {
@@ -67,6 +68,7 @@ export const reportFilterFields = {
   identity: z.enum(VISIT_IDENTITIES).optional(),
   country: z.string().regex(COUNTRY_CODE_PATTERN).optional(),
   region: z.string().regex(REGION_CODE_PATTERN).optional(),
+  city: z.string().min(1).max(MAX_CITY_NAME_LENGTH).optional(),
   source: z.string().min(1).max(MAX_REFERRER_HOST_LENGTH).optional(),
   campaign: z.string().min(1).max(MAX_UTM_VALUE_LENGTH).optional(),
   failed: z
@@ -201,6 +203,17 @@ const regionSharesSchema = z.array(
   }),
 );
 
+const citySharesSchema = z.array(
+  z.strictObject({
+    value: z.string().nullable(),
+    region: z.string().nullable(),
+    region_name: z.string().nullable(),
+    visits: z.int(),
+    conversions: z.int().nullable(),
+    converting_visits: z.int().nullable(),
+  }),
+);
+
 export const devicesReportSchema = z
   .strictObject({
     device_types: valueSharesSchema,
@@ -208,6 +221,7 @@ export const devicesReportSchema = z
     operating_systems: valueSharesSchema,
     countries: valueSharesSchema,
     regions: regionSharesSchema,
+    cities: citySharesSchema,
   })
   .meta({
     id: 'DevicesReport',
@@ -216,7 +230,10 @@ export const devicesReportSchema = z
       'per value, sorted by visits: the top five values and "other" for the rest, unknown ' +
       `countries included. regions lists the top ${String(TOP_REGIONS)} regions (the first ` +
       'subdivision of the country, as an ISO 3166-2 code such as BR-SP, with the name CloudFront ' +
-      'gave it), then "other" for the rest, then a null value for visits without a region.',
+      'gave it), then "other" for the rest, then a null value for visits without a region. ' +
+      `cities lists the top ${String(TOP_CITIES)} approximate cities with their region, kept ` +
+      'only for projects that turned the city on, then "other", then a null value for the ' +
+      'visits without a city (every visit, for a project with the city off).',
   });
 
 const sourceShareShape = {
@@ -325,6 +342,7 @@ export const timelineReportSchema = z
         country: z.string().nullable(),
         region: z.string().nullable(),
         region_name: z.string().nullable(),
+        city: z.string().nullable(),
         channel: z.enum(CHANNELS).nullable(),
         user_id: z.string().nullable(),
         events: z.array(

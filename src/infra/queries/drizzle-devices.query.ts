@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { sql } from 'drizzle-orm';
 import type {
+  CityCount,
   DeviceDimension,
   DevicesQuery,
   RegionCount,
@@ -61,6 +62,29 @@ export class DrizzleDevicesQuery implements DevicesQuery {
         FROM ${events}
         WHERE ${inScope(scope)}
         GROUP BY ${events.region}`,
+    );
+    return [...rows];
+  }
+
+  async cities(scope: QueryScope): Promise<readonly CityCount[]> {
+    const rows = await this.db.execute<{
+      city: string | null;
+      region: string | null;
+      regionName: string | null;
+      visits: number;
+      conversions: number;
+      convertingVisits: number;
+    }>(
+      sql`
+        SELECT ${events.city} AS "city",
+          ${events.region} AS "region",
+          max(${events.regionName}) AS "regionName",
+          ${visits} AS "visits",
+          count(*) FILTER (WHERE ${isConversion(scope)})::int AS "conversions",
+          ${convertingVisits(scope)} AS "convertingVisits"
+        FROM ${events}
+        WHERE ${inScope(scope)}
+        GROUP BY ${events.region}, ${events.city}`,
     );
     return [...rows];
   }

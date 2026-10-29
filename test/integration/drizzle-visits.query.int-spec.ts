@@ -120,6 +120,7 @@ const SEEDED: readonly TrackedEvent[] = [
     country: 'PT',
     region: 'PT-11',
     regionName: 'Lisboa',
+    city: 'Lisboa',
   }),
   event(7, '2026-10-05T01:00:00.000Z', 'page_view', {
     path: '/inicio',
@@ -219,6 +220,7 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       country: 'BR',
       region: null,
       regionName: null,
+      city: null,
       channel: 'paid',
       source: 'google',
       campaign: 'spring_sale',
@@ -234,7 +236,12 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       userId: 'ana',
     });
     expect(visits[2]).toMatchObject({ source: 'news.example.com', campaign: null });
-    expect(visits[3]).toMatchObject({ country: 'PT', region: 'PT-11', regionName: 'Lisboa' });
+    expect(visits[3]).toMatchObject({
+      country: 'PT',
+      region: 'PT-11',
+      regionName: 'Lisboa',
+      city: 'Lisboa',
+    });
     expect(visits[4]).toMatchObject({ source: '(direct)', campaign: null });
   });
 
@@ -324,6 +331,8 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
     expect(await sessions({ country: 'PT' })).toEqual([visitId(4)]);
     expect(await sessions({ region: 'PT-11' })).toEqual([visitId(4)]);
     expect(await sessions({ country: 'BR', region: 'PT-11' })).toEqual([]);
+    expect(await sessions({ region: 'PT-11', city: 'Lisboa' })).toEqual([visitId(4)]);
+    expect(await sessions({ city: 'Porto' })).toEqual([]);
     expect(await sessions({ source: 'google' })).toEqual([visitId(1)]);
     expect(await sessions({ source: 'news.example.com' })).toEqual([visitId(7)]);
     expect(await sessions({ source: '(direct)' })).toEqual([visitId(3)]);

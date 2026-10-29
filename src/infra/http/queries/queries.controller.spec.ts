@@ -95,6 +95,17 @@ const DEVICES: DevicesReport = {
     { value: 'BR-SP', name: 'São Paulo', visits: 3, conversions: 2, convertingVisits: 1 },
     { value: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
   ],
+  cities: [
+    {
+      value: 'Campinas',
+      region: 'BR-SP',
+      regionName: 'São Paulo',
+      visits: 2,
+      conversions: 1,
+      convertingVisits: 1,
+    },
+    { value: null, region: null, regionName: null, visits: 2, conversions: 1, convertingVisits: 0 },
+  ],
 };
 
 const ACQUISITION: AcquisitionReport = {
@@ -173,6 +184,7 @@ const TIMELINE: TimelineReport = {
       country: 'BR',
       region: 'BR-SP',
       regionName: 'São Paulo',
+      city: 'Campinas',
       channel: 'paid',
       userId: 'ana',
       events: [
@@ -270,6 +282,7 @@ describe('QueriesController', () => {
         identity: 'anonymous',
         country: 'BR',
         region: 'BR-SP',
+        city: 'Campinas',
         source: 'google',
         campaign: 'spring_sale',
         failed: 'true',
@@ -291,6 +304,7 @@ describe('QueriesController', () => {
             identity: 'anonymous',
             country: 'BR',
             region: 'BR-SP',
+            city: 'Campinas',
             source: 'google',
             campaign: 'spring_sale',
             failed: true,
@@ -346,6 +360,24 @@ describe('QueriesController', () => {
       regions: [
         { value: 'BR-SP', name: 'São Paulo', visits: 3, conversions: 2, converting_visits: 1 },
         { value: null, name: null, visits: 1, conversions: 0, converting_visits: 0 },
+      ],
+      cities: [
+        {
+          value: 'Campinas',
+          region: 'BR-SP',
+          region_name: 'São Paulo',
+          visits: 2,
+          conversions: 1,
+          converting_visits: 1,
+        },
+        {
+          value: null,
+          region: null,
+          region_name: null,
+          visits: 2,
+          conversions: 1,
+          converting_visits: 0,
+        },
       ],
     });
   });
@@ -571,6 +603,7 @@ describe('QueriesController', () => {
           country: 'BR',
           region: 'BR-SP',
           region_name: 'São Paulo',
+          city: 'Campinas',
           channel: 'paid',
           user_id: 'ana',
           events: [
