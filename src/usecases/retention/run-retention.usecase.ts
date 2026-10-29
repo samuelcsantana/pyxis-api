@@ -16,6 +16,7 @@ import type { Clock } from '../../domain/services/clock';
 
 export const RETENTION_STEPS = [
   'events',
+  'cities',
   'sessions',
   'signInCodes',
   'trialCards',
@@ -48,6 +49,7 @@ export class RunRetentionUseCase {
     const now = this.clock.now();
     const steps: Readonly<Record<RetentionStep, () => Promise<number>>> = {
       events: () => this.deleteOldEvents(eventRetentionCutoff(now)),
+      cities: () => this.eraseCitiesTurnedOff(),
       sessions: () =>
         this.retention.deleteExpiredSessions({
           createdBefore: new Date(now.getTime() - SESSION_ABSOLUTE_TTL_MS),
@@ -68,6 +70,7 @@ export class RunRetentionUseCase {
     };
     const report: Record<RetentionStep, number> = {
       events: 0,
+      cities: 0,
       sessions: 0,
       signInCodes: 0,
       trialCards: 0,
@@ -96,14 +99,29 @@ export class RunRetentionUseCase {
   }
 
   private async deleteOldEvents(cutoff: Date): Promise<number> {
-    let total = 0;
-    for (const projectId of await this.retention.projectIdsNotHeld()) {
-      let deleted: number;
-      do {
-        deleted = await this.retention.deleteEventsBefore(projectId, cutoff, RETENTION_BATCH_SIZE);
-        total += deleted;
-      } while (deleted === RETENTION_BATCH_SIZE);
-    }
-    return total;
+    return inBatches(await this.retention.projectIdsNotHeld(), (projectId) =>
+      this.retention.deleteEventsBefore(projectId, cutoff, RETENTION_BATCH_SIZE),
+    );
   }
+
+  private async eraseCitiesTurnedOff(): Promise<number> {
+    return inBatches(await this.retention.projectIdsWithCitiesToErase(), (projectId) =>
+      this.retention.eraseCities(projectId, RETENTION_BATCH_SIZE),
+    );
+  }
+}
+
+async function inBatches(
+  projectIds: readonly string[],
+  nextBatch: (projectId: string) => Promise<number>,
+): Promise<number> {
+  let total = 0;
+  for (const projectId of projectIds) {
+    let changed: number;
+    do {
+      changed = await nextBatch(projectId);
+      total += changed;
+    } while (changed === RETENTION_BATCH_SIZE);
+  }
+  return total;
 }

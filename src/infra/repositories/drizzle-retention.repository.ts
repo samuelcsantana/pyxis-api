@@ -39,6 +39,40 @@ export class DrizzleRetentionRepository implements RetentionRepository {
     return deleted.length;
   }
 
+  async projectIdsWithCitiesToErase(): Promise<readonly string[]> {
+    const rows = await this.db
+      .select({ id: projects.id })
+      .from(projects)
+      .leftJoin(accounts, eq(accounts.id, projects.accountId))
+      .where(
+        and(
+          eq(projects.cityEnabled, false),
+          isNull(projects.deletionHeldAt),
+          isNull(accounts.deletionHeldAt),
+          sql`EXISTS (
+            SELECT 1 FROM ${events}
+            WHERE ${events.projectId} = ${projects.id} AND ${events.city} IS NOT NULL
+          )`,
+        ),
+      );
+    return rows.map((row) => row.id);
+  }
+
+  async eraseCities(projectId: string, limit: number): Promise<number> {
+    const erased = await this.db.execute<{ id: string }>(sql`
+      UPDATE ${events} SET ${sql.identifier(events.city.name)} = NULL
+      WHERE ctid IN (
+        SELECT ctid FROM ${events}
+        WHERE ${events.projectId} = ${projectId} AND ${events.city} IS NOT NULL
+        LIMIT ${limit}
+      )
+      AND EXISTS (
+        SELECT 1 FROM ${projects} WHERE ${projects.id} = ${projectId} AND NOT ${projects.cityEnabled}
+      )
+      RETURNING ${events.id}`);
+    return erased.length;
+  }
+
   async deleteExpiredSessions(cutoffs: ExpiredSessionCutoffs): Promise<number> {
     const deleted = await this.db.execute<{ id: string }>(sql`
       DELETE FROM ${adminSessions}

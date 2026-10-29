@@ -4,6 +4,7 @@ import { createJobsHandler, DAILY_JOB, type JobsHandlerDependencies } from './jo
 const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = {
   events: 12,
+  cities: 0,
   sessions: 1,
   signInCodes: 2,
   trialCards: 0,
