@@ -277,6 +277,38 @@ describe('the remote MCP endpoint', () => {
     });
   });
 
+  it('describes the cities and the reach, and filters the visits by a city within its region', async () => {
+    const token = await personalToken('Cities');
+    const range = { project_id: SHOP_ID, from: '2026-10-09', to: '2026-10-15' };
+
+    const listed = await post({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, withBearer(token));
+    const devicesTool = listed
+      .json<{ result: { tools: { name: string; description: string }[] } }>()
+      .result.tools.find(({ name }) => name === 'devices');
+    expect(devicesTool?.description).toContain('reach counts the visits of the range');
+
+    const devices = await post(toolCall('devices', range), withBearer(token));
+    const { report } = JSON.parse(toolText(devices.json<ToolAnswer>())) as {
+      report: { cities: unknown[]; reach: { cities: number } };
+    };
+    expect(Array.isArray(report.cities)).toBe(true);
+    expect(report.reach.cities).toBe(0);
+
+    const inCity = await post(
+      toolCall('visits', { ...range, region: 'BR-SP', city: 'Campinas' }),
+      withBearer(token),
+    );
+    expect(inCity.json<ToolAnswer>().result.isError).toBeUndefined();
+
+    const withoutRegion = await post(
+      toolCall('visits', { ...range, city: 'Campinas' }),
+      withBearer(token),
+    );
+    const refused = withoutRegion.json<ToolAnswer>();
+    expect(refused.result.isError).toBe(true);
+    expect(toolText(refused)).toBe('city is matched inside a region: give region too.');
+  });
+
   it('answers times in the project time zone, the same instants the API answers in UTC', async () => {
     const token = await personalToken('Times');
     const fromApi = await withSession('GET', `/v1/projects/${SHOP_ID}/settings`);
