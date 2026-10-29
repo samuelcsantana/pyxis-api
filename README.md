@@ -276,7 +276,7 @@ CloudFront adds; the function's own URL answers 403 without it. The connector's 
 distribution still serves, a CloudFront Function answers 404, because a token names one resource
 address. CloudWatch alarms e-mail the
 operator when requests end in unexpected errors, when the function fails, times out or is
-throttled, when the database grows, when sign-in codes are being guessed, when the day's sign-up
+throttled, when the daily jobs fail, skip a day or swallow a failed step, when the database grows, when sign-in codes are being guessed, when the day's sign-up
 codes run out, when SES's bounce or complaint rate climbs, when a card starts a second free trial,
 and when a refund or an account e-mail fails. Provisioning, deploys, checks, alarms and rollbacks are in the
 [runbook](docs/RUNBOOK.md). Merging a pull request never deploys.

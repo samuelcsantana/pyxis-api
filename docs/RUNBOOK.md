@@ -181,20 +181,23 @@ from a browser outside AWS: CloudFront sets no region for requests from AWS's ow
 Every alarm e-mails `alert_email` through the SNS topic `pyxis-api-alerts`, once when it fires
 and once when it clears.
 
-| Alarm                                     | Fires when                                                                 |
-| ----------------------------------------- | -------------------------------------------------------------------------- |
-| `pyxis-api-unhandled-errors`              | 5 or more requests end in an unexpected 500 within five minutes            |
-| `pyxis-api-function-errors`               | 3 or more HTTP function invocations fail or time out in five minutes       |
-| `pyxis-api-function-throttles`            | 10 or more requests are throttled in five minutes (concurrency full)       |
-| `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch                  |
-| `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                                   |
-| `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                                     |
-| `pyxis-api-repeated-trials`               | A card starts a free trial already started by another account              |
-| `pyxis-api-refund-failures`               | A refund fails when an account is closed (refund by hand in Stripe)        |
-| `pyxis-api-account-notice-failures`       | An end-of-access, reminder or deletion e-mail fails (tried again tomorrow) |
-| `pyxis-api-sign-up-daily-cap`             | A sign-up code request is refused because the day's codes ran out          |
-| `pyxis-api-ses-bounce-rate`               | The SES account's bounce rate reaches 2% (AWS reviews it from 5%)          |
-| `pyxis-api-ses-complaint-rate`            | The SES account's complaint rate reaches 0.08% (AWS reviews it from 0.1%)  |
+| Alarm                                     | Fires when                                                                   |
+| ----------------------------------------- | ---------------------------------------------------------------------------- |
+| `pyxis-api-unhandled-errors`              | 5 or more requests end in an unexpected 500 within five minutes              |
+| `pyxis-api-function-errors`               | 3 or more HTTP function invocations fail or time out in five minutes         |
+| `pyxis-api-function-throttles`            | 10 or more requests are throttled in five minutes (concurrency full)         |
+| `pyxis-api-jobs-function-errors`          | A jobs function invocation fails or times out (a daily step, digest, export) |
+| `pyxis-api-daily-jobs-missed`             | No daily run logged `jobs.daily_done` within 26 hours                        |
+| `pyxis-api-daily-job-step-failures`       | A step of the jobs function logs its failure (see The daily jobs)            |
+| `pyxis-api-database-size`                 | The database passes 70% of the 1 GB of a free Neon branch                    |
+| `pyxis-api-rejected-sign-in-codes`        | 20 wrong sign-in codes within 15 minutes                                     |
+| `pyxis-api-refused-sign-in-code-requests` | 5 refused code requests within an hour                                       |
+| `pyxis-api-repeated-trials`               | A card starts a free trial already started by another account                |
+| `pyxis-api-refund-failures`               | A refund fails when an account is closed (refund by hand in Stripe)          |
+| `pyxis-api-account-notice-failures`       | An end-of-access, reminder or deletion e-mail fails (tried again tomorrow)   |
+| `pyxis-api-sign-up-daily-cap`             | A sign-up code request is refused because the day's codes ran out            |
+| `pyxis-api-ses-bounce-rate`               | The SES account's bounce rate reaches 2% (AWS reviews it from 5%)            |
+| `pyxis-api-ses-complaint-rate`            | The SES account's complaint rate reaches 0.08% (AWS reviews it from 0.1%)    |
 
 The refund and account e-mail alarms count `accounts.refund_failed` and `accounts.notice_failed`
 in both functions' logs; `account:close` runs on the operator's machine, so its failures show in
@@ -247,7 +250,9 @@ aws cloudwatch set-alarm-state --alarm-name pyxis-api-database-size --state-valu
 ```
 
 Then `retention.step_done { step, deleted }` is logged for each step; `retention.step_failed`
-names a step that failed and why. The schedule can be paused with `aws scheduler update-schedule`
+names a step that failed and why. A failed `cities` step means the cities of a project that
+turned the city off were not erased, which the Terms promise within 48 hours: fix the cause and
+run the daily jobs by hand the same day. The schedule can be paused with `aws scheduler update-schedule`
 or by setting its state to `DISABLED` in Terraform.
 
 After measuring the accounts, the job runs the account lifecycle and logs
@@ -258,7 +263,19 @@ ones found alone for the first time, `projectlessRemoved` the ones deleted thirt
 mark (`admin_users.projectless_since`; a person who gets a project back loses the mark). Look for `accounts.reconcile_failed` (Stripe could not be read for one account),
 `accounts.notice_failed` (an e-mail that will be tried again tomorrow), and
 `accounts.deletion_failed` or `accounts.incomplete_removal_failed`, which also fail the invocation
-so the error alarm fires; the next run continues from what is left. Reconciliation needs
+so the error alarm fires; the next run continues from what is left.
+
+The run ends with `jobs.daily_done`, after the best-effort steps (the site icons and the demo
+traffic), whether they succeeded or not. Three alarms watch the jobs function:
+`pyxis-api-jobs-function-errors` fires when an invocation fails or times out (a step that throws
+ends the run, and nothing retries it before the next schedule);
+`pyxis-api-daily-jobs-missed` fires when no `jobs.daily_done` was logged within
+`daily_jobs_missed_after_hours` (26 by default), which also catches a schedule that never ran;
+`pyxis-api-daily-job-step-failures` counts the failures a run swallows and goes on from:
+`retention.step_failed`, `jobs.project_icons_failed`, `jobs.demo_traffic_failed`,
+`accounts.reconcile_failed`, `account_usage.notice_failed` and `exports.failed`. The missed-run
+alarm treats missing data as breaching, so after a fresh `terraform apply` it stays in ALARM until
+an image that logs `jobs.daily_done` has run once. Reconciliation needs
 `/<project>/jobs/STRIPE_SECRET_KEY`, the same value as `/<project>/app/STRIPE_SECRET_KEY`.
 
 ## The weekly digest
