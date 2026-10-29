@@ -416,6 +416,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0050](docs/adr/0050-subscribing-from-the-free-plan-and-withdrawing-back-to-it.md)    | Subscribing from the free plan, and withdrawing back to it                 |
 | [0051](docs/adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md)            | An ended subscription falls back to the free plan                          |
 | [0052](docs/adr/0052-free-accounts-with-no-events-are-deleted.md)                     | Free accounts with no events are deleted after a notice                    |
+| [0053](docs/adr/0053-one-free-account-per-mailbox.md)                                 | One free account per mailbox, not per address                              |
 
 ## Roadmap
 
