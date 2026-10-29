@@ -10,7 +10,9 @@ import {
   DEMO_CONVERSION_EVENT,
   DEMO_DAILY_VARIATION,
   DEMO_PEOPLE,
+  DEMO_PLACES,
   DEMO_VISITS_BY_WEEKDAY,
+  demoCityOf,
 } from './demo-store';
 import { seededRandom } from './seeded-random';
 
@@ -102,7 +104,9 @@ describe('demoEventsOfDay', () => {
     for (const visit of VISITS) {
       const traits = new Set(
         visit.map((event) =>
-          [event.deviceType, event.browser, event.os, event.country, event.region].join('|'),
+          [event.deviceType, event.browser, event.os, event.country, event.region, event.city].join(
+            '|',
+          ),
         ),
       );
 
@@ -111,6 +115,23 @@ describe('demoEventsOfDay', () => {
     expect(ALL_EVENTS.every((event) => /^[A-Z]{2}$/.test(event.country ?? ''))).toBe(true);
     expect(ALL_EVENTS.every((event) => REGION_CODE_PATTERN.test(event.region ?? ''))).toBe(true);
     expect(ALL_EVENTS.every((event) => (event.regionName ?? '').length <= 64)).toBe(true);
+  });
+
+  it('places most visits in a real city of their region, and leaves a few without one', () => {
+    const cities = VISITS.map((visit) => visit[0]?.city ?? null);
+    const placed = cities.filter((city) => city !== null);
+    const regionOfCity = new Map(
+      DEMO_PLACES.flatMap(({ item }) => item.cities.map((city) => [city, item.region] as const)),
+    );
+
+    expect(placed.length).toBeGreaterThan(cities.length * 0.8);
+    expect(placed.length).toBeLessThan(cities.length);
+    expect(
+      VISITS.every((visit) => {
+        const first = visit[0];
+        return first?.city == null || regionOfCity.get(first.city) === first.region;
+      }),
+    ).toBe(true);
   });
 
   it('identifies a person only from a successful sign-in or sign-up onward', () => {
@@ -236,5 +257,29 @@ describe('demoVisitCount', () => {
 
   it('refuses a day the calendar does not know', () => {
     expect(() => demoVisitCount('2026-13-45', seededRandom('nowhere'))).toThrow(InvalidRangeError);
+  });
+});
+
+describe('demoCityOf', () => {
+  const lisbon = {
+    country: 'PT',
+    region: 'PT-11',
+    regionName: 'Lisbon',
+    cities: ['Lisbon', 'Sintra'],
+  };
+
+  it('picks a city of the place from the end of the visit id, the same one every time', () => {
+    expect(demoCityOf(lisbon, '00000000-0000-4000-8000-000000000001')).toBe('Sintra');
+    expect(demoCityOf(lisbon, '00000000-0000-4000-8000-000000000002')).toBe('Lisbon');
+  });
+
+  it('leaves one visit in ten without a city', () => {
+    expect(demoCityOf(lisbon, '00000000-0000-4000-8000-00000000000a')).toBeNull();
+  });
+
+  it('gives no city to a place that lists none', () => {
+    expect(
+      demoCityOf({ ...lisbon, cities: [] }, '00000000-0000-4000-8000-000000000001'),
+    ).toBeNull();
   });
 });

@@ -16,6 +16,7 @@ export interface DemoPlace {
   readonly country: string;
   readonly region: string;
   readonly regionName: string;
+  readonly cities: readonly string[];
 }
 
 export interface DemoRequestOutcome {
@@ -56,23 +57,145 @@ export const DEMO_DEVICES: readonly Weighted<DemoDevice>[] = [
 ];
 
 export const DEMO_PLACES: readonly Weighted<DemoPlace>[] = [
-  { item: { country: 'US', region: 'US-CA', regionName: 'California' }, weight: 14 },
-  { item: { country: 'BR', region: 'BR-SP', regionName: 'São Paulo' }, weight: 12 },
-  { item: { country: 'US', region: 'US-NY', regionName: 'New York' }, weight: 10 },
-  { item: { country: 'GB', region: 'GB-ENG', regionName: 'England' }, weight: 9 },
-  { item: { country: 'US', region: 'US-TX', regionName: 'Texas' }, weight: 7 },
-  { item: { country: 'BR', region: 'BR-RJ', regionName: 'Rio de Janeiro' }, weight: 5 },
-  { item: { country: 'FR', region: 'FR-IDF', regionName: 'Île-de-France' }, weight: 5 },
-  { item: { country: 'CA', region: 'CA-ON', regionName: 'Ontario' }, weight: 5 },
-  { item: { country: 'US', region: 'US-WA', regionName: 'Washington' }, weight: 4 },
-  { item: { country: 'DE', region: 'DE-BE', regionName: 'Berlin' }, weight: 4 },
-  { item: { country: 'IN', region: 'IN-KA', regionName: 'Karnataka' }, weight: 4 },
-  { item: { country: 'DE', region: 'DE-BY', regionName: 'Bavaria' }, weight: 3 },
-  { item: { country: 'PT', region: 'PT-11', regionName: 'Lisbon' }, weight: 3 },
-  { item: { country: 'ES', region: 'ES-MD', regionName: 'Madrid' }, weight: 3 },
-  { item: { country: 'NL', region: 'NL-NH', regionName: 'North Holland' }, weight: 3 },
-  { item: { country: 'AU', region: 'AU-NSW', regionName: 'New South Wales' }, weight: 3 },
+  {
+    item: {
+      country: 'US',
+      region: 'US-CA',
+      regionName: 'California',
+      cities: ['San Francisco', 'Los Angeles', 'San Diego', 'San Jose'],
+    },
+    weight: 14,
+  },
+  {
+    item: {
+      country: 'BR',
+      region: 'BR-SP',
+      regionName: 'São Paulo',
+      cities: ['São Paulo', 'Campinas', 'Santos', 'Ribeirão Preto'],
+    },
+    weight: 12,
+  },
+  {
+    item: {
+      country: 'US',
+      region: 'US-NY',
+      regionName: 'New York',
+      cities: ['New York', 'Brooklyn', 'Buffalo'],
+    },
+    weight: 10,
+  },
+  {
+    item: {
+      country: 'GB',
+      region: 'GB-ENG',
+      regionName: 'England',
+      cities: ['London', 'Manchester', 'Bristol'],
+    },
+    weight: 9,
+  },
+  {
+    item: {
+      country: 'US',
+      region: 'US-TX',
+      regionName: 'Texas',
+      cities: ['Austin', 'Houston', 'Dallas'],
+    },
+    weight: 7,
+  },
+  {
+    item: {
+      country: 'BR',
+      region: 'BR-RJ',
+      regionName: 'Rio de Janeiro',
+      cities: ['Rio de Janeiro', 'Niterói'],
+    },
+    weight: 5,
+  },
+  {
+    item: {
+      country: 'FR',
+      region: 'FR-IDF',
+      regionName: 'Île-de-France',
+      cities: ['Paris', 'Versailles'],
+    },
+    weight: 5,
+  },
+  {
+    item: { country: 'CA', region: 'CA-ON', regionName: 'Ontario', cities: ['Toronto', 'Ottawa'] },
+    weight: 5,
+  },
+  {
+    item: {
+      country: 'US',
+      region: 'US-WA',
+      regionName: 'Washington',
+      cities: ['Seattle', 'Spokane'],
+    },
+    weight: 4,
+  },
+  { item: { country: 'DE', region: 'DE-BE', regionName: 'Berlin', cities: ['Berlin'] }, weight: 4 },
+  {
+    item: {
+      country: 'IN',
+      region: 'IN-KA',
+      regionName: 'Karnataka',
+      cities: ['Bengaluru', 'Mysuru'],
+    },
+    weight: 4,
+  },
+  {
+    item: {
+      country: 'DE',
+      region: 'DE-BY',
+      regionName: 'Bavaria',
+      cities: ['Munich', 'Nuremberg'],
+    },
+    weight: 3,
+  },
+  {
+    item: { country: 'PT', region: 'PT-11', regionName: 'Lisbon', cities: ['Lisbon', 'Sintra'] },
+    weight: 3,
+  },
+  {
+    item: {
+      country: 'ES',
+      region: 'ES-MD',
+      regionName: 'Madrid',
+      cities: ['Madrid', 'Alcalá de Henares'],
+    },
+    weight: 3,
+  },
+  {
+    item: {
+      country: 'NL',
+      region: 'NL-NH',
+      regionName: 'North Holland',
+      cities: ['Amsterdam', 'Haarlem'],
+    },
+    weight: 3,
+  },
+  {
+    item: {
+      country: 'AU',
+      region: 'AU-NSW',
+      regionName: 'New South Wales',
+      cities: ['Sydney', 'Newcastle'],
+    },
+    weight: 3,
+  },
 ];
+
+const SLOTS_PER_CITYLESS_VISIT = 10;
+const SESSION_SLOT_DIGITS = 4;
+const HEXADECIMAL = 16;
+
+export function demoCityOf(place: DemoPlace, sessionId: string): string | null {
+  const slot = Number.parseInt(sessionId.slice(-SESSION_SLOT_DIGITS), HEXADECIMAL);
+  if (slot % SLOTS_PER_CITYLESS_VISIT === 0) {
+    return null;
+  }
+  return place.cities[slot % place.cities.length] ?? null;
+}
 
 function source(
   referrerHost: string | null,
