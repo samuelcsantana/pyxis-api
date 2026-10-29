@@ -12,6 +12,12 @@ export const projectSettingsSchema = z
       .string()
       .nullable()
       .describe('The event counted as a conversion; null when the project has none'),
+    city_enabled: z
+      .boolean()
+      .describe(
+        "Whether new events keep the visitor's approximate city; off by default, and when off " +
+          'the city is never read',
+      ),
     allowed_origins: z
       .array(z.string())
       .describe('The origins whose pages may send events with a public key'),

@@ -13,6 +13,7 @@ const PROJECT: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'UTC',
   conversionEvent: null,
+  cityEnabled: false,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const RANGE = { from: '2026-10-04', to: '2026-10-05' };

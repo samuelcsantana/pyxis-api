@@ -28,6 +28,7 @@ const PROJECT: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'UTC',
   conversionEvent: null,
+  cityEnabled: false,
   createdAt: new Date('2026-11-01T00:00:00.000Z'),
 };
 const GUEST: PersonOfProject = {

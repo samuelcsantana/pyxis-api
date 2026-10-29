@@ -88,6 +88,7 @@ describe('project settings and keys against a real Postgres', () => {
     expect(created.project).toEqual({
       ...SHOP,
       id: expect.any(String) as string,
+      cityEnabled: false,
       createdAt: expect.any(Date) as Date,
     });
     expect((await lookups.findByPublicKey(publicKey('A')))?.id).toBe(created.project.id);
@@ -132,6 +133,18 @@ describe('project settings and keys against a real Postgres', () => {
     expect(await settings.update(project.id, { name: 'Store' })).toMatchObject({
       name: 'Store',
       timezone: 'UTC',
+    });
+  });
+
+  it('creates a project with the city off and turns it on and off', async () => {
+    const { project } = await settings.createWithPublicKey(SHOP, publicKey('A'));
+
+    expect(project.cityEnabled).toBe(false);
+    expect(await settings.update(project.id, { cityEnabled: true })).toMatchObject({
+      cityEnabled: true,
+    });
+    expect(await settings.update(project.id, { cityEnabled: false })).toMatchObject({
+      cityEnabled: false,
     });
   });
 

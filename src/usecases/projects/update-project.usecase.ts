@@ -19,10 +19,11 @@ export interface UpdateProjectCommand {
   readonly allowedOrigins?: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string | null;
+  readonly cityEnabled?: boolean;
 }
 
 function validatedChanges(command: UpdateProjectCommand): ProjectChanges {
-  const { name, allowedOrigins, timezone, conversionEvent } = command;
+  const { name, allowedOrigins, timezone, conversionEvent, cityEnabled } = command;
   return {
     ...(name === undefined ? {} : { name: requireProjectName(name) }),
     ...(allowedOrigins === undefined ? {} : { allowedOrigins: requireOrigins(allowedOrigins) }),
@@ -33,6 +34,7 @@ function validatedChanges(command: UpdateProjectCommand): ProjectChanges {
           conversionEvent:
             conversionEvent === null ? null : requireConversionEvent(conversionEvent),
         }),
+    ...(cityEnabled === undefined ? {} : { cityEnabled }),
   };
 }
 

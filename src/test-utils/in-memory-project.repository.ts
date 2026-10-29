@@ -71,7 +71,12 @@ export class InMemoryProjectRepository
   }
 
   async createWithPublicKey(project: NewProject, publicKey: string): Promise<CreatedProject> {
-    const created: Project = { ...project, id: this.nextId(), createdAt: CREATED_AT };
+    const created: Project = {
+      ...project,
+      id: this.nextId(),
+      cityEnabled: false,
+      createdAt: CREATED_AT,
+    };
     this.projects.set(created.id, created);
     const key = await this.create({ projectId: created.id, kind: 'public', publicKey });
     return { project: created, publicKeyId: key.id };

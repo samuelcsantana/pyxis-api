@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "city_enabled" boolean DEFAULT false NOT NULL;

@@ -12,6 +12,7 @@ const SHOP: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
+  cityEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const WEEK = { from: '2026-10-05', to: '2026-10-11' };
