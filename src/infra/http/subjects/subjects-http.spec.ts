@@ -117,6 +117,7 @@ describe('SubjectsController', () => {
         country: 'BR',
         region: 'BR-SP',
         regionName: 'São Paulo',
+        city: null,
         properties: { plan: 'mei' },
       },
     ],

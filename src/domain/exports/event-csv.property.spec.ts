@@ -52,6 +52,7 @@ const exportedEvent: fc.Arbitrary<ExportedEvent> = fc.record({
   country: optionalText,
   region: optionalText,
   regionName: optionalText,
+  city: optionalText,
   properties: fc.dictionary(
     text,
     fc.oneof(text, fc.double({ noNaN: true, noDefaultInfinity: true }), fc.boolean()),
@@ -108,6 +109,7 @@ describe('the events CSV, for any value', () => {
             country: guarded(event.country ?? ''),
             region: guarded(event.region ?? ''),
             region_name: guarded(event.regionName ?? ''),
+            city: guarded(event.city ?? ''),
             properties: JSON.stringify(event.properties),
           },
         );

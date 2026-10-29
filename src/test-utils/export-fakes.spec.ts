@@ -23,6 +23,7 @@ function event(id: string): ExportedEvent {
     country: null,
     region: null,
     regionName: null,
+    city: null,
     properties: {},
   };
 }

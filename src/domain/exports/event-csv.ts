@@ -19,6 +19,7 @@ const COLUMNS = [
   'country',
   'region',
   'region_name',
+  'city',
   'properties',
 ] as const;
 
@@ -58,6 +59,7 @@ export function eventCsvLine(event: ExportedEvent): string {
     event.country,
     event.region,
     event.regionName,
+    event.city,
     JSON.stringify(event.properties),
   ];
   return `${fields.map(csvField).join(',')}${LINE_END}`;

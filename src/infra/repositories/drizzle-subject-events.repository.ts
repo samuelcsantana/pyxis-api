@@ -63,7 +63,7 @@ export class DrizzleSubjectEventsRepository implements SubjectEventsRepository {
         ${events.fromAdClick} AS "fromAdClick", ${events.deviceType} AS "deviceType",
         ${events.browser} AS "browser", ${events.os} AS "os", ${events.country} AS "country",
         ${events.region} AS "region", ${events.regionName} AS "regionName",
-        ${events.properties} AS "properties"
+        ${events.city} AS "city", ${events.properties} AS "properties"
       FROM ${events}
       WHERE ${subjectRows(projectId, userId)}${afterCursor}
       ORDER BY ${events.occurredAt}, ${events.id}

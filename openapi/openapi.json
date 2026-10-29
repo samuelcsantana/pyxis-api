@@ -4072,6 +4072,12 @@
                 "browser": {
                   "type": "string"
                 },
+                "city": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "country": {
                   "type": [
                     "string",
@@ -4175,6 +4181,7 @@
                 "country",
                 "region",
                 "region_name",
+                "city",
                 "properties"
               ],
               "type": "object"
