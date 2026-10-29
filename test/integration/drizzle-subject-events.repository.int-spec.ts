@@ -59,6 +59,9 @@ function event(
 const SEEDED: readonly TrackedEvent[] = [
   event(SIGN_UP_VISIT, '2026-10-04T12:00:00.000Z', 'page_view', { path: '/calculator' }),
   event(SIGN_UP_VISIT, '2026-10-04T12:03:00.000Z', 'calculator_used', {
+    region: 'BR-BA',
+    regionName: 'Bahia',
+    city: 'Salvador',
     properties: { plan: 'mei' },
   }),
   event(SIGN_UP_VISIT, '2026-10-04T12:05:00.000Z', 'identify', { userId: 'ana' }),
@@ -122,8 +125,9 @@ describe('subject repositories against a real Postgres', () => {
       browser: 'safari',
       os: 'ios',
       country: 'BR',
-      region: null,
-      regionName: null,
+      region: 'BR-BA',
+      regionName: 'Bahia',
+      city: 'Salvador',
       properties: { plan: 'mei' },
     });
   });

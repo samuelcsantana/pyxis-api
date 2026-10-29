@@ -59,6 +59,7 @@ function subjectEventsBody(page: SubjectEventsPage): SubjectEventsBody {
       country: event.country,
       region: event.region,
       region_name: event.regionName,
+      city: event.city,
       properties: { ...event.properties },
     })),
     next_after: page.nextAfter,

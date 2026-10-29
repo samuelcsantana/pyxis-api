@@ -45,6 +45,7 @@ function eventAt(index: number): ExportedEvent {
     country: null,
     region: null,
     regionName: null,
+    city: null,
     properties: {},
   };
 }
