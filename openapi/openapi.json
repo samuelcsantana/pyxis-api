@@ -1779,6 +1779,9 @@
             },
             "type": "array"
           },
+          "city_enabled": {
+            "type": "boolean"
+          },
           "conversion_event": {
             "type": [
               "string",
@@ -1808,6 +1811,7 @@
           "allowed_origins",
           "timezone",
           "conversion_event",
+          "city_enabled",
           "created_at"
         ],
         "type": "object"
@@ -2911,6 +2915,10 @@
             "minItems": 1,
             "type": "array"
           },
+          "city_enabled": {
+            "description": "Keep the visitor's approximate city on new events; off by default. Turning it off stops reading the city at once and erases the cities already kept within a day.",
+            "type": "boolean"
+          },
           "conversion_event": {
             "anyOf": [
               {
@@ -3111,6 +3119,10 @@
             },
             "type": "array"
           },
+          "city_enabled": {
+            "description": "Whether new events keep the visitor's approximate city; off by default, and when off the city is never read",
+            "type": "boolean"
+          },
           "conversion_event": {
             "description": "The event counted as a conversion; null when the project has none",
             "type": [
@@ -3275,6 +3287,7 @@
           "name",
           "timezone",
           "conversion_event",
+          "city_enabled",
           "allowed_origins",
           "created_at",
           "account_id",

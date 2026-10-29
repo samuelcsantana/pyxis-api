@@ -59,6 +59,7 @@ async function setup(settings: RemoteMcpSettings = OPEN) {
     allowedOrigins: [],
     timezone: 'UTC',
     conversionEvent: null,
+    cityEnabled: false,
     createdAt: NOW,
   });
   const admin: AdminUser = await admins.grantAccess('ana@example.com', PROJECT_ID);

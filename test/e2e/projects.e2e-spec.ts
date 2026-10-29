@@ -109,8 +109,30 @@ describe('projects managed by the owner of their account', () => {
       role: 'owner',
       timezone: 'America/Sao_Paulo',
       allowed_origins: ['https://owned-shop.example.com'],
+      city_enabled: false,
       public_keys: [{ id: created.public_key.id, key: created.public_key.key }],
     });
+  });
+
+  it('turns the city on and off, and shows it in the settings', async () => {
+    const { project_id: projectId } = await createProject();
+
+    const on = await call('PATCH', `/v1/projects/${projectId}`, {
+      payload: { city_enabled: true },
+    });
+    const settingsWhileOn = await call('GET', `/v1/projects/${projectId}/settings`);
+    const off = await call('PATCH', `/v1/projects/${projectId}`, {
+      payload: { city_enabled: false },
+    });
+    const notBoolean = await call('PATCH', `/v1/projects/${projectId}`, {
+      payload: { city_enabled: 'yes' },
+    });
+
+    expect(on.statusCode).toBe(200);
+    expect(on.json()).toMatchObject({ id: projectId, city_enabled: true });
+    expect(settingsWhileOn.json()).toMatchObject({ city_enabled: true });
+    expect(off.json()).toMatchObject({ city_enabled: false });
+    expect(notBoolean.statusCode).toBe(400);
   });
 
   it('changes the settings, and refuses an origin a browser would never send', async () => {

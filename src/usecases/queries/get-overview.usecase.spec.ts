@@ -12,6 +12,7 @@ const PROJECT: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
+  cityEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const LATE_EVENING_IN_SAO_PAULO = new Date('2026-10-06T02:30:00.000Z');

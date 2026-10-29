@@ -37,6 +37,7 @@ const PROJECT: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'UTC',
   conversionEvent: null,
+  cityEnabled: false,
   createdAt: new Date('2026-11-02T00:00:00.000Z'),
 };
 
@@ -87,6 +88,7 @@ describe('managedProjectBody', () => {
       allowed_origins: ['https://shop.example.com'],
       timezone: 'UTC',
       conversion_event: null,
+      city_enabled: false,
       created_at: '2026-11-02T00:00:00.000Z',
     });
   });
@@ -150,6 +152,7 @@ describe('ProjectsController', () => {
       allowed_origins: ['https://store.example.com'],
       timezone: 'UTC',
       conversion_event: null,
+      city_enabled: true,
     });
 
     expect(body.id).toBe(PROJECT.id);
@@ -160,6 +163,7 @@ describe('ProjectsController', () => {
       allowedOrigins: ['https://store.example.com'],
       timezone: 'UTC',
       conversionEvent: null,
+      cityEnabled: true,
     });
   });
 

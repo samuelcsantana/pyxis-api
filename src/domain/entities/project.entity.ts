@@ -4,5 +4,6 @@ export interface Project {
   readonly allowedOrigins: readonly string[];
   readonly timezone: string;
   readonly conversionEvent: string | null;
+  readonly cityEnabled: boolean;
   readonly createdAt: Date;
 }

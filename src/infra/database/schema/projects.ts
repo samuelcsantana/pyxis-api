@@ -25,6 +25,7 @@ export const projects = pgTable(
       length: MAX_DELETION_HOLD_REASON_LENGTH,
     }),
     demoTraffic: boolean('demo_traffic').notNull().default(false),
+    cityEnabled: boolean('city_enabled').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index('projects_account_id_idx').on(table.accountId)],

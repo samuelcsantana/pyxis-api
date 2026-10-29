@@ -48,6 +48,13 @@ export const projectChangesSchema = z
       .nullable()
       .optional()
       .describe('The event counted as a conversion; null clears it'),
+    city_enabled: z
+      .boolean()
+      .optional()
+      .describe(
+        "Keep the visitor's approximate city on new events; off by default. Turning it off " +
+          'stops reading the city at once and erases the cities already kept within a day.',
+      ),
   })
   .meta({ id: 'ProjectChanges', description: 'The settings to change; the rest stay.' });
 
@@ -58,6 +65,7 @@ export const managedProjectSchema = z
     allowed_origins: z.array(z.string()),
     timezone: z.string(),
     conversion_event: z.string().nullable(),
+    city_enabled: z.boolean(),
     created_at: z.iso.datetime(),
   })
   .meta({ id: 'ManagedProject', description: 'The settings of the project after the change.' });

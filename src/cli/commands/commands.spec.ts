@@ -231,6 +231,7 @@ describe('account:show', () => {
           allowedOrigins: ['https://shop.example.com'],
           timezone: 'UTC',
           conversionEvent: null,
+          cityEnabled: false,
           createdAt: new Date('2026-10-14T10:00:00.000Z'),
         },
       ],
@@ -408,6 +409,7 @@ describe('account:limits', () => {
       allowedOrigins: ['https://site.example.com'],
       timezone: 'UTC',
       conversionEvent: null,
+      cityEnabled: false,
       createdAt: new Date('2026-10-14T10:00:00.000Z'),
     };
     context.accounts.add(account, {
@@ -966,6 +968,17 @@ describe('project:update', () => {
     });
   });
 
+  it('reads --city-on and --city-off as turning the city on and off', () => {
+    expect(projectUpdateCommand.parse(['--project', PROJECT_ID, '--city-on'])).toEqual({
+      projectId: PROJECT_ID,
+      cityEnabled: true,
+    });
+    expect(projectUpdateCommand.parse(['--project', PROJECT_ID, '--city-off'])).toEqual({
+      projectId: PROJECT_ID,
+      cityEnabled: false,
+    });
+  });
+
   it('reads --clear-conversion-event as clearing it', () => {
     expect(
       projectUpdateCommand.parse(['--project', PROJECT_ID, '--clear-conversion-event']),
@@ -982,6 +995,7 @@ describe('project:update', () => {
       ['--project', PROJECT_ID, '--conversion-event', 'x', '--clear-conversion-event'],
     ],
     ['a project id that is not a UUID', ['--project', 'shop', '--timezone', 'UTC']],
+    ['both city flags', ['--project', PROJECT_ID, '--city-on', '--city-off']],
   ])('refuses %s', (_, argv) => {
     expect(() => projectUpdateCommand.parse(argv)).toThrow(CliUsageError);
   });
@@ -1008,7 +1022,23 @@ describe('project:update', () => {
       'allowed_origins=https://shop.example.com,http://localhost:5173',
       'timezone=Europe/Lisbon',
       'conversion_event=plan_selected',
+      'city_enabled=false',
     ]);
+    expect(output.err).toEqual([]);
+  });
+
+  it('turns the city on and off, saying what each one means', async () => {
+    const { context, projectId } = await createdProject();
+    const on = captureOutput();
+    const off = captureOutput();
+
+    await projectUpdateCommand.execute(context, { projectId, cityEnabled: true }, on);
+    await projectUpdateCommand.execute(context, { projectId, cityEnabled: false }, off);
+
+    expect(on.out).toContain('city_enabled=true');
+    expect(on.err).toEqual([expect.stringContaining('privacy notice')]);
+    expect(off.out).toContain('city_enabled=false');
+    expect(off.err).toEqual([expect.stringContaining('erases the cities already kept')]);
   });
 
   it('changes only the time zone when that is all it is given', async () => {

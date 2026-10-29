@@ -12,6 +12,7 @@ const PROJECT: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'America/Sao_Paulo',
   conversionEvent: null,
+  cityEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 

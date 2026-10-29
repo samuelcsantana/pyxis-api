@@ -19,6 +19,7 @@ const SHOP: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'America/Sao_Paulo',
   conversionEvent: null,
+  cityEnabled: false,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const BLOG: Project = { ...SHOP, id: '00000000-0000-4000-b000-000000000002', name: 'Blog' };

@@ -352,6 +352,16 @@ describe('UpdateProjectUseCase', () => {
     ).toBeNull();
   });
 
+  it('creates a project with the city off, and turns it on and off', async () => {
+    const { store, updateProject, projectId } = await withProject();
+
+    expect((await store.findById(projectId))?.cityEnabled).toBe(false);
+    expect((await updateProject.execute({ projectId, cityEnabled: true })).cityEnabled).toBe(true);
+    expect((await updateProject.execute({ projectId, cityEnabled: false })).cityEnabled).toBe(
+      false,
+    );
+  });
+
   it('refuses an invalid change before writing anything', async () => {
     const { store, updateProject, projectId } = await withProject();
 
@@ -435,6 +445,7 @@ describe('DeleteProjectUseCase', () => {
       allowedOrigins: ['https://shop.example.com'],
       timezone: 'UTC',
       conversionEvent: null,
+      cityEnabled: false,
       createdAt: NOW,
     });
 

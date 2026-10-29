@@ -24,6 +24,7 @@ export function projectSettingsBody(settings: ProjectSettings): ProjectSettingsB
     name: settings.name,
     timezone: settings.timezone,
     conversion_event: settings.conversionEvent,
+    city_enabled: settings.cityEnabled,
     allowed_origins: [...settings.allowedOrigins],
     created_at: settings.createdAt.toISOString(),
     account_id: settings.accountId,
