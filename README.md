@@ -28,12 +28,8 @@ queries and erases a person's events on request, without cookies or personal dat
 </div>
 
 > **Status:** in production since 2026-10-06 at `api.pyxis-analytics.dev` (AWS Lambda behind
-> CloudFront, sa-east-1): ingestion, dashboard sign-in and queries, erasure, retention and the
-> weekly digest. Since 2026-10-15 it opens sign-up for the hosted plan, billed through Stripe;
-> since 2026-10-16 it is also the remote MCP server that Claude connects to, at
-> `https://api.pyxis-analytics.dev/mcp`; and since 2026-10-28 a new account starts on the free
-> plan, without a card and without a trial. `main` is deployed by the deploy script on request
-> (see [Deployment](#deployment)).
+> CloudFront, sa-east-1); `main` is deployed by the deploy script on request (see
+> [Deployment](#deployment)).
 
 ## Ecosystem
 
@@ -423,50 +419,8 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 
 ## Roadmap
 
-- [x] Service skeleton, quality gates, OpenAPI export
-- [x] Database: Drizzle, migrations, least-privilege roles, local Postgres
-- [x] Ingestion: domain rules, `POST /v1/batch`, project and key scripts
-- [x] Deployment code: Lambda handlers, image, Terraform, deploy script, runbook
-- [x] First apply to AWS
-- [x] Dashboard sign-in: emailed code, opaque sessions, `admin:grant`
-- [x] Dashboard queries: overview, devices, acquisition, features, requests, funnel, timeline
-- [x] Visits list: filtered by pages, events, channel, device and identity
-- [x] Property breakdown of a named event
-- [x] Erasure and export of a person's events
-- [x] Retention: a daily job deletes events older than 13 months
-- [x] API reference on GitHub Pages
-- [x] Database size report and alarm (in Terraform, applied with the stack)
-- [x] Load test script, run against the local stack
-- [x] Load test through CloudFront
-- [x] E-mail preferences: the weekly digest switch and the admin's language
-- [x] Weekly digest e-mail on Mondays
-- [x] Sign-in abuse alarms: rejected codes and refused code requests, read from the logs
-- [x] Read-only access tokens for agents, the ones `pyxis-mcp` reads with
-- [x] Accounts that own projects, with the hosted plan's project limit
-- [x] Monthly quota per account, measured daily, ingestion paused at 150%
-- [x] Billing through Stripe: Checkout, portal and the webhook that keeps each account's status
-- [x] Sign-up behind a switch, with the terms version accepted and Checkout for the owner
-- [x] Projects and keys managed by the owner of their account
-- [x] People added and removed by the owner, with an invitation e-mail
-- [x] The end of an account: reconciliation, revoked keys, notices and deletion after thirty days
-- [x] The welcome e-mail with the terms accepted
-- [x] Exports of a project, by e-mail, for a week
-- [x] Repeated free trials with the same card detected, with an alarm
-- [x] Account closed by its owner: cancelled at once, refunded inside seven days, deleted later
-- [x] Abuse tools for the operator: suspend an account or a person, close with a chosen refund,
-      hold a deletion, revoke a token; alarms on failed refunds and account e-mails
-- [x] OAuth server for the Claude connector, behind a switch
-- [x] The remote MCP endpoint, `/mcp`, with the tools of `pyxis-mcp`
-- [x] Promotion codes in Checkout, behind a switch
-- [x] A batch refused for its key or its origin is readable by the page that sent it
-- [x] Every e-mail in seven languages
-- [x] A reviewer code for connector directory reviewers, opened and closed by the operator
-- [x] Demo traffic: invented visits added every day to a project of the operator
-- [x] The free plan's status, limits and pause at 100%
-- [x] Sign-up into the free plan, behind a switch, with a waiting list at the cap
-- [x] Subscribing from the free plan, and withdrawing back to it within 7 days
-- [x] Falling back to the free plan when a paid subscription ends
-- [x] Free accounts with no events deleted after a notice
+What shipped, release by release, is in the [CHANGELOG](CHANGELOG.md) and the
+[GitHub releases](https://github.com/samuelcsantana/pyxis-api/releases).
 
 ## Contributing and license
 
