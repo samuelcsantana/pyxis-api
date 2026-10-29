@@ -66,6 +66,7 @@ function visitConditions(filters: ReportFilters): readonly SQL[] {
     ...identityConditions(filters.identity),
     ...anyEventWith(events.country, filters.country),
     ...anyEventWith(events.region, filters.region),
+    ...anyEventWith(events.city, filters.city),
     ...entryWith(entrySource, filters.source),
     ...entryWith(events.utmCampaign, filters.campaign),
     ...failureConditions(filters.failed),

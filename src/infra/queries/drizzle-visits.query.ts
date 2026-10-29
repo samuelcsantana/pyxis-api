@@ -80,6 +80,7 @@ interface VisitRow {
   readonly country: string | null;
   readonly region: string | null;
   readonly regionName: string | null;
+  readonly city: string | null;
   readonly channel: Channel | null;
   readonly source: string | null;
   readonly campaign: string | null;
@@ -107,6 +108,7 @@ function listItem(row: VisitRow): VisitListItem {
     country: row.country,
     region: row.region,
     regionName: row.regionName,
+    city: row.city,
     channel: row.channel,
     source: row.source,
     campaign: row.campaign,
@@ -138,6 +140,7 @@ export class DrizzleVisitsQuery implements VisitsQuery {
           ${firstOf(sql`${events.country}`)} AS "country",
           ${firstOf(sql`${events.region}`)} AS "region",
           ${firstOf(sql`${events.regionName}`)} AS "regionName",
+          ${firstOf(sql`${events.city}`)} AS "city",
           ${firstOf(sql`${events.channel}`, sql`${events.channel} IS NOT NULL`)} AS "channel",
           ${firstOf(entrySource, isEntryPageView)} AS "source",
           ${firstOf(sql`${events.utmCampaign}`, isEntryPageView)} AS "campaign",
@@ -165,7 +168,7 @@ export class DrizzleVisitsQuery implements VisitsQuery {
       )
       SELECT totals."total", page."sessionId", page."entryPath", page."pageViews",
         page."failedRequests", page."deviceType", page."browser", page."os", page."country",
-        page."region", page."regionName", page."channel", page."source", page."campaign", page."userId",
+        page."region", page."regionName", page."city", page."channel", page."source", page."campaign", page."userId",
         ${isoUtc(sql`page."startedAtValue"`)} AS "startedAt",
         ${isoUtc(sql`page."endedAtValue"`)} AS "endedAt",
         to_jsonb(ARRAY(

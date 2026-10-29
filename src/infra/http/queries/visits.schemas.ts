@@ -56,6 +56,7 @@ export const visitsReportSchema = z
         country: z.string().nullable(),
         region: z.string().nullable(),
         region_name: z.string().nullable(),
+        city: z.string().nullable(),
         channel: z.enum(CHANNELS).nullable(),
         source: z.string().nullable(),
         campaign: z.string().nullable(),

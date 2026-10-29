@@ -30,6 +30,7 @@ export interface ReportFilters {
   readonly identity: VisitIdentity | null;
   readonly country: string | null;
   readonly region: string | null;
+  readonly city: string | null;
   readonly source: string | null;
   readonly campaign: string | null;
   readonly failed: boolean;
@@ -45,6 +46,7 @@ export const NO_REPORT_FILTERS: ReportFilters = {
   identity: null,
   country: null,
   region: null,
+  city: null,
   source: null,
   campaign: null,
   failed: false,

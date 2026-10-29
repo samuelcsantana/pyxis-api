@@ -45,6 +45,7 @@ function visitsBody(report: VisitsReport, timezone: string): VisitsReportBody {
       country: visit.country,
       region: visit.region,
       region_name: visit.regionName,
+      city: visit.city,
       channel: visit.channel,
       source: visit.source,
       campaign: visit.campaign,

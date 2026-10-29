@@ -5,6 +5,7 @@ import {
   DEVICES_QUERY,
   type DevicesQuery,
   type DevicesReport,
+  topCitiesAndRest,
   topRegionsAndRest,
   topValuesAndOther,
 } from '../../domain/queries/devices';
@@ -23,13 +24,14 @@ export class GetDevicesUseCase {
     const countConversions = project.conversionEvent !== null;
     const shares = async (dimension: DeviceDimension) =>
       topValuesAndOther(await this.query.breakdown(current, dimension), countConversions);
-    const [deviceType, browser, os, country, regions] = await Promise.all([
+    const [deviceType, browser, os, country, regions, cities] = await Promise.all([
       shares('deviceType'),
       shares('browser'),
       shares('os'),
       shares('country'),
       this.query.regions(current).then((counts) => topRegionsAndRest(counts, countConversions)),
+      this.query.cities(current).then((counts) => topCitiesAndRest(counts, countConversions)),
     ]);
-    return { deviceType, browser, os, country, regions };
+    return { deviceType, browser, os, country, regions, cities };
   }
 }

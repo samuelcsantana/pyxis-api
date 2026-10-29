@@ -25,6 +25,7 @@ function visit(index: number): VisitSummary {
     country: 'BR',
     region: 'BR-SP',
     regionName: 'São Paulo',
+    city: null,
     channel: index === 0 ? 'paid' : null,
     userId: index === 0 ? 'ana' : null,
   };

@@ -1,4 +1,5 @@
 import type {
+  CityCount,
   DeviceDimension,
   DevicesQuery,
   RegionCount,
@@ -11,6 +12,8 @@ export class StubDevicesQuery implements DevicesQuery {
   readonly askedForRegions: QueryScope[] = [];
   readonly counts = new Map<DeviceDimension, readonly ValueCount[]>();
   regionCounts: readonly RegionCount[] = [];
+  readonly askedForCities: QueryScope[] = [];
+  cityCounts: readonly CityCount[] = [];
 
   breakdown(scope: QueryScope, dimension: DeviceDimension): Promise<readonly ValueCount[]> {
     this.asked.push({ scope, dimension });
@@ -20,5 +23,10 @@ export class StubDevicesQuery implements DevicesQuery {
   regions(scope: QueryScope): Promise<readonly RegionCount[]> {
     this.askedForRegions.push(scope);
     return Promise.resolve(this.regionCounts);
+  }
+
+  cities(scope: QueryScope): Promise<readonly CityCount[]> {
+    this.askedForCities.push(scope);
+    return Promise.resolve(this.cityCounts);
   }
 }

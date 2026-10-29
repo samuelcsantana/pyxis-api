@@ -48,7 +48,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   answer says which time that was:
   [ADR 0010](adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)),
   `/devices` (device type, browser, system and country, top five and "other", plus the top ten
-  regions, "other" and the visits without a region) and
+  regions, "other" and the visits without a region, and the top twenty approximate cities with
+  their region, "other" and the visits without a city, which is every visit of a project that
+  keeps the city off) and
   `/acquisition` (visits per day and channel, sources and campaigns with conversions and ad
   clicks; a visit's source is its campaign source, else its referring host, else `(ad click)`
   when it came from an ad click, else `(direct)`); wherever
@@ -80,7 +82,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   entry page, page views, first named events, failed requests and the source and campaign it
   came from, plus the total of matching visits; filtered by up to three pages it viewed, a star
   matching any characters, a named event with an optional property value, channel, device,
-  browser, system, country, region, source, campaign, whether it was identified, a request route
+  browser, system, country, region, city (by its exact name, sent with its region), source,
+  campaign, whether it was identified, a request route
   (`POST /orders/:id`) and
   whether a request, or a request to that route, failed; a visit is one browser tab, and nothing
   links two of them) and

@@ -10,6 +10,7 @@ import {
   MAX_REFERRER_HOST_LENGTH,
   MAX_UTM_VALUE_LENGTH,
 } from '../../../domain/events/event-limits';
+import { MAX_CITY_NAME_LENGTH } from '../../../domain/events/city';
 import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import {
   MAX_VISIT_PATH_FILTERS,
@@ -36,6 +37,7 @@ export function reportFiltersOf(query: ReportFilterParams): ReportFilters {
     identity: query.identity ?? null,
     country: query.country ?? null,
     region: query.region ?? null,
+    city: query.city ?? null,
     source: query.source ?? null,
     campaign: query.campaign ?? null,
     failed: query.failed ?? false,
@@ -111,6 +113,14 @@ export function ApiReportFilters() {
         'Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and ' +
         'the subdivision',
       schema: { type: 'string', pattern: REGION_CODE_PATTERN.source },
+    }),
+    ApiQuery({
+      name: 'city',
+      required: false,
+      description:
+        'Only the visits from this approximate city, by its exact name; send it with its region, ' +
+        'since the same name exists in several regions',
+      schema: { type: 'string', minLength: 1, maxLength: MAX_CITY_NAME_LENGTH },
     }),
     ApiQuery({
       name: 'source',

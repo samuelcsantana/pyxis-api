@@ -35,6 +35,24 @@ describe('GetDevicesUseCase', () => {
       { region: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
       { region: 'BR-SP', name: 'São Paulo', visits: 6, conversions: 1, convertingVisits: 1 },
     ];
+    query.cityCounts = [
+      {
+        city: null,
+        region: 'BR-SP',
+        regionName: 'São Paulo',
+        visits: 4,
+        conversions: 0,
+        convertingVisits: 0,
+      },
+      {
+        city: 'Campinas',
+        region: 'BR-SP',
+        regionName: 'São Paulo',
+        visits: 3,
+        conversions: 1,
+        convertingVisits: 1,
+      },
+    ];
 
     const report = await run('2026-09-06', '2026-10-05');
 
@@ -58,6 +76,27 @@ describe('GetDevicesUseCase', () => {
     ]);
     expect(query.asked[0]?.scope.range).toEqual({ from: '2026-09-06', to: '2026-10-05' });
     expect(query.askedForRegions.map((scope) => scope.range)).toEqual([
+      { from: '2026-09-06', to: '2026-10-05' },
+    ]);
+    expect(report.cities).toEqual([
+      {
+        value: 'Campinas',
+        region: 'BR-SP',
+        regionName: 'São Paulo',
+        visits: 3,
+        conversions: 1,
+        convertingVisits: 1,
+      },
+      {
+        value: null,
+        region: null,
+        regionName: null,
+        visits: 4,
+        conversions: 0,
+        convertingVisits: 0,
+      },
+    ]);
+    expect(query.askedForCities.map((scope) => scope.range)).toEqual([
       { from: '2026-09-06', to: '2026-10-05' },
     ]);
   });

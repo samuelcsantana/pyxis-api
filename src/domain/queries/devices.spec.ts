@@ -1,5 +1,8 @@
 import {
+  type CityCount,
   OTHER_VALUE,
+  TOP_CITIES,
+  topCitiesAndRest,
   TOP_DEVICE_VALUES,
   TOP_REGIONS,
   topRegionsAndRest,
@@ -109,6 +112,97 @@ describe('topRegionsAndRest', () => {
   it('answers null conversions when the project counts none', () => {
     expect(topRegionsAndRest([regionCount(null, 4, 2)], false)).toEqual([
       { value: null, name: null, visits: 4, conversions: null, convertingVisits: null },
+    ]);
+  });
+});
+
+function cityCount(
+  city: string | null,
+  region: string | null,
+  visits: number,
+  conversions = 0,
+): CityCount {
+  return {
+    city,
+    region,
+    regionName: region === null ? null : `Name of ${region}`,
+    visits,
+    conversions,
+    convertingVisits: conversions,
+  };
+}
+
+describe('topCitiesAndRest', () => {
+  it('keeps every city with its region, sorted by visits, then by name, then by region', () => {
+    expect(
+      topCitiesAndRest(
+        [
+          cityCount('Bom Jesus', 'BR-RS', 2),
+          cityCount('Salvador', 'BR-BA', 5, 1),
+          cityCount('Bom Jesus', 'BR-PI', 2),
+          cityCount('Aracaju', 'BR-SE', 2),
+        ],
+        true,
+      ).map((share) => [share.value, share.region, share.visits]),
+    ).toEqual([
+      ['Salvador', 'BR-BA', 5],
+      ['Aracaju', 'BR-SE', 2],
+      ['Bom Jesus', 'BR-PI', 2],
+      ['Bom Jesus', 'BR-RS', 2],
+    ]);
+  });
+
+  it(`keeps the top ${String(TOP_CITIES)}, then the rest as other, then the unplaced last`, () => {
+    const counts = Array.from({ length: TOP_CITIES + 2 }, (_, index) =>
+      cityCount(`City ${String(index).padStart(2, '0')}`, 'BR-BA', 40 - index, 1),
+    );
+
+    const shares = topCitiesAndRest(
+      [cityCount(null, 'BR-BA', 30, 2), cityCount('Ashburn', null, 3), ...counts],
+      true,
+    );
+
+    expect(shares).toHaveLength(TOP_CITIES + 2);
+    expect(shares[0]).toEqual({
+      value: 'City 00',
+      region: 'BR-BA',
+      regionName: 'Name of BR-BA',
+      visits: 40,
+      conversions: 1,
+      convertingVisits: 1,
+    });
+    expect(shares.at(-2)).toEqual({
+      value: OTHER_VALUE,
+      region: null,
+      regionName: null,
+      visits: 40 - TOP_CITIES + (40 - TOP_CITIES - 1),
+      conversions: 2,
+      convertingVisits: 2,
+    });
+    expect(shares.at(-1)).toEqual({
+      value: null,
+      region: null,
+      regionName: null,
+      visits: 33,
+      conversions: 2,
+      convertingVisits: 2,
+    });
+  });
+
+  it('adds no other and no unplaced row when nothing is left over', () => {
+    expect(topCitiesAndRest([cityCount('Salvador', 'BR-BA', 1)], true)).toHaveLength(1);
+  });
+
+  it('answers null conversions when the project counts none', () => {
+    expect(topCitiesAndRest([cityCount('Salvador', 'BR-BA', 4, 2)], false)).toEqual([
+      {
+        value: 'Salvador',
+        region: 'BR-BA',
+        regionName: 'Name of BR-BA',
+        visits: 4,
+        conversions: null,
+        convertingVisits: null,
+      },
     ]);
   });
 });

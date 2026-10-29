@@ -34,6 +34,7 @@ export interface VisitListItem {
   readonly country: string | null;
   readonly region: string | null;
   readonly regionName: string | null;
+  readonly city: string | null;
   readonly channel: Channel | null;
   readonly source: string | null;
   readonly campaign: string | null;
