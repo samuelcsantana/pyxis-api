@@ -5,6 +5,7 @@ import {
   DEVICES_QUERY,
   type DevicesQuery,
   type DevicesReport,
+  reachOf,
   topCitiesAndRest,
   topRegionsAndRest,
   topValuesAndOther,
@@ -24,14 +25,24 @@ export class GetDevicesUseCase {
     const countConversions = project.conversionEvent !== null;
     const shares = async (dimension: DeviceDimension) =>
       topValuesAndOther(await this.query.breakdown(current, dimension), countConversions);
-    const [deviceType, browser, os, country, regions, cities] = await Promise.all([
-      shares('deviceType'),
-      shares('browser'),
-      shares('os'),
-      shares('country'),
-      this.query.regions(current).then((counts) => topRegionsAndRest(counts, countConversions)),
-      this.query.cities(current).then((counts) => topCitiesAndRest(counts, countConversions)),
-    ]);
-    return { deviceType, browser, os, country, regions, cities };
+    const [deviceType, browser, os, countryCounts, regionCounts, cityCounts, reachCounts] =
+      await Promise.all([
+        shares('deviceType'),
+        shares('browser'),
+        shares('os'),
+        this.query.breakdown(current, 'country'),
+        this.query.regions(current),
+        this.query.cities(current),
+        this.query.reach(current),
+      ]);
+    return {
+      deviceType,
+      browser,
+      os,
+      country: topValuesAndOther(countryCounts, countConversions),
+      regions: topRegionsAndRest(regionCounts, countConversions),
+      cities: topCitiesAndRest(cityCounts, countConversions),
+      reach: reachOf(reachCounts, countryCounts, regionCounts),
+    };
   }
 }

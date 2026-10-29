@@ -145,6 +145,15 @@ describe('dashboard queries', () => {
           converting_visits: 1,
         },
       ],
+      reach: {
+        visits: 1,
+        continents: 0,
+        countries: 0,
+        regions: 0,
+        cities: 0,
+        top_country: null,
+        top_region: null,
+      },
     });
   });
 

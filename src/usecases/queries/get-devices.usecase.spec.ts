@@ -30,7 +30,11 @@ describe('GetDevicesUseCase', () => {
       { value: 'desktop', visits: 2, conversions: 0, convertingVisits: 0 },
       { value: 'mobile', visits: 5, conversions: 1, convertingVisits: 1 },
     ]);
-    query.counts.set('country', [{ value: null, visits: 1, conversions: 0, convertingVisits: 0 }]);
+    query.counts.set('country', [
+      { value: null, visits: 1, conversions: 0, convertingVisits: 0 },
+      { value: 'BR', visits: 6, conversions: 1, convertingVisits: 1 },
+    ]);
+    query.reachCounts = { visits: 7, countries: ['BR'], regions: 1, cities: 1 };
     query.regionCounts = [
       { region: null, name: null, visits: 1, conversions: 0, convertingVisits: 0 },
       { region: 'BR-SP', name: 'São Paulo', visits: 6, conversions: 1, convertingVisits: 1 },
@@ -62,7 +66,20 @@ describe('GetDevicesUseCase', () => {
     ]);
     expect(report.browser).toEqual([]);
     expect(report.country).toEqual([
+      { value: 'BR', visits: 6, conversions: 1, convertingVisits: 1 },
       { value: 'other', visits: 1, conversions: 0, convertingVisits: 0 },
+    ]);
+    expect(report.reach).toEqual({
+      visits: 7,
+      continents: 1,
+      countries: 1,
+      regions: 1,
+      cities: 1,
+      topCountry: { value: 'BR', visits: 6 },
+      topRegion: { value: 'BR-SP', name: 'São Paulo', visits: 6 },
+    });
+    expect(query.askedForReach.map((scope) => scope.range)).toEqual([
+      { from: '2026-09-06', to: '2026-10-05' },
     ]);
     expect(query.asked.map((asked) => asked.dimension)).toEqual([
       'deviceType',

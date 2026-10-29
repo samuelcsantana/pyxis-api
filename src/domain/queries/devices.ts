@@ -1,3 +1,4 @@
+import { continentCount } from '../geography/continents';
 import type { QueryScope } from './query-scope';
 
 export type DeviceDimension = 'deviceType' | 'browser' | 'os' | 'country';
@@ -31,10 +32,18 @@ export interface CityCount {
   readonly convertingVisits: number;
 }
 
+export interface ReachCounts {
+  readonly visits: number;
+  readonly countries: readonly string[];
+  readonly regions: number;
+  readonly cities: number;
+}
+
 export interface DevicesQuery {
   breakdown(scope: QueryScope, dimension: DeviceDimension): Promise<readonly ValueCount[]>;
   regions(scope: QueryScope): Promise<readonly RegionCount[]>;
   cities(scope: QueryScope): Promise<readonly CityCount[]>;
+  reach(scope: QueryScope): Promise<ReachCounts>;
 }
 
 export const DEVICES_QUERY = Symbol('DevicesQuery');
@@ -63,9 +72,31 @@ export interface CityShare {
   readonly convertingVisits: number | null;
 }
 
+export interface LeadingCountry {
+  readonly value: string;
+  readonly visits: number;
+}
+
+export interface LeadingRegion {
+  readonly value: string;
+  readonly name: string | null;
+  readonly visits: number;
+}
+
+export interface Reach {
+  readonly visits: number;
+  readonly continents: number;
+  readonly countries: number;
+  readonly regions: number;
+  readonly cities: number;
+  readonly topCountry: LeadingCountry | null;
+  readonly topRegion: LeadingRegion | null;
+}
+
 export type DevicesReport = Readonly<Record<DeviceDimension, readonly ValueShare[]>> & {
   readonly regions: readonly RegionShare[];
   readonly cities: readonly CityShare[];
+  readonly reach: Reach;
 };
 
 export function topValuesAndOther(
@@ -145,6 +176,40 @@ export function topCitiesAndRest(
     regionName: share.regionName,
     ...conversionCounts(share, countConversions),
   }));
+}
+
+function leadingCountry(counts: readonly ValueCount[]): LeadingCountry | null {
+  const [leader] = counts
+    .filter((count): count is ValueCount & { value: string } => count.value !== null)
+    .toSorted((left, right) => right.visits - left.visits || left.value.localeCompare(right.value));
+  return leader === undefined ? null : { value: leader.value, visits: leader.visits };
+}
+
+function leadingRegion(counts: readonly RegionCount[]): LeadingRegion | null {
+  const [leader] = counts
+    .filter((count): count is RegionCount & { region: string } => count.region !== null)
+    .toSorted(
+      (left, right) => right.visits - left.visits || left.region.localeCompare(right.region),
+    );
+  return leader === undefined
+    ? null
+    : { value: leader.region, name: leader.name, visits: leader.visits };
+}
+
+export function reachOf(
+  counts: ReachCounts,
+  countryCounts: readonly ValueCount[],
+  regionCounts: readonly RegionCount[],
+): Reach {
+  return {
+    visits: counts.visits,
+    continents: continentCount(counts.countries),
+    countries: counts.countries.length,
+    regions: counts.regions,
+    cities: counts.cities,
+    topCountry: leadingCountry(countryCounts),
+    topRegion: leadingRegion(regionCounts),
+  };
 }
 
 interface Counted {

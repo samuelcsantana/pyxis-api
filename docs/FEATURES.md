@@ -50,7 +50,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   `/devices` (device type, browser, system and country, top five and "other", plus the top ten
   regions, "other" and the visits without a region, and the top twenty approximate cities with
   their region, "other" and the visits without a city, which is every visit of a project that
-  keeps the city off) and
+  keeps the city off, plus the reach of the range: visits, continents as UN M49 places their
+  countries (Antarctica and unknown codes count for none), countries, regions and cities, and the
+  country and the region with most visits) and
   `/acquisition` (visits per day and channel, sources and campaigns with conversions and ad
   clicks; a visit's source is its campaign source, else its referring host, else `(ad click)`
   when it came from an ad click, else `(direct)`); wherever

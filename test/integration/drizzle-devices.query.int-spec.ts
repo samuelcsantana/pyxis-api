@@ -178,6 +178,25 @@ describe('DrizzleDevicesQuery against a real Postgres', () => {
     );
   });
 
+  it('counts the reach: visits, distinct countries, regions and cities in their region', async () => {
+    expect(await query.reach(SCOPE)).toEqual({
+      visits: 3,
+      countries: ['BR'],
+      regions: 1,
+      cities: 1,
+    });
+    expect(await query.reach({ ...SCOPE, projectId: BLOG_ID })).toEqual({
+      visits: 1,
+      countries: [],
+      regions: 0,
+      cities: 0,
+    });
+  });
+
+  it('counts the reach of the visits the filters select only', async () => {
+    expect(await query.reach(filteredScope(MOBILE_ONLY))).toMatchObject({ visits: 1, regions: 1 });
+  });
+
   it('never counts another project', async () => {
     expect(await query.breakdown({ ...SCOPE, projectId: BLOG_ID }, 'deviceType')).toEqual([
       { value: 'desktop', visits: 1, conversions: 0, convertingVisits: 0 },
