@@ -215,8 +215,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   people fit; it keeps its Stripe customer, keys and data, and the owner gets a `back_to_free`
   e-mail. A withdrawal that leaves an account over the free plan answers `fit_by`, 30 days ahead:
   the daily job ends the account on that day if it still does not fit. `GET /v1/me/accounts`
-  answers the owner the `project_count`, `people_count`, `free_plan_fit_due_at` and
-  `bound_by_free_plan_terms`, so the dashboard promises the fallback only where the API makes it
+  answers the owner the `project_count`, `people_count`, `free_plan_fit_due_at`,
+  `bound_by_free_plan_terms` and `mailbox_has_another_free_account` (another free account of the
+  owner's mailbox, ADR 0053), so the dashboard promises the fallback only where the API makes it
   ([ADR 0051](adr/0051-an-ended-subscription-falls-back-to-the-free-plan.md))
 - Free accounts with no events: the daily job warns the owner of a free account that stored no
   event in the 30 days after it entered the free plan (`free_since`), or none for 90 days in a row,
