@@ -209,6 +209,12 @@ variable "function_errors_alarm_threshold" {
   default     = 3
 }
 
+variable "jobs_function_errors_alarm_threshold" {
+  description = "Failed or timed-out invocations of the jobs function within five minutes at which the alarm fires. The function runs once a day, so one is enough."
+  type        = number
+  default     = 1
+}
+
 variable "function_throttles_alarm_threshold" {
   description = "Throttled requests to the HTTP function within five minutes at which the alarm fires."
   type        = number
