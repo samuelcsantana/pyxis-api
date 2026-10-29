@@ -281,7 +281,8 @@ export class QueriesController {
   @ApiRange()
   @ApiReportFilters()
   @ApiOperation({
-    summary: 'Visits and conversions by device type, browser, system, country and region',
+    summary:
+      'Visits and conversions by device type, browser, system, country, region and city, and the reach of the range',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: devicesReportSchema })
   async devices(
