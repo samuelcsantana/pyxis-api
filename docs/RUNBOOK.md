@@ -192,10 +192,16 @@ and once when it clears.
 | `pyxis-api-repeated-trials`               | A card starts a free trial already started by another account              |
 | `pyxis-api-refund-failures`               | A refund fails when an account is closed (refund by hand in Stripe)        |
 | `pyxis-api-account-notice-failures`       | An end-of-access, reminder or deletion e-mail fails (tried again tomorrow) |
+| `pyxis-api-sign-up-daily-cap`             | A sign-up code request is refused because the day's codes ran out          |
+| `pyxis-api-ses-bounce-rate`               | The SES account's bounce rate reaches 2% (AWS reviews it from 5%)          |
+| `pyxis-api-ses-complaint-rate`            | The SES account's complaint rate reaches 0.08% (AWS reviews it from 0.1%)  |
 
 The refund and account e-mail alarms count `accounts.refund_failed` and `accounts.notice_failed`
 in both functions' logs; `account:close` runs on the operator's machine, so its failures show in
-its own output instead. The thresholds are Terraform variables. All of them watch sa-east-1, so an outage before the
+its own output instead. The two SES alarms read the account's own reputation metrics
+(`AWS/SES`, `Reputation.BounceRate` and `Reputation.ComplaintRate`) and exist only when the mail
+goes through SES; a run of sign-up codes sent to made-up addresses is the likely cause of a
+bounce alarm, and the sign-up cap alarm usually comes first. The thresholds are Terraform variables. All of them watch sa-east-1, so an outage before the
 function (DNS, the certificate, CloudFront itself) raises none; an external uptime check of
 `/health` would cover it. To see an alert e-mail arrive without breaking anything:
 
