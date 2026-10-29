@@ -22,7 +22,7 @@ const REVOKED_CONNECTION = 'd1e2f3a4-b5c6-4d7e-8f9a-0b1c2d3e4f03';
 
 let sequence = 0;
 
-function event(projectId: string, occurredAt: Date): TrackedEvent {
+function event(projectId: string, occurredAt: Date, city: string | null = null): TrackedEvent {
   sequence += 1;
   return {
     id: `f1f1f1f1-0000-4000-8000-${String(sequence).padStart(12, '0')}`,
@@ -41,7 +41,7 @@ function event(projectId: string, occurredAt: Date): TrackedEvent {
     country: 'BR',
     region: null,
     regionName: null,
-    city: null,
+    city,
     properties: {},
   };
 }
@@ -129,6 +129,7 @@ describe('retention against a real Postgres', () => {
 
     expect(report).toEqual({
       events: 3,
+      cities: 0,
       sessions: 3,
       signInCodes: 1,
       trialCards: 1,
@@ -181,6 +182,45 @@ describe('retention against a real Postgres', () => {
     expect(kept?.count).toBe(5);
   });
 
+  it('erases, as the application role, the cities of a project with the option off only', async () => {
+    await owner`UPDATE projects SET city_enabled = true WHERE id = ${BLOG_ID}`;
+    await new DrizzleEventRepository(createDrizzleDatabase(app)).insertMany([
+      event(SHOP_ID, NOW, 'Salvador'),
+      event(SHOP_ID, NOW, 'Camaçari'),
+      event(BLOG_ID, NOW, 'Lisboa'),
+    ]);
+
+    expect(await retention.projectIdsWithCitiesToErase()).toEqual([SHOP_ID]);
+    const report = await new RunRetentionUseCase(retention, new FixedClock(NOW)).execute();
+
+    expect(report.cities).toBe(2);
+    const cities = await owner<{ project_id: string; city: string | null }[]>`
+      SELECT project_id, city FROM events WHERE city IS NOT NULL
+    `;
+    expect(cities).toEqual([{ project_id: BLOG_ID, city: 'Lisboa' }]);
+    expect(await retention.projectIdsWithCitiesToErase()).toEqual([]);
+  });
+
+  it('erases cities in batches, and nothing once the project turns the option back on', async () => {
+    await new DrizzleEventRepository(createDrizzleDatabase(app)).insertMany([
+      event(SHOP_ID, NOW, 'Salvador'),
+      event(SHOP_ID, NOW, 'Ilhéus'),
+    ]);
+
+    expect(await retention.eraseCities(SHOP_ID, 1)).toBe(1);
+    await owner`UPDATE projects SET city_enabled = true WHERE id = ${SHOP_ID}`;
+    expect(await retention.eraseCities(SHOP_ID, 1)).toBe(0);
+  });
+
+  it('keeps the cities of a held project', async () => {
+    await new DrizzleEventRepository(createDrizzleDatabase(app)).insertMany([
+      event(SHOP_ID, NOW, 'Salvador'),
+    ]);
+    await owner`UPDATE projects SET deletion_held_at = ${NOW} WHERE id = ${SHOP_ID}`;
+
+    expect(await retention.projectIdsWithCitiesToErase()).toEqual([]);
+  });
+
   it('deletes events in batches of the size it is given', async () => {
     expect(await retention.deleteEventsBefore(SHOP_ID, CUTOFF, 1)).toBe(1);
     expect(await retention.deleteEventsBefore(SHOP_ID, CUTOFF, 1)).toBe(1);
@@ -193,6 +233,7 @@ describe('retention against a real Postgres', () => {
 
     expect(await run.execute()).toEqual({
       events: 0,
+      cities: 0,
       sessions: 0,
       signInCodes: 0,
       trialCards: 0,

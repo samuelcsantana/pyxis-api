@@ -12,6 +12,7 @@ const NOW = new Date('2026-10-06T06:00:00.000Z');
 
 class ScriptedRetention implements RetentionRepository {
   readonly eventCalls: { readonly projectId: string; readonly cutoff: Date }[] = [];
+  readonly cityCalls: string[] = [];
   readonly sessionCutoffs: ExpiredSessionCutoffs[] = [];
   readonly codeNows: Date[] = [];
   readonly trialCardCutoffs: Date[] = [];
@@ -20,7 +21,10 @@ class ScriptedRetention implements RetentionRepository {
   readonly requestCutoffs: Date[] = [];
   failing: string | null = null;
 
-  constructor(private readonly batches: Readonly<Record<string, number[]>>) {}
+  constructor(
+    private readonly batches: Readonly<Record<string, number[]>>,
+    private readonly cityBatches: Readonly<Record<string, number[]>> = {},
+  ) {}
 
   projectIdsNotHeld(): Promise<readonly string[]> {
     return Promise.resolve(Object.keys(this.batches));
@@ -32,6 +36,16 @@ class ScriptedRetention implements RetentionRepository {
     }
     this.eventCalls.push({ projectId, cutoff });
     const next = this.batches[projectId]?.shift() ?? 0;
+    return Promise.resolve(Math.min(next, limit));
+  }
+
+  projectIdsWithCitiesToErase(): Promise<readonly string[]> {
+    return Promise.resolve(Object.keys(this.cityBatches));
+  }
+
+  eraseCities(projectId: string, limit: number): Promise<number> {
+    this.cityCalls.push(projectId);
+    const next = this.cityBatches[projectId]?.shift() ?? 0;
     return Promise.resolve(Math.min(next, limit));
   }
 
@@ -93,6 +107,7 @@ describe('RunRetentionUseCase', () => {
 
     expect(report).toEqual({
       events: RETENTION_BATCH_SIZE * 2 + 7,
+      cities: 0,
       sessions: 3,
       signInCodes: 5,
       trialCards: 2,
@@ -123,6 +138,26 @@ describe('RunRetentionUseCase', () => {
     expect(logs).toContainEqual({
       level: 'log',
       message: { message: 'retention.step_done', step: 'signInCodes', deleted: 5 },
+    });
+  });
+
+  it('erases the cities of the projects that turned them off, batch after batch', async () => {
+    const retention = new ScriptedRetention(
+      {},
+      { 'project-off': [RETENTION_BATCH_SIZE, 40], 'project-swept': [3] },
+    );
+
+    const report = await new RunRetentionUseCase(retention, new FixedClock(NOW)).execute();
+
+    expect(report.cities).toBe(RETENTION_BATCH_SIZE + 43);
+    expect(retention.cityCalls).toEqual(['project-off', 'project-off', 'project-swept']);
+    expect(logs).toContainEqual({
+      level: 'log',
+      message: {
+        message: 'retention.step_done',
+        step: 'cities',
+        deleted: RETENTION_BATCH_SIZE + 43,
+      },
     });
   });
 
