@@ -1,7 +1,12 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { AccountStatus } from '../../domain/accounts/account-status';
 import { isSuspended } from '../../domain/accounts/account-suspension';
-import { canTakeAFreePlace } from '../../domain/accounts/free-plan-sign-up';
+import {
+  canTakeAFreePlace,
+  type FreePlace,
+  type FreePlacement,
+  freePlaceOf,
+} from '../../domain/accounts/free-plan-sign-up';
 import { SIGN_UP_SETTINGS, type SignUpSettings } from '../../domain/accounts/sign-up-settings';
 import { normalizeEmail } from '../../domain/auth/email';
 import { InvalidSignInCodeError } from '../../domain/errors/auth.errors';
@@ -48,6 +53,12 @@ export interface SignedUp {
   readonly sessionToken: string;
   readonly accountId: string;
   readonly accountStatus: AccountStatus;
+  readonly freePlace: FreePlace;
+}
+
+interface SignUpAccount {
+  readonly account: Account;
+  readonly placement: FreePlacement | null;
 }
 
 @Injectable()
@@ -83,7 +94,8 @@ export class CompleteSignUpUseCase {
       throw new InvalidSignInCodeError();
     }
     await this.admins.setEmailLanguage(admin.id, code.emailLanguage);
-    const account = await this.accountFor(admin.id, now);
+    const { account, placement } = await this.accountFor(admin.id, now);
+    const freePlace = freePlaceOf(account, placement);
     await this.terms.record({
       adminUserId: admin.id,
       accountId: account.id,
@@ -105,12 +117,14 @@ export class CompleteSignUpUseCase {
       adminUserId: admin.id,
       accountId: account.id,
       accountStatus: account.status,
+      freePlace,
     });
     return {
       email: admin.email,
       sessionToken,
       accountId: account.id,
       accountStatus: account.status,
+      freePlace,
     };
   }
 
@@ -121,13 +135,15 @@ export class CompleteSignUpUseCase {
     return this.settings.termsVersion;
   }
 
-  private async accountFor(adminUserId: string, now: Date): Promise<Account> {
+  private async accountFor(adminUserId: string, now: Date): Promise<SignUpAccount> {
     const live = await this.accounts.liveAccountOwnedBy(adminUserId);
     if (!this.settings.freePlanOpen) {
-      return live ?? this.accounts.create({ ownerAdminId: adminUserId, status: 'incomplete' });
+      const account =
+        live ?? (await this.accounts.create({ ownerAdminId: adminUserId, status: 'incomplete' }));
+      return { account, placement: null };
     }
     if (live !== null && !canTakeAFreePlace(live)) {
-      return live;
+      return { account: live, placement: null };
     }
     return this.accounts.claimFreePlace({
       ownerAdminId: adminUserId,

@@ -10,14 +10,19 @@ import {
   isNotNull,
   isNull,
   ne,
+  notExists,
+  or,
   sql,
 } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
+import { type FreePlacement, freePlacementOf } from '../../domain/accounts/free-plan-sign-up';
 import type { Account } from '../../domain/entities/account.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import type {
   AccountMembership,
   AccountOverview,
   AccountRepository,
+  ClaimedFreePlace,
   FreePlaceClaim,
   NewAccount,
 } from '../../domain/repositories/account.repository';
@@ -67,40 +72,85 @@ async function freeAccountCount(
   return free;
 }
 
+const HOLDS_A_FREE_PLACE = or(
+  eq(accounts.status, 'free'),
+  and(eq(accounts.status, 'incomplete'), isNotNull(accounts.freeWaitlistedAt)),
+);
+
+async function mailboxHoldsAFreePlace(
+  transaction: DrizzleTransaction,
+  claim: FreePlaceClaim,
+): Promise<boolean> {
+  const claimant = alias(adminUsers, 'claimant');
+  const [held] = await transaction
+    .select({ id: accounts.id })
+    .from(accounts)
+    .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
+    .innerJoin(claimant, eq(claimant.mailbox, adminUsers.mailbox))
+    .where(
+      and(
+        eq(claimant.id, claim.ownerAdminId),
+        HOLDS_A_FREE_PLACE,
+        claim.accountId === null ? undefined : ne(accounts.id, claim.accountId),
+      ),
+    )
+    .limit(1);
+  return held !== undefined;
+}
+
+function newAccountOf(claim: FreePlaceClaim, placement: FreePlacement) {
+  const ownerAdminId = claim.ownerAdminId;
+  switch (placement) {
+    case 'place':
+      return { ownerAdminId, status: 'free' as const, freeSince: claim.at };
+    case 'waitlist':
+      return { ownerAdminId, status: 'incomplete' as const, freeWaitlistedAt: claim.at };
+    case 'refuse':
+      return { ownerAdminId, status: 'incomplete' as const };
+  }
+}
+
+function claimChangesOf(claim: FreePlaceClaim, placement: FreePlacement) {
+  switch (placement) {
+    case 'place':
+      return { status: 'free' as const, freeWaitlistedAt: null, freeSince: claim.at };
+    case 'waitlist':
+      return {
+        freeWaitlistedAt: sql`coalesce(${accounts.freeWaitlistedAt}, ${claim.at.toISOString()}::timestamptz)`,
+      };
+    case 'refuse':
+      return null;
+  }
+}
+
 async function insertClaim(
   transaction: DrizzleTransaction,
   claim: FreePlaceClaim,
-  hasAPlace: boolean,
+  placement: FreePlacement,
 ): Promise<Account> {
-  const values = hasAPlace
-    ? { ownerAdminId: claim.ownerAdminId, status: 'free' as const, freeSince: claim.at }
-    : {
-        ownerAdminId: claim.ownerAdminId,
-        status: 'incomplete' as const,
-        freeWaitlistedAt: claim.at,
-      };
-  return toAccount(insertedRow(await transaction.insert(accounts).values(values).returning()));
+  return toAccount(
+    insertedRow(
+      await transaction.insert(accounts).values(newAccountOf(claim, placement)).returning(),
+    ),
+  );
 }
 
 async function updateClaim(
   transaction: DrizzleTransaction,
   claim: FreePlaceClaim,
   accountId: string,
-  hasAPlace: boolean,
+  placement: FreePlacement,
 ): Promise<Account> {
-  const [updated] = await transaction
-    .update(accounts)
-    .set(
-      hasAPlace
-        ? { status: 'free', freeWaitlistedAt: null, freeSince: claim.at }
-        : {
-            freeWaitlistedAt: sql`coalesce(${accounts.freeWaitlistedAt}, ${claim.at.toISOString()}::timestamptz)`,
-          },
-    )
-    .where(and(eq(accounts.id, accountId), eq(accounts.status, 'incomplete')))
-    .returning();
-  if (updated !== undefined) {
-    return toAccount(updated);
+  const changes = claimChangesOf(claim, placement);
+  if (changes !== null) {
+    const [updated] = await transaction
+      .update(accounts)
+      .set(changes)
+      .where(and(eq(accounts.id, accountId), eq(accounts.status, 'incomplete')))
+      .returning();
+    if (updated !== undefined) {
+      return toAccount(updated);
+    }
   }
   const [current] = await transaction.select().from(accounts).where(eq(accounts.id, accountId));
   if (current === undefined) {
@@ -117,13 +167,19 @@ export class DrizzleAccountRepository implements AccountRepository {
     return toAccount(insertedRow(await this.db.insert(accounts).values(account).returning()));
   }
 
-  claimFreePlace(claim: FreePlaceClaim): Promise<Account> {
+  claimFreePlace(claim: FreePlaceClaim): Promise<ClaimedFreePlace> {
     return this.db.transaction(async (transaction) => {
       await transaction.execute(sql`select pg_advisory_xact_lock(${FREE_PLACES_LOCK_KEY})`);
-      const hasAPlace = (await freeAccountCount(transaction)) < claim.freeAccountsMax;
-      return claim.accountId === null
-        ? insertClaim(transaction, claim, hasAPlace)
-        : updateClaim(transaction, claim, claim.accountId, hasAPlace);
+      const placement = freePlacementOf({
+        freeAccounts: await freeAccountCount(transaction),
+        freeAccountsMax: claim.freeAccountsMax,
+        mailboxHoldsAFreePlace: await mailboxHoldsAFreePlace(transaction, claim),
+      });
+      const account =
+        claim.accountId === null
+          ? await insertClaim(transaction, claim, placement)
+          : await updateClaim(transaction, claim, claim.accountId, placement);
+      return { account, placement };
     });
   }
 
@@ -138,9 +194,20 @@ export class DrizzleAccountRepository implements AccountRepository {
       if (places <= 0) {
         return 0;
       }
-      const oldestWaiting = transaction
-        .select({ id: accounts.id })
+      const freeAccounts = alias(accounts, 'free_account');
+      const freeOwners = alias(adminUsers, 'free_owner');
+      const freeAccountOfTheMailbox = transaction
+        .select({ id: freeAccounts.id })
+        .from(freeAccounts)
+        .innerJoin(freeOwners, eq(freeOwners.id, freeAccounts.ownerAdminId))
+        .where(and(eq(freeAccounts.status, 'free'), eq(freeOwners.mailbox, adminUsers.mailbox)));
+      const firstWaitingOfEachMailbox = transaction
+        .selectDistinctOn([adminUsers.mailbox], {
+          id: accounts.id,
+          waitlistedAt: accounts.freeWaitlistedAt,
+        })
         .from(accounts)
+        .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
         .where(
           and(
             eq(accounts.status, 'incomplete'),
@@ -148,9 +215,15 @@ export class DrizzleAccountRepository implements AccountRepository {
             isNull(accounts.stripeSubscriptionId),
             isNull(accounts.deletionHeldAt),
             isNull(accounts.suspendedAt),
+            notExists(freeAccountOfTheMailbox),
           ),
         )
-        .orderBy(asc(accounts.freeWaitlistedAt), asc(accounts.id))
+        .orderBy(asc(adminUsers.mailbox), asc(accounts.freeWaitlistedAt), asc(accounts.id))
+        .as('first_waiting');
+      const oldestWaiting = transaction
+        .select({ id: firstWaitingOfEachMailbox.id })
+        .from(firstWaitingOfEachMailbox)
+        .orderBy(asc(firstWaitingOfEachMailbox.waitlistedAt), asc(firstWaitingOfEachMailbox.id))
         .limit(places);
       const opened = await transaction
         .update(accounts)

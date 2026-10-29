@@ -110,13 +110,14 @@ describe('accounts against a real Postgres', () => {
     };
 
     it('starts a new owner on the free plan while there is a place', async () => {
-      const claimed = await accounts.claimFreePlace({
+      const { account: claimed, placement } = await accounts.claimFreePlace({
         ownerAdminId: OWNER_ID,
         accountId: null,
         freeAccountsMax: 1,
         at: AT,
       });
 
+      expect(placement).toBe('place');
       expect(claimed).toMatchObject({
         ownerAdminId: OWNER_ID,
         status: 'free',
@@ -129,13 +130,14 @@ describe('accounts against a real Postgres', () => {
     it('makes a new owner wait, marked since the claim, once the plan holds its maximum', async () => {
       await accounts.create({ ownerAdminId: GUEST_ID, status: 'free' });
 
-      const claimed = await accounts.claimFreePlace({
+      const { account: claimed, placement } = await accounts.claimFreePlace({
         ownerAdminId: OWNER_ID,
         accountId: null,
         freeAccountsMax: 1,
         at: AT,
       });
 
+      expect(placement).toBe('waitlist');
       expect(claimed).toMatchObject({ status: 'incomplete', freeWaitlistedAt: AT });
     });
 
@@ -143,7 +145,7 @@ describe('accounts against a real Postgres', () => {
       const unfinished = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
       await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id = ${unfinished.id}`;
 
-      const claimed = await accounts.claimFreePlace({
+      const { account: claimed } = await accounts.claimFreePlace({
         ownerAdminId: OWNER_ID,
         accountId: unfinished.id,
         freeAccountsMax: 1,
@@ -171,15 +173,18 @@ describe('accounts against a real Postgres', () => {
         at: AT,
       });
 
-      expect(first.freeWaitlistedAt).toEqual(EARLIER);
-      expect(again).toMatchObject({ status: 'incomplete', freeWaitlistedAt: EARLIER });
+      expect(first.account.freeWaitlistedAt).toEqual(EARLIER);
+      expect(again.account).toMatchObject({ status: 'incomplete', freeWaitlistedAt: EARLIER });
     });
 
     it('leaves an account that is no longer unfinished as it is, and refuses one that is gone', async () => {
       const running = await accounts.create({ ownerAdminId: OWNER_ID, status: 'active' });
       const claim = { ownerAdminId: OWNER_ID, freeAccountsMax: 5, at: AT };
 
-      expect(await accounts.claimFreePlace({ ...claim, accountId: running.id })).toEqual(running);
+      expect(await accounts.claimFreePlace({ ...claim, accountId: running.id })).toEqual({
+        account: running,
+        placement: 'place',
+      });
       await expect(accounts.claimFreePlace({ ...claim, accountId: MISSING_ID })).rejects.toThrow(
         'no longer exists',
       );
@@ -235,11 +240,124 @@ describe('accounts against a real Postgres', () => {
         ),
       );
 
-      expect(claims.map((claim) => claim.status).sort()).toEqual(['free', 'incomplete']);
+      expect(claims.map((claim) => claim.account.status).sort()).toEqual(['free', 'incomplete']);
       const rows = await owner<{ free: number }[]>`
         SELECT count(*)::int AS free FROM accounts WHERE status = 'free'
       `;
       expect(rows).toEqual([{ free: 2 }]);
+    });
+
+    describe('one free place per mailbox', () => {
+      const TAGGED_ID = 'c1a2b3c4-0000-4000-8000-000000000004';
+      const DOTTED_ID = 'c1a2b3c4-0000-4000-8000-000000000005';
+      const GMAIL_ID = 'c1a2b3c4-0000-4000-8000-000000000006';
+
+      beforeEach(async () => {
+        await owner`
+          INSERT INTO admin_users (id, email)
+          VALUES (${TAGGED_ID}, 'owner+shop@example.com'), (${DOTTED_ID}, 'o.w.n.e.r@gmail.com'),
+                 (${GMAIL_ID}, 'owner+blog@googlemail.com')
+        `;
+      });
+
+      it('stores the mailbox behind each address', async () => {
+        const rows = await owner<{ email: string; mailbox: string }[]>`
+          SELECT email, mailbox FROM admin_users ORDER BY email
+        `;
+
+        expect(rows).toEqual([
+          { email: 'guest@example.com', mailbox: 'guest@example.com' },
+          { email: 'o.w.n.e.r@gmail.com', mailbox: 'owner@gmail.com' },
+          { email: 'owner+blog@googlemail.com', mailbox: 'owner@gmail.com' },
+          { email: 'owner+shop@example.com', mailbox: 'owner@example.com' },
+          { email: 'owner@example.com', mailbox: 'owner@example.com' },
+          { email: 'stranger@example.com', mailbox: 'stranger@example.com' },
+        ]);
+      });
+
+      it('refuses a place and a wait to another address of a mailbox on the free plan', async () => {
+        await accounts.create({ ownerAdminId: OWNER_ID, status: 'free' });
+
+        const { account, placement } = await accounts.claimFreePlace({
+          ownerAdminId: TAGGED_ID,
+          accountId: null,
+          freeAccountsMax: 5,
+          at: AT,
+        });
+
+        expect(placement).toBe('refuse');
+        expect(account).toMatchObject({
+          ownerAdminId: TAGGED_ID,
+          status: 'incomplete',
+          freeWaitlistedAt: null,
+        });
+        expect(await freeSinceOf(account.id)).toBeNull();
+      });
+
+      it('leaves an unfinished account of a mailbox that already waits as it is', async () => {
+        await accounts.create({ ownerAdminId: STRANGER_ID, status: 'free' });
+        const waiting = await accounts.create({ ownerAdminId: DOTTED_ID, status: 'incomplete' });
+        await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id = ${waiting.id}`;
+        const unfinished = await accounts.create({ ownerAdminId: GMAIL_ID, status: 'incomplete' });
+
+        const claimed = await accounts.claimFreePlace({
+          ownerAdminId: GMAIL_ID,
+          accountId: unfinished.id,
+          freeAccountsMax: 1,
+          at: AT,
+        });
+
+        expect(claimed).toEqual({ account: unfinished, placement: 'refuse' });
+      });
+
+      it('lets an unfinished account claim again without counting its own wait against it', async () => {
+        await accounts.create({ ownerAdminId: STRANGER_ID, status: 'free' });
+        const unfinished = await accounts.create({ ownerAdminId: OWNER_ID, status: 'incomplete' });
+        await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id = ${unfinished.id}`;
+
+        const claimed = await accounts.claimFreePlace({
+          ownerAdminId: OWNER_ID,
+          accountId: unfinished.id,
+          freeAccountsMax: 2,
+          at: AT,
+        });
+
+        expect(claimed.placement).toBe('place');
+        expect(claimed.account).toMatchObject({ status: 'free' });
+      });
+
+      it('gives a place to only one of two addresses of one mailbox claiming at the same time', async () => {
+        const claims = await Promise.all(
+          [DOTTED_ID, GMAIL_ID].map((ownerAdminId) =>
+            accounts.claimFreePlace({ ownerAdminId, accountId: null, freeAccountsMax: 5, at: AT }),
+          ),
+        );
+
+        expect(claims.map((claim) => claim.placement).sort()).toEqual(['place', 'refuse']);
+      });
+
+      it('opens one waiting account per mailbox, the one waiting longest, and none for a mailbox already on the plan', async () => {
+        const sooner = await accounts.create({ ownerAdminId: DOTTED_ID, status: 'incomplete' });
+        const later = await accounts.create({ ownerAdminId: GMAIL_ID, status: 'incomplete' });
+        const ofAFreeMailbox = await accounts.create({
+          ownerAdminId: TAGGED_ID,
+          status: 'incomplete',
+        });
+        await accounts.create({ ownerAdminId: OWNER_ID, status: 'free' });
+        await owner`UPDATE accounts SET free_waitlisted_at = ${EARLIER} WHERE id IN (${sooner.id}, ${ofAFreeMailbox.id})`;
+        await owner`UPDATE accounts SET free_waitlisted_at = ${AT} WHERE id = ${later.id}`;
+
+        expect(await accounts.openWaitingAccounts(10, AT)).toBe(1);
+        expect(await accounts.findById(sooner.id)).toMatchObject({ status: 'free' });
+        expect(await accounts.findById(later.id)).toMatchObject({
+          status: 'incomplete',
+          freeWaitlistedAt: AT,
+        });
+        expect(await accounts.findById(ofAFreeMailbox.id)).toMatchObject({
+          status: 'incomplete',
+          freeWaitlistedAt: EARLIER,
+        });
+      });
     });
   });
 

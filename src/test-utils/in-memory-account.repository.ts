@@ -1,6 +1,7 @@
 import type { Account } from '../domain/entities/account.entity';
 import type { Project } from '../domain/entities/project.entity';
 import type { PlanLimitChanges } from '../domain/accounts/account-limits';
+import { freePlacementOf } from '../domain/accounts/free-plan-sign-up';
 import type { AccountDeletionHoldRepository } from '../domain/repositories/account-deletion-hold.repository';
 import type { AccountPlanLimitsRepository } from '../domain/repositories/account-plan-limits.repository';
 import type { AccountQuotaExemptionRepository } from '../domain/repositories/account-quota-exemption.repository';
@@ -9,12 +10,20 @@ import type {
   AccountMembership,
   AccountOverview,
   AccountRepository,
+  ClaimedFreePlace,
   FreePlaceClaim,
   NewAccount,
 } from '../domain/repositories/account.repository';
 import type { InMemoryAdminUserRepository } from './in-memory-admin-user.repository';
 
 const CREATED_AT = new Date('2026-10-14T00:00:00.000Z');
+
+function holdsAFreePlace(account: Account): boolean {
+  return (
+    account.status === 'free' ||
+    (account.status === 'incomplete' && account.freeWaitlistedAt !== null)
+  );
+}
 
 export interface AccountMembers {
   readonly projects: readonly Project[];
@@ -77,9 +86,18 @@ export class InMemoryAccountRepository
     return Promise.resolve(created);
   }
 
-  async claimFreePlace(claim: FreePlaceClaim): Promise<Account> {
-    const hasAPlace =
-      this.stored.filter((account) => account.status === 'free').length < claim.freeAccountsMax;
+  async claimFreePlace(claim: FreePlaceClaim): Promise<ClaimedFreePlace> {
+    const mailbox = this.admins.mailboxOf(claim.ownerAdminId);
+    const placement = freePlacementOf({
+      freeAccounts: this.stored.filter((account) => account.status === 'free').length,
+      freeAccountsMax: claim.freeAccountsMax,
+      mailboxHoldsAFreePlace: this.stored.some(
+        (account) =>
+          account.id !== claim.accountId &&
+          this.admins.mailboxOf(account.ownerAdminId) === mailbox &&
+          holdsAFreePlace(account),
+      ),
+    });
     const account =
       claim.accountId === null
         ? await this.create({ ownerAdminId: claim.ownerAdminId, status: 'incomplete' })
@@ -87,17 +105,18 @@ export class InMemoryAccountRepository
     if (account === undefined) {
       throw new Error('The account claiming a free place no longer exists.');
     }
-    if (account.status !== 'incomplete') {
-      return account;
+    if (account.status !== 'incomplete' || placement === 'refuse') {
+      return { account, placement };
     }
-    const claimed: Account = hasAPlace
-      ? { ...account, status: 'free', freeWaitlistedAt: null }
-      : { ...account, freeWaitlistedAt: account.freeWaitlistedAt ?? claim.at };
+    const claimed: Account =
+      placement === 'place'
+        ? { ...account, status: 'free', freeWaitlistedAt: null }
+        : { ...account, freeWaitlistedAt: account.freeWaitlistedAt ?? claim.at };
     this.accounts.set(claimed.id, claimed);
-    if (hasAPlace) {
+    if (placement === 'place') {
       this.freeSince.set(claimed.id, claim.at);
     }
-    return claimed;
+    return { account: claimed, placement };
   }
 
   freeAccountCount(): Promise<number> {
@@ -107,21 +126,40 @@ export class InMemoryAccountRepository
   openWaitingAccounts(freeAccountsMax: number, at: Date): Promise<number> {
     const places =
       freeAccountsMax - this.stored.filter((account) => account.status === 'free').length;
+    const freeMailboxes = new Set(
+      this.stored
+        .filter((account) => account.status === 'free')
+        .map((account) => this.admins.mailboxOf(account.ownerAdminId)),
+    );
     const waiting = this.stored
       .filter(
         (account) =>
           account.status === 'incomplete' &&
           account.freeWaitlistedAt !== null &&
           account.deletionHeldAt === null &&
-          account.suspendedAt === null,
+          account.suspendedAt === null &&
+          !freeMailboxes.has(this.admins.mailboxOf(account.ownerAdminId)),
       )
       .sort((first, second) => Number(first.freeWaitlistedAt) - Number(second.freeWaitlistedAt))
+      .filter(this.firstOfEachMailbox())
       .slice(0, Math.max(places, 0));
     for (const account of waiting) {
       this.accounts.set(account.id, { ...account, status: 'free', freeWaitlistedAt: null });
       this.freeSince.set(account.id, at);
     }
     return Promise.resolve(waiting.length);
+  }
+
+  private firstOfEachMailbox(): (account: Account) => boolean {
+    const seen = new Set<string>();
+    return (account) => {
+      const mailbox = this.admins.mailboxOf(account.ownerAdminId);
+      if (seen.has(mailbox)) {
+        return false;
+      }
+      seen.add(mailbox);
+      return true;
+    };
   }
 
   suspend(accountId: string, reason: string, at: Date): Promise<Account | null> {
