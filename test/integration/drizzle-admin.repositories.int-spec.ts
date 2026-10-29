@@ -1,5 +1,9 @@
+import fc from 'fast-check';
 import type postgres from 'postgres';
 import { sha256Hex } from '../../src/domain/auth/hashing';
+import { mailboxOf } from '../../src/domain/auth/mailbox';
+import { MAX_EMAIL_LENGTH } from '../../src/infra/database/schema/admins';
+import { PROPERTY_PARAMETERS, signUpEmailAddress } from '../../src/test-utils/property-testing';
 import {
   createDrizzleDatabase,
   createPostgresClient,
@@ -59,6 +63,20 @@ describe('admin repositories against a real Postgres', () => {
       expect(again).toEqual(first);
       expect(first).toMatchObject({ email: 'owner@example.com', emailLanguage: 'en' });
       expect(await admins.projectsOf(first.id)).toEqual([]);
+    });
+
+    it('stores the mailbox of any address the sign-up accepts as the domain reads it', async () => {
+      await fc.assert(
+        fc.asyncProperty(signUpEmailAddress(MAX_EMAIL_LENGTH), async (address) => {
+          const [row] = await owner<{ mailbox: string }[]>`
+            INSERT INTO admin_users (email) VALUES (${address})
+            ON CONFLICT (email) DO UPDATE SET email = excluded.email
+            RETURNING mailbox
+          `;
+          expect(row?.mailbox).toBe(mailboxOf(address));
+        }),
+        PROPERTY_PARAMETERS,
+      );
     });
 
     it('grants access idempotently, creating the admin once, and lists their projects by name', async () => {
