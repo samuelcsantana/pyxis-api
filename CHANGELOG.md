@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.35.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.34.2...v0.35.0) (2026-10-29)
+
+
+### Features
+
+* **accounts:** find the free accounts that measure a site another account measures ([58ad790](https://github.com/samuelcsantana/pyxis-api/commit/58ad7903be7f5569da71fd89e33d93cf015182ea))
+* **accounts:** give one free place per mailbox ([485e3f9](https://github.com/samuelcsantana/pyxis-api/commit/485e3f9db6c003bf772d9d033a91b031e6e277d1))
+* **accounts:** report the free accounts that share a site in the daily run ([59cfaf2](https://github.com/samuelcsantana/pyxis-api/commit/59cfaf2c303ee9437dd59c73909e9b2491d6dfa6))
+* **accounts:** store the mailbox behind each admin address ([3e6d314](https://github.com/samuelcsantana/pyxis-api/commit/3e6d314f66ef2d1ebee4cb46137752f8b86ba70f))
+* **auth:** answer what happened to the free place at sign-up ([90945b1](https://github.com/samuelcsantana/pyxis-api/commit/90945b16adbe316f88e6506e319a34f101f328c0))
+
+
+### Documentation
+
+* **adr:** note what 0053 leaves to the dashboard and to the daily job ([92c1f97](https://github.com/samuelcsantana/pyxis-api/commit/92c1f9781b70315e37fe5b83180d610bcee9b125))
+* **adr:** record one free account per mailbox ([4267190](https://github.com/samuelcsantana/pyxis-api/commit/426719000441a2846e5a58ae77c0d8ccd3c1032d))
+* **features:** describe the report of free accounts that share a site ([886ab6a](https://github.com/samuelcsantana/pyxis-api/commit/886ab6a060a39352c02e75d0d061d951fba29f5e))
+* keep the feature list short and move the detail to FEATURES.md ([cd29327](https://github.com/samuelcsantana/pyxis-api/commit/cd2932756f3a500a732daaf3999a9371f2079475))
+* move local development, settings and scripts to the runbook ([aee67a5](https://github.com/samuelcsantana/pyxis-api/commit/aee67a5974ccd3ba3a2047a9431661947a198582))
+* point the contributing guide at the runbook's scripts ([895a6a5](https://github.com/samuelcsantana/pyxis-api/commit/895a6a5a1c62e8447c1240f728df99424d12d452))
+* shorten the status note and point the roadmap at the changelog ([cf3e001](https://github.com/samuelcsantana/pyxis-api/commit/cf3e00179cc4b8927e66c349640a7f37a0d6a9dc))
+
 ## [0.34.2](https://github.com/samuelcsantana/pyxis-api/compare/v0.34.1...v0.34.2) (2026-10-28)
 
 
