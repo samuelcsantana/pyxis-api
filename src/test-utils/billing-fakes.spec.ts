@@ -59,5 +59,6 @@ describe('InMemoryFreePlanFallbackRepository', () => {
     expect(fallbacks.statusOf('unknown')).toBeUndefined();
     expect(await fallbacks.fallBack('unknown', at)).toBe(false);
     expect(await fallbacks.toNotify('unknown')).toBeNull();
+    expect(await fallbacks.mailboxHasAnotherFreeAccount('unknown')).toBe(false);
   });
 });

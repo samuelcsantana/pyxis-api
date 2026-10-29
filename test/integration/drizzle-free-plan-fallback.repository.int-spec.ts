@@ -120,6 +120,15 @@ describe('the fall back to the free plan against a real Postgres', () => {
     `;
 
     expect(await fallbacks.fitOf(ENDING)).toMatchObject({ ownerHasAnotherFreeAccount: true });
+    expect(await fallbacks.mailboxHasAnotherFreeAccount(ENDING)).toBe(true);
+    expect(await fallbacks.mailboxHasAnotherFreeAccount(ALIAS_FREE)).toBe(false);
+  });
+
+  it('says whether the mailbox of an account has another free account, and says no for a missing one', async () => {
+    expect(await fallbacks.mailboxHasAnotherFreeAccount(BIAS_PAID)).toBe(true);
+    expect(await fallbacks.mailboxHasAnotherFreeAccount(BIAS_FREE)).toBe(false);
+    expect(await fallbacks.mailboxHasAnotherFreeAccount(ENDING)).toBe(false);
+    expect(await fallbacks.mailboxHasAnotherFreeAccount(MISSING)).toBe(false);
   });
 
   it('puts a running subscription back on free, keeping the customer and marking the notice', async () => {

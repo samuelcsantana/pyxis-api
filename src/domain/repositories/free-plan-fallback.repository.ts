@@ -15,6 +15,7 @@ export interface FitDeadline {
 
 export interface FreePlanFallbackRepository {
   fitOf(accountId: string): Promise<FreePlanFit | null>;
+  mailboxHasAnotherFreeAccount(accountId: string): Promise<boolean>;
   fallBack(accountId: string, at: Date): Promise<boolean>;
   toNotify(accountId: string): Promise<BackToFreeTarget | null>;
   pendingNotices(): Promise<readonly BackToFreeTarget[]>;
