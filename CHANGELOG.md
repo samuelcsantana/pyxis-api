@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.36.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.35.0...v0.36.0) (2026-10-29)
+
+
+### Features
+
+* **accounts:** answer mailbox_has_another_free_account with the owner's accounts ([60c64a5](https://github.com/samuelcsantana/pyxis-api/commit/60c64a5e4f2fd59e023177a3c7ee54f24e33bc82))
+* **accounts:** ask whether the mailbox of an account has another free account ([e196c65](https://github.com/samuelcsantana/pyxis-api/commit/e196c6570deacaaf2b9688f9d50409a91f178a23))
+* **auth:** answer 429 sign_up_busy once the day's sign-up codes ran out ([2121f23](https://github.com/samuelcsantana/pyxis-api/commit/2121f2310bc1b335b655dcb9977d4a57a9082ea3))
+* **infra:** alarm when the day's sign-up codes run out ([1631807](https://github.com/samuelcsantana/pyxis-api/commit/163180774895260a40731ad5ac834ebd2ce59c14))
+
+
+### Documentation
+
+* **features:** list mailbox_has_another_free_account in the accounts answer ([1eb1d26](https://github.com/samuelcsantana/pyxis-api/commit/1eb1d26826a911d19f477667b7735b9bac2991c0))
+* **features:** say that sign-up answers busy at the daily cap ([7565258](https://github.com/samuelcsantana/pyxis-api/commit/756525843f6d411a0b44722ee6915b90dc9f5c53))
+* list the sign-up cap and SES reputation alarms ([7508a6d](https://github.com/samuelcsantana/pyxis-api/commit/7508a6d57b7713a6c019d54b618979c084a03617))
+
 ## [0.35.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.34.2...v0.35.0) (2026-10-29)
 
 
