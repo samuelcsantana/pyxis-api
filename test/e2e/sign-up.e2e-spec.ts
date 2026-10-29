@@ -1,6 +1,7 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
 import { TRIAL_DAYS } from '../../src/domain/accounts/hosted-plan';
+import { SIGN_UP_CODES_PER_DAY } from '../../src/domain/accounts/sign-up-policy';
 import { SIGN_UP_SETTINGS } from '../../src/domain/accounts/sign-up-settings';
 import { BILLING_GATEWAY } from '../../src/domain/billing/billing-gateway';
 import { SESSION_TOKEN_PATTERN } from '../../src/domain/auth/session-policy';
@@ -339,6 +340,25 @@ describe('sign-up while it is open', () => {
     expect(form?.get('customer')).toBe('cus_e2e_back');
     expect(form?.get('subscription_data[trial_period_days]')).toBeNull();
     expect(form?.get('cancel_url')).toBe(`${E2E_DASHBOARD_ORIGIN}/account`);
+  });
+
+  it('answers 429 sign_up_busy to any address once the sign-up codes of the last day ran out', async () => {
+    try {
+      await owner`
+        INSERT INTO otp_codes (email, code_hash, purpose, created_at, expires_at)
+        SELECT 'cap-filler-' || n || '@sign-up.example.com', repeat('0', 64), 'sign_up', now(),
+               now() + interval '10 minutes'
+        FROM generate_series(1, ${SIGN_UP_CODES_PER_DAY}) AS n
+      `;
+
+      const refused = await post('/v1/auth/sign-up/code', { email: FOUNDER });
+
+      expect(refused.statusCode).toBe(429);
+      expect(refused.json()).toMatchObject({ error: 'sign_up_busy' });
+      expect(mail.signUpCodes).toEqual([]);
+    } finally {
+      await owner`DELETE FROM otp_codes WHERE email LIKE 'cap-filler-%@sign-up.example.com'`;
+    }
   });
 
   it('has no billing portal before the first subscription, and needs a session', async () => {

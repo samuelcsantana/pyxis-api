@@ -8,6 +8,7 @@ import type { Account } from '../../domain/entities/account.entity';
 import {
   AccountNotFoundError,
   NoBillingYetError,
+  SignUpBusyError,
   SignUpClosedError,
   SubscriptionExistsError,
   TermsOutdatedError,
@@ -197,7 +198,7 @@ describe('RequestSignUpCodeUseCase', () => {
     warn.mockRestore();
   });
 
-  it('sends nothing once the sign-up codes of the last day reach the daily cap', async () => {
+  it('refuses as busy, sending nothing, once the sign-up codes of the last day reach the daily cap', async () => {
     const { requestCode, codes, mail } = setup();
     for (let sent = 0; sent < SIGN_UP_CODES_PER_DAY; sent += 1) {
       await codes.create({
@@ -211,9 +212,10 @@ describe('RequestSignUpCodeUseCase', () => {
     }
     const warn = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => undefined);
 
-    await requestCode.execute(EMAIL);
+    await expect(requestCode.execute(EMAIL)).rejects.toBeInstanceOf(SignUpBusyError);
 
     expect(mail.signUpCodes).toEqual([]);
+    expect(codes.stored).toHaveLength(SIGN_UP_CODES_PER_DAY);
     expect(warn).toHaveBeenCalledWith({
       message: 'auth.sign_up_daily_cap',
       cap: SIGN_UP_CODES_PER_DAY,

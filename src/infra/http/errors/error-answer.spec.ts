@@ -28,6 +28,7 @@ import {
   ConfirmationMismatchError,
   DeletionOnHoldError,
   ProjectLimitReachedError,
+  SignUpBusyError,
   SubscriptionRequiredError,
 } from '../../../domain/errors/account.errors';
 import {
@@ -92,6 +93,7 @@ describe('toErrorAnswer', () => {
     [new OwnerStaysError(), 409, 'owner_stays'],
     [new PersonNotFoundError(), 404, 'person_not_found'],
     [new ExportLimitReachedError(3), 429, 'export_limit_reached'],
+    [new SignUpBusyError(), 429, 'sign_up_busy'],
     [new ExportNotFoundError(), 404, 'export_not_found'],
     [new AccountEndedError(), 409, 'account_ended'],
     [new DeletionOnHoldError(), 409, 'deletion_on_hold'],
