@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.38.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.37.0...v0.38.0) (2026-10-29)
+
+
+### Features
+
+* **queries:** add the reach of the visits to Devices ([517fbd7](https://github.com/samuelcsantana/pyxis-api/commit/517fbd779c0015013a55e2da44b31ed52fca5362))
+
 ## [0.37.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.36.0...v0.37.0) (2026-10-29)
 
 
