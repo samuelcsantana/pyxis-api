@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
 import { HOSTED_PLAN_LIMITS, TRIAL_DAYS } from '../../domain/accounts/hosted-plan';
 import { SIGN_UP_CODES_PER_DAY } from '../../domain/accounts/sign-up-policy';
 import type { SignUpSettings } from '../../domain/accounts/sign-up-settings';
@@ -19,6 +20,7 @@ import { FakeBillingGateway } from '../../test-utils/fake-billing-gateway';
 import { FixedClock } from '../../test-utils/fixed-clock';
 import { InMemoryAccountUsageRepository } from '../../test-utils/in-memory-account-usage.repository';
 import { InMemoryAccountWelcomeRepository } from '../../test-utils/in-memory-account-welcome.repository';
+import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-free-plan-fallback.repository';
 import { WelcomeAccountsUseCase } from './welcome-accounts.usecase';
 import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.repository';
 import { InMemoryAdminSessionRepository } from '../../test-utils/in-memory-admin-session.repository';
@@ -65,6 +67,7 @@ function setup(settings: SignUpSettings = OPEN) {
   const terms = new InMemoryTermsAcceptanceRepository();
   const mail = new RecordingMailSender();
   const gateway = new FakeBillingGateway();
+  const fallbacks = new InMemoryFreePlanFallbackRepository();
   const welcome = new WelcomeAccountsUseCase(
     new InMemoryAccountWelcomeRepository(),
     mail,
@@ -96,7 +99,8 @@ function setup(settings: SignUpSettings = OPEN) {
     ),
     startCheckout: new StartCheckoutUseCase(accounts, gateway, settings),
     openPortal: new OpenBillingPortalUseCase(accounts, gateway, settings),
-    listAccounts: new ListMyAccountsUseCase(accounts, usage, terms, settings, clock),
+    fallbacks,
+    listAccounts: new ListMyAccountsUseCase(accounts, usage, terms, settings, clock, fallbacks),
   };
 }
 
@@ -843,6 +847,7 @@ describe('ListMyAccountsUseCase', () => {
         pauseAtEvents: 150_000,
         held: { projects: 0, people: 1 },
         boundByFreePlanTerms: false,
+        mailboxHasAnotherFreeAccount: false,
       },
       {
         account: joined,
@@ -853,8 +858,34 @@ describe('ListMyAccountsUseCase', () => {
         pauseAtEvents: 150_000,
         held: null,
         boundByFreePlanTerms: null,
+        mailboxHasAnotherFreeAccount: null,
       },
     ]);
+  });
+
+  it('tells the owner when another free account belongs to their mailbox', async () => {
+    const context = setup();
+    const owner = await context.admins.findOrCreateByEmail(EMAIL);
+    const owned = accountOf({ ownerAdminId: owner.id, status: 'active' });
+    context.accounts.add(owned);
+    context.fallbacks.add({
+      accountId: owned.id,
+      ownerEmail: EMAIL,
+      ownerLanguage: 'en',
+      eventsPerMonthLimit: null,
+      status: 'active',
+      fit: {
+        ...NO_LIMIT_OVERRIDES,
+        projects: 0,
+        people: 1,
+        acceptedTermsVersions: ['1.3'],
+        ownerHasAnotherFreeAccount: true,
+      },
+    });
+
+    const [listed] = await context.listAccounts.execute(owner.id);
+
+    expect(listed?.mailboxHasAnotherFreeAccount).toBe(true);
   });
 
   async function termsBindingWith(settings: SignUpSettings, acceptedVersions: readonly string[]) {

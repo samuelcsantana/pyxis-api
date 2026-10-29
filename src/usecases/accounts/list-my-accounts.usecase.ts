@@ -20,6 +20,10 @@ import {
   type RecordedUsage,
 } from '../../domain/repositories/account-usage.repository';
 import {
+  FREE_PLAN_FALLBACK_REPOSITORY,
+  type FreePlanFallbackRepository,
+} from '../../domain/repositories/free-plan-fallback.repository';
+import {
   TERMS_ACCEPTANCE_REPOSITORY,
   type TermsAcceptanceRepository,
 } from '../../domain/repositories/terms-acceptance.repository';
@@ -34,6 +38,7 @@ export interface MyAccount {
   readonly pauseAtEvents: number;
   readonly held: AccountHoldings | null;
   readonly boundByFreePlanTerms: boolean | null;
+  readonly mailboxHasAnotherFreeAccount: boolean | null;
 }
 
 export interface AccountHoldings {
@@ -49,6 +54,7 @@ export class ListMyAccountsUseCase {
     @Inject(TERMS_ACCEPTANCE_REPOSITORY) private readonly terms: TermsAcceptanceRepository,
     @Inject(SIGN_UP_SETTINGS) private readonly settings: SignUpSettings,
     @Inject(CLOCK) private readonly clock: Clock,
+    @Inject(FREE_PLAN_FALLBACK_REPOSITORY) private readonly fallbacks: FreePlanFallbackRepository,
   ) {}
 
   async execute(adminUserId: string): Promise<readonly MyAccount[]> {
@@ -65,6 +71,8 @@ export class ListMyAccountsUseCase {
         pauseAtEvents: ingestionPauseThresholdOf(account),
         held: await this.holdingsFor({ account, role }),
         boundByFreePlanTerms: await this.termsBindingFor({ account, role }, now),
+        mailboxHasAnotherFreeAccount:
+          role === 'owner' ? await this.fallbacks.mailboxHasAnotherFreeAccount(account.id) : null,
       })),
     );
   }

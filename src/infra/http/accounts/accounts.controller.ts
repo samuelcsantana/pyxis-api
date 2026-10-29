@@ -59,6 +59,7 @@ export function myAccountBody({
   pauseAtEvents,
   held,
   boundByFreePlanTerms,
+  mailboxHasAnotherFreeAccount,
 }: MyAccount): MyAccountBody {
   const owner = role === 'owner';
   return {
@@ -79,6 +80,7 @@ export function myAccountBody({
     project_count: held?.projects ?? null,
     people_count: held?.people ?? null,
     bound_by_free_plan_terms: boundByFreePlanTerms,
+    mailbox_has_another_free_account: mailboxHasAnotherFreeAccount,
     month,
     events_this_month: usage === null ? null : usage.events,
     measured_at: usage === null ? null : usage.updatedAt.toISOString(),

@@ -2073,6 +2073,13 @@
                   ],
                   "type": "object"
                 },
+                "mailbox_has_another_free_account": {
+                  "description": "Whether another account on the free plan belongs to the mailbox of the owner (the address without its +tag, and on Gmail without dots). Only one free account is kept per mailbox, so a subscription that ends then ends the account instead of falling back to the free plan. Null for members.",
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
                 "measured_at": {
                   "anyOf": [
                     {
@@ -2199,6 +2206,7 @@
                 "project_count",
                 "people_count",
                 "bound_by_free_plan_terms",
+                "mailbox_has_another_free_account",
                 "month",
                 "events_this_month",
                 "measured_at",

@@ -151,6 +151,15 @@ export const myAccountsSchema = z
               'ends fall back to the free plan, when the plan is open and the account fits it; ' +
               'otherwise it ends as the earlier terms say. Null for members.',
           ),
+        mailbox_has_another_free_account: z
+          .boolean()
+          .nullable()
+          .describe(
+            'Whether another account on the free plan belongs to the mailbox of the owner (the ' +
+              'address without its +tag, and on Gmail without dots). Only one free account is ' +
+              'kept per mailbox, so a subscription that ends then ends the account instead of ' +
+              'falling back to the free plan. Null for members.',
+          ),
         month: z.string().describe('The calendar month in UTC the usage is counted in, YYYY-MM.'),
         events_this_month: z
           .number()
