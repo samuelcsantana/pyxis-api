@@ -247,8 +247,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
 - Sign-up, closed until `SIGNUP_OPEN=true`, a `TERMS_VERSION` and a `TERMS_URL` are set (otherwise
   `404`):
   `GET /v1/auth/sign-up` says whether it is open and which terms to show, with their address;
-  `POST /v1/auth/sign-up/code` e-mails a code (202 for any address, the sign-in limits plus 50
-  sign-up codes a day in all); `POST /v1/auth/sign-up/verify` takes the code and the terms version
+  `POST /v1/auth/sign-up/code` e-mails a code (202 for any address, silent at the per-address
+  limit; `429 sign_up_busy` for every address once 50 sign-up codes were created in the last 24
+  hours, logged as `auth.sign_up_daily_cap`, which an alarm watches); `POST /v1/auth/sign-up/verify` takes the code and the terms version
   accepted (`409 terms_outdated` if it is not the current one), records the acceptance and answers
   a session and an `incomplete` account. `GET /v1/me/accounts` lists the admin's accounts with
   their billing state and the month measured; `POST /v1/accounts/{accountId}/checkout` opens
