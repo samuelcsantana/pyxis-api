@@ -6,6 +6,8 @@ Date: 2026-10-12
 
 Accepted. Extends [ADR 0006](0006-lambda-behind-cloudfront.md) (CloudFront in front of the API,
 which already forwards its viewer location headers).
+Its refusal of the city is superseded by [ADR 0054](0054-city-as-a-per-project-option.md): the
+city is now a per-project option, off by default.
 
 ## Context
 
