@@ -1,5 +1,10 @@
 import { Logger } from '@nestjs/common';
-import { createJobsHandler, DAILY_JOB, type JobsHandlerDependencies } from './jobs-handler';
+import {
+  createJobsHandler,
+  DAILY_JOB,
+  DAILY_JOB_DONE,
+  type JobsHandlerDependencies,
+} from './jobs-handler';
 
 const SIZE = { bytes: 300_000_000, limitBytes: 1_000_000_000, ratio: 0.3 };
 const RETENTION = {
@@ -254,5 +259,58 @@ describe('createJobsHandler', () => {
 
     await expect(handler()).rejects.toThrow('The account lifecycle failed for 1 account(s).');
     expect(order).toEqual(['parameters', 'size', 'retention', 'usage']);
+  });
+
+  it('logs the end of the daily jobs after the last step, the line the missed-run alarm counts', async () => {
+    const order: string[] = [];
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation((line: unknown) => {
+      order.push(JSON.stringify(line));
+    });
+
+    await createJobsHandler(recordingDependencies(order))();
+
+    expect(order.slice(-2)).toEqual(['demo traffic', JSON.stringify({ message: DAILY_JOB_DONE })]);
+    log.mockRestore();
+  });
+
+  it('logs the end of the daily jobs when a best-effort step failed', async () => {
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      refreshProjectIcons: () => Promise.reject(new Error('database went away')),
+      generateDemoTraffic: () => Promise.reject(new Error('insert timed out')),
+    });
+
+    await handler();
+
+    expect(log).toHaveBeenCalledWith({ message: DAILY_JOB_DONE });
+    log.mockRestore();
+    error.mockRestore();
+  });
+
+  it('logs no end of the daily jobs when a step fails', async () => {
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      sendOperatorNotices: () => Promise.reject(new Error('connection lost')),
+    });
+
+    await expect(handler()).rejects.toThrow('connection lost');
+    expect(log).not.toHaveBeenCalledWith({ message: DAILY_JOB_DONE });
+    log.mockRestore();
+  });
+
+  it.each([
+    ['the weekly digest', { job: 'weekly-digest' }],
+    ['the operator notices', { job: 'account-notices' }],
+    ['an export', { job: 'export', exportId: 'e-1' }],
+  ])('logs no end of the daily jobs for %s', async (_label, event) => {
+    const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+
+    await createJobsHandler(recordingDependencies([]))(event);
+
+    expect(log).not.toHaveBeenCalledWith({ message: DAILY_JOB_DONE });
+    log.mockRestore();
   });
 });
