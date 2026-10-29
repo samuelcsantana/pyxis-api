@@ -27,6 +27,8 @@ import { ConfirmSubscriptionsUseCase } from '../usecases/billing/confirm-subscri
 import { DrizzleSubscriptionConfirmationRepository } from '../infra/repositories/drizzle-subscription-confirmation.repository';
 import { FallBackToFreePlanUseCase } from '../usecases/billing/fall-back-to-free-plan.usecase';
 import { SweepInactiveFreeAccountsUseCase } from '../usecases/accounts/sweep-inactive-free-accounts.usecase';
+import { ReportSharedFreeSitesUseCase } from '../usecases/accounts/report-shared-free-sites.usecase';
+import { DrizzleFreeSiteSharingRepository } from '../infra/repositories/drizzle-free-site-sharing.repository';
 import { AccountDataDeletion } from '../usecases/accounts/account-data-deletion';
 import { DrizzleFreeAccountInactivityRepository } from '../infra/repositories/drizzle-free-account-inactivity.repository';
 import { DrizzleFreePlanFallbackRepository } from '../infra/repositories/drizzle-free-plan-fallback.repository';
@@ -136,6 +138,7 @@ export const handler = createJobsHandler({
           new AccountDataDeletion(lifecycle, mail),
           mail,
         ),
+        new ReportSharedFreeSitesUseCase(new DrizzleFreeSiteSharingRepository(database)),
       ).execute();
     }),
   processExport: (exportId) =>
