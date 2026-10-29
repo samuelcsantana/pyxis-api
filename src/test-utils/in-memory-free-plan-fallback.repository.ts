@@ -42,6 +42,10 @@ export class InMemoryFreePlanFallbackRepository implements FreePlanFallbackRepos
     return Promise.resolve(this.accounts.get(accountId)?.fit ?? null);
   }
 
+  mailboxHasAnotherFreeAccount(accountId: string): Promise<boolean> {
+    return Promise.resolve(this.accounts.get(accountId)?.fit.ownerHasAnotherFreeAccount === true);
+  }
+
   fallBack(accountId: string, at: Date): Promise<boolean> {
     const account = this.accounts.get(accountId);
     if (account === undefined || !hasRunningSubscription(account.status)) {

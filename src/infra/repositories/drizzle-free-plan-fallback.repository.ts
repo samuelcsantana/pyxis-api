@@ -46,8 +46,7 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
     if (account === undefined) {
       return null;
     }
-    const accountOwner = alias(adminUsers, 'account_owner');
-    const [projectCount, peopleCount, acceptances, otherFree] = await Promise.all([
+    const [projectCount, peopleCount, acceptances, ownerHasAnotherFreeAccount] = await Promise.all([
       this.db.select({ projects: count() }).from(projects).where(eq(projects.accountId, accountId)),
       this.db
         .select({ people: countDistinct(adminProjectAccess.adminUserId) })
@@ -58,19 +57,7 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
         .select({ version: termsAcceptances.version })
         .from(termsAcceptances)
         .where(eq(termsAcceptances.accountId, accountId)),
-      this.db
-        .select({ id: accounts.id })
-        .from(accounts)
-        .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
-        .innerJoin(accountOwner, eq(accountOwner.mailbox, adminUsers.mailbox))
-        .where(
-          and(
-            eq(accountOwner.id, account.ownerAdminId),
-            eq(accounts.status, 'free'),
-            ne(accounts.id, accountId),
-          ),
-        )
-        .limit(1),
+      this.mailboxHasAnotherFreeAccount(accountId),
     ]);
     return {
       eventsPerMonthLimit: account.eventsPerMonthLimit,
@@ -79,8 +66,24 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
       projects: aggregateRow(projectCount).projects,
       people: aggregateRow(peopleCount).people,
       acceptedTermsVersions: acceptances.map((acceptance) => acceptance.version),
-      ownerHasAnotherFreeAccount: otherFree.length > 0,
+      ownerHasAnotherFreeAccount,
     };
+  }
+
+  async mailboxHasAnotherFreeAccount(accountId: string): Promise<boolean> {
+    const thisAccount = alias(accounts, 'this_account');
+    const thisOwner = alias(adminUsers, 'this_owner');
+    const [other] = await this.db
+      .select({ id: accounts.id })
+      .from(accounts)
+      .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
+      .innerJoin(thisOwner, eq(thisOwner.mailbox, adminUsers.mailbox))
+      .innerJoin(thisAccount, eq(thisAccount.ownerAdminId, thisOwner.id))
+      .where(
+        and(eq(thisAccount.id, accountId), eq(accounts.status, 'free'), ne(accounts.id, accountId)),
+      )
+      .limit(1);
+    return other !== undefined;
   }
 
   async fallBack(accountId: string, at: Date): Promise<boolean> {
