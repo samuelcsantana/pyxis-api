@@ -214,6 +214,31 @@ const citySharesSchema = z.array(
   }),
 );
 
+const reachSchema = z
+  .strictObject({
+    visits: z.int().describe('Visits of the range, the base of every share'),
+    continents: z
+      .int()
+      .describe(
+        'Continents the visits came from, as UN M49 places their countries (Americas, Europe, ' +
+          'Asia, Africa, Oceania); Antarctica and unknown countries count for none',
+      ),
+    countries: z.int().describe('Distinct countries'),
+    regions: z.int().describe('Distinct regions (first subdivisions of a country)'),
+    cities: z
+      .int()
+      .describe('Distinct approximate cities, each in its region; 0 while the city is off'),
+    top_country: z
+      .strictObject({ value: z.string(), visits: z.int() })
+      .nullable()
+      .describe('The country with most visits; null when no visit had a country'),
+    top_region: z
+      .strictObject({ value: z.string(), name: z.string().nullable(), visits: z.int() })
+      .nullable()
+      .describe('The region with most visits; null when no visit had a region'),
+  })
+  .describe('How far the visits of the range reached, and where most of them came from');
+
 export const devicesReportSchema = z
   .strictObject({
     device_types: valueSharesSchema,
@@ -222,6 +247,7 @@ export const devicesReportSchema = z
     countries: valueSharesSchema,
     regions: regionSharesSchema,
     cities: citySharesSchema,
+    reach: reachSchema,
   })
   .meta({
     id: 'DevicesReport',

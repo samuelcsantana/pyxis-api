@@ -124,6 +124,15 @@ function devicesBody(report: DevicesReport): DevicesReportBody {
       conversions: share.conversions,
       converting_visits: share.convertingVisits,
     })),
+    reach: {
+      visits: report.reach.visits,
+      continents: report.reach.continents,
+      countries: report.reach.countries,
+      regions: report.reach.regions,
+      cities: report.reach.cities,
+      top_country: report.reach.topCountry,
+      top_region: report.reach.topRegion,
+    },
   };
 }
 

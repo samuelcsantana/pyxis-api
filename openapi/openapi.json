@@ -1232,6 +1232,111 @@
             },
             "type": "array"
           },
+          "reach": {
+            "additionalProperties": false,
+            "description": "How far the visits of the range reached, and where most of them came from",
+            "properties": {
+              "cities": {
+                "description": "Distinct approximate cities, each in its region; 0 while the city is off",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "continents": {
+                "description": "Continents the visits came from, as UN M49 places their countries (Americas, Europe, Asia, Africa, Oceania); Antarctica and unknown countries count for none",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "countries": {
+                "description": "Distinct countries",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "regions": {
+                "description": "Distinct regions (first subdivisions of a country)",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              },
+              "top_country": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "value": {
+                        "type": "string"
+                      },
+                      "visits": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "visits"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The country with most visits; null when no visit had a country"
+              },
+              "top_region": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "value": {
+                        "type": "string"
+                      },
+                      "visits": {
+                        "maximum": 9007199254740991,
+                        "minimum": -9007199254740991,
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "value",
+                      "name",
+                      "visits"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The region with most visits; null when no visit had a region"
+              },
+              "visits": {
+                "description": "Visits of the range, the base of every share",
+                "maximum": 9007199254740991,
+                "minimum": -9007199254740991,
+                "type": "integer"
+              }
+            },
+            "required": [
+              "visits",
+              "continents",
+              "countries",
+              "regions",
+              "cities",
+              "top_country",
+              "top_region"
+            ],
+            "type": "object"
+          },
           "regions": {
             "items": {
               "additionalProperties": false,
@@ -1296,7 +1401,8 @@
           "operating_systems",
           "countries",
           "regions",
-          "cities"
+          "cities",
+          "reach"
         ],
         "type": "object"
       },

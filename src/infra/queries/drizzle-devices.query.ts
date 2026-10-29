@@ -4,6 +4,7 @@ import type {
   CityCount,
   DeviceDimension,
   DevicesQuery,
+  ReachCounts,
   RegionCount,
   ValueCount,
 } from '../../domain/queries/devices';
@@ -87,5 +88,28 @@ export class DrizzleDevicesQuery implements DevicesQuery {
         GROUP BY ${events.region}, ${events.city}`,
     );
     return [...rows];
+  }
+
+  async reach(scope: QueryScope): Promise<ReachCounts> {
+    const rows = await this.db.execute<{
+      visits: number;
+      countries: string[];
+      regions: number;
+      cities: number;
+    }>(
+      sql`
+        SELECT ${visits} AS "visits",
+          coalesce(
+            jsonb_agg(DISTINCT ${events.country}) FILTER (WHERE ${events.country} IS NOT NULL),
+            '[]'::jsonb
+          ) AS "countries",
+          count(DISTINCT ${events.region})::int AS "regions",
+          count(DISTINCT (${events.region}, ${events.city}))
+            FILTER (WHERE ${events.city} IS NOT NULL)::int AS "cities"
+        FROM ${events}
+        WHERE ${inScope(scope)}`,
+    );
+    const [reach] = rows as unknown as readonly [ReachCounts];
+    return reach;
   }
 }

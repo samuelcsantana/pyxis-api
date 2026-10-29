@@ -1,5 +1,6 @@
 import {
   type CityCount,
+  reachOf,
   OTHER_VALUE,
   TOP_CITIES,
   topCitiesAndRest,
@@ -204,5 +205,60 @@ describe('topCitiesAndRest', () => {
         convertingVisits: null,
       },
     ]);
+  });
+});
+
+describe('reachOf', () => {
+  const counts = {
+    visits: 10,
+    countries: ['BR', 'US', 'PT', 'AQ'],
+    regions: 4,
+    cities: 6,
+  };
+
+  it('counts continents from the countries, and names the country and region with most visits', () => {
+    expect(
+      reachOf(
+        counts,
+        [
+          { value: null, visits: 9, conversions: 0, convertingVisits: 0 },
+          { value: 'US', visits: 2, conversions: 0, convertingVisits: 0 },
+          { value: 'BR', visits: 7, conversions: 1, convertingVisits: 1 },
+        ],
+        [regionCount('BR-SP', 2), regionCount('BR-BA', 5), regionCount(null, 9)],
+      ),
+    ).toEqual({
+      visits: 10,
+      continents: 2,
+      countries: 4,
+      regions: 4,
+      cities: 6,
+      topCountry: { value: 'BR', visits: 7 },
+      topRegion: { value: 'BR-BA', name: 'Name of BR-BA', visits: 5 },
+    });
+  });
+
+  it('breaks a tie by code', () => {
+    const reach = reachOf(
+      counts,
+      [
+        { value: 'US', visits: 3, conversions: 0, convertingVisits: 0 },
+        { value: 'BR', visits: 3, conversions: 0, convertingVisits: 0 },
+      ],
+      [regionCount('BR-SP', 3), regionCount('BR-BA', 3)],
+    );
+
+    expect(reach.topCountry?.value).toBe('BR');
+    expect(reach.topRegion?.value).toBe('BR-BA');
+  });
+
+  it('names no leader when no visit had a country or a region', () => {
+    const reach = reachOf(
+      { visits: 2, countries: [], regions: 0, cities: 0 },
+      [{ value: null, visits: 2, conversions: 0, convertingVisits: 0 }],
+      [regionCount(null, 2)],
+    );
+
+    expect(reach).toMatchObject({ continents: 0, countries: 0, topCountry: null, topRegion: null });
   });
 });

@@ -2,6 +2,7 @@ import type {
   CityCount,
   DeviceDimension,
   DevicesQuery,
+  ReachCounts,
   RegionCount,
   ValueCount,
 } from '../domain/queries/devices';
@@ -14,6 +15,8 @@ export class StubDevicesQuery implements DevicesQuery {
   regionCounts: readonly RegionCount[] = [];
   readonly askedForCities: QueryScope[] = [];
   cityCounts: readonly CityCount[] = [];
+  readonly askedForReach: QueryScope[] = [];
+  reachCounts: ReachCounts = { visits: 0, countries: [], regions: 0, cities: 0 };
 
   breakdown(scope: QueryScope, dimension: DeviceDimension): Promise<readonly ValueCount[]> {
     this.asked.push({ scope, dimension });
@@ -28,5 +31,10 @@ export class StubDevicesQuery implements DevicesQuery {
   cities(scope: QueryScope): Promise<readonly CityCount[]> {
     this.askedForCities.push(scope);
     return Promise.resolve(this.cityCounts);
+  }
+
+  reach(scope: QueryScope): Promise<ReachCounts> {
+    this.askedForReach.push(scope);
+    return Promise.resolve(this.reachCounts);
   }
 }

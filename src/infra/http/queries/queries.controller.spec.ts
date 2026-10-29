@@ -106,6 +106,15 @@ const DEVICES: DevicesReport = {
     },
     { value: null, region: null, regionName: null, visits: 2, conversions: 1, convertingVisits: 0 },
   ],
+  reach: {
+    visits: 4,
+    continents: 1,
+    countries: 1,
+    regions: 1,
+    cities: 1,
+    topCountry: { value: 'BR', visits: 3 },
+    topRegion: { value: 'BR-SP', name: 'São Paulo', visits: 3 },
+  },
 };
 
 const ACQUISITION: AcquisitionReport = {
@@ -379,6 +388,15 @@ describe('QueriesController', () => {
           converting_visits: 0,
         },
       ],
+      reach: {
+        visits: 4,
+        continents: 1,
+        countries: 1,
+        regions: 1,
+        cities: 1,
+        top_country: { value: 'BR', visits: 3 },
+        top_region: { value: 'BR-SP', name: 'São Paulo', visits: 3 },
+      },
     });
   });
 
