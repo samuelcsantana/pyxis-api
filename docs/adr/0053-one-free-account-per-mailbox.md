@@ -58,5 +58,10 @@ and Gmail also ignores dots in the local part and treats `googlemail.com` as `gm
   at the mailbox: that return is promised by the terms as a right of withdrawal.
 - Two different people whose provider gives meaning to `+` would share a mailbox and only one of
   them could be on the free plan; the other is offered the paid plan.
-- A refused account is an unfinished one, so the daily job removes it like any unfinished
-  sign-up that never subscribes.
+- A refused account is an unfinished one with no wait and no project, so the daily job removes
+  it seven days after it was created, like any unfinished sign-up that never subscribes.
+- The dashboard still decides from the accounts the signed-in admin owns whether cancelling a
+  paid account goes back to the free plan. When another address of the same mailbox holds the
+  free account, it promises the return and the API ends the account instead, until
+  `GET /v1/me/accounts` says whether the mailbox has another free account and the dashboard
+  reads it.
