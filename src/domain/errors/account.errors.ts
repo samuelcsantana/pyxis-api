@@ -24,6 +24,14 @@ export class SignUpClosedError extends DomainError {
   }
 }
 
+export class SignUpBusyError extends DomainError {
+  readonly code = 'sign_up_busy';
+
+  constructor() {
+    super('The sign-up codes of the last day ran out; try again later.');
+  }
+}
+
 export class TermsOutdatedError extends DomainError {
   readonly code = 'terms_outdated';
 

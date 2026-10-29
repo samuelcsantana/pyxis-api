@@ -55,8 +55,10 @@ export class SignUpController {
   @ApiOperation({
     summary: 'Email a code to create an account',
     description:
-      'Answers 202 whoever the email is. A code is created and emailed within the limits per ' +
-      'email and per day; 404 while sign-up is closed.',
+      'Answers 202 whoever the email is: a code is created and emailed within the limit per ' +
+      'email, and nothing is said when that limit is reached. 429 sign_up_busy once the sign-up ' +
+      'codes of the last 24 hours reach the daily cap, for every address alike; 429 also when ' +
+      'the client address sends too many requests; 404 while sign-up is closed.',
   })
   @ApiResponse({ status: HttpStatus.ACCEPTED, description: 'Accepted.' })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })

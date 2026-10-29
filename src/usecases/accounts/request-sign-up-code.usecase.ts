@@ -13,7 +13,7 @@ import {
   SIGN_IN_CODE_TTL_MS,
   SIGN_IN_CODE_WINDOW_MS,
 } from '../../domain/auth/sign-in-code';
-import { SignUpClosedError } from '../../domain/errors/account.errors';
+import { SignUpBusyError, SignUpClosedError } from '../../domain/errors/account.errors';
 import {
   OTP_CODE_REPOSITORY,
   type OtpCodeRepository,
@@ -75,7 +75,7 @@ export class RequestSignUpCodeUseCase {
     );
     if (today >= SIGN_UP_CODES_PER_DAY) {
       this.logger.warn({ message: 'auth.sign_up_daily_cap', cap: SIGN_UP_CODES_PER_DAY });
-      return true;
+      throw new SignUpBusyError();
     }
     return false;
   }
