@@ -13,7 +13,7 @@ const SHOP_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f8091a';
 const ORIGIN = 'https://shop.example.com';
 const KEY = `${PUBLIC_KEY_PREFIX}${'E'.repeat(32)}`;
 const CITY_SHOP_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f8091b';
-const CITY_KEY = `${PUBLIC_KEY_PREFIX}${'C'.repeat(32)}`;
+const CITY_KEY = `${PUBLIC_KEY_PREFIX}${'Y'.repeat(32)}`;
 const SAFARI_IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 
