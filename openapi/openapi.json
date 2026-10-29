@@ -3922,6 +3922,16 @@
             "pattern": "^(?:[A-Za-z0-9_'+\\-]+\\.)*[A-Za-z0-9_'+\\-]*[A-Za-z0-9_+-]@(?:[A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
             "type": "string"
           },
+          "free_place": {
+            "description": "placed when the account took a place on the free plan; waitlisted when it waits for one; taken_by_same_mailbox when the mailbox behind the address (the address without its +tag, and on Gmail without dots) already has an account on the free plan or waiting for one, so this account waits for its subscription; not_offered when the free plan is closed or a returning owner gets an account that already runs.",
+            "enum": [
+              "placed",
+              "waitlisted",
+              "taken_by_same_mailbox",
+              "not_offered"
+            ],
+            "type": "string"
+          },
           "session_token": {
             "pattern": "^[A-Za-z0-9_-]{43}$",
             "type": "string"
@@ -3931,7 +3941,8 @@
           "email",
           "session_token",
           "account_id",
-          "account_status"
+          "account_status",
+          "free_place"
         ],
         "type": "object"
       },

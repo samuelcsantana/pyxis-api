@@ -31,7 +31,8 @@ function signUpController(settings: SignUpSettings) {
           email: EMAIL,
           sessionToken: 'fresh-token',
           accountId: ACCOUNT_ID,
-          accountStatus: 'free',
+          accountStatus: 'incomplete',
+          freePlace: 'taken_by_same_mailbox',
         });
       },
     } as unknown as CompleteSignUpUseCase,
@@ -100,7 +101,8 @@ describe('SignUpController', () => {
       email: EMAIL,
       session_token: 'fresh-token',
       account_id: ACCOUNT_ID,
-      account_status: 'free',
+      account_status: 'incomplete',
+      free_place: 'taken_by_same_mailbox',
     });
     expect(completions).toEqual([
       {

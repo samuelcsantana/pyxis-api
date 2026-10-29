@@ -103,6 +103,7 @@ export class SignUpController {
       session_token: signedUp.sessionToken,
       account_id: signedUp.accountId,
       account_status: signedUp.accountStatus,
+      free_place: signedUp.freePlace,
     };
   }
 }
