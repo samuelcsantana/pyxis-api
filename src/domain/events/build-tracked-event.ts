@@ -12,6 +12,7 @@ export interface ReceptionContext {
   readonly device: UserAgentClassification;
   readonly country: string | null;
   readonly region: ViewerRegion;
+  readonly city: string | null;
 }
 
 export function buildTrackedEvent(event: AcceptedEvent, context: ReceptionContext): TrackedEvent {
@@ -32,6 +33,7 @@ export function buildTrackedEvent(event: AcceptedEvent, context: ReceptionContex
     country: context.country,
     region: context.region.region,
     regionName: context.region.regionName,
+    city: context.city,
     properties: event.properties,
   };
 }

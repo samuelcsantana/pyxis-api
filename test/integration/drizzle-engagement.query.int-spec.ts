@@ -44,6 +44,7 @@ function event(
     country: 'BR',
     region: null,
     regionName: null,
+    city: null,
     ...overrides,
   };
 }

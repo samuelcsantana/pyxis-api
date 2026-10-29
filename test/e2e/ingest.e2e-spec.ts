@@ -12,6 +12,8 @@ import { E2E_CLIENT_IP_HEADER } from './env-setup';
 const SHOP_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f8091a';
 const ORIGIN = 'https://shop.example.com';
 const KEY = `${PUBLIC_KEY_PREFIX}${'E'.repeat(32)}`;
+const CITY_SHOP_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f8091b';
+const CITY_KEY = `${PUBLIC_KEY_PREFIX}${'C'.repeat(32)}`;
 const SAFARI_IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 
@@ -70,12 +72,20 @@ describe('POST /v1/batch', () => {
 
   beforeAll(async () => {
     owner = postgres(e2eOwnerUrl(), { max: 1, onnotice: () => undefined });
-    await owner`DELETE FROM projects WHERE id = ${SHOP_ID}`;
+    await owner`DELETE FROM projects WHERE id IN (${SHOP_ID}, ${CITY_SHOP_ID})`;
     await owner`
       INSERT INTO projects (id, name, allowed_origins) VALUES (${SHOP_ID}, 'Shop', ${[ORIGIN]})
     `;
     await owner`
       INSERT INTO project_keys (project_id, kind, public_key) VALUES (${SHOP_ID}, 'public', ${KEY})
+    `;
+    await owner`
+      INSERT INTO projects (id, name, allowed_origins, city_enabled)
+      VALUES (${CITY_SHOP_ID}, 'City shop', ${[ORIGIN]}, true)
+    `;
+    await owner`
+      INSERT INTO project_keys (project_id, kind, public_key)
+      VALUES (${CITY_SHOP_ID}, 'public', ${CITY_KEY})
     `;
     app = await createTestApp();
   });
@@ -179,7 +189,7 @@ describe('POST /v1/batch', () => {
     expect(stored).not.toContain('203.0.113.99');
   });
 
-  it('stores the country and the region from CloudFront, and never the city', async () => {
+  it('stores the country and the region from CloudFront, and no city while the project has it off', async () => {
     await send({
       body: batch([event(52)]),
       location: {
@@ -195,6 +205,24 @@ describe('POST /v1/batch', () => {
     `;
     expect(row).toMatchObject({ country: 'BR', region: 'BR-SP', region_name: 'São Paulo' });
     expect(JSON.stringify(row)).not.toContain('Campinas');
+    expect(row?.city).toBeNull();
+  });
+
+  it('stores the decoded city for a project that turned it on', async () => {
+    await send({
+      body: batch([event(54)], { key: CITY_KEY }),
+      location: {
+        'cloudfront-viewer-country': 'BR',
+        'cloudfront-viewer-country-region': 'BA',
+        'cloudfront-viewer-country-region-name': 'Bahia',
+        'cloudfront-viewer-city': 'Cama%C3%A7ari',
+      },
+    });
+
+    const [row] = await owner<Record<string, unknown>[]>`
+      SELECT * FROM events WHERE project_id = ${CITY_SHOP_ID} AND id = ${String(event(54).id)}
+    `;
+    expect(row).toMatchObject({ region: 'BR-BA', region_name: 'Bahia', city: 'Camaçari' });
   });
 
   it('stores the time the function URL received the batch as its reception time', async () => {

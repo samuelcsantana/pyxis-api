@@ -70,6 +70,7 @@ function commandOf(batch: BatchEnvelope, request: FastifyRequest): IngestBatchCo
     viewerCountry: singleHeader(request, 'cloudfront-viewer-country'),
     viewerRegion: singleHeader(request, 'cloudfront-viewer-country-region'),
     viewerRegionName: singleHeader(request, 'cloudfront-viewer-country-region-name'),
+    viewerCity: singleHeader(request, 'cloudfront-viewer-city'),
     viewerAsn: singleHeader(request, CLOUDFRONT_VIEWER_ASN_HEADER),
     arrivedAt: arrivedAtOf(request),
   };

@@ -50,6 +50,7 @@ export function filteredEvent(
     path: '/pricing',
     attribution: null,
     channel: null,
+    city: null,
     properties: {},
     ...(sessionId === DESKTOP_VISIT ? ON_A_LAPTOP : IPHONE),
     ...overrides,

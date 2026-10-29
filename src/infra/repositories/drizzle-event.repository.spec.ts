@@ -18,6 +18,7 @@ const EVENT: TrackedEvent = {
   country: null,
   region: null,
   regionName: null,
+  city: null,
   properties: {},
 };
 

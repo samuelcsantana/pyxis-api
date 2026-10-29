@@ -67,5 +67,6 @@ export interface TrackedEvent {
   readonly country: string | null;
   readonly region: string | null;
   readonly regionName: string | null;
+  readonly city: string | null;
   readonly properties: PropertyMap;
 }

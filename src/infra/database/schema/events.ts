@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   char,
@@ -10,6 +11,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core';
 import type { PropertyMap } from '../../../domain/entities/tracked-event.entity';
+import { MAX_CITY_NAME_LENGTH } from '../../../domain/events/city';
 import { projects } from './projects';
 
 export const events = pgTable(
@@ -36,6 +38,7 @@ export const events = pgTable(
     country: char('country', { length: 2 }),
     region: varchar('region', { length: 6 }),
     regionName: varchar('region_name', { length: 64 }),
+    city: varchar('city', { length: MAX_CITY_NAME_LENGTH }),
     channel: varchar('channel', { length: 16 }),
     properties: jsonb('properties').$type<PropertyMap>().notNull().default({}),
   },
@@ -54,6 +57,9 @@ export const events = pgTable(
       table.sessionId,
       table.occurredAt,
     ),
+    index('events_project_city_idx')
+      .on(table.projectId)
+      .where(sql`${table.city} is not null`),
   ],
 );
 
