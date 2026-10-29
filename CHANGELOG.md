@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.39.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.39.0...v0.39.1) (2026-10-29)
+
+
+### Documentation
+
+* **openapi:** name the cities and the reach in the devices summary ([ce52f62](https://github.com/samuelcsantana/pyxis-api/commit/ce52f620c5b7accaddc5d1c1f0bf0311523d1afe))
+
 ## [0.39.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.38.0...v0.39.0) (2026-10-29)
 
 
