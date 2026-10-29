@@ -352,3 +352,74 @@ describe('sign-up while it is open', () => {
     expect(anonymous.statusCode).toBe(401);
   });
 });
+
+describe('sign-up into the free plan, one place per mailbox', () => {
+  const PLAIN = 'mailbox-owner@sign-up.example.com';
+  const ALIAS = 'mailbox-owner+shop@sign-up.example.com';
+  let app: NestFastifyApplication;
+  let owner: postgres.Sql;
+  const mail = new RecordingMailSender();
+  const { post } = caller(() => app);
+
+  const removeBoth = async (): Promise<void> => {
+    for (const email of [PLAIN, ALIAS]) {
+      await owner`
+        DELETE FROM accounts WHERE owner_admin_id IN (SELECT id FROM admin_users WHERE email = ${email})
+      `;
+      await owner`DELETE FROM admin_users WHERE email = ${email}`;
+      await owner`DELETE FROM otp_codes WHERE email = ${email}`;
+    }
+  };
+
+  const signUpAs = async (email: string) => {
+    await post('/v1/auth/sign-up/code', { email });
+    const code = mail.signUpCodes.findLast((delivered) => delivered.email === email)?.code;
+    return post('/v1/auth/sign-up/verify', { email, code, terms_version: TERMS });
+  };
+
+  beforeAll(async () => {
+    owner = postgres(e2eOwnerUrl(), { max: 1, onnotice: () => undefined });
+    app = await createTestApp((builder) =>
+      builder
+        .overrideProvider(MAIL_SENDER)
+        .useValue(mail)
+        .overrideProvider(SIGN_UP_SETTINGS)
+        .useValue({
+          open: true,
+          termsVersion: TERMS,
+          termsUrl: 'https://pyxis.example.com/terms',
+          dashboardOrigin: E2E_DASHBOARD_ORIGIN,
+          freePlanOpen: true,
+          freeAccountsMax: 200,
+          trialOffered: false,
+          freePlanTermsForEarlierAccountsFrom: null,
+        }),
+    );
+    await removeBoth();
+  });
+
+  afterAll(async () => {
+    await removeBoth();
+    await app.close();
+    await owner.end();
+  });
+
+  it('places the first address, and gives an alias of its mailbox neither a place nor a wait', async () => {
+    const plain = await signUpAs(PLAIN);
+    const alias = await signUpAs(ALIAS);
+
+    expect(plain.statusCode).toBe(200);
+    expect(plain.json()).toMatchObject({ account_status: 'free', free_place: 'placed' });
+    expect(alias.statusCode).toBe(200);
+    expect(alias.json()).toMatchObject({
+      email: ALIAS,
+      account_status: 'incomplete',
+      free_place: 'taken_by_same_mailbox',
+    });
+    const [refused] = await owner<{ status: string; free_waitlisted_at: Date | null }[]>`
+      SELECT status, free_waitlisted_at FROM accounts
+      WHERE id = ${alias.json<{ account_id: string }>().account_id}
+    `;
+    expect(refused).toEqual({ status: 'incomplete', free_waitlisted_at: null });
+  });
+});
