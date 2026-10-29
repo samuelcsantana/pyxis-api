@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
 import {
   boolean,
   char,
@@ -13,6 +13,13 @@ import {
 } from 'drizzle-orm/pg-core';
 import { MAX_ACCESS_TOKEN_NAME_LENGTH } from '../../../domain/auth/access-token-policy';
 import { CODE_PURPOSES, type CodePurpose } from '../../../domain/auth/code-purpose';
+import {
+  ADDRESS_SEPARATOR,
+  GMAIL_DOMAIN,
+  GMAIL_DOMAINS,
+  GMAIL_IGNORED_CHARACTER,
+  TAG_SEPARATOR,
+} from '../../../domain/auth/mailbox';
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../../../domain/auth/email-language';
 import { WEEKLY_DIGEST_BY_DEFAULT } from '../../../domain/entities/email-preferences.entity';
 import type {
@@ -34,14 +41,37 @@ function emailLanguage() {
     .default(DEFAULT_EMAIL_LANGUAGE);
 }
 
-export const adminUsers = pgTable('admin_users', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  email: varchar('email', { length: MAX_EMAIL_LENGTH }).notNull().unique(),
-  emailLanguage: emailLanguage(),
-  suspendedAt: timestamp('suspended_at', { withTimezone: true }),
-  projectlessSince: timestamp('projectless_since', { withTimezone: true }),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+function sqlText(value: string): SQL {
+  return sql.raw(`'${value}'`);
+}
+
+function mailboxExpression(email: SQL): SQL {
+  const separator = sqlText(ADDRESS_SEPARATOR);
+  const address = sql`lower(${email})`;
+  const localPart = sql`split_part(${address}, ${separator}, 1)`;
+  const domain = sql`split_part(${address}, ${separator}, 2)`;
+  const beforeTag = sql`split_part(${localPart}, ${sqlText(TAG_SEPARATOR)}, 1)`;
+  const untagged = sql`coalesce(nullif(${beforeTag}, ''), ${localPart})`;
+  const gmailDomains = sql.join(GMAIL_DOMAINS.map(sqlText), sql`, `);
+  const gmailLocalPart = sql`replace(${untagged}, ${sqlText(GMAIL_IGNORED_CHARACTER)}, '')`;
+  return sql`case when ${domain} in (${gmailDomains}) then ${gmailLocalPart} || ${separator} || ${sqlText(GMAIL_DOMAIN)} else ${untagged} || ${separator} || ${domain} end`;
+}
+
+export const adminUsers = pgTable(
+  'admin_users',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    email: varchar('email', { length: MAX_EMAIL_LENGTH }).notNull().unique(),
+    mailbox: varchar('mailbox', { length: MAX_EMAIL_LENGTH })
+      .notNull()
+      .generatedAlwaysAs((): SQL => mailboxExpression(sql`${adminUsers.email}`)),
+    emailLanguage: emailLanguage(),
+    suspendedAt: timestamp('suspended_at', { withTimezone: true }),
+    projectlessSince: timestamp('projectless_since', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index('admin_users_mailbox_idx').on(table.mailbox)],
+);
 
 export const adminProjectAccess = pgTable(
   'admin_project_access',

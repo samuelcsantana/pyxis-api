@@ -1,4 +1,5 @@
-import { getTableConfig } from 'drizzle-orm/pg-core';
+import type { SQL } from 'drizzle-orm';
+import { getTableConfig, PgDialect } from 'drizzle-orm/pg-core';
 import {
   accountUsageMonths,
   accounts,
@@ -47,6 +48,10 @@ function foreignKeyTargets(
     const reference = foreignKey.reference();
     return `${getTableConfig(reference.foreignTable).name}.${reference.foreignColumns.map((column) => column.name).join(',')}`;
   });
+}
+
+function isExpressionBuilder(value: unknown): value is () => SQL {
+  return typeof value === 'function';
 }
 
 describe('database schema', () => {
@@ -316,5 +321,25 @@ describe('database schema', () => {
     const email = getTableConfig(adminUsers).columns.find((column) => column.name === 'email');
 
     expect(email?.isUnique).toBe(true);
+  });
+
+  it('derives the mailbox of an admin from the e-mail in the database, with literals only, indexed and not unique', () => {
+    const config = getTableConfig(adminUsers);
+    const mailbox = config.columns.find((column) => column.name === 'mailbox');
+    const expression = mailbox?.generated?.as;
+    if (!isExpressionBuilder(expression)) {
+      throw new Error('The mailbox is not generated from an expression.');
+    }
+
+    const rendered = new PgDialect().sqlToQuery(expression());
+
+    expect(mailbox?.generated?.type).toBe('always');
+    expect(mailbox?.isUnique).toBe(false);
+    expect(rendered.params).toEqual([]);
+    expect(rendered.sql).toContain('lower("admin_users"."email")');
+    expect(rendered.sql).toContain("in ('gmail.com', 'googlemail.com')");
+    expect(config.indexes.map((index) => [index.config.name, index.config.unique])).toEqual([
+      ['admin_users_mailbox_idx', false],
+    ]);
   });
 });
