@@ -21,20 +21,20 @@ docker compose up -d --build   # Postgres, the migration step and the API on :30
 
 ## Scripts
 
-| Script                                | What it does                                                          |
-| ------------------------------------- | --------------------------------------------------------------------- |
-| `npm run lint`                        | ESLint, then the comment check for YAML, shell, Docker and SQL files  |
-| `npm run format` / `format:check`     | Prettier                                                              |
-| `npm run typecheck`                   | TypeScript in strict mode, for the app and for the scripts            |
-| `npm test`                            | Unit tests, no database                                               |
-| `npm run test:integration`            | Database adapters against a real Postgres (`docker compose up -d db`) |
-| `npm run test:cov`                    | Unit and integration together, with the 100% coverage gate            |
-| `npm run db:migrate`                  | Applies the migrations as the owner and grants the app role           |
-| `npm run project:create` and friends  | Project and key scripts (README); run `npm run build` first           |
-| `npm run test:e2e`                    | The application over HTTP                                             |
-| `npm run test:tooling`                | Tests of the lint rule and the comment check                          |
-| `npm run openapi:export`              | Regenerates `openapi/openapi.json` from the code                      |
-| `npm run build:watch` + `start:watch` | Recompile and restart on change, in two terminals                     |
+| Script                                | What it does                                                                                                  |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `npm run lint`                        | ESLint, then the comment check for YAML, shell, Docker and SQL files                                          |
+| `npm run format` / `format:check`     | Prettier                                                                                                      |
+| `npm run typecheck`                   | TypeScript in strict mode, for the app and for the scripts                                                    |
+| `npm test`                            | Unit tests, no database                                                                                       |
+| `npm run test:integration`            | Database adapters against a real Postgres (`docker compose up -d db`)                                         |
+| `npm run test:cov`                    | Unit and integration together, with the 100% coverage gate                                                    |
+| `npm run db:migrate`                  | Applies the migrations as the owner and grants the app role                                                   |
+| `npm run project:create` and friends  | Project and key scripts ([runbook](docs/RUNBOOK.md#project-key-and-admin-scripts)); run `npm run build` first |
+| `npm run test:e2e`                    | The application over HTTP                                                                                     |
+| `npm run test:tooling`                | Tests of the lint rule and the comment check                                                                  |
+| `npm run openapi:export`              | Regenerates `openapi/openapi.json` from the code                                                              |
+| `npm run build:watch` + `start:watch` | Recompile and restart on change, in two terminals                                                             |
 
 ## Workflow
 
