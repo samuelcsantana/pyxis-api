@@ -224,6 +224,13 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   meantime; replying to the notice asks a person to review it. Only stored events count; paid and
   comped accounts, deletion holds and suspended accounts are never touched
   ([ADR 0052](adr/0052-free-accounts-with-no-events-are-deleted.md))
+- Free accounts that share a site: the daily job reports each project of a free account with an
+  origin that a project of another account (not ended) or of no account also allows, as
+  `accounts.free_site_shared` at warn level with the account and project ids only, and counts the
+  free accounts in `freeAccountsSharingASite`. Origins of a developer machine (`localhost`,
+  `*.localhost`, `127.0.0.1`, `[::1]`) do not count. It reports and blocks nothing: the same site
+  in two accounts can be an agency and its client, and refusing an origin would tell a stranger
+  that someone else measures it
 
 - Billing through Stripe: `POST /v1/billing/stripe/webhook` takes Stripe's signed events (raw body,
   up to 512 KB), applies each one once (`billing_events`), always re-reads the subscription before
