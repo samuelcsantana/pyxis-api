@@ -16,6 +16,7 @@ import type {
 export const DAILY_JOB = 'daily';
 export const WEEKLY_DIGEST_JOB = 'weekly-digest';
 export const OPERATOR_NOTICES_JOB = 'account-notices';
+export const DAILY_JOB_DONE = 'jobs.daily_done';
 
 export interface JobsHandlerDependencies {
   readonly loadParameters: () => Promise<unknown>;
@@ -134,6 +135,7 @@ export function createJobsHandler(
     const operatorNotices = await dependencies.sendOperatorNotices();
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
     const demoTraffic = await bestEffortGenerateDemoTraffic(dependencies.generateDemoTraffic);
+    logger.log({ message: DAILY_JOB_DONE });
     return {
       ok: true,
       job: DAILY_JOB,
