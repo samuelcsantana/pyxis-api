@@ -215,6 +215,17 @@ variable "jobs_function_errors_alarm_threshold" {
   default     = 1
 }
 
+variable "daily_jobs_missed_after_hours" {
+  description = "Hours without a finished daily run of the jobs function after which the alarm fires. The schedule runs every 24 hours; the margin covers a slow run, and CloudWatch caps an alarm's window at seven days."
+  type        = number
+  default     = 26
+
+  validation {
+    condition     = var.daily_jobs_missed_after_hours >= 25 && var.daily_jobs_missed_after_hours <= 168 && floor(var.daily_jobs_missed_after_hours) == var.daily_jobs_missed_after_hours
+    error_message = "daily_jobs_missed_after_hours must be a whole number of hours from 25 to 168."
+  }
+}
+
 variable "function_throttles_alarm_threshold" {
   description = "Throttled requests to the HTTP function within five minutes at which the alarm fires."
   type        = number

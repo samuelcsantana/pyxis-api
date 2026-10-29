@@ -151,6 +151,34 @@ resource "aws_cloudwatch_metric_alarm" "jobs_function_errors" {
   ok_actions          = [aws_sns_topic.alerts.arn]
 }
 
+resource "aws_cloudwatch_log_metric_filter" "daily_jobs_completed" {
+  name           = "${var.project}-daily-jobs-completed"
+  log_group_name = aws_cloudwatch_log_group.function["${var.project}-jobs"].name
+  pattern        = "{ $.message.message = \"jobs.daily_done\" }"
+
+  metric_transformation {
+    name          = "DailyJobsCompleted"
+    namespace     = var.metrics_namespace
+    value         = "1"
+    default_value = 0
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "daily_jobs_missed" {
+  alarm_name          = "${var.project}-daily-jobs-missed"
+  alarm_description   = "No daily run of the jobs function finished within ${var.daily_jobs_missed_after_hours} hours (no jobs.daily_done line): the 06:00 UTC schedule did not run, the run failed before its end, or it has been waiting for the function too long. Retention, the erase of the cities a project turned off (promised within 48 hours), the account lifecycle and the notices did not run; find the cause in the jobs function's logs and run the daily jobs by hand (docs/RUNBOOK.md, The daily jobs)."
+  namespace           = var.metrics_namespace
+  metric_name         = "DailyJobsCompleted"
+  statistic           = "Sum"
+  period              = var.daily_jobs_missed_after_hours * 3600
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "LessThanThreshold"
+  treat_missing_data  = "breaching"
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
+}
+
 resource "aws_cloudwatch_metric_alarm" "function_throttles" {
   alarm_name          = "${var.project}-function-throttles"
   alarm_description   = "${var.function_throttles_alarm_threshold} or more requests were refused within five minutes because every execution environment of the HTTP function was busy: raise http_reserved_concurrency or look for abuse."
