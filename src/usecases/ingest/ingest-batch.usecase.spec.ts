@@ -98,11 +98,12 @@ function setup() {
     viewerCountry: 'BR',
     viewerRegion: 'SP',
     viewerRegionName: 'S%C3%A3o%20Paulo',
+    viewerCity: 'Campinas',
     viewerAsn: BRAZILIAN_CARRIER_ASN,
     arrivedAt: undefined,
     ...overrides,
   });
-  return { useCase, events, rateLimiter, usage, command };
+  return { useCase, projects, events, rateLimiter, usage, command };
 }
 
 describe('IngestBatchUseCase', () => {
@@ -189,6 +190,32 @@ describe('IngestBatchUseCase', () => {
     await useCase.execute(command({ viewerCountry: undefined }));
 
     expect(events.stored[0]).toMatchObject({ country: null, region: null, regionName: null });
+  });
+
+  it('keeps no city while the project has it off, whatever the header says', async () => {
+    const { useCase, events, command } = setup();
+
+    await useCase.execute(command());
+
+    expect(events.stored[0]?.city).toBeNull();
+  });
+
+  it('keeps the decoded city once the project turns it on', async () => {
+    const { useCase, projects, events, command } = setup();
+    await projects.update(PROJECT.id, { cityEnabled: true });
+
+    await useCase.execute(command({ viewerCity: 'Feira%20de%20Santana' }));
+
+    expect(events.stored[0]).toMatchObject({ region: 'BR-SP', city: 'Feira de Santana' });
+  });
+
+  it('keeps no city without a region, even with the option on', async () => {
+    const { useCase, projects, events, command } = setup();
+    await projects.update(PROJECT.id, { cityEnabled: true });
+
+    await useCase.execute(command({ viewerRegion: undefined }));
+
+    expect(events.stored[0]).toMatchObject({ region: null, city: null });
   });
 
   it('counts a resent event as a duplicate', async () => {

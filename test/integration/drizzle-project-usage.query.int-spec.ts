@@ -37,6 +37,7 @@ function event(projectId: string, sessionId: string, receivedAt: string): Tracke
     country: 'BR',
     region: null,
     regionName: null,
+    city: null,
     properties: {},
   };
 }

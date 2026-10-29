@@ -26,6 +26,7 @@ export function toEventRow(event: TrackedEvent): NewEventRow {
     country: event.country,
     region: event.region,
     regionName: event.regionName,
+    city: event.city,
     channel: event.channel,
     properties: event.properties,
   };

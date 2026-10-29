@@ -35,6 +35,7 @@ function event(
     path: '/',
     attribution: null,
     channel: null,
+    city: null,
     properties: {},
     ...device,
     ...overrides,

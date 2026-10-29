@@ -29,6 +29,7 @@ function trackedEvent(index: number, overrides: Partial<TrackedEvent> = {}): Tra
     country: 'BR',
     region: null,
     regionName: null,
+    city: null,
     properties: {},
     ...overrides,
   };

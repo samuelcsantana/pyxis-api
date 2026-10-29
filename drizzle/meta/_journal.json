@@ -274,6 +274,13 @@
       "when": 1793284881458,
       "tag": "0038_project-city-option",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1793285492606,
+      "tag": "0039_event-city",
+      "breakpoints": true
     }
   ]
 }

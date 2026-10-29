@@ -94,7 +94,16 @@ describe('database schema', () => {
         name: 'events_project_session_occurred_at_idx',
         columns: ['project_id', 'session_id', 'occurred_at'],
       },
+      { name: 'events_project_city_idx', columns: ['project_id'] },
     ]);
+  });
+
+  it('indexes only the events that hold a city, for erasing them when a project turns it off', () => {
+    const cityIndex = getTableConfig(events).indexes.find(
+      (index) => index.config.name === 'events_project_city_idx',
+    );
+
+    expect(cityIndex?.config.where).toBeDefined();
   });
 
   it('ties events and keys to their project and deletes them with it', () => {

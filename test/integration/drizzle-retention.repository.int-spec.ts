@@ -41,6 +41,7 @@ function event(projectId: string, occurredAt: Date): TrackedEvent {
     country: 'BR',
     region: null,
     regionName: null,
+    city: null,
     properties: {},
   };
 }

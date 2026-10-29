@@ -10,6 +10,7 @@ const CONTEXT: ReceptionContext = {
   device: { deviceType: 'mobile', browser: 'safari', os: 'ios' },
   country: 'BR',
   region: { region: 'BR-SP', regionName: 'São Paulo' },
+  city: 'Campinas',
 };
 
 const EVENT: AcceptedEvent = {
@@ -42,6 +43,7 @@ describe('buildTrackedEvent', () => {
       country: 'BR',
       region: 'BR-SP',
       regionName: 'São Paulo',
+      city: 'Campinas',
       properties: { plan: 'pro' },
     });
   });

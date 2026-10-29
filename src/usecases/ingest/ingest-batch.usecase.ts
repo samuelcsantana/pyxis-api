@@ -12,6 +12,7 @@ import {
   UnknownProjectKeyError,
 } from '../../domain/errors/ingest.errors';
 import { buildTrackedEvent, type ReceptionContext } from '../../domain/events/build-tracked-event';
+import { normalizeCity } from '../../domain/events/city';
 import { normalizeCountry } from '../../domain/events/country';
 import { dataCenterNetworkOf } from '../../domain/events/data-center-networks';
 import { receptionTime } from '../../domain/events/reception-time';
@@ -52,6 +53,7 @@ export interface IngestBatchCommand {
   readonly viewerCountry: string | undefined;
   readonly viewerRegion: string | undefined;
   readonly viewerRegionName: string | undefined;
+  readonly viewerCity: string | undefined;
   readonly viewerAsn: string | undefined;
   readonly arrivedAt: Date | undefined;
 }
@@ -156,13 +158,15 @@ export class IngestBatchUseCase {
       return refusedWhole(command.events, project.id, origin, 'data_center');
     }
     const country = normalizeCountry(command.viewerCountry);
+    const region = normalizeRegion(country, command.viewerRegion, command.viewerRegionName);
     const context: ReceptionContext = {
       projectId: project.id,
       sentAt: command.sentAt,
       receivedAt,
       device: classifyUserAgent(command.userAgent, command.clientHints),
       country,
-      region: normalizeRegion(country, command.viewerRegion, command.viewerRegionName),
+      region,
+      city: normalizeCity(project.cityEnabled, region, command.viewerCity),
     };
     return this.ingest(command.events, context, origin);
   }
