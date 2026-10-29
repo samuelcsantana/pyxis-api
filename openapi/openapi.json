@@ -7734,7 +7734,7 @@
             "pyxis_session": []
           }
         ],
-        "summary": "Visits and conversions by device type, browser, system, country and region",
+        "summary": "Visits and conversions by device type, browser, system, country, region and city, and the reach of the range",
         "tags": [
           "dashboard queries"
         ]
