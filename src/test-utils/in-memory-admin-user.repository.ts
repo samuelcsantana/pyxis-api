@@ -1,4 +1,5 @@
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../domain/auth/email-language';
+import { mailboxOf } from '../domain/auth/mailbox';
 import type { AdminUser } from '../domain/entities/admin-user.entity';
 import type { Project } from '../domain/entities/project.entity';
 import type { AdminSuspensionRepository } from '../domain/repositories/admin-suspension.repository';
@@ -17,6 +18,11 @@ export class InMemoryAdminUserRepository implements AdminUserRepository, AdminSu
 
   findByEmail(email: string): Promise<AdminUser | null> {
     return Promise.resolve(this.admins.find((admin) => admin.email === email) ?? null);
+  }
+
+  mailboxOf(adminUserId: string): string {
+    const admin = this.admins.find((candidate) => candidate.id === adminUserId);
+    return admin === undefined ? adminUserId : mailboxOf(admin.email);
   }
 
   findById(adminUserId: string): Promise<AdminUser | null> {

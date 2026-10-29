@@ -1,4 +1,5 @@
 import type { AccountStatus } from '../accounts/account-status';
+import type { FreePlacement } from '../accounts/free-plan-sign-up';
 import type { Account } from '../entities/account.entity';
 import type { Project } from '../entities/project.entity';
 
@@ -12,6 +13,11 @@ export interface FreePlaceClaim {
   readonly accountId: string | null;
   readonly freeAccountsMax: number;
   readonly at: Date;
+}
+
+export interface ClaimedFreePlace {
+  readonly account: Account;
+  readonly placement: FreePlacement;
 }
 
 export interface AccountOverview {
@@ -30,7 +36,7 @@ export interface AccountMembership {
 
 export interface AccountRepository {
   create(account: NewAccount): Promise<Account>;
-  claimFreePlace(claim: FreePlaceClaim): Promise<Account>;
+  claimFreePlace(claim: FreePlaceClaim): Promise<ClaimedFreePlace>;
   freeAccountCount(): Promise<number>;
   openWaitingAccounts(freeAccountsMax: number, at: Date): Promise<number>;
   findById(accountId: string): Promise<Account | null>;

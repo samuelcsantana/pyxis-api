@@ -11,6 +11,7 @@ import {
   type SQL,
   sql,
 } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { ACCOUNT_STATUSES, hasRunningSubscription } from '../../domain/accounts/account-status';
 import type { FreePlanFit } from '../../domain/accounts/free-plan-fallback';
 import type {
@@ -45,6 +46,7 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
     if (account === undefined) {
       return null;
     }
+    const accountOwner = alias(adminUsers, 'account_owner');
     const [projectCount, peopleCount, acceptances, otherFree] = await Promise.all([
       this.db.select({ projects: count() }).from(projects).where(eq(projects.accountId, accountId)),
       this.db
@@ -59,9 +61,11 @@ export class DrizzleFreePlanFallbackRepository implements FreePlanFallbackReposi
       this.db
         .select({ id: accounts.id })
         .from(accounts)
+        .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
+        .innerJoin(accountOwner, eq(accountOwner.mailbox, adminUsers.mailbox))
         .where(
           and(
-            eq(accounts.ownerAdminId, account.ownerAdminId),
+            eq(accountOwner.id, account.ownerAdminId),
             eq(accounts.status, 'free'),
             ne(accounts.id, accountId),
           ),

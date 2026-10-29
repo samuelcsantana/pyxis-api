@@ -324,6 +324,7 @@ describe('CompleteSignUpUseCase', () => {
     });
 
     expect(signedUp.accountStatus).toBe('incomplete');
+    expect(signedUp.freePlace).toBe('not_offered');
   });
 
   describe('with the free plan open', () => {
@@ -351,6 +352,7 @@ describe('CompleteSignUpUseCase', () => {
       const signedUp = await signUp(context);
 
       expect(signedUp.accountStatus).toBe('free');
+      expect(signedUp.freePlace).toBe('placed');
       expect(context.accounts.stored.at(-1)).toMatchObject({
         id: signedUp.accountId,
         status: 'free',
@@ -386,9 +388,39 @@ describe('CompleteSignUpUseCase', () => {
       const signedUp = await signUp(context);
 
       expect(signedUp.accountStatus).toBe('incomplete');
+      expect(signedUp.freePlace).toBe('waitlisted');
       expect(context.accounts.stored).toEqual([
         expect.objectContaining({ id: signedUp.accountId, freeWaitlistedAt: NOW }),
       ]);
+    });
+
+    it('gives no place and no wait to an alias of a mailbox already on the free plan, and says why', async () => {
+      const context = setup(FREE_PLAN_OPEN);
+      await signUp(context);
+      const log = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+      const tryWelcome = jest.spyOn(context.welcome, 'tryWelcome');
+
+      const alias = await context.completeSignUp.execute({
+        email: 'founder+shop@example.com',
+        code: await sentCode(context.requestCode, context.mail, 'founder+shop@example.com'),
+        termsVersion: TERMS,
+        client: CLIENT,
+      });
+
+      expect(alias).toMatchObject({
+        accountStatus: 'incomplete',
+        freePlace: 'taken_by_same_mailbox',
+      });
+      expect(context.accounts.stored.at(-1)).toMatchObject({
+        id: alias.accountId,
+        status: 'incomplete',
+        freeWaitlistedAt: null,
+      });
+      expect(tryWelcome).not.toHaveBeenCalled();
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'auth.signed_up', freePlace: 'taken_by_same_mailbox' }),
+      );
+      log.mockRestore();
     });
 
     it('moves an unfinished sign-up onto the free plan when its owner comes back', async () => {
@@ -421,9 +453,14 @@ describe('CompleteSignUpUseCase', () => {
       ]);
     });
 
-    it.each(['free', 'trialing', 'active', 'comped'] as const)(
-      'gives a returning owner their %s account as it is',
-      async (status) => {
+    it.each([
+      ['free', 'placed'],
+      ['trialing', 'not_offered'],
+      ['active', 'not_offered'],
+      ['comped', 'not_offered'],
+    ] as const)(
+      'gives a returning owner their %s account as it is, its free place %s',
+      async (status, freePlace) => {
         const context = setup(FREE_PLAN_OPEN);
         const owner = await context.admins.findOrCreateByEmail(EMAIL);
         context.accounts.add(accountOf({ ownerAdminId: owner.id, status }));
@@ -431,6 +468,7 @@ describe('CompleteSignUpUseCase', () => {
         const signedUp = await signUp(context);
 
         expect(signedUp.accountStatus).toBe(status);
+        expect(signedUp.freePlace).toBe(freePlace);
         expect(context.accounts.stored).toHaveLength(1);
       },
     );

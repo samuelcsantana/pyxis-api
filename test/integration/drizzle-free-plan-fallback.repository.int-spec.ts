@@ -16,6 +16,8 @@ const CLOSED = 'c1c2c3c4-0000-4000-8000-000000000012';
 const BIAS_FREE = 'c1c2c3c4-0000-4000-8000-000000000013';
 const BIAS_PAID = 'c1c2c3c4-0000-4000-8000-000000000014';
 const MISSING = 'c1c2c3c4-0000-4000-8000-000000000099';
+const ALIAS_OF_ANA = 'c1c2c3c4-0000-4000-8000-000000000004';
+const ALIAS_FREE = 'c1c2c3c4-0000-4000-8000-000000000015';
 const SHOP = 'c1c2c3c4-0000-4000-8000-000000000021';
 const BLOG = 'c1c2c3c4-0000-4000-8000-000000000022';
 
@@ -107,6 +109,17 @@ describe('the fall back to the free plan against a real Postgres', () => {
       ownerHasAnotherFreeAccount: true,
     });
     expect(await fallbacks.fitOf(MISSING)).toBeNull();
+  });
+
+  it('counts a free account of another address of the same mailbox as another free account', async () => {
+    await owner`
+      INSERT INTO admin_users (id, email) VALUES (${ALIAS_OF_ANA}, 'ana+news@example.com')
+    `;
+    await owner`
+      INSERT INTO accounts (id, owner_admin_id, status) VALUES (${ALIAS_FREE}, ${ALIAS_OF_ANA}, 'free')
+    `;
+
+    expect(await fallbacks.fitOf(ENDING)).toMatchObject({ ownerHasAnotherFreeAccount: true });
   });
 
   it('puts a running subscription back on free, keeping the customer and marking the notice', async () => {
