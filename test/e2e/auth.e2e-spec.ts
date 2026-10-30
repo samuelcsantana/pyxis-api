@@ -14,6 +14,7 @@ import { e2eOwnerUrl } from './e2e-database';
 import { E2E_CLIENT_IP_HEADER, E2E_DASHBOARD_ORIGIN } from './env-setup';
 
 const PROJECT_ID = 'd6a4f5e7-8e91-4203-b425-d6e7f8091a2b';
+const ACCOUNT_ID = 'd6a4f5e7-8e91-4203-b425-d6e7f8091a3c';
 const ADMIN_ID = 'e7b5a6f8-9fa2-4314-a536-e7f8091a2b3c';
 const ADMIN_EMAIL = 'ana@example.com';
 const STRANGER_EMAIL = 'nobody@example.com';
@@ -322,10 +323,27 @@ describe('dashboard sign-in', () => {
           first_event_at: null,
           last_event_at: null,
           icon_version: null,
+          account_id: null,
           ingestion_suspended_at: null,
           ingestion_suspension_reason: null,
         },
       ],
+    });
+  });
+
+  it('names the account that holds each project', async () => {
+    await owner`
+      INSERT INTO accounts (id, owner_admin_id, status) VALUES (${ACCOUNT_ID}, ${ADMIN_ID}, 'active')
+    `;
+    await owner`UPDATE projects SET account_id = ${ACCOUNT_ID} WHERE id = ${PROJECT_ID}`;
+
+    const signedIn = await me(await signIn());
+
+    await owner`UPDATE projects SET account_id = NULL WHERE id = ${PROJECT_ID}`;
+    await owner`DELETE FROM accounts WHERE id = ${ACCOUNT_ID}`;
+    expect(signedIn.statusCode).toBe(200);
+    expect(signedIn.json()).toMatchObject({
+      projects: [{ id: PROJECT_ID, account_id: ACCOUNT_ID }],
     });
   });
 

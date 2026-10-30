@@ -202,6 +202,7 @@ describe('MeController', () => {
       firstEventAt: null,
       lastEventAt: null,
       iconVersion: null,
+      accountId: null,
       ingestionSuspendedAt: null,
       ingestionSuspensionReason: null,
     };
@@ -210,6 +211,7 @@ describe('MeController', () => {
       firstEventAt: new Date('2026-10-01T12:00:00.000Z'),
       lastEventAt: new Date('2026-10-05T09:30:00.000Z'),
       iconVersion: '0123456789abcdef',
+      accountId: '33333333-0000-4000-8000-000000000003',
       ingestionSuspendedAt: new Date('2026-10-06T08:00:00.000Z'),
       ingestionSuspensionReason: 'Forged traffic.',
     };
@@ -236,6 +238,7 @@ describe('MeController', () => {
           first_event_at: '2026-10-01T12:00:00.000Z',
           last_event_at: '2026-10-05T09:30:00.000Z',
           icon_version: '0123456789abcdef',
+          account_id: '33333333-0000-4000-8000-000000000003',
           ingestion_suspended_at: '2026-10-06T08:00:00.000Z',
           ingestion_suspension_reason: 'Forged traffic.',
         },
@@ -247,6 +250,7 @@ describe('MeController', () => {
           first_event_at: null,
           last_event_at: null,
           icon_version: null,
+          account_id: null,
           ingestion_suspended_at: null,
           ingestion_suspension_reason: null,
         },

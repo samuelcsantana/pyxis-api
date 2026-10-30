@@ -23,6 +23,7 @@ import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
 import { AuthenticateSessionUseCase } from './authenticate-session.usecase';
 import { InMemoryProjectIconRepository } from '../../test-utils/in-memory-project-icon.repository';
 import { InMemoryProjectSuspensionRepository } from '../../test-utils/in-memory-project-suspension.repository';
+import { StubProjectAccountsQuery } from '../../test-utils/stub-project-accounts.query';
 import { StubProjectActivityQuery } from '../../test-utils/stub-project-activity.query';
 import { DescribeAdminUseCase } from './describe-admin.usecase';
 import { RequestSignInCodeUseCase } from './request-sign-in-code.usecase';
@@ -78,6 +79,7 @@ async function setup() {
       new StubProjectActivityQuery(),
       new InMemoryProjectIconRepository(),
       new InMemoryProjectSuspensionRepository(),
+      new StubProjectAccountsQuery(),
     ),
   };
 }
@@ -453,6 +455,7 @@ describe('dashboard sign-in', () => {
             firstEventAt: null,
             lastEventAt: null,
             iconVersion: null,
+            accountId: null,
             ingestionSuspendedAt: null,
             ingestionSuspensionReason: null,
             deletionHeldAt: null,
