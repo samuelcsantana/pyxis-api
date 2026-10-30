@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.40.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.39.1...v0.40.0) (2026-10-30)
+
+
+### Features
+
+* **auth:** name the account of each project in GET /v1/me ([d27af48](https://github.com/samuelcsantana/pyxis-api/commit/d27af48b77f0c5334c125a2b0dba8b3ae358e31f))
+* **projects:** read the account of each of several projects in one query ([7f1964b](https://github.com/samuelcsantana/pyxis-api/commit/7f1964ba2a8e53091b4998e2035af91ec7a69c56))
+
+
+### Documentation
+
+* **features:** say that GET /v1/me names each project's account ([0f5a21f](https://github.com/samuelcsantana/pyxis-api/commit/0f5a21f4d398b3b247785de7414675a345156bb3))
+
 ## [0.39.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.39.0...v0.39.1) (2026-10-29)
 
 
