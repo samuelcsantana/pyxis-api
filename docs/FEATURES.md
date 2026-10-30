@@ -27,7 +27,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   `HttpOnly` cookie that is checked on every request and revoked at sign-out; `GET /v1/me` lists
   the admin's projects, each with when its first and its latest events happened (null before
   any), so the dashboard can tell a project still waiting for its first event from a quiet
-  period. A person gets in through sign-up, an account owner's invitation or the operator's
+  period, and the account that holds it (null for a project outside any account), read for all
+  of them in one query. A person gets in through sign-up, an account owner's invitation or the operator's
   `admin:grant` ([ADR 0007](adr/0007-email-code-sign-in-with-opaque-sessions.md))
 - A branded sign-in email with a plain-text twin: the code first in the subject and in the
   hidden inbox preview, then in a large monospace block a double-click copies whole; how long it
