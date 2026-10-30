@@ -2,6 +2,10 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { AdminUser } from '../../domain/entities/admin-user.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import {
+  PROJECT_ACCOUNTS_QUERY,
+  type ProjectAccountsQuery,
+} from '../../domain/queries/project-accounts';
+import {
   NO_ACTIVITY,
   PROJECT_ACTIVITY_QUERY,
   type ProjectActivity,
@@ -24,6 +28,7 @@ import {
 
 export interface DescribedProject extends Project, ProjectActivity, ProjectRestrictions {
   readonly iconVersion: string | null;
+  readonly accountId: string | null;
 }
 
 export interface AdminDescription {
@@ -38,6 +43,7 @@ export class DescribeAdminUseCase {
     @Inject(PROJECT_ACTIVITY_QUERY) private readonly activity: ProjectActivityQuery,
     @Inject(PROJECT_ICON_REPOSITORY) private readonly icons: ProjectIconRepository,
     @Inject(PROJECT_RESTRICTIONS_QUERY) private readonly restrictions: ProjectRestrictionsQuery,
+    @Inject(PROJECT_ACCOUNTS_QUERY) private readonly accounts: ProjectAccountsQuery,
   ) {}
 
   async execute(admin: AdminUser): Promise<AdminDescription> {
@@ -46,6 +52,7 @@ export class DescribeAdminUseCase {
     const activity = await this.activity.activityOf(ids);
     const iconVersions = await this.icons.versionsOf(ids);
     const restrictions = await this.restrictions.restrictionsOf(admin.id, ids);
+    const accountIds = await this.accounts.accountsOf(ids);
     return {
       email: admin.email,
       projects: projects.map((project) => ({
@@ -53,6 +60,7 @@ export class DescribeAdminUseCase {
         ...(activity.get(project.id) ?? NO_ACTIVITY),
         ...(restrictions.get(project.id) ?? NO_RESTRICTIONS),
         iconVersion: iconVersions.get(project.id) ?? null,
+        accountId: accountIds.get(project.id) ?? null,
       })),
     };
   }

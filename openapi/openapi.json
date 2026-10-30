@@ -2000,6 +2000,19 @@
             "items": {
               "additionalProperties": false,
               "properties": {
+                "account_id": {
+                  "anyOf": [
+                    {
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The account that holds the project; null for a project created by the operator outside any account"
+                },
                 "conversion_event": {
                   "type": [
                     "string",
@@ -2079,6 +2092,7 @@
                 "first_event_at",
                 "last_event_at",
                 "icon_version",
+                "account_id",
                 "ingestion_suspended_at",
                 "ingestion_suspension_reason"
               ],

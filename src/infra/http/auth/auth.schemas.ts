@@ -73,6 +73,13 @@ export const meSchema = z
             'A short hash of the icon taken from the project site, which changes only when the ' +
               'icon does (add it to the icon URL to cache it); null when the site shows none',
           ),
+        account_id: z
+          .uuid()
+          .nullable()
+          .describe(
+            'The account that holds the project; null for a project created by the operator ' +
+              'outside any account',
+          ),
         ...projectRestrictionFields,
       }),
     ),
