@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.41.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.40.0...v0.41.0) (2026-10-31)
+
+
+### Features
+
+* **mail:** send the weekly digest's turn-off link to the e-mail part ([320d920](https://github.com/samuelcsantana/pyxis-api/commit/320d920f863ea1f0c7da58b19a5f72251e2aefe2))
+
 ## [0.40.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.39.1...v0.40.0) (2026-10-30)
 
 
