@@ -7,7 +7,7 @@ const LINKS = emailLinksFor('https://dashboard.example.com');
 
 const PROJECT_ID = 'd2e07854-0000-4000-8000-000000000001';
 const OVERVIEW_URL = `${LINKS.dashboardUrl}${PROJECT_ID}/overview?from=2026-10-05&to=2026-10-11`;
-const SETTINGS_URL = `${LINKS.dashboardUrl}${PROJECT_ID}/settings`;
+const SETTINGS_URL = `${LINKS.dashboardUrl}${PROJECT_ID}/settings/email`;
 const OVERVIEW_HREF = `${LINKS.dashboardUrl}${PROJECT_ID}/overview?from=2026-10-05&amp;to=2026-10-11`;
 const HTML_LINE_LIMIT = 400;
 const GMAIL_CLIPPING_BYTES = 102 * 1024;
@@ -554,7 +554,7 @@ describe('customer data in the weekly digest', () => {
 
     expect(hrefs(html)).toEqual([
       `${LINKS.dashboardUrl}..%2Fx%3Fy/overview?from=2026-10-05&amp;to=2026-10-11`,
-      `${LINKS.dashboardUrl}..%2Fx%3Fy/settings`,
+      `${LINKS.dashboardUrl}..%2Fx%3Fy/settings/email`,
     ]);
   });
 });
@@ -566,9 +566,9 @@ describe('buildWeeklyDigestEmail for another dashboard', () => {
   it('links to the dashboard it is given', () => {
     expect(hrefs(email.html)).toEqual([
       `${elsewhere}/${PROJECT_ID}/overview?from=2026-10-05&amp;to=2026-10-11`,
-      `${elsewhere}/${PROJECT_ID}/settings`,
+      `${elsewhere}/${PROJECT_ID}/settings/email`,
     ]);
-    expect(email.text).toContain(`${elsewhere}/${PROJECT_ID}/settings`);
+    expect(email.text).toContain(`${elsewhere}/${PROJECT_ID}/settings/email`);
   });
 
   it('loads its logo from that dashboard', () => {

@@ -367,7 +367,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
 - A weekly digest by e-mail, on Mondays at 11:00 UTC: each admin gets, per project, the week that
   closed on Sunday in the project's time zone against the week before (visits, identified users,
   converting visits, failed writes, visits per day, top pages and events, the write routes that
-  failed), in the language of their last sign-in, with a link to the same week in the dashboard.
+  failed), in the language of their last sign-in, with a link to the same week in the dashboard
+  and one to turn it off, which opens the E-mail part of the project's Settings.
   The inbox preview carries the identified users, converting visits and failed writes, and the
   time zone is named in the reader's language ("Horário Padrão de Brasília"). A week without
   visits says when the last event arrived, in the preview too. The numbers come from the

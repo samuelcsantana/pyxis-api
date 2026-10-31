@@ -231,8 +231,10 @@ function overviewUrl(digest: WeeklyDigest, links: EmailLinks): string {
   return `${links.dashboardUrl}${project}/overview?${query.toString()}`;
 }
 
+const EMAIL_SETTINGS_PATH = 'settings/email';
+
 function settingsUrl(digest: WeeklyDigest, links: EmailLinks): string {
-  return `${links.dashboardUrl}${encodeURIComponent(digest.projectId)}/settings`;
+  return `${links.dashboardUrl}${encodeURIComponent(digest.projectId)}/${EMAIL_SETTINGS_PATH}`;
 }
 
 function weekLine({ digest, messages, formats }: Wording): string {
