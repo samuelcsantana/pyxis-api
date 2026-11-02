@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, notExists, sql } from 'drizzle-orm';
 import type {
   FreeAccountInactivityRepository,
   FreeAccountToSweep,
@@ -27,6 +27,23 @@ export class DrizzleFreeAccountInactivityRepository implements FreeAccountInacti
       ) AS latest
       WHERE ${projects.accountId} = ${accounts.id}
     )`.mapWith(accounts.createdAt);
+    const projectWithoutEvents = this.db
+      .select({ id: projects.id, name: projects.name })
+      .from(projects)
+      .where(
+        and(
+          eq(projects.accountId, accounts.id),
+          notExists(
+            this.db
+              .select({ projectId: events.projectId })
+              .from(events)
+              .where(eq(events.projectId, projects.id)),
+          ),
+        ),
+      )
+      .orderBy(asc(projects.createdAt), asc(projects.id))
+      .limit(1)
+      .as('project_without_events');
     return this.db
       .select({
         accountId: accounts.id,
@@ -38,9 +55,15 @@ export class DrizzleFreeAccountInactivityRepository implements FreeAccountInacti
         ),
         lastEventAt,
         inactivityNotifiedAt: accounts.inactivityNotifiedAt,
+        installRemindedAt: accounts.installRemindedAt,
+        oldestProjectWithoutEvents: {
+          id: projectWithoutEvents.id,
+          name: projectWithoutEvents.name,
+        },
       })
       .from(accounts)
       .innerJoin(adminUsers, eq(adminUsers.id, accounts.ownerAdminId))
+      .leftJoinLateral(projectWithoutEvents, sql`true`)
       .where(
         and(
           eq(accounts.status, 'free'),
@@ -62,5 +85,9 @@ export class DrizzleFreeAccountInactivityRepository implements FreeAccountInacti
       .update(accounts)
       .set({ inactivityNotifiedAt: null })
       .where(eq(accounts.id, accountId));
+  }
+
+  async markInstallReminded(accountId: string, at: Date): Promise<void> {
+    await this.db.update(accounts).set({ installRemindedAt: at }).where(eq(accounts.id, accountId));
   }
 }

@@ -23,8 +23,10 @@ describe('InMemoryFreeAccountInactivityRepository', () => {
 
     await inactivity.markNotified('unknown', new Date(1000));
     await inactivity.clearNotice('unknown');
+    await inactivity.markInstallReminded('unknown', new Date(1000));
 
     expect(inactivity.notifiedAt('unknown')).toBeUndefined();
+    expect(inactivity.installRemindedAt('unknown')).toBeUndefined();
     expect(await inactivity.freeAccounts()).toEqual([]);
   });
 });

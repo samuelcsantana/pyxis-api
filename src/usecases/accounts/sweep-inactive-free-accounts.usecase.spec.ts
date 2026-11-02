@@ -24,6 +24,8 @@ function freeAccount(fields: Partial<FreeAccountToSweep> = {}): FreeAccountToSwe
     freeSince: daysAgo(30),
     lastEventAt: null,
     inactivityNotifiedAt: null,
+    installRemindedAt: null,
+    oldestProjectWithoutEvents: null,
     ...fields,
   };
 }
