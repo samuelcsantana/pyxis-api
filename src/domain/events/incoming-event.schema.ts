@@ -16,6 +16,7 @@ import {
   USER_ID_PATTERN,
 } from './event-limits';
 import { API_REQUEST_METHODS } from './reserved-event-names';
+import { VISITOR_KINDS } from './visitor-kind';
 
 const propertyValueSchema = z.union([
   z.string().max(MAX_PROPERTY_STRING_LENGTH),
@@ -54,6 +55,14 @@ export const incomingEventSchema = z.strictObject({
   user_id: z.string().regex(USER_ID_PATTERN).optional(),
   path: pathSchema,
   attribution: attributionSchema.optional(),
+  visitor: z
+    .enum(VISITOR_KINDS)
+    .optional()
+    .describe(
+      "Whether the visit is this browser's first, its first this month, its first today or " +
+        'another one today, as the tracker tells from the period of the last answer. Sent on ' +
+        "the visit's first event and kept only for a project that counts unique visitors.",
+    ),
   properties: eventPropertiesSchema.optional(),
 });
 

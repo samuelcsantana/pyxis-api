@@ -1860,6 +1860,16 @@
           "user_id": {
             "pattern": "^[A-Za-z0-9_-]{1,64}$",
             "type": "string"
+          },
+          "visitor": {
+            "description": "Whether the visit is this browser's first, its first this month, its first today or another one today, as the tracker tells from the period of the last answer. Sent on the visit's first event and kept only for a project that counts unique visitors.",
+            "enum": [
+              "first_visit",
+              "first_this_month",
+              "first_today",
+              "again_today"
+            ],
+            "type": "string"
           }
         },
         "required": [

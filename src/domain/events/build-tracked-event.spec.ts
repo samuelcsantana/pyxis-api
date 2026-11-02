@@ -21,6 +21,7 @@ const EVENT: AcceptedEvent = {
   userId: 'user_42',
   path: '/pricing',
   attribution: null,
+  visitor: null,
   properties: { plan: 'pro' },
 };
 
