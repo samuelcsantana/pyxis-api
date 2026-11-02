@@ -3,6 +3,8 @@ import type {
   FreeAccountToSweep,
 } from '../domain/repositories/free-account-inactivity.repository';
 
+type AccountMarks = Pick<FreeAccountToSweep, 'inactivityNotifiedAt' | 'installRemindedAt'>;
+
 export class InMemoryFreeAccountInactivityRepository implements FreeAccountInactivityRepository {
   private readonly accounts = new Map<string, FreeAccountToSweep>();
 
@@ -14,24 +16,33 @@ export class InMemoryFreeAccountInactivityRepository implements FreeAccountInact
     return this.accounts.get(accountId)?.inactivityNotifiedAt;
   }
 
+  installRemindedAt(accountId: string): Date | null | undefined {
+    return this.accounts.get(accountId)?.installRemindedAt;
+  }
+
   freeAccounts(): Promise<readonly FreeAccountToSweep[]> {
     return Promise.resolve([...this.accounts.values()]);
   }
 
   markNotified(accountId: string, at: Date): Promise<void> {
-    this.setNotice(accountId, at);
+    this.mark(accountId, { inactivityNotifiedAt: at });
     return Promise.resolve();
   }
 
   clearNotice(accountId: string): Promise<void> {
-    this.setNotice(accountId, null);
+    this.mark(accountId, { inactivityNotifiedAt: null });
     return Promise.resolve();
   }
 
-  private setNotice(accountId: string, at: Date | null): void {
+  markInstallReminded(accountId: string, at: Date): Promise<void> {
+    this.mark(accountId, { installRemindedAt: at });
+    return Promise.resolve();
+  }
+
+  private mark(accountId: string, marks: Partial<AccountMarks>): void {
     const account = this.accounts.get(accountId);
     if (account !== undefined) {
-      this.accounts.set(accountId, { ...account, inactivityNotifiedAt: at });
+      this.accounts.set(accountId, { ...account, ...marks });
     }
   }
 }

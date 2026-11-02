@@ -609,6 +609,8 @@ describe('RunAccountLifecycleUseCase', () => {
       ownerEmail: 'ana@example.com',
       ownerLanguage: 'en' as const,
       lastEventAt: null,
+      installRemindedAt: null,
+      oldestProjectWithoutEvents: null,
     };
     inactivity.add({
       ...owner,

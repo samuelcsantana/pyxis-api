@@ -12,17 +12,23 @@ const FREE_SINCE = new Date('2026-12-01T12:00:00.000Z');
 const OLDER_EVENT = new Date('2026-12-05T10:00:00.000Z');
 const NEWER_EVENT = new Date('2026-12-20T10:00:00.000Z');
 const NOTIFIED_AT = new Date('2027-01-05T06:00:00.000Z');
+const REMINDED_AT = new Date('2026-11-05T06:00:00.000Z');
 const ANA = 'd1d2d3d4-0000-4000-8000-000000000001';
 const BIA = 'd1d2d3d4-0000-4000-8000-000000000002';
 const CAI = 'd1d2d3d4-0000-4000-8000-000000000003';
 const DAN = 'd1d2d3d4-0000-4000-8000-000000000004';
+const EVA = 'd1d2d3d4-0000-4000-8000-000000000005';
 const MEASURED = 'd1d2d3d4-0000-4000-8000-000000000011';
 const EMPTY = 'd1d2d3d4-0000-4000-8000-000000000012';
 const HELD = 'd1d2d3d4-0000-4000-8000-000000000013';
 const SUSPENDED = 'd1d2d3d4-0000-4000-8000-000000000014';
 const PAID = 'd1d2d3d4-0000-4000-8000-000000000015';
+const WAITING = 'd1d2d3d4-0000-4000-8000-000000000016';
 const SHOP = 'd1d2d3d4-0000-4000-8000-000000000021';
 const BLOG = 'd1d2d3d4-0000-4000-8000-000000000022';
+const LIVE = 'd1d2d3d4-0000-4000-8000-000000000023';
+const FIRST_EMPTY = 'd1d2d3d4-0000-4000-8000-000000000024';
+const LATER_EMPTY = 'd1d2d3d4-0000-4000-8000-000000000025';
 
 describe('free accounts and their last stored event, against a real Postgres', () => {
   let owner: postgres.Sql;
@@ -87,6 +93,8 @@ describe('free accounts and their last stored event, against a real Postgres', (
       freeSince: FREE_SINCE,
       lastEventAt: NEWER_EVENT,
       inactivityNotifiedAt: NOTIFIED_AT,
+      installRemindedAt: null,
+      oldestProjectWithoutEvents: null,
     });
   });
 
@@ -97,6 +105,30 @@ describe('free accounts and their last stored event, against a real Postgres', (
       freeSince: CREATED_AT,
       lastEventAt: null,
       inactivityNotifiedAt: null,
+      installRemindedAt: null,
+      oldestProjectWithoutEvents: null,
+    });
+  });
+
+  it('gives the oldest project of the account that never stored an event', async () => {
+    await owner`INSERT INTO admin_users (id, email, email_language) VALUES (${EVA}, 'eva@example.com', 'es')`;
+    await owner`
+      INSERT INTO accounts (id, owner_admin_id, status, created_at)
+      VALUES (${WAITING}, ${EVA}, 'free', ${CREATED_AT})
+    `;
+    await owner`
+      INSERT INTO projects (id, name, account_id, created_at)
+      VALUES (${LIVE}, 'Live', ${WAITING}, ${CREATED_AT}),
+             (${LATER_EMPTY}, 'Later', ${WAITING}, ${OLDER_EVENT}),
+             (${FIRST_EMPTY}, 'First', ${WAITING}, ${FREE_SINCE})
+    `;
+    await storeEvent(LIVE, OLDER_EVENT);
+
+    const free = await inactivity.freeAccounts();
+
+    expect(free.find(({ accountId }) => accountId === WAITING)).toMatchObject({
+      lastEventAt: OLDER_EVENT,
+      oldestProjectWithoutEvents: { id: FIRST_EMPTY, name: 'First' },
     });
   });
 
@@ -110,9 +142,10 @@ describe('free accounts and their last stored event, against a real Postgres', (
     expect(free.map(({ accountId }) => accountId)).not.toContain(SUSPENDED);
   });
 
-  it('marks the notice and clears it', async () => {
+  it('marks the notice, clears it and marks the install reminder', async () => {
     await inactivity.markNotified(EMPTY, NOTIFIED_AT);
     await inactivity.clearNotice(MEASURED);
+    await inactivity.markInstallReminded(EMPTY, REMINDED_AT);
 
     const free = await inactivity.freeAccounts();
 
@@ -120,5 +153,9 @@ describe('free accounts and their last stored event, against a real Postgres', (
       NOTIFIED_AT,
     );
     expect(free.find(({ accountId }) => accountId === MEASURED)?.inactivityNotifiedAt).toBeNull();
+    expect(free.find(({ accountId }) => accountId === EMPTY)?.installRemindedAt).toEqual(
+      REMINDED_AT,
+    );
+    expect(free.find(({ accountId }) => accountId === MEASURED)?.installRemindedAt).toBeNull();
   });
 });

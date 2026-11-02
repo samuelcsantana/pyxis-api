@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ADD COLUMN "install_reminded_at" timestamp with time zone;
