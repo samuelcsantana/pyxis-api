@@ -135,6 +135,75 @@ const kpiSchema = z.strictObject({
 
 const failureCountSchema = z.strictObject({ failed: z.int(), total: z.int() });
 
+const CALENDAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+const visitorDaysSchema = z
+  .array(
+    z.strictObject({
+      date: z.iso.date(),
+      first_visit: z
+        .int()
+        .describe(
+          'Visits of a browser on its first visit to the site, or its first since its storage ' +
+            'was cleared',
+        ),
+      first_this_month: z
+        .int()
+        .describe(
+          'Visits of a browser seen in an earlier month, back for the first time this month',
+        ),
+      first_today: z
+        .int()
+        .describe('Visits of a browser seen earlier this month, back for the first time today'),
+      again_today: z.int().describe('Visits of a browser that had already visited today'),
+    }),
+  )
+  .describe(
+    'One entry per day of the period, oldest first: the visits that started that day, by the ' +
+      'kind their first event carried. Unique visitors of the day = first_visit + ' +
+      'first_this_month + first_today; new = first_visit. Days do not add up to unique ' +
+      'visitors: a browser back on two days counts on both.',
+  );
+
+const visitorMonthsSchema = z
+  .array(
+    z.strictObject({
+      month: z.string().regex(CALENDAR_MONTH).describe('Calendar month, YYYY-MM'),
+      first_visit: z.int(),
+      first_this_month: z.int(),
+      exact: z
+        .boolean()
+        .describe(
+          'True when the period holds the whole month, or runs from its first day to today: ' +
+            'first_visit + first_this_month is then the unique visitors of the month (so far). ' +
+            'Otherwise it is not: a period that starts after the 1st leaves out a browser ' +
+            'whose first visit this month came before the period, and one that ends earlier ' +
+            'covers only its own days.',
+        ),
+    }),
+  )
+  .describe(
+    'One entry per calendar month the period touches, oldest first, counting only its days ' +
+      'inside the period',
+  );
+
+const visitorsSchema = z
+  .strictObject({
+    enabled: z
+      .boolean()
+      .describe('Whether the project counts unique visitors; every list below is empty when false'),
+    daily: visitorDaysSchema,
+    months: visitorMonthsSchema,
+    previous_daily: visitorDaysSchema,
+    previous_months: visitorMonthsSchema,
+  })
+  .describe(
+    'Unique visitors counted without an identifier: the tracker marks the first event of each ' +
+      'visit with whether its browser is new, back for the first time this month or today, or ' +
+      'back again today, and a visit without that mark never counts. The previous lists cover ' +
+      'the previous period, cut at the same time as previous_days.',
+  );
+
 export const overviewReportSchema = z
   .strictObject({
     kpis: z.strictObject({
@@ -175,13 +244,15 @@ export const overviewReportSchema = z
         }),
       )
       .describe('One entry per day of the previous period, oldest first'),
+    visitors: visitorsSchema,
   })
   .meta({
     id: 'OverviewReport',
     description:
       'Visits, identified users, conversions (null without a conversion event) and failed writes ' +
       'of the range against the previous one (the same number of days right before it), with ' +
-      'one daily entry per day of each period.',
+      'one daily entry per day of each period, and the unique visitors of both when the ' +
+      'project counts them.',
   });
 
 const valueSharesSchema = z.array(

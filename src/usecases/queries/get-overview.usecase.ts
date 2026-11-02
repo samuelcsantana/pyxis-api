@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { Project } from '../../domain/entities/project.entity';
-import { daysIn } from '../../domain/queries/date-range';
+import { daysIn, todayIn } from '../../domain/queries/date-range';
 import {
   type DayTotals,
   OVERVIEW_QUERY,
@@ -11,6 +11,13 @@ import {
   TOP_ITEMS,
 } from '../../domain/queries/overview';
 import type { QueryScope } from '../../domain/queries/query-scope';
+import {
+  NO_VISITOR_KINDS,
+  type VisitorDay,
+  VISITORS_OFF,
+  type VisitorsReport,
+  visitorMonths,
+} from '../../domain/queries/visitors';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { type RequestedRange, scopedPeriods } from './scoped-periods';
 
@@ -28,6 +35,14 @@ const EMPTY_DAY: Omit<DayTotals, 'date'> = {
 function denseDays(dates: readonly string[], sparse: readonly DayTotals[]): readonly DayTotals[] {
   const byDate = new Map(sparse.map((day) => [day.date, day]));
   return dates.map((date) => byDate.get(date) ?? { ...EMPTY_DAY, date });
+}
+
+function denseVisitorDays(
+  dates: readonly string[],
+  sparse: readonly VisitorDay[],
+): readonly VisitorDay[] {
+  const byDate = new Map(sparse.map((day) => [day.date, day]));
+  return dates.map((date) => byDate.get(date) ?? { ...NO_VISITOR_KINDS, date });
 }
 
 function failures(totals: PeriodTotals) {
@@ -55,19 +70,20 @@ export class GetOverviewUseCase {
   ) {}
 
   async execute(project: Project, requested: RequestedRange): Promise<OverviewReport> {
-    const { current, previous, comparisonCutoff } = scopedPeriods(
-      project,
-      requested,
-      this.clock.now(),
-    );
-    const [now, before, sparseDays, sparsePreviousDays, topPages, topEvents] = await Promise.all([
-      this.query.totals(current),
-      this.query.totals(previous),
-      this.query.days(current),
-      this.query.days(previous),
-      this.query.topPages(current, TOP_ITEMS),
-      this.query.topEvents(current, TOP_ITEMS),
-    ]);
+    const readAt = this.clock.now();
+    const { current, previous, comparisonCutoff } = scopedPeriods(project, requested, readAt);
+    const [now, before, sparseDays, sparsePreviousDays, topPages, topEvents, visitors] =
+      await Promise.all([
+        this.query.totals(current),
+        this.query.totals(previous),
+        this.query.days(current),
+        this.query.days(previous),
+        this.query.topPages(current, TOP_ITEMS),
+        this.query.topEvents(current, TOP_ITEMS),
+        project.visitorsEnabled
+          ? this.visitors(current, previous, todayIn(project.timezone, readAt))
+          : VISITORS_OFF,
+      ]);
     const days = denseDays(daysIn(current.range), sparseDays);
     const previousDays = denseDays(daysIn(previous.range), sparsePreviousDays);
     return {
@@ -109,6 +125,27 @@ export class GetOverviewUseCase {
       topEvents,
       comparisonCutoff,
       previousDays: previousDays.map((day) => previousDay(day, previous)),
+      visitors,
+    };
+  }
+
+  private async visitors(
+    current: QueryScope,
+    previous: QueryScope,
+    today: string,
+  ): Promise<VisitorsReport> {
+    const [sparseDaily, sparsePreviousDaily] = await Promise.all([
+      this.query.visitorDays(current),
+      this.query.visitorDays(previous),
+    ]);
+    const daily = denseVisitorDays(daysIn(current.range), sparseDaily);
+    const previousDaily = denseVisitorDays(daysIn(previous.range), sparsePreviousDaily);
+    return {
+      enabled: true,
+      daily,
+      months: visitorMonths(daily, current, today),
+      previousDaily,
+      previousMonths: visitorMonths(previousDaily, previous, today),
     };
   }
 }

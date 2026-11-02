@@ -2675,7 +2675,7 @@
       },
       "OverviewReport": {
         "additionalProperties": false,
-        "description": "Visits, identified users, conversions (null without a conversion event) and failed writes of the range against the previous one (the same number of days right before it), with one daily entry per day of each period.",
+        "description": "Visits, identified users, conversions (null without a conversion event) and failed writes of the range against the previous one (the same number of days right before it), with one daily entry per day of each period, and the unique visitors of both when the project counts them.",
         "properties": {
           "comparison_cutoff": {
             "anyOf": [
@@ -3078,6 +3078,186 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "visitors": {
+            "additionalProperties": false,
+            "description": "Unique visitors counted without an identifier: the tracker marks the first event of each visit with whether its browser is new, back for the first time this month or today, or back again today, and a visit without that mark never counts. The previous lists cover the previous period, cut at the same time as previous_days.",
+            "properties": {
+              "daily": {
+                "description": "One entry per day of the period, oldest first: the visits that started that day, by the kind their first event carried. Unique visitors of the day = first_visit + first_this_month + first_today; new = first_visit. Days do not add up to unique visitors: a browser back on two days counts on both.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "again_today": {
+                      "description": "Visits of a browser that had already visited today",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "date": {
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                      "type": "string"
+                    },
+                    "first_this_month": {
+                      "description": "Visits of a browser seen in an earlier month, back for the first time this month",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "first_today": {
+                      "description": "Visits of a browser seen earlier this month, back for the first time today",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "first_visit": {
+                      "description": "Visits of a browser on its first visit to the site, or its first since its storage was cleared",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "first_visit",
+                    "first_this_month",
+                    "first_today",
+                    "again_today"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "enabled": {
+                "description": "Whether the project counts unique visitors; every list below is empty when false",
+                "type": "boolean"
+              },
+              "months": {
+                "description": "One entry per calendar month the period touches, oldest first, counting only its days inside the period",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "exact": {
+                      "description": "True when the period holds the whole month, or runs from its first day to today: first_visit + first_this_month is then the unique visitors of the month (so far). Otherwise it is not: a period that starts after the 1st leaves out a browser whose first visit this month came before the period, and one that ends earlier covers only its own days.",
+                      "type": "boolean"
+                    },
+                    "first_this_month": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "first_visit": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "month": {
+                      "description": "Calendar month, YYYY-MM",
+                      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "first_visit",
+                    "first_this_month",
+                    "exact"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "previous_daily": {
+                "description": "One entry per day of the period, oldest first: the visits that started that day, by the kind their first event carried. Unique visitors of the day = first_visit + first_this_month + first_today; new = first_visit. Days do not add up to unique visitors: a browser back on two days counts on both.",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "again_today": {
+                      "description": "Visits of a browser that had already visited today",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "date": {
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                      "type": "string"
+                    },
+                    "first_this_month": {
+                      "description": "Visits of a browser seen in an earlier month, back for the first time this month",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "first_today": {
+                      "description": "Visits of a browser seen earlier this month, back for the first time today",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "first_visit": {
+                      "description": "Visits of a browser on its first visit to the site, or its first since its storage was cleared",
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "date",
+                    "first_visit",
+                    "first_this_month",
+                    "first_today",
+                    "again_today"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "previous_months": {
+                "description": "One entry per calendar month the period touches, oldest first, counting only its days inside the period",
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "exact": {
+                      "description": "True when the period holds the whole month, or runs from its first day to today: first_visit + first_this_month is then the unique visitors of the month (so far). Otherwise it is not: a period that starts after the 1st leaves out a browser whose first visit this month came before the period, and one that ends earlier covers only its own days.",
+                      "type": "boolean"
+                    },
+                    "first_this_month": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "first_visit": {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    "month": {
+                      "description": "Calendar month, YYYY-MM",
+                      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "month",
+                    "first_visit",
+                    "first_this_month",
+                    "exact"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "enabled",
+              "daily",
+              "months",
+              "previous_daily",
+              "previous_months"
+            ],
+            "type": "object"
           }
         },
         "required": [
@@ -3086,7 +3266,8 @@
           "top_pages",
           "top_events",
           "comparison_cutoff",
-          "previous_days"
+          "previous_days",
+          "visitors"
         ],
         "type": "object"
       },

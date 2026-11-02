@@ -1,5 +1,5 @@
 import type { QueryScope } from './query-scope';
-import type { VisitorDay } from './visitors';
+import type { VisitorDay, VisitorsReport } from './visitors';
 
 export const TOP_ITEMS = 10;
 
@@ -84,4 +84,5 @@ export interface OverviewReport {
   readonly topEvents: readonly EventCount[];
   readonly comparisonCutoff: string | null;
   readonly previousDays: readonly PreviousDay[];
+  readonly visitors: VisitorsReport;
 }

@@ -14,6 +14,7 @@ import type { FeaturesReport } from '../../../domain/queries/features';
 import type { RequestsReport } from '../../../domain/queries/requests';
 import type { TimelineReport, TimelineSubject } from '../../../domain/queries/timeline';
 import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/queries/overview';
+import type { VisitorDay, VisitorMonth, VisitorsReport } from '../../../domain/queries/visitors';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
@@ -63,6 +64,35 @@ function writeErrorsBody(kpi: WriteErrorsKpi) {
   return { current: kpi.current, previous: kpi.previous, daily: [...kpi.daily] };
 }
 
+function visitorDaysBody(days: readonly VisitorDay[]) {
+  return days.map((day) => ({
+    date: day.date,
+    first_visit: day.firstVisit,
+    first_this_month: day.firstThisMonth,
+    first_today: day.firstToday,
+    again_today: day.againToday,
+  }));
+}
+
+function visitorMonthsBody(months: readonly VisitorMonth[]) {
+  return months.map((month) => ({
+    month: month.month,
+    first_visit: month.firstVisit,
+    first_this_month: month.firstThisMonth,
+    exact: month.exact,
+  }));
+}
+
+function visitorsBody(visitors: VisitorsReport) {
+  return {
+    enabled: visitors.enabled,
+    daily: visitorDaysBody(visitors.daily),
+    months: visitorMonthsBody(visitors.months),
+    previous_daily: visitorDaysBody(visitors.previousDaily),
+    previous_months: visitorMonthsBody(visitors.previousMonths),
+  };
+}
+
 function overviewBody(report: OverviewReport): OverviewReportBody {
   const { conversions, convertingVisits } = report.kpis;
   return {
@@ -91,6 +121,7 @@ function overviewBody(report: OverviewReport): OverviewReportBody {
       converting_visits: day.convertingVisits,
       write_errors: { ...day.writeErrors },
     })),
+    visitors: visitorsBody(report.visitors),
   };
 }
 
