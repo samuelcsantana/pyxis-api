@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { sql } from 'drizzle-orm';
+import { type SQL, sql } from 'drizzle-orm';
+import type { VisitorKind } from '../../domain/events/visitor-kind';
 import type {
   DayTotals,
   EventCount,
@@ -8,11 +9,26 @@ import type {
   PeriodTotals,
 } from '../../domain/queries/overview';
 import type { QueryScope } from '../../domain/queries/query-scope';
+import type { VisitorDay, VisitorKindCounts } from '../../domain/queries/visitors';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
 import { isNamedEvent, isPageView, localDay, periodTotalsColumns } from './definitions';
 import { inScope } from './report-filters';
+
+function firstVisitorKinds(scope: QueryScope): SQL {
+  return sql`
+    SELECT DISTINCT ON (${events.sessionId})
+      ${events.visitor} AS "visitor",
+      ${localDay(scope)} AS "date"
+    FROM ${events}
+    WHERE ${inScope(scope)} AND ${events.visitor} IS NOT NULL
+    ORDER BY ${events.sessionId}, ${events.occurredAt}`;
+}
+
+function visitsOfKind(kind: VisitorKind): SQL {
+  return sql`count(*) FILTER (WHERE firsts."visitor" = ${kind})::int`;
+}
 
 @Injectable()
 export class DrizzleOverviewQuery implements OverviewQuery {
@@ -63,6 +79,22 @@ export class DrizzleOverviewQuery implements OverviewQuery {
       GROUP BY ${events.name}
       ORDER BY "count" DESC, "name"
       LIMIT ${limit}`);
+    return [...rows];
+  }
+
+  async visitorDays(scope: QueryScope): Promise<readonly VisitorDay[]> {
+    const rows = await this.db.execute<
+      Record<keyof VisitorKindCounts, number> & { date: string }
+    >(sql`
+      WITH firsts AS (${firstVisitorKinds(scope)})
+      SELECT firsts."date",
+        ${visitsOfKind('first_visit')} AS "firstVisit",
+        ${visitsOfKind('first_this_month')} AS "firstThisMonth",
+        ${visitsOfKind('first_today')} AS "firstToday",
+        ${visitsOfKind('again_today')} AS "againToday"
+      FROM firsts
+      GROUP BY firsts."date"
+      ORDER BY firsts."date"`);
     return [...rows];
   }
 }
