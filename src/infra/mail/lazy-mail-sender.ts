@@ -1,5 +1,6 @@
 import type { NoticeText } from '../../domain/notices/operator-notice';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
+import type { InstallReminder } from '../../domain/accounts/install-reminder';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { SubscriptionConfirmation } from '../../domain/accounts/subscription-confirmation';
 import type { Welcome } from '../../domain/accounts/welcome';
@@ -56,6 +57,14 @@ export class LazyMailSender implements MailSender {
 
   async sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void> {
     await this.resolved().sendWelcome(email, welcome, language);
+  }
+
+  async sendInstallReminder(
+    email: string,
+    reminder: InstallReminder,
+    language: EmailLanguage,
+  ): Promise<void> {
+    await this.resolved().sendInstallReminder(email, reminder, language);
   }
 
   async sendSubscriptionConfirmed(

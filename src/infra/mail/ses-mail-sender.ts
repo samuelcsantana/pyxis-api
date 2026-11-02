@@ -1,5 +1,6 @@
 import { SendEmailCommand, type SendEmailCommandInput, SESv2Client } from '@aws-sdk/client-sesv2';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
+import type { InstallReminder } from '../../domain/accounts/install-reminder';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { SubscriptionConfirmation } from '../../domain/accounts/subscription-confirmation';
 import type { Welcome } from '../../domain/accounts/welcome';
@@ -19,6 +20,7 @@ import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 import { buildSubscriptionConfirmedEmail } from './subscription-confirmed-email';
 import { buildWelcomeEmail } from './welcome-email';
+import { buildInstallReminderEmail } from './install-reminder-email';
 
 export type SesSend = (input: SendEmailCommandInput) => Promise<unknown>;
 
@@ -92,6 +94,18 @@ export class SesMailSender implements MailSender {
     return this.deliver(
       email,
       buildWelcomeEmail(welcome, language, this.links, this.supportEmail),
+      this.supportEmail,
+    );
+  }
+
+  sendInstallReminder(
+    email: string,
+    reminder: InstallReminder,
+    language: EmailLanguage,
+  ): Promise<void> {
+    return this.deliver(
+      email,
+      buildInstallReminderEmail(reminder, language, this.links, this.supportEmail),
       this.supportEmail,
     );
   }

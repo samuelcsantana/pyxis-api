@@ -13,6 +13,7 @@ import { buildAccountNoticeEmail } from './account-notice-email';
 import { buildInvitationEmail } from './invitation-email';
 import { buildSubscriptionConfirmedEmail } from './subscription-confirmed-email';
 import { buildWelcomeEmail } from './welcome-email';
+import { buildInstallReminderEmail } from './install-reminder-email';
 import { buildExportReadyEmail } from './export-ready-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
@@ -226,6 +227,25 @@ describe('ResendMailSender', () => {
     });
   });
 
+  it('sends the install reminder with replies going to the support address', async () => {
+    const send = okResend();
+    const reminder = { project: { id: 'p-1', name: 'Shop' } };
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendInstallReminder(
+      'owner@example.com',
+      reminder,
+      'nl',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildInstallReminderEmail(reminder, 'nl', LINKS, SUPPORT),
+    });
+  });
+
   it('sends the subscription confirmation with replies going to the support address', async () => {
     const send = okResend();
     const confirmation = { interval: 'month' as const, withdrawalDays: 7, terms: null };
@@ -416,6 +436,26 @@ describe('SesMailSender', () => {
     );
 
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
+  });
+
+  it('sends the install reminder through SES too', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send, SUPPORT).sendInstallReminder(
+      'owner@example.com',
+      { project: null },
+      'fr',
+    );
+
+    expect(sent[0]).toEqual(
+      expect.objectContaining({
+        Destination: { ToAddresses: ['owner@example.com'] },
+        ReplyToAddresses: [SUPPORT],
+      }),
+    );
+    expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe(
+      buildInstallReminderEmail({ project: null }, 'fr', LINKS, SUPPORT).subject,
+    );
   });
 
   it('sends an account notice with replies going to the support address', async () => {
@@ -658,6 +698,26 @@ describe('LoggingMailSender', () => {
 
     expect(logs).toEqual([
       { message: 'mail.welcome', plan: 'trial', withTerms: false, language: 'en' },
+    ]);
+  });
+
+  it('logs the project an install reminder points at, or none, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+    const sender = new LoggingMailSender();
+
+    await sender.sendInstallReminder(
+      'owner@example.com',
+      { project: { id: 'p-1', name: 'Shop' } },
+      'en',
+    );
+    await sender.sendInstallReminder('owner@example.com', { project: null }, 'it');
+
+    expect(logs).toEqual([
+      { message: 'mail.install_reminder', projectId: 'p-1', language: 'en' },
+      { message: 'mail.install_reminder', projectId: null, language: 'it' },
     ]);
   });
 

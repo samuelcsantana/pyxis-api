@@ -33,6 +33,7 @@ describe('LazyMailSender', () => {
       { plan: { kind: 'subscription' }, terms: null },
       'en',
     );
+    await sender.sendInstallReminder('ana@example.com', { project: null }, 'de');
     await sender.sendSubscriptionConfirmed(
       'ana@example.com',
       { interval: 'month', withdrawalDays: 7, terms: null },
@@ -66,10 +67,24 @@ describe('LazyMailSender', () => {
     expect(recording.invitations).toHaveLength(1);
     expect(recording.accountNotices).toHaveLength(1);
     expect(recording.welcomes).toHaveLength(1);
+    expect(recording.installReminders).toEqual([
+      { email: 'ana@example.com', reminder: { project: null }, language: 'de' },
+    ]);
     expect(recording.subscriptionConfirmations).toHaveLength(1);
     expect(recording.exportsReady).toHaveLength(1);
     expect(recording.operatorNotices).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
+  });
+
+  it('passes on the failure of the sender it created', async () => {
+    const recording = new RecordingMailSender();
+    recording.failFor('ana@example.com', new Error('provider down'));
+    const sender = new LazyMailSender(() => recording);
+
+    await expect(
+      sender.sendInstallReminder('ana@example.com', { project: null }, 'en'),
+    ).rejects.toThrow('provider down');
+    expect(recording.installReminders).toEqual([]);
   });
 
   it('turns a sender that cannot be created into a failed send, not a failed start', async () => {
