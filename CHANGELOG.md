@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.42.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.41.0...v0.42.0) (2026-11-02)
+
+
+### Features
+
+* **accounts:** record the install reminder and find the project to install ([50567ee](https://github.com/samuelcsantana/pyxis-api/commit/50567eee318bbd1534e10f75b063fd7e9e238f09))
+* **accounts:** remind empty free accounts to install the tracker in the daily job ([72a20d4](https://github.com/samuelcsantana/pyxis-api/commit/72a20d43147ae9edcddcdbb038cd352e6c3898f9))
+* **accounts:** tell when a free account is due for the install reminder ([1d854a1](https://github.com/samuelcsantana/pyxis-api/commit/1d854a13dddb1634887950fd603a39774dd348e8))
+* **mail:** write the install reminder in the seven e-mail languages ([08a9fc4](https://github.com/samuelcsantana/pyxis-api/commit/08a9fc493d8b046f8d1974f85393d362a7369b75))
+
+
+### Documentation
+
+* describe the install reminder for free accounts with no events ([d7e62a2](https://github.com/samuelcsantana/pyxis-api/commit/d7e62a2ade1149d475d9a1eedef6b001730a3b7f))
+
 ## [0.41.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.40.0...v0.41.0) (2026-11-02)
 
 
