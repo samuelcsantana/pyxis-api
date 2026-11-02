@@ -6,6 +6,7 @@ import type { FeaturesReport } from '../../../domain/queries/features';
 import type { RequestsReport } from '../../../domain/queries/requests';
 import type { OverviewReport } from '../../../domain/queries/overview';
 import { NO_REPORT_FILTERS } from '../../../domain/queries/report-filters';
+import { VISITORS_OFF } from '../../../domain/queries/visitors';
 import type { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import type { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import type { GetFeaturesUseCase } from '../../../usecases/queries/get-features.usecase';
@@ -85,6 +86,21 @@ const REPORT: OverviewReport = {
       writeErrors: { failed: 0, total: 1 },
     },
   ],
+  visitors: VISITORS_OFF,
+};
+
+const COUNTED_VISITORS: OverviewReport['visitors'] = {
+  enabled: true,
+  daily: [
+    { date: '2026-10-04', firstVisit: 3, firstThisMonth: 1, firstToday: 2, againToday: 4 },
+    { date: '2026-10-05', firstVisit: 2, firstThisMonth: 0, firstToday: 1, againToday: 1 },
+  ],
+  months: [{ month: '2026-10', firstVisit: 5, firstThisMonth: 1, exact: false }],
+  previousDaily: [
+    { date: '2026-10-02', firstVisit: 1, firstThisMonth: 1, firstToday: 0, againToday: 0 },
+    { date: '2026-10-03', firstVisit: 0, firstThisMonth: 0, firstToday: 1, againToday: 2 },
+  ],
+  previousMonths: [{ month: '2026-10', firstVisit: 1, firstThisMonth: 1, exact: false }],
 };
 
 const DEVICES: DevicesReport = {
@@ -333,6 +349,46 @@ describe('QueriesController', () => {
     });
 
     expect(overviewReportSchema.parse(body).comparison_cutoff).toBeNull();
+  });
+
+  it('answers the unique visitors of both periods in snake case when the project counts them', async () => {
+    const { controller } = controllerAnswering({ ...REPORT, visitors: COUNTED_VISITORS });
+
+    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
+      from: '2026-10-04',
+      to: '2026-10-05',
+    });
+
+    expect(overviewReportSchema.parse(body).visitors).toEqual({
+      enabled: true,
+      daily: [
+        { date: '2026-10-04', first_visit: 3, first_this_month: 1, first_today: 2, again_today: 4 },
+        { date: '2026-10-05', first_visit: 2, first_this_month: 0, first_today: 1, again_today: 1 },
+      ],
+      months: [{ month: '2026-10', first_visit: 5, first_this_month: 1, exact: false }],
+      previous_daily: [
+        { date: '2026-10-02', first_visit: 1, first_this_month: 1, first_today: 0, again_today: 0 },
+        { date: '2026-10-03', first_visit: 0, first_this_month: 0, first_today: 1, again_today: 2 },
+      ],
+      previous_months: [{ month: '2026-10', first_visit: 1, first_this_month: 1, exact: false }],
+    });
+  });
+
+  it('answers empty visitor lists when the project does not count visitors', async () => {
+    const { controller } = controllerAnswering(REPORT);
+
+    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
+      from: '2026-10-04',
+      to: '2026-10-05',
+    });
+
+    expect(overviewReportSchema.parse(body).visitors).toEqual({
+      enabled: false,
+      daily: [],
+      months: [],
+      previous_daily: [],
+      previous_months: [],
+    });
   });
 
   it('keeps conversions null when the project has no conversion event', async () => {

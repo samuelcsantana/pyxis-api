@@ -112,6 +112,7 @@ describe('dashboard queries', () => {
         converting_visits: 0,
         write_errors: { failed: 0, total: 0 },
       })),
+      visitors: { enabled: false, daily: [], months: [], previous_daily: [], previous_months: [] },
     });
   });
 

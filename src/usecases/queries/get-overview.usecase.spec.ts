@@ -5,6 +5,7 @@ import { FixedClock } from '../../test-utils/fixed-clock';
 import { StubOverviewQuery } from '../../test-utils/stub-overview.query';
 import { GetOverviewUseCase } from './get-overview.usecase';
 import { NO_REPORT_FILTERS } from '../../domain/queries/report-filters';
+import { NO_VISITOR_KINDS, VISITORS_OFF } from '../../domain/queries/visitors';
 
 const PROJECT: Project = {
   id: 'project-1',
@@ -241,5 +242,85 @@ describe('GetOverviewUseCase', () => {
     const { run } = setup();
 
     await expect(run('2026-10-06', '2026-10-06')).rejects.toBeInstanceOf(InvalidRangeError);
+  });
+
+  describe('unique visitors', () => {
+    const COUNTING = { ...PROJECT, visitorsEnabled: true };
+
+    it('reads no visitor and answers them off when the project does not count visitors', async () => {
+      const { query, run } = setup();
+
+      const report = await run('2026-10-03', '2026-10-05');
+
+      expect(report.visitors).toEqual(VISITORS_OFF);
+      expect(query.visitorScopes).toEqual([]);
+    });
+
+    it('reads both periods through the same scopes as the other reads, up to the same cutoff', async () => {
+      const { query, run } = setup(COUNTING);
+
+      await run('2026-10-03', '2026-10-05');
+
+      expect(query.visitorScopes).toEqual([
+        expect.objectContaining({ range: { from: '2026-10-03', to: '2026-10-05' } }),
+        expect.objectContaining({
+          range: { from: '2026-09-30', to: '2026-10-02' },
+          lastDayUntil: '23:30:00.000',
+        }),
+      ]);
+      expect(query.visitorScopes[0]?.lastDayUntil).toBeUndefined();
+    });
+
+    it('gives each period one entry per day, with zeros on days without a counted visit', async () => {
+      const { query, run } = setup(COUNTING);
+      const busyDay = { firstVisit: 4, firstThisMonth: 2, firstToday: 3, againToday: 1 };
+      query.sparseVisitorDays = [
+        { date: '2026-10-04', ...busyDay },
+        { date: '2026-10-01', ...busyDay, firstVisit: 1 },
+      ];
+
+      const { visitors } = await run('2026-10-03', '2026-10-05');
+
+      expect(visitors.enabled).toBe(true);
+      expect(visitors.daily).toEqual([
+        { date: '2026-10-03', ...NO_VISITOR_KINDS },
+        { date: '2026-10-04', ...busyDay },
+        { date: '2026-10-05', ...NO_VISITOR_KINDS },
+      ]);
+      expect(visitors.previousDaily).toEqual([
+        { date: '2026-09-30', ...NO_VISITOR_KINDS },
+        { date: '2026-10-01', ...busyDay, firstVisit: 1 },
+        { date: '2026-10-02', ...NO_VISITOR_KINDS },
+      ]);
+      expect(visitors.months).toEqual([
+        { month: '2026-10', firstVisit: 4, firstThisMonth: 2, exact: false },
+      ]);
+      expect(visitors.previousMonths).toEqual([
+        { month: '2026-09', firstVisit: 0, firstThisMonth: 0, exact: false },
+        { month: '2026-10', firstVisit: 1, firstThisMonth: 2, exact: false },
+      ]);
+    });
+
+    it('calls the month exact when the range runs from its first day to today, in the project zone', async () => {
+      const { run } = setup(COUNTING);
+
+      const { visitors } = await run('2026-10-01', '2026-10-05');
+
+      expect(visitors.months).toEqual([expect.objectContaining({ month: '2026-10', exact: true })]);
+      expect(visitors.previousMonths).toEqual([
+        expect.objectContaining({ month: '2026-09', exact: false }),
+      ]);
+    });
+
+    it('calls a whole month exact, and partial a previous period that starts after the 1st', async () => {
+      const { run } = setup(COUNTING);
+
+      const { visitors } = await run('2026-09-01', '2026-09-30');
+
+      expect(visitors.months).toEqual([expect.objectContaining({ month: '2026-09', exact: true })]);
+      expect(visitors.previousMonths).toEqual([
+        expect.objectContaining({ month: '2026-08', exact: false }),
+      ]);
+    });
   });
 });
