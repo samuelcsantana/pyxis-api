@@ -6,6 +6,7 @@ import type {
   PeriodTotals,
 } from '../domain/queries/overview';
 import type { QueryScope } from '../domain/queries/query-scope';
+import type { VisitorDay } from '../domain/queries/visitors';
 
 const NO_TOTALS: PeriodTotals = {
   visits: 0,
@@ -23,6 +24,8 @@ export class StubOverviewQuery implements OverviewQuery {
   pages: readonly PageCount[] = [];
   namedEvents: readonly EventCount[] = [];
   limits: number[] = [];
+  readonly visitorScopes: QueryScope[] = [];
+  sparseVisitorDays: readonly VisitorDay[] = [];
 
   totals(scope: QueryScope): Promise<PeriodTotals> {
     this.scopes.push(scope);
@@ -46,5 +49,14 @@ export class StubOverviewQuery implements OverviewQuery {
     this.scopes.push(scope);
     this.limits.push(limit);
     return Promise.resolve(this.namedEvents);
+  }
+
+  visitorDays(scope: QueryScope): Promise<readonly VisitorDay[]> {
+    this.visitorScopes.push(scope);
+    return Promise.resolve(
+      this.sparseVisitorDays.filter(
+        (day) => day.date >= scope.range.from && day.date <= scope.range.to,
+      ),
+    );
   }
 }

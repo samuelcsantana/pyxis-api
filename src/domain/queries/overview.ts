@@ -1,4 +1,5 @@
 import type { QueryScope } from './query-scope';
+import type { VisitorDay } from './visitors';
 
 export const TOP_ITEMS = 10;
 
@@ -34,6 +35,7 @@ export interface OverviewQuery {
   days(scope: QueryScope): Promise<readonly DayTotals[]>;
   topPages(scope: QueryScope, limit: number): Promise<readonly PageCount[]>;
   topEvents(scope: QueryScope, limit: number): Promise<readonly EventCount[]>;
+  visitorDays(scope: QueryScope): Promise<readonly VisitorDay[]>;
 }
 
 export const OVERVIEW_QUERY = Symbol('OverviewQuery');
