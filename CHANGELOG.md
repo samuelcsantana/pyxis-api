@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.41.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.40.0...v0.41.0) (2026-11-02)
+
+
+### Features
+
+* **demo-traffic:** start every invented visit with a kind of visitor ([399d05f](https://github.com/samuelcsantana/pyxis-api/commit/399d05f7e60facb57fca683b2c4e0d11c5ec2d33))
+* **events:** accept the kind of visitor on incoming events ([faa1cdc](https://github.com/samuelcsantana/pyxis-api/commit/faa1cdc8e12f930c738f477e89d5caeee5bb3d01))
+* **events:** compute when the site's day and month end ([71d3f6c](https://github.com/samuelcsantana/pyxis-api/commit/71d3f6ccc215b8914223cd51618534a6ace30f33))
+* **exports:** carry the visitor kind in the project export and the person's copy ([2ce8e40](https://github.com/samuelcsantana/pyxis-api/commit/2ce8e4023832bb863b29ffdfc334e779484df544))
+* **ingest:** keep the visitor kind and answer the site's period when counting visitors ([4038ce5](https://github.com/samuelcsantana/pyxis-api/commit/4038ce53357c90a3bfaa24a762eb34208d1239fb))
+* **mail:** send the weekly digest's turn-off link to the e-mail part ([320d920](https://github.com/samuelcsantana/pyxis-api/commit/320d920f863ea1f0c7da58b19a5f72251e2aefe2))
+* **overview:** answer the unique visitors of both periods when the project counts them ([5ec8e7e](https://github.com/samuelcsantana/pyxis-api/commit/5ec8e7e4c4f35a5b36934f875e3c376f93cfef7e))
+* **overview:** count the visitor kind each visit started with, per local day ([c131aa4](https://github.com/samuelcsantana/pyxis-api/commit/c131aa44003fd0d7744e2fecc707a1a752858270))
+* **projects:** let a project count unique visitors, off by default ([1db8f38](https://github.com/samuelcsantana/pyxis-api/commit/1db8f38195492f3e325eb0218b7251f7735bce74))
+
+
+### Documentation
+
+* **adr:** record unique visitors without an identifier ([8182ed4](https://github.com/samuelcsantana/pyxis-api/commit/8182ed4a3242e814178e3b0ffc72b24bec07a696))
+* **adr:** say what happens to stored visitor kinds instead of calling them non-personal ([20bed9a](https://github.com/samuelcsantana/pyxis-api/commit/20bed9af711fd333fc381842a0930d873c73ce00))
+* describe the unique visitors of the overview and the demo ([66f2749](https://github.com/samuelcsantana/pyxis-api/commit/66f2749e2739f506e9ac89404d89ff7113f2c1ca))
+
 ## [0.40.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.39.1...v0.40.0) (2026-10-30)
 
 
