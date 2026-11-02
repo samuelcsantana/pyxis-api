@@ -1,4 +1,5 @@
 import type { AccountNotice } from '../accounts/account-notice';
+import type { InstallReminder } from '../accounts/install-reminder';
 import type { QuotaNotice } from '../accounts/quota-notice';
 import type { SubscriptionConfirmation } from '../accounts/subscription-confirmation';
 import type { Welcome } from '../accounts/welcome';
@@ -16,6 +17,11 @@ export interface MailSender {
   sendInvitation(email: string, invitation: Invitation, language: EmailLanguage): Promise<void>;
   sendAccountNotice(email: string, notice: AccountNotice, language: EmailLanguage): Promise<void>;
   sendWelcome(email: string, welcome: Welcome, language: EmailLanguage): Promise<void>;
+  sendInstallReminder(
+    email: string,
+    reminder: InstallReminder,
+    language: EmailLanguage,
+  ): Promise<void>;
   sendSubscriptionConfirmed(
     email: string,
     confirmation: SubscriptionConfirmation,

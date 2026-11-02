@@ -1,6 +1,7 @@
 import type { NoticeText } from '../../domain/notices/operator-notice';
 import { Logger } from '@nestjs/common';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
+import type { InstallReminder } from '../../domain/accounts/install-reminder';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
 import type { SubscriptionConfirmation } from '../../domain/accounts/subscription-confirmation';
 import type { Welcome } from '../../domain/accounts/welcome';
@@ -57,6 +58,19 @@ export class LoggingMailSender implements MailSender {
       message: 'mail.welcome',
       plan: welcome.plan.kind,
       withTerms: welcome.terms !== null,
+      language,
+    });
+    return Promise.resolve();
+  }
+
+  sendInstallReminder(
+    _email: string,
+    reminder: InstallReminder,
+    language: EmailLanguage,
+  ): Promise<void> {
+    this.logger.log({
+      message: 'mail.install_reminder',
+      projectId: reminder.project?.id ?? null,
       language,
     });
     return Promise.resolve();
