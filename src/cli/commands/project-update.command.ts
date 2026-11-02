@@ -15,6 +15,7 @@ export interface ProjectUpdateArgs {
   readonly timezone?: string;
   readonly conversionEvent?: string | null;
   readonly cityEnabled?: boolean;
+  readonly visitorsEnabled?: boolean;
 }
 
 function conversionEventChange(values: Parameters<typeof flag>[0]): string | null | undefined {
@@ -28,11 +29,15 @@ function conversionEventChange(values: Parameters<typeof flag>[0]): string | nul
   return null;
 }
 
-function cityChange(values: Parameters<typeof flag>[0]): boolean | undefined {
-  const on = flag(values, 'city-on');
-  const off = flag(values, 'city-off');
+function switchChange(
+  values: Parameters<typeof flag>[0],
+  onFlag: string,
+  offFlag: string,
+): boolean | undefined {
+  const on = flag(values, onFlag);
+  const off = flag(values, offFlag);
   if (on && off) {
-    throw new CliUsageError('Use either --city-on or --city-off.');
+    throw new CliUsageError(`Use either --${onFlag} or --${offFlag}.`);
   }
   if (on) {
     return true;
@@ -46,12 +51,19 @@ const CITY_ON_NOTICE =
 const CITY_OFF_NOTICE =
   'The city is no longer read; the daily job erases the cities already kept at its next run ' +
   '(`jobs:run` starts one now).';
+const VISITORS_ON_NOTICE =
+  'New events keep the kind of visit the tracker sends, and each answer tells the browser when ' +
+  "the site's day and month end (within a minute, the project lookup is cached): the site's " +
+  'privacy notice must say so before this is turned on.';
+const VISITORS_OFF_NOTICE =
+  'New events no longer keep the kind of visit (within a minute); the tracker deletes its ' +
+  'marker on its next answer. The kinds already kept stay: they are not personal data.';
 
 export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
   usage:
     'npm run -s project:update -- --project <id> [--name <name>] [--origin <origin>…] ' +
     '[--timezone <IANA zone>] [--conversion-event <event name> | --clear-conversion-event] ' +
-    '[--city-on | --city-off]',
+    '[--city-on | --city-off] [--visitors-on | --visitors-off]',
 
   parse(argv) {
     const values = parseCommandArgs(argv, {
@@ -63,12 +75,15 @@ export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
       'clear-conversion-event': { type: 'boolean' },
       'city-on': { type: 'boolean' },
       'city-off': { type: 'boolean' },
+      'visitors-on': { type: 'boolean' },
+      'visitors-off': { type: 'boolean' },
     });
     const name = optionalText(values, 'name');
     const origins = textList(values, 'origin');
     const timezone = optionalText(values, 'timezone');
     const conversionEvent = conversionEventChange(values);
-    const cityEnabled = cityChange(values);
+    const cityEnabled = switchChange(values, 'city-on', 'city-off');
+    const visitorsEnabled = switchChange(values, 'visitors-on', 'visitors-off');
     const args: ProjectUpdateArgs = {
       projectId: requiredId(values, 'project'),
       ...(name === undefined ? {} : { name }),
@@ -76,6 +91,7 @@ export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
       ...(timezone === undefined ? {} : { timezone }),
       ...(conversionEvent === undefined ? {} : { conversionEvent }),
       ...(cityEnabled === undefined ? {} : { cityEnabled }),
+      ...(visitorsEnabled === undefined ? {} : { visitorsEnabled }),
     };
     if (Object.keys(args).length === 1) {
       throw new CliUsageError('Give at least one setting to change.');
@@ -91,6 +107,7 @@ export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
       ...(args.timezone === undefined ? {} : { timezone: args.timezone }),
       ...(args.conversionEvent === undefined ? {} : { conversionEvent: args.conversionEvent }),
       ...(args.cityEnabled === undefined ? {} : { cityEnabled: args.cityEnabled }),
+      ...(args.visitorsEnabled === undefined ? {} : { visitorsEnabled: args.visitorsEnabled }),
     });
     output.stdout(`project_id=${project.id}`);
     output.stdout(`name=${project.name}`);
@@ -98,8 +115,12 @@ export const projectUpdateCommand: CliCommand<ProjectUpdateArgs> = {
     output.stdout(`timezone=${project.timezone}`);
     output.stdout(`conversion_event=${project.conversionEvent ?? ''}`);
     output.stdout(`city_enabled=${String(project.cityEnabled)}`);
+    output.stdout(`visitors_enabled=${String(project.visitorsEnabled)}`);
     if (args.cityEnabled !== undefined) {
       output.stderr(args.cityEnabled ? CITY_ON_NOTICE : CITY_OFF_NOTICE);
+    }
+    if (args.visitorsEnabled !== undefined) {
+      output.stderr(args.visitorsEnabled ? VISITORS_ON_NOTICE : VISITORS_OFF_NOTICE);
     }
   },
 };

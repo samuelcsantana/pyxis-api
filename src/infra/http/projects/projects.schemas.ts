@@ -55,6 +55,14 @@ export const projectChangesSchema = z
         "Keep the visitor's approximate city on new events; off by default. Turning it off " +
           'stops reading the city at once and erases the cities already kept within a day.',
       ),
+    visitors_enabled: z
+      .boolean()
+      .optional()
+      .describe(
+        'Count unique visitors without an identifier; off by default. When on, new events keep ' +
+          "the kind of visit the tracker sends and each batch's answer carries visitor_period. " +
+          'Turning it off stops keeping the kind within a minute; the kinds already kept stay.',
+      ),
   })
   .meta({ id: 'ProjectChanges', description: 'The settings to change; the rest stay.' });
 
@@ -66,6 +74,7 @@ export const managedProjectSchema = z
     timezone: z.string(),
     conversion_event: z.string().nullable(),
     city_enabled: z.boolean(),
+    visitors_enabled: z.boolean(),
     created_at: z.iso.datetime(),
   })
   .meta({ id: 'ManagedProject', description: 'The settings of the project after the change.' });

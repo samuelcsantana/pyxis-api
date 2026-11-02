@@ -15,6 +15,7 @@ const PROJECT: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const PUBLIC_KEY_ID = '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e';
@@ -74,6 +75,7 @@ describe('ProjectSettingsController', () => {
       timezone: 'America/Sao_Paulo',
       conversion_event: 'signup_completed',
       city_enabled: false,
+      visitors_enabled: false,
       allowed_origins: ['https://shop.example.com'],
       created_at: '2026-10-01T00:00:00.000Z',
       account_id: ACCOUNT_ID,

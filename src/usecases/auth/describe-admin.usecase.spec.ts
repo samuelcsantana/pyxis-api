@@ -14,6 +14,7 @@ function project(id: string, name: string): Project {
     timezone: 'America/Sao_Paulo',
     conversionEvent: null,
     cityEnabled: false,
+    visitorsEnabled: false,
     createdAt: new Date('2026-09-01T00:00:00.000Z'),
   };
 }

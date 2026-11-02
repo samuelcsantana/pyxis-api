@@ -24,6 +24,7 @@ const PROJECT: Project = {
   timezone: 'UTC',
   conversionEvent: null,
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const SECRET = `${SECRET_KEY_PREFIX}${'H'.repeat(32)}`;

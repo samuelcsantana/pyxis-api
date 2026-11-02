@@ -56,6 +56,7 @@ export function managedProjectBody(project: Project): ManagedProjectBody {
     timezone: project.timezone,
     conversion_event: project.conversionEvent,
     city_enabled: project.cityEnabled,
+    visitors_enabled: project.visitorsEnabled,
     created_at: project.createdAt.toISOString(),
   };
 }
@@ -136,6 +137,7 @@ export class ProjectsController {
       ...(body.timezone === undefined ? {} : { timezone: body.timezone }),
       ...(body.conversion_event === undefined ? {} : { conversionEvent: body.conversion_event }),
       ...(body.city_enabled === undefined ? {} : { cityEnabled: body.city_enabled }),
+      ...(body.visitors_enabled === undefined ? {} : { visitorsEnabled: body.visitors_enabled }),
     });
     return managedProjectBody(project);
   }

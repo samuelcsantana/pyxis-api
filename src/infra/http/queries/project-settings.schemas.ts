@@ -18,6 +18,12 @@ export const projectSettingsSchema = z
         "Whether new events keep the visitor's approximate city; off by default, and when off " +
           'the city is never read',
       ),
+    visitors_enabled: z
+      .boolean()
+      .describe(
+        'Whether the project counts unique visitors: new events keep the kind of visit the ' +
+          'tracker sends, and no identifier is created or kept; off by default',
+      ),
     allowed_origins: z
       .array(z.string())
       .describe('The origins whose pages may send events with a public key'),

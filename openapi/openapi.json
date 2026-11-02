@@ -1984,6 +1984,9 @@
           },
           "timezone": {
             "type": "string"
+          },
+          "visitors_enabled": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -1993,6 +1996,7 @@
           "timezone",
           "conversion_event",
           "city_enabled",
+          "visitors_enabled",
           "created_at"
         ],
         "type": "object"
@@ -3135,6 +3139,10 @@
             "description": "An IANA time zone, such as America/Sao_Paulo",
             "maxLength": 64,
             "type": "string"
+          },
+          "visitors_enabled": {
+            "description": "Count unique visitors without an identifier; off by default. When on, new events keep the kind of visit the tracker sends and each batch's answer carries visitor_period. Turning it off stops keeping the kind within a minute; the kinds already kept stay.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -3475,6 +3483,10 @@
           "timezone": {
             "description": "The IANA time zone the days of every report are counted in",
             "type": "string"
+          },
+          "visitors_enabled": {
+            "description": "Whether the project counts unique visitors: new events keep the kind of visit the tracker sends, and no identifier is created or kept; off by default",
+            "type": "boolean"
           }
         },
         "required": [
@@ -3483,6 +3495,7 @@
           "timezone",
           "conversion_event",
           "city_enabled",
+          "visitors_enabled",
           "allowed_origins",
           "created_at",
           "account_id",

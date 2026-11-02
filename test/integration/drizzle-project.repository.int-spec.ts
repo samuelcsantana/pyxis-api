@@ -59,6 +59,7 @@ describe('DrizzleProjectRepository against a real Postgres', () => {
       timezone: 'America/Sao_Paulo',
       conversionEvent: 'signup_completed',
       cityEnabled: false,
+      visitorsEnabled: false,
       createdAt: expect.any(Date) as Date,
     });
   });
