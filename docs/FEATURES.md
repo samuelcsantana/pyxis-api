@@ -57,7 +57,14 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   writes against the previous period, daily activity of both periods, top pages and events; a
   range that ends today is compared with the previous period up to the same time of day, and the
   answer says which time that was:
-  [ADR 0010](adr/0010-compare-an-unfinished-day-up-to-the-same-time.md)),
+  [ADR 0010](adr/0010-compare-an-unfinished-day-up-to-the-same-time.md); for a project that
+  counts unique visitors, `visitors` gives both periods one entry per local day with the visits
+  that started that day by the kind their first event carried, the earliest kind of a visit
+  counting once and a visit without one never, and one entry per calendar month with its first
+  visits and first visits this month inside the range and `exact`, true only when the range holds
+  the whole month or runs from its 1st to today, the only spans whose sum is the month's unique
+  visitors; with the option off the reads are skipped, `enabled` is false and the lists are empty,
+  so "off" never reads as "no visitors yet"),
   `/devices` (device type, browser, system and country, top five and "other", plus the top ten
   regions, "other" and the visits without a region, and the top twenty approximate cities with
   their region, "other" and the visits without a city, which is every visit of a project that
@@ -359,7 +366,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   anyone's real numbers: `project:demo-traffic --project <id>` marks it (never a project of an
   account), and the daily job fills it with the invented visits of a store, 25 to 62 a day,
   from 90 days back the first time, then each new day up to the moment it runs. The same day
-  always gives the same events and ids, so a run never adds a day twice; `--off` stops it
+  always gives the same events and ids, so a run never adds a day twice; the first event of
+  each visit carries a kind of visitor read from its visit id, so the store's Overview counts
+  unique visitors once its option is on; `--off` stops it
   ([ADR 0041](adr/0041-a-demo-project-is-filled-with-invented-visits-every-day.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
@@ -411,8 +420,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   first this month, its first today or another one today. Nothing that tells one browser from
   another is created, stored or sent, and the server cannot link two visits. Turning the option
   off stops keeping the label within a minute (the project lookup is cached) and the tracker
-  deletes its marker at its next answered send; the labels kept stay, since they are not personal
-  data. The count has limits: a visit that ends before the tracker's first answered send (about
+  deletes its marker at its next answered send; the labels kept stay and follow every other field
+  of their events: the 13-month retention, the project's deletion and an identified person's
+  erasure and copy. The count has limits: a visit that ends before the tracker's first answered send (about
   five seconds; a hidden tab sends with `sendBeacon`, which has no answer) keeps no marker, so a
   quick visitor returns as a first visit; two tabs opened at once on the first visit of the day
   count twice; a private window, a cleared browser, or a phone and a computer are different
