@@ -6,7 +6,7 @@
 </picture>
 
 **The API of Pyxis: it receives product analytics events from the browser, answers the dashboard's
-queries and erases a person's events on request, without cookies or personal data.**
+queries and erases a person's events on request, without cookies or stored IP addresses.**
 
 [![CI](https://github.com/samuelcsantana/pyxis-api/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/samuelcsantana/pyxis-api/actions/workflows/ci.yml)
 [![Coverage](https://codecov.io/gh/samuelcsantana/pyxis-api/graph/badge.svg)](https://codecov.io/gh/samuelcsantana/pyxis-api)
@@ -46,7 +46,7 @@ Most analytics products ask a site to trade its visitors' privacy for insight: t
 cookies, fingerprinting, raw IP addresses, full URLs with personal data in them. Pyxis answers the
 questions a product team actually asks (which features are used, where requests fail, where a
 sign-up funnel loses people, what one person did in order) while storing **no cookie, no IP
-address, no user agent and no personal data**. Every rule is enforced in code and covered by
+address and no user agent**. Every rule is enforced in code and covered by
 tests, not left to a policy page.
 
 Read more: [why Pyxis was built and what it never stores][post], the introduction post on the
@@ -332,7 +332,7 @@ What differs from the hosted service:
 
 ## Privacy and security
 
-- **No cookie on ingestion, no personal data in events.** The only cookie is the dashboard's
+- **No cookie on ingestion, no IP address stored.** The only cookie is the dashboard's
   session. The IP address and the user agent are classified and discarded, never stored, and the
   city is read only for a project that turns it on, off by default
   ([ADR 0054](docs/adr/0054-city-as-a-per-project-option.md)).
