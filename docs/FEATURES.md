@@ -248,6 +248,15 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   meantime; replying to the notice asks a person to review it. Only stored events count; paid and
   comped accounts, deletion holds and suspended accounts are never touched
   ([ADR 0052](adr/0052-free-accounts-with-no-events-are-deleted.md))
+- One reminder to install the tracker: the daily job e-mails the owner of a free account that never
+  stored an event, once, from the third day after it entered the free plan (`free_since`) and
+  before the fourteenth, so a late run never reaches an account near the inactivity notice. The
+  e-mail links to the Install screen of the account's oldest project without events, or to the
+  dashboard with a request to create the first project, and names the three ways to install as the
+  screen's tabs do: the npm package or a script tag, an AI coding agent, the Google Tag Manager
+  template. It is recorded in `install_reminded_at` and never sent twice; an account that already
+  got the inactivity notice is skipped; a failed send is logged with the account id and tried
+  again the next day. Its links carry no query parameters, and the run reports `installReminders`
 - Free accounts that share a site: the daily job reports each project of a free account with an
   origin that a project of another account (not ended) or of no account also allows, as
   `accounts.free_site_shared` at warn level with the account and project ids only, and counts the
