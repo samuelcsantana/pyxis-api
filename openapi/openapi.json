@@ -1899,6 +1899,9 @@
             "maximum": 9007199254740991,
             "minimum": 0,
             "type": "integer"
+          },
+          "visitor_period": {
+            "$ref": "#/components/schemas/VisitorPeriod"
           }
         },
         "required": [
@@ -4648,6 +4651,29 @@
         ],
         "type": "object"
       },
+      "VisitorPeriod": {
+        "additionalProperties": false,
+        "description": "When the site's day and month end, the same for every visitor of the site that day. Present only when the project counts unique visitors: the tracker keeps it to tell the kind of its next visit, and deletes what it kept when a successful answer comes without it.",
+        "properties": {
+          "day_ends_at": {
+            "description": "The next midnight in the project's time zone, in UTC",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "month_ends_at": {
+            "description": "The first instant of next month in the project's time zone, in UTC",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day_ends_at",
+          "month_ends_at"
+        ],
+        "type": "object"
+      },
       "VisitsReport": {
         "additionalProperties": false,
         "description": "The visits with events in the range, newest first, 50 per page. A visit is one browser tab; nothing links two of them. entry_path is its first page view, highlights its first named events in order, failed_requests its api_request events with status 0 or 400 and above, source and campaign those of its entry page view (the source as Acquisition names it), user_id the id it was identified with. total counts every visit that matches the filters, on every page. next_cursor goes back as cursor for the older page, null on the last one. Times are UTC; timezone names the project zone to show them in.",
@@ -6142,7 +6168,7 @@
                 }
               }
             },
-            "description": "The batch was processed."
+            "description": "The batch was processed. visitor_period comes only when the project counts unique visitors."
           },
           "400": {
             "content": {

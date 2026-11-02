@@ -42,6 +42,7 @@ function event(projectId: string, occurredAt: Date, city: string | null = null):
     region: null,
     regionName: null,
     city,
+    visitor: null,
     properties: {},
   };
 }

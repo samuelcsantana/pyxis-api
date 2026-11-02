@@ -11,6 +11,7 @@ const CONTEXT: ReceptionContext = {
   country: 'BR',
   region: { region: 'BR-SP', regionName: 'São Paulo' },
   city: 'Campinas',
+  visitorsEnabled: false,
 };
 
 const EVENT: AcceptedEvent = {
@@ -45,8 +46,18 @@ describe('buildTrackedEvent', () => {
       region: 'BR-SP',
       regionName: 'São Paulo',
       city: 'Campinas',
+      visitor: null,
       properties: { plan: 'pro' },
     });
+  });
+
+  it('keeps the kind of visitor only for a project that counts unique visitors', () => {
+    const firstVisit: AcceptedEvent = { ...EVENT, visitor: 'first_visit' };
+
+    expect(buildTrackedEvent(firstVisit, { ...CONTEXT, visitorsEnabled: true }).visitor).toBe(
+      'first_visit',
+    );
+    expect(buildTrackedEvent(firstVisit, CONTEXT).visitor).toBeNull();
   });
 
   it('classifies the channel only for the event that carries attribution', () => {

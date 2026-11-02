@@ -36,6 +36,7 @@ function event(
     attribution: null,
     channel: null,
     city: null,
+    visitor: null,
     properties: {},
     ...device,
     ...overrides,

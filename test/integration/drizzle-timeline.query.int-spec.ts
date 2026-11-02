@@ -45,6 +45,7 @@ function event(
     region: 'BR-SP',
     regionName: 'São Paulo',
     city: null,
+    visitor: null,
     properties: {},
     ...overrides,
   };

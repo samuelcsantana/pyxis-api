@@ -50,6 +50,7 @@ function event(
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
     ...overrides,
   };

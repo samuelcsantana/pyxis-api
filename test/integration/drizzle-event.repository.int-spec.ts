@@ -30,6 +30,7 @@ function trackedEvent(index: number, overrides: Partial<TrackedEvent> = {}): Tra
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
     ...overrides,
   };
@@ -126,6 +127,19 @@ describe('DrizzleEventRepository against a real Postgres', () => {
       region_name: 'São Paulo',
       properties: { plan: 'pro', seats: 3, trial: true },
     });
+  });
+
+  it('stores the kind of visitor, and refuses one outside the four kinds', async () => {
+    await repository.insertMany([
+      trackedEvent(1, { visitor: 'first_this_month' }),
+      trackedEvent(2, { visitor: null }),
+    ]);
+
+    const rows = await owner<{ visitor: string | null }[]>`SELECT visitor FROM events ORDER BY id`;
+    expect(rows.map(({ visitor }) => visitor)).toEqual(['first_this_month', null]);
+    await expect(
+      owner`UPDATE events SET visitor = 'returning' WHERE visitor IS NULL`,
+    ).rejects.toThrow(/events_visitor_check/);
   });
 
   it('has no column that could hold a user agent or an address', async () => {

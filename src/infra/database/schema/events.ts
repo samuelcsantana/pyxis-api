@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import {
   boolean,
   char,
+  check,
   index,
   jsonb,
   pgTable,
@@ -12,7 +13,14 @@ import {
 } from 'drizzle-orm/pg-core';
 import type { PropertyMap } from '../../../domain/entities/tracked-event.entity';
 import { MAX_CITY_NAME_LENGTH } from '../../../domain/events/city';
+import {
+  MAX_VISITOR_KIND_LENGTH,
+  VISITOR_KINDS,
+  type VisitorKind,
+} from '../../../domain/events/visitor-kind';
 import { projects } from './projects';
+
+const VISITOR_VALUES = sql.raw(VISITOR_KINDS.map((kind) => `'${kind}'`).join(', '));
 
 export const events = pgTable(
   'events',
@@ -39,6 +47,7 @@ export const events = pgTable(
     region: varchar('region', { length: 6 }),
     regionName: varchar('region_name', { length: 64 }),
     city: varchar('city', { length: MAX_CITY_NAME_LENGTH }),
+    visitor: varchar('visitor', { length: MAX_VISITOR_KIND_LENGTH }).$type<VisitorKind>(),
     channel: varchar('channel', { length: 16 }),
     properties: jsonb('properties').$type<PropertyMap>().notNull().default({}),
   },
@@ -60,6 +69,7 @@ export const events = pgTable(
     index('events_project_city_idx')
       .on(table.projectId)
       .where(sql`${table.city} is not null`),
+    check('events_visitor_check', sql`${table.visitor} in (${VISITOR_VALUES})`),
   ],
 );
 

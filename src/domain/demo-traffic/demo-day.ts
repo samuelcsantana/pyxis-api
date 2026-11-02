@@ -136,6 +136,7 @@ class VisitRecorder {
       region: this.traits.place.region,
       regionName: this.traits.place.regionName,
       city: demoCityOf(this.traits.place, this.traits.sessionId),
+      visitor: null,
       properties,
     });
   }

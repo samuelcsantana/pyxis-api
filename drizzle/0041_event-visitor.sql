@@ -1,0 +1,2 @@
+ALTER TABLE "events" ADD COLUMN "visitor" varchar(16);--> statement-breakpoint
+ALTER TABLE "events" ADD CONSTRAINT "events_visitor_check" CHECK ("events"."visitor" in ('first_visit', 'first_this_month', 'first_today', 'again_today'));
