@@ -51,6 +51,7 @@ export function filteredEvent(
     attribution: null,
     channel: null,
     city: null,
+    visitor: null,
     properties: {},
     ...(sessionId === DESKTOP_VISIT ? ON_A_LAPTOP : IPHONE),
     ...overrides,

@@ -42,6 +42,7 @@ function read(
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties,
     ...overrides,
   };

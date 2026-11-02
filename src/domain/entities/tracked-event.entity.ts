@@ -1,3 +1,5 @@
+import type { VisitorKind } from '../events/visitor-kind';
+
 export type PropertyValue = string | number | boolean;
 
 export type PropertyMap = Readonly<Record<string, PropertyValue>>;
@@ -68,5 +70,6 @@ export interface TrackedEvent {
   readonly region: string | null;
   readonly regionName: string | null;
   readonly city: string | null;
+  readonly visitor: VisitorKind | null;
   readonly properties: PropertyMap;
 }

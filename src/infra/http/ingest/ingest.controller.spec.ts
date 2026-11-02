@@ -27,6 +27,7 @@ const RESULT: IngestBatchResult = {
     { reason: 'reserved_rules', name: 'page_view' },
   ],
   dropped: [{ eventName: 'plan_selected', field: 'properties.contact', reason: 'email' }],
+  visitorPeriod: null,
 };
 
 function setup(outcome: () => Promise<IngestBatchResult> = () => Promise.resolve(RESULT)) {
@@ -111,6 +112,34 @@ describe('IngestController', () => {
 
     expect(answer).toEqual({ accepted: 1, duplicates: 1, rejected: 2 });
     expect(headers).toEqual({ 'access-control-allow-origin': ORIGIN, vary: 'Origin' });
+  });
+
+  it("adds the end of the site's day and month when the project counts unique visitors", async () => {
+    const { controller, reply, request } = setup(() =>
+      Promise.resolve({
+        ...RESULT,
+        visitorPeriod: {
+          dayEndsAt: new Date('2026-11-03T03:00:00.000Z'),
+          monthEndsAt: new Date('2026-12-01T03:00:00.000Z'),
+        },
+      }),
+    );
+
+    const answer = await controller.ingest(
+      { key: KEY, sent_at: '2026-11-02T14:00:06.000Z', events: [] },
+      request,
+      reply,
+    );
+
+    expect(answer).toEqual({
+      accepted: 1,
+      duplicates: 1,
+      rejected: 2,
+      visitor_period: {
+        day_ends_at: '2026-11-03T03:00:00.000Z',
+        month_ends_at: '2026-12-01T03:00:00.000Z',
+      },
+    });
   });
 
   it('logs each rejection and each dropped property with the request id, never a value', async () => {

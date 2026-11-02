@@ -13,6 +13,7 @@ export interface ReceptionContext {
   readonly country: string | null;
   readonly region: ViewerRegion;
   readonly city: string | null;
+  readonly visitorsEnabled: boolean;
 }
 
 export function buildTrackedEvent(event: AcceptedEvent, context: ReceptionContext): TrackedEvent {
@@ -34,6 +35,7 @@ export function buildTrackedEvent(event: AcceptedEvent, context: ReceptionContex
     region: context.region.region,
     regionName: context.region.regionName,
     city: context.city,
+    visitor: context.visitorsEnabled ? event.visitor : null,
     properties: event.properties,
   };
 }

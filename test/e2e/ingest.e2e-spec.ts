@@ -1,5 +1,6 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
+import { visitorPeriodOf } from '../../src/domain/events/visitor-period';
 import { PUBLIC_KEY_PREFIX } from '../../src/domain/keys/project-keys';
 import { PROJECT_RATE_LIMITER } from '../../src/domain/services/project-rate-limiter';
 import { FixedWindowProjectRateLimiter } from '../../src/infra/rate-limit/fixed-window-project-rate-limiter';
@@ -14,6 +15,9 @@ const ORIGIN = 'https://shop.example.com';
 const KEY = `${PUBLIC_KEY_PREFIX}${'E'.repeat(32)}`;
 const CITY_SHOP_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f8091b';
 const CITY_KEY = `${PUBLIC_KEY_PREFIX}${'Y'.repeat(32)}`;
+const VISITORS_SHOP_ID = 'c5f3e4d6-7d80-4192-a314-c5d6e7f8091c';
+const VISITORS_KEY = `${PUBLIC_KEY_PREFIX}${'V'.repeat(32)}`;
+const VISITORS_TIME_ZONE = 'America/Sao_Paulo';
 const SAFARI_IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1';
 
@@ -72,7 +76,9 @@ describe('POST /v1/batch', () => {
 
   beforeAll(async () => {
     owner = postgres(e2eOwnerUrl(), { max: 1, onnotice: () => undefined });
-    await owner`DELETE FROM projects WHERE id IN (${SHOP_ID}, ${CITY_SHOP_ID})`;
+    await owner`
+      DELETE FROM projects WHERE id IN (${SHOP_ID}, ${CITY_SHOP_ID}, ${VISITORS_SHOP_ID})
+    `;
     await owner`
       INSERT INTO projects (id, name, allowed_origins) VALUES (${SHOP_ID}, 'Shop', ${[ORIGIN]})
     `;
@@ -86,6 +92,14 @@ describe('POST /v1/batch', () => {
     await owner`
       INSERT INTO project_keys (project_id, kind, public_key)
       VALUES (${CITY_SHOP_ID}, 'public', ${CITY_KEY})
+    `;
+    await owner`
+      INSERT INTO projects (id, name, allowed_origins, timezone, visitors_enabled)
+      VALUES (${VISITORS_SHOP_ID}, 'Visitors shop', ${[ORIGIN]}, ${VISITORS_TIME_ZONE}, true)
+    `;
+    await owner`
+      INSERT INTO project_keys (project_id, kind, public_key)
+      VALUES (${VISITORS_SHOP_ID}, 'public', ${VISITORS_KEY})
     `;
     app = await createTestApp();
   });
@@ -223,6 +237,56 @@ describe('POST /v1/batch', () => {
       SELECT * FROM events WHERE project_id = ${CITY_SHOP_ID} AND id = ${String(event(54).id)}
     `;
     expect(row).toMatchObject({ region: 'BR-BA', region_name: 'Bahia', city: 'Camaçari' });
+  });
+
+  it('stores no kind of visitor and answers no period for a project that does not count them', async () => {
+    const response = await send({ body: batch([event(56, { visitor: 'first_visit' })]) });
+
+    const [row] = await owner<{ visitor: string | null }[]>`
+      SELECT visitor FROM events WHERE project_id = ${SHOP_ID} AND id = ${String(event(56).id)}
+    `;
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toEqual({ accepted: 1, duplicates: 0, rejected: 0 });
+    expect(row?.visitor).toBeNull();
+  });
+
+  it("stores the kind of visitor and answers the end of the site's day and month for a project that counts them", async () => {
+    const arrivedAt = Date.now() - 1_000;
+    const period = visitorPeriodOf(VISITORS_TIME_ZONE, new Date(arrivedAt));
+
+    const response = await send({
+      body: batch([event(57, { visitor: 'first_this_month' }), event(58)], { key: VISITORS_KEY }),
+      arrivedAt,
+    });
+
+    const rows = await owner<{ visitor: string | null }[]>`
+      SELECT visitor FROM events WHERE project_id = ${VISITORS_SHOP_ID}
+      AND id IN (${String(event(57).id)}, ${String(event(58).id)}) ORDER BY id
+    `;
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toEqual({
+      accepted: 2,
+      duplicates: 0,
+      rejected: 0,
+      visitor_period: {
+        day_ends_at: period.dayEndsAt.toISOString(),
+        month_ends_at: period.monthEndsAt.toISOString(),
+      },
+    });
+    expect(period.dayEndsAt.getTime()).toBeGreaterThan(arrivedAt);
+    expect(rows.map(({ visitor }) => visitor)).toEqual(['first_this_month', null]);
+  });
+
+  it('rejects an event with an unknown kind of visitor and stores the rest of the batch', async () => {
+    const response = await send({
+      body: batch([event(59, { visitor: 'returning' }), event(60, { visitor: 'again_today' })], {
+        key: VISITORS_KEY,
+      }),
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toMatchObject({ accepted: 1, duplicates: 0, rejected: 1 });
+    expect(response.json()).toHaveProperty('visitor_period.day_ends_at');
   });
 
   it('stores the time the function URL received the batch as its reception time', async () => {

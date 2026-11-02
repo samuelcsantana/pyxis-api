@@ -125,6 +125,7 @@ describe('IngestBatchUseCase', () => {
       allowedOrigin: ORIGIN,
       rejections: [],
       dropped: [],
+      visitorPeriod: null,
     });
     expect(events.stored).toHaveLength(2);
   });
@@ -217,6 +218,80 @@ describe('IngestBatchUseCase', () => {
     await useCase.execute(command({ viewerRegion: undefined }));
 
     expect(events.stored[0]).toMatchObject({ region: null, city: null });
+  });
+
+  it('keeps no kind of visitor and answers no period while the project does not count visitors', async () => {
+    const { useCase, events, command } = setup();
+
+    const result = await useCase.execute(
+      command({ events: [event(1, { name: 'page_view', visitor: 'first_visit' })] }),
+    );
+
+    expect(result).toMatchObject({ accepted: 1, rejected: 0, visitorPeriod: null });
+    expect(events.stored[0]?.visitor).toBeNull();
+  });
+
+  it('keeps the kind of visitor and answers the period once the project counts visitors', async () => {
+    const { useCase, projects, events, command } = setup();
+    await projects.update(PROJECT.id, { visitorsEnabled: true });
+
+    const result = await useCase.execute(
+      command({ events: [event(1, { name: 'page_view', visitor: 'first_today' }), event(2)] }),
+    );
+
+    expect(result).toMatchObject({ accepted: 2, rejected: 0 });
+    expect(result.visitorPeriod).toEqual({
+      dayEndsAt: new Date('2026-10-07T03:00:00.000Z'),
+      monthEndsAt: new Date('2026-11-01T03:00:00.000Z'),
+    });
+    expect(events.stored.map(({ visitor }) => visitor)).toEqual(['first_today', null]);
+  });
+
+  it('rejects an event with an unknown kind of visitor and keeps the rest of the batch', async () => {
+    const { useCase, projects, events, command } = setup();
+    await projects.update(PROJECT.id, { visitorsEnabled: true });
+
+    const result = await useCase.execute(
+      command({ events: [event(1, { visitor: 'returning' }), event(2)] }),
+    );
+
+    expect(result).toMatchObject({ accepted: 1, rejected: 1 });
+    expect(result.rejections).toEqual([{ reason: 'invalid_schema', name: 'plan_selected' }]);
+    expect(events.stored).toHaveLength(1);
+  });
+
+  it("counts the period from the reception time, in the project's time zone", async () => {
+    const { useCase, projects, command } = setup();
+    await projects.update(PROJECT.id, { visitorsEnabled: true, timezone: 'Australia/Brisbane' });
+    const arrivedBeforeMidnight = new Date(RECEIVED_AT.getTime() - 20_000);
+
+    const result = await useCase.execute(command({ arrivedAt: arrivedBeforeMidnight }));
+
+    expect(result.visitorPeriod?.dayEndsAt).toEqual(new Date('2026-10-06T14:00:00.000Z'));
+  });
+
+  it.each([
+    ['a bot', { userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1)' }],
+    ['a cloud data center', { viewerAsn: AMAZON_ASN }],
+  ])('answers the period to a batch refused as sent from %s', async (_label, overrides) => {
+    const { useCase, projects, command } = setup();
+    jest.spyOn(Logger.prototype, 'log').mockImplementation(() => undefined);
+    await projects.update(PROJECT.id, { visitorsEnabled: true });
+
+    const result = await useCase.execute(command(overrides));
+
+    expect(result).toMatchObject({ accepted: 0, rejected: 1 });
+    expect(result.visitorPeriod?.monthEndsAt).toEqual(new Date('2026-11-01T03:00:00.000Z'));
+  });
+
+  it('answers no period to a refused batch while the project does not count visitors', async () => {
+    const { useCase, command } = setup();
+
+    const result = await useCase.execute(
+      command({ userAgent: 'Mozilla/5.0 (compatible; Googlebot/2.1)' }),
+    );
+
+    expect(result).toMatchObject({ rejected: 1, visitorPeriod: null });
   });
 
   it('counts a resent event as a duplicate', async () => {

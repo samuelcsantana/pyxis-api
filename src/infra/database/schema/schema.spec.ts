@@ -106,6 +106,13 @@ describe('database schema', () => {
     expect(cityIndex?.config.where).toBeDefined();
   });
 
+  it('lets an event hold only one of the four kinds of visitor, or none', () => {
+    const config = getTableConfig(events);
+
+    expect(config.checks.map((check) => check.name)).toEqual(['events_visitor_check']);
+    expect(config.columns.find((column) => column.name === 'visitor')?.notNull).toBe(false);
+  });
+
   it('ties events and keys to their project and deletes them with it', () => {
     expect(foreignKeyTargets(events)).toEqual(['projects.id']);
     expect(foreignKeyTargets(projectKeys)).toEqual(['projects.id']);

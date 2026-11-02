@@ -27,12 +27,14 @@ import { BatchEnvelopePipe } from './batch-envelope.pipe';
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import { INGEST_THROTTLER, skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { allowOrigin, answerPreflight } from './ingest-cors';
+import type { VisitorPeriod } from '../../../domain/events/visitor-period';
 import {
   type BatchEnvelope,
   batchRequestSchema,
   errorResponseSchema,
   type IngestResult,
   ingestResultSchema,
+  type VisitorPeriodBody,
 } from './ingest.schemas';
 
 const ERROR_RESPONSES = [
@@ -76,6 +78,24 @@ function commandOf(batch: BatchEnvelope, request: FastifyRequest): IngestBatchCo
   };
 }
 
+function visitorPeriodBody(period: VisitorPeriod): VisitorPeriodBody {
+  return {
+    day_ends_at: period.dayEndsAt.toISOString(),
+    month_ends_at: period.monthEndsAt.toISOString(),
+  };
+}
+
+function answerOf(result: IngestBatchResult): IngestResult {
+  const counts = {
+    accepted: result.accepted,
+    duplicates: result.duplicates,
+    rejected: result.rejected,
+  };
+  return result.visitorPeriod === null
+    ? counts
+    : { ...counts, visitor_period: visitorPeriodBody(result.visitorPeriod) };
+}
+
 function ApiErrorResponses(): MethodDecorator {
   return (target, key, descriptor) => {
     for (const [status, description] of ERROR_RESPONSES) {
@@ -109,7 +129,9 @@ export class IngestController {
   })
   @ApiResponse({
     status: HttpStatus.ACCEPTED,
-    description: 'The batch was processed.',
+    description:
+      'The batch was processed. visitor_period comes only when the project counts unique ' +
+      'visitors.',
     standardSchema: ingestResultSchema,
   })
   @ApiErrorResponses()
@@ -127,7 +149,7 @@ export class IngestController {
     }
     allowOrigin(reply, result.allowedOrigin);
     this.logOutcome(request.requestId, result);
-    return { accepted: result.accepted, duplicates: result.duplicates, rejected: result.rejected };
+    return answerOf(result);
   }
 
   @Options()

@@ -19,6 +19,7 @@ const EVENT: TrackedEvent = {
   region: null,
   regionName: null,
   city: null,
+  visitor: null,
   properties: {},
 };
 
@@ -55,5 +56,9 @@ describe('toEventRow', () => {
       fromAdClick: true,
       channel: 'paid',
     });
+  });
+
+  it('writes the kind of visitor into its column', () => {
+    expect(toEventRow({ ...EVENT, visitor: 'again_today' }).visitor).toBe('again_today');
   });
 });

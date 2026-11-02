@@ -35,6 +35,7 @@ function event(projectId: string, occurredAt: string): TrackedEvent {
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
   };
 }

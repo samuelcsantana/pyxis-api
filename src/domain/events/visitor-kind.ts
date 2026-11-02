@@ -6,3 +6,5 @@ export const VISITOR_KINDS = [
 ] as const;
 
 export type VisitorKind = (typeof VISITOR_KINDS)[number];
+
+export const MAX_VISITOR_KIND_LENGTH = 16;

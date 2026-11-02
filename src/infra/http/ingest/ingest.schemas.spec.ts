@@ -68,6 +68,41 @@ describe('response schemas', () => {
     });
   });
 
+  it("describe the end of the site's day and month next to the counts", () => {
+    const answer = {
+      accepted: 1,
+      duplicates: 0,
+      rejected: 0,
+      visitor_period: {
+        day_ends_at: '2026-11-03T03:00:00.000Z',
+        month_ends_at: '2026-12-01T03:00:00.000Z',
+      },
+    };
+
+    expect(ingestResultSchema.parse(answer)).toEqual(answer);
+  });
+
+  it.each([
+    ['an instant with an offset', { day_ends_at: '2026-11-03T00:00:00-03:00' }],
+    ['a missing end of the month', { month_ends_at: undefined }],
+    ['an unknown field', { week_ends_at: '2026-11-08T03:00:00.000Z' }],
+  ])('refuse a visitor period with %s', (_, overrides) => {
+    const visitorPeriod = {
+      day_ends_at: '2026-11-03T03:00:00.000Z',
+      month_ends_at: '2026-12-01T03:00:00.000Z',
+      ...overrides,
+    };
+
+    expect(
+      ingestResultSchema.safeParse({
+        accepted: 1,
+        duplicates: 0,
+        rejected: 0,
+        visitor_period: visitorPeriod,
+      }).success,
+    ).toBe(false);
+  });
+
   it('describe the error body', () => {
     expect(
       errorResponseSchema.safeParse({

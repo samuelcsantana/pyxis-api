@@ -51,6 +51,7 @@ function pageView(projectId: string): TrackedEvent {
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
   };
 }

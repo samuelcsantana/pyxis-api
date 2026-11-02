@@ -17,6 +17,7 @@ import { normalizeCountry } from '../../domain/events/country';
 import { dataCenterNetworkOf } from '../../domain/events/data-center-networks';
 import { receptionTime } from '../../domain/events/reception-time';
 import { normalizeRegion } from '../../domain/events/region';
+import { type VisitorPeriod, visitorPeriodOf } from '../../domain/events/visitor-period';
 import { EVENT_NAME_PATTERN, MAX_EVENTS_PER_BATCH } from '../../domain/events/event-limits';
 import type { PiiReason } from '../../domain/events/pii-barrier';
 import {
@@ -79,23 +80,32 @@ export interface IngestBatchResult {
   readonly allowedOrigin: string;
   readonly rejections: readonly EventRejection[];
   readonly dropped: readonly DroppedProperty[];
+  readonly visitorPeriod: VisitorPeriod | null;
+}
+
+interface Answered {
+  readonly projectId: string;
+  readonly allowedOrigin: string;
+  readonly visitorPeriod: VisitorPeriod | null;
 }
 
 function refusedWhole(
   events: readonly unknown[],
-  projectId: string,
-  allowedOrigin: string,
+  answered: Answered,
   reason: AutomatedClientReason,
 ): IngestBatchResult {
   return {
     accepted: 0,
     duplicates: 0,
     rejected: events.length,
-    projectId,
-    allowedOrigin,
+    ...answered,
     rejections: events.map(() => ({ reason, name: null })),
     dropped: [],
   };
+}
+
+function visitorPeriodFor(project: Project, receivedAt: Date): VisitorPeriod | null {
+  return project.visitorsEnabled ? visitorPeriodOf(project.timezone, receivedAt) : null;
 }
 
 function eventNameOf(input: unknown): string | null {
@@ -143,8 +153,13 @@ export class IngestBatchUseCase {
     if (isPausedAt(state.ingestionPausedUntil, receivedAt)) {
       throw new QuotaExceededError(state.ingestionPausedUntil, origin);
     }
+    const answered: Answered = {
+      projectId: project.id,
+      allowedOrigin: origin,
+      visitorPeriod: visitorPeriodFor(project, receivedAt),
+    };
     if (isBotUserAgent(command.userAgent)) {
-      return refusedWhole(command.events, project.id, origin, 'bot');
+      return refusedWhole(command.events, answered, 'bot');
     }
     const network = dataCenterNetworkOf(command.viewerAsn);
     if (network !== null) {
@@ -155,7 +170,7 @@ export class IngestBatchUseCase {
         operator: network.operator,
         events: command.events.length,
       });
-      return refusedWhole(command.events, project.id, origin, 'data_center');
+      return refusedWhole(command.events, answered, 'data_center');
     }
     const country = normalizeCountry(command.viewerCountry);
     const region = normalizeRegion(country, command.viewerRegion, command.viewerRegionName);
@@ -167,8 +182,9 @@ export class IngestBatchUseCase {
       country,
       region,
       city: normalizeCity(project.cityEnabled, region, command.viewerCity),
+      visitorsEnabled: project.visitorsEnabled,
     };
-    return this.ingest(command.events, context, origin);
+    return this.ingest(command.events, context, answered);
   }
 
   private allowedOrigin(project: Project, origin: string | undefined): string {
@@ -181,7 +197,7 @@ export class IngestBatchUseCase {
   private async ingest(
     events: readonly unknown[],
     context: ReceptionContext,
-    origin: string,
+    answered: Answered,
   ): Promise<IngestBatchResult> {
     const tracked: TrackedEvent[] = [];
     const rejections: EventRejection[] = [];
@@ -203,8 +219,7 @@ export class IngestBatchUseCase {
       accepted: inserted,
       duplicates: tracked.length - inserted,
       rejected: rejections.length,
-      projectId: context.projectId,
-      allowedOrigin: origin,
+      ...answered,
       rejections,
       dropped,
     };

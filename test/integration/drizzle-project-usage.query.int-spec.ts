@@ -38,6 +38,7 @@ function event(projectId: string, sessionId: string, receivedAt: string): Tracke
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
   };
 }

@@ -35,11 +35,29 @@ export const batchRequestSchema = z
       `${String(MAX_EVENTS_PER_BATCH)} events answer 413.`,
   });
 
+const periodEndSchema = z.iso.datetime();
+
+export const visitorPeriodSchema = z
+  .strictObject({
+    day_ends_at: periodEndSchema.describe("The next midnight in the project's time zone, in UTC"),
+    month_ends_at: periodEndSchema.describe(
+      "The first instant of next month in the project's time zone, in UTC",
+    ),
+  })
+  .meta({
+    id: 'VisitorPeriod',
+    description:
+      "When the site's day and month end, the same for every visitor of the site that day. " +
+      'Present only when the project counts unique visitors: the tracker keeps it to tell the ' +
+      'kind of its next visit, and deletes what it kept when a successful answer comes without it.',
+  });
+
 export const ingestResultSchema = z
   .strictObject({
     accepted: z.int().min(0),
     duplicates: z.int().min(0),
     rejected: z.int().min(0),
+    visitor_period: visitorPeriodSchema.optional(),
   })
   .meta({ id: 'IngestResult', description: 'What happened to each event of the batch.' });
 
@@ -56,4 +74,5 @@ export const errorResponseSchema = z
 
 export type BatchEnvelope = z.infer<typeof batchEnvelopeSchema>;
 export type IngestResult = z.infer<typeof ingestResultSchema>;
+export type VisitorPeriodBody = z.infer<typeof visitorPeriodSchema>;
 export type ErrorResponse = z.infer<typeof errorResponseSchema>;
