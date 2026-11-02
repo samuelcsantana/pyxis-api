@@ -4,6 +4,8 @@ import {
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
 import { DrizzleDemoTrafficRepository } from '../../src/infra/repositories/drizzle-demo-traffic.repository';
+import { NO_REPORT_FILTERS } from '../../src/domain/queries/report-filters';
+import { DrizzleOverviewQuery } from '../../src/infra/queries/drizzle-overview.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
 import { FixedClock } from '../../src/test-utils/fixed-clock';
 import { GenerateDemoTrafficUseCase } from '../../src/usecases/demo-traffic/generate-demo-traffic.usecase';
@@ -81,5 +83,31 @@ describe('demo traffic against a real Postgres', () => {
     expect(row?.conversions).toBeGreaterThan(0);
     expect(row?.people).toBeGreaterThan(50);
     expect(row?.visits).toBeGreaterThan(90 * 25);
+  });
+
+  it('starts every visit with a kind of visitor, which the overview counts once per visit', async () => {
+    await new GenerateDemoTrafficUseCase(projects, events, new FixedClock(NOW)).execute();
+    const query = new DrizzleOverviewQuery(createDrizzleDatabase(app));
+
+    const days = await query.visitorDays({
+      projectId: DEMO_ID,
+      timeZone: 'UTC',
+      conversionEvent: 'signup_completed',
+      range: { from: '2026-07-20', to: '2026-10-19' },
+      filters: NO_REPORT_FILTERS,
+    });
+    const [row] = await owner<{ visits: number; marked: number }[]>`
+      SELECT count(DISTINCT session_id)::int AS visits,
+             count(*) FILTER (WHERE visitor IS NOT NULL)::int AS marked
+      FROM events WHERE project_id = ${DEMO_ID}
+    `;
+    const counted = days.reduce(
+      (sum, day) => sum + day.firstVisit + day.firstThisMonth + day.firstToday + day.againToday,
+      0,
+    );
+
+    expect(row?.marked).toBe(row?.visits);
+    expect(counted).toBe(row?.visits);
+    expect(days.every((day) => day.firstVisit > day.againToday)).toBe(true);
   });
 });

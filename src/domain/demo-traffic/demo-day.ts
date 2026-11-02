@@ -30,6 +30,7 @@ import {
   DEMO_VISITS_BY_HOUR,
   DEMO_VISITS_BY_WEEKDAY,
   demoCityOf,
+  demoVisitorOf,
 } from './demo-store';
 import { type SeededRandom, seededRandom, type Weighted } from './seeded-random';
 import { instantInZone } from './zoned-time';
@@ -136,7 +137,7 @@ class VisitRecorder {
       region: this.traits.place.region,
       regionName: this.traits.place.regionName,
       city: demoCityOf(this.traits.place, this.traits.sessionId),
-      visitor: null,
+      visitor: isLanding ? demoVisitorOf(this.traits.sessionId) : null,
       properties,
     });
   }
