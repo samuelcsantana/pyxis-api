@@ -22,6 +22,7 @@ import { InMemoryFreePlanFallbackRepository } from '../../test-utils/in-memory-f
 import { InMemoryFreeAccountInactivityRepository } from '../../test-utils/in-memory-free-account-inactivity.repository';
 import { AccountDataDeletion } from './account-data-deletion';
 import { SweepInactiveFreeAccountsUseCase } from './sweep-inactive-free-accounts.usecase';
+import { RemindToInstallUseCase } from './remind-to-install.usecase';
 import { ReportSharedFreeSitesUseCase } from './report-shared-free-sites.usecase';
 import { InMemoryFreeSiteSharingRepository } from '../../test-utils/in-memory-free-site-sharing.repository';
 import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
@@ -102,6 +103,7 @@ function setup() {
       trialOffered: false,
       freePlanTermsForEarlierAccountsFrom: null,
     }),
+    new RemindToInstallUseCase(inactivity, mail),
     new SweepInactiveFreeAccountsUseCase(
       inactivity,
       new AccountDataDeletion(lifecycle, mail),
@@ -157,6 +159,7 @@ describe('RunAccountLifecycleUseCase', () => {
       deleted: 0,
       partlyHeld: 0,
       incompleteRemoved: 0,
+      installReminders: 0,
       inactiveFreeNotices: 0,
       inactiveFreeRevived: 0,
       inactiveFreeDeleted: 0,
@@ -644,6 +647,42 @@ describe('RunAccountLifecycleUseCase', () => {
       'account_deleted',
       'empty_free_account',
     ]);
+  });
+
+  it('reminds the free accounts with no events to install, before sweeping them', async () => {
+    const { inactivity, mail, useCase } = setup();
+    const owner = {
+      ownerLanguage: 'es' as const,
+      lastEventAt: null,
+      inactivityNotifiedAt: null,
+      installRemindedAt: null,
+      oldestProjectWithoutEvents: { id: 'shop', name: 'Shop' },
+    };
+    inactivity.add({
+      ...owner,
+      accountId: 'new',
+      ownerAdminId: 'new-owner',
+      ownerEmail: 'new@example.com',
+      freeSince: daysAgo(4),
+    });
+    inactivity.add({
+      ...owner,
+      accountId: 'old',
+      ownerAdminId: 'old-owner',
+      ownerEmail: 'old@example.com',
+      freeSince: daysAgo(30),
+    });
+    const remind = jest.spyOn(mail, 'sendInstallReminder');
+    const notify = jest.spyOn(mail, 'sendAccountNotice');
+
+    const report = await useCase.execute();
+
+    expect(report).toMatchObject({ installReminders: 1, inactiveFreeNotices: 1 });
+    expect(mail.installReminders.map(({ email }) => email)).toEqual(['new@example.com']);
+    expect(mail.accountNotices.map(({ email }) => email)).toEqual(['old@example.com']);
+    expect(remind.mock.invocationCallOrder[0]).toBeLessThan(
+      notify.mock.invocationCallOrder[0] ?? Number.NaN,
+    );
   });
 
   it('sends the back-to-free notices the webhook could not', async () => {

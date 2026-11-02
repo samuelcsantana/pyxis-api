@@ -21,6 +21,7 @@ import type { OpenFreePlacesUseCase } from './open-free-places.usecase';
 import type { ConfirmSubscriptionsUseCase } from '../billing/confirm-subscriptions.usecase';
 import type { FallBackToFreePlanUseCase } from '../billing/fall-back-to-free-plan.usecase';
 import { AccountDataDeletion } from './account-data-deletion';
+import type { RemindToInstallUseCase } from './remind-to-install.usecase';
 import type { SweepInactiveFreeAccountsUseCase } from './sweep-inactive-free-accounts.usecase';
 import type { ReportSharedFreeSitesUseCase } from './report-shared-free-sites.usecase';
 
@@ -39,6 +40,7 @@ export interface AccountLifecycleReport {
   readonly deleted: number;
   readonly partlyHeld: number;
   readonly incompleteRemoved: number;
+  readonly installReminders: number;
   readonly inactiveFreeNotices: number;
   readonly inactiveFreeRevived: number;
   readonly inactiveFreeDeleted: number;
@@ -80,6 +82,7 @@ export class RunAccountLifecycleUseCase {
     private readonly freePlaces: OpenFreePlacesUseCase,
     private readonly confirmations: ConfirmSubscriptionsUseCase,
     private readonly fallbacks: FallBackToFreePlanUseCase,
+    private readonly installReminders: RemindToInstallUseCase,
     private readonly inactiveFreeAccounts: SweepInactiveFreeAccountsUseCase,
     private readonly sharedFreeSites: ReportSharedFreeSitesUseCase,
   ) {
@@ -107,6 +110,7 @@ export class RunAccountLifecycleUseCase {
     );
     const deletion = await this.deleteEnded(now);
     const incomplete = await this.removeStaleIncomplete(now);
+    const installReminders = await this.installReminders.execute(now);
     const inactive = await this.inactiveFreeAccounts.execute(now);
     const sweep = await this.projectless.execute();
     const freeAccountsSharingASite = await this.sharedFreeSites.execute();
@@ -123,6 +127,7 @@ export class RunAccountLifecycleUseCase {
       deleted: deletion.removed,
       partlyHeld: deletion.partlyHeld + inactive.partlyHeld,
       incompleteRemoved: incomplete.removed,
+      installReminders,
       inactiveFreeNotices: inactive.notified,
       inactiveFreeRevived: inactive.revived,
       inactiveFreeDeleted: inactive.deleted,
