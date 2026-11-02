@@ -26,6 +26,7 @@ const LIFECYCLE = {
   freePlacesOpened: 0,
   backToFreeNotices: 0,
   unfitFreeAccountsEnded: 0,
+  installReminders: 0,
   inactiveFreeNotices: 0,
   inactiveFreeRevived: 0,
   inactiveFreeDeleted: 0,

@@ -27,6 +27,7 @@ import { ConfirmSubscriptionsUseCase } from '../usecases/billing/confirm-subscri
 import { DrizzleSubscriptionConfirmationRepository } from '../infra/repositories/drizzle-subscription-confirmation.repository';
 import { FallBackToFreePlanUseCase } from '../usecases/billing/fall-back-to-free-plan.usecase';
 import { SweepInactiveFreeAccountsUseCase } from '../usecases/accounts/sweep-inactive-free-accounts.usecase';
+import { RemindToInstallUseCase } from '../usecases/accounts/remind-to-install.usecase';
 import { ReportSharedFreeSitesUseCase } from '../usecases/accounts/report-shared-free-sites.usecase';
 import { DrizzleFreeSiteSharingRepository } from '../infra/repositories/drizzle-free-site-sharing.repository';
 import { AccountDataDeletion } from '../usecases/accounts/account-data-deletion';
@@ -105,6 +106,7 @@ export const handler = createJobsHandler({
       const mail = new LazyMailSender(() => createMailSender(env));
       const clock = new SystemClock();
       const lifecycle = new DrizzleAccountLifecycleRepository(database);
+      const inactivity = new DrizzleFreeAccountInactivityRepository(database);
       return new RunAccountLifecycleUseCase(
         lifecycle,
         new DrizzleAccountBillingRepository(database),
@@ -133,8 +135,9 @@ export const handler = createJobsHandler({
           clock,
           signUpSettingsFromEnv(env),
         ),
+        new RemindToInstallUseCase(inactivity, mail),
         new SweepInactiveFreeAccountsUseCase(
-          new DrizzleFreeAccountInactivityRepository(database),
+          inactivity,
           new AccountDataDeletion(lifecycle, mail),
           mail,
         ),
