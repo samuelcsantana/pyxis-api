@@ -79,8 +79,8 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   MCP endpoint with the sixteen tools of [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp).
 - **A person's data.** Their events erased or exported on request, from the site's backend with a
   secret key; every event deleted after 13 months.
-- **E-mails.** Sign-in codes, invitations, the welcome, notices and a weekly digest, each in its
-  reader's language.
+- **E-mails.** Sign-in codes, invitations, the welcome, one install reminder, notices and a weekly
+  digest, each in its reader's language.
 - **Operator commands.** Suspend, hold, limit or close an account, a project, a person or a token
   from the command line.
 
