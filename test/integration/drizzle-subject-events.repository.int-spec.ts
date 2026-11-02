@@ -63,6 +63,7 @@ const SEEDED: readonly TrackedEvent[] = [
     region: 'BR-BA',
     regionName: 'Bahia',
     city: 'Salvador',
+    visitor: 'first_this_month',
     properties: { plan: 'mei' },
   }),
   event(SIGN_UP_VISIT, '2026-10-04T12:05:00.000Z', 'identify', { userId: 'ana' }),
@@ -129,6 +130,7 @@ describe('subject repositories against a real Postgres', () => {
       region: 'BR-BA',
       regionName: 'Bahia',
       city: 'Salvador',
+      visitor: 'first_this_month',
       properties: { plan: 'mei' },
     });
   });

@@ -4373,6 +4373,12 @@
                     "string",
                     "null"
                   ]
+                },
+                "visitor": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [
@@ -4393,6 +4399,7 @@
                 "region",
                 "region_name",
                 "city",
+                "visitor",
                 "properties"
               ],
               "type": "object"

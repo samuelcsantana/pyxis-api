@@ -122,15 +122,16 @@ describe('project exports against a real Postgres', () => {
   it('reads the events of the project in pages, in time order, after a cursor', async () => {
     await owner`
       INSERT INTO events (id, project_id, occurred_at, received_at, name, session_id, path,
-                          device_type, browser, os, properties)
+                          device_type, browser, os, visitor, properties)
       VALUES ('00000000-0000-4000-8000-000000000003', ${SHOP_ID}, '2026-10-01T00:00:02Z', ${NOW},
               'page_view', '00000000-0000-4000-8000-0000000000aa', '/b', 'desktop', 'chrome',
-              'windows', '{"plan":"yearly"}'),
+              'windows', 'first_visit', '{"plan":"yearly"}'),
              ('00000000-0000-4000-8000-000000000001', ${SHOP_ID}, '2026-10-01T00:00:01Z', ${NOW},
               'page_view', '00000000-0000-4000-8000-0000000000aa', '/a', 'desktop', 'chrome',
-              'windows', '{}'),
+              'windows', NULL, '{}'),
              ('00000000-0000-4000-8000-000000000002', ${SHOP_ID}, '2026-10-01T00:00:01Z', ${NOW},
-              'signup', '00000000-0000-4000-8000-0000000000aa', '/a', 'mobile', 'safari', 'ios', '{}')
+              'signup', '00000000-0000-4000-8000-0000000000aa', '/a', 'mobile', 'safari', 'ios',
+              NULL, '{}')
     `;
 
     const first = await exports.page(SHOP_ID, null, 2);
@@ -141,8 +142,14 @@ describe('project exports against a real Postgres', () => {
     const second = await exports.page(SHOP_ID, { occurredAt: last.occurredAt, id: last.id }, 2);
 
     expect(first.map(({ path, name }) => `${path} ${name}`)).toEqual(['/a page_view', '/a signup']);
+    expect(first.map(({ visitor }) => visitor)).toEqual([null, null]);
     expect(second).toEqual([
-      expect.objectContaining({ path: '/b', properties: { plan: 'yearly' }, fromAdClick: false }),
+      expect.objectContaining({
+        path: '/b',
+        properties: { plan: 'yearly' },
+        fromAdClick: false,
+        visitor: 'first_visit',
+      }),
     ]);
   });
 });

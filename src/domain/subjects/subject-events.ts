@@ -20,6 +20,7 @@ export interface SubjectEvent {
   readonly region: string | null;
   readonly regionName: string | null;
   readonly city: string | null;
+  readonly visitor: string | null;
   readonly properties: PropertyMap;
 }
 
