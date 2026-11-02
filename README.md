@@ -65,7 +65,8 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   dropped and paths re-templated; device, browser, country and region are derived, then the user
   agent and the address are discarded.
 - **Unique visitors without an identifier.** A per-project option, off by default: the browser
-  keeps only when the site's day and month end and labels each visit's first event.
+  keeps only when the site's day and month end and labels each visit's first event, and the
+  Overview counts them per day and per calendar month.
 - **Dashboard queries.** Overview, devices, acquisition, features and event properties, requests,
   funnels, timelines, visits, time of day, engagement and live arrivals, over up to 400 days in
   the project's time zone, narrowed by the same visit filters.
