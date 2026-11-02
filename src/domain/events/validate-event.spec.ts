@@ -1,4 +1,5 @@
 import { type EventValidation, validateIncomingEvent } from './validate-event';
+import { VISITOR_KINDS } from './visitor-kind';
 
 const EVENT_ID = '9f1c2b3a-1d2e-4f5a-8b6c-7d8e9f0a1b2c';
 const SESSION_ID = '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e';
@@ -40,6 +41,7 @@ describe('validateIncomingEvent', () => {
           userId: null,
           path: '/pricing',
           attribution: null,
+          visitor: null,
           properties: {},
         },
         dropped: [],
@@ -84,6 +86,9 @@ describe('validateIncomingEvent', () => {
       ],
       ['attribution without from_ad_click', { attribution: { referrer_host: 'google.com' } }],
       ['an unknown utm field', { attribution: { utm: { term: 'pricing' }, from_ad_click: false } }],
+      ['an unknown kind of visitor', { visitor: 'returning' }],
+      ['a kind of visitor in capitals', { visitor: 'FIRST_VISIT' }],
+      ['a null kind of visitor', { visitor: null }],
     ])('rejects %s as invalid_schema', (_, overrides) => {
       expect(validateIncomingEvent(incoming(overrides))).toEqual({
         ok: false,
@@ -332,6 +337,18 @@ describe('validateIncomingEvent', () => {
         utmCampaign: null,
         fromAdClick: true,
       });
+    });
+
+    it.each(VISITOR_KINDS)('keeps the kind of visitor %s', (visitor) => {
+      const result = accepted(validateIncomingEvent(incoming({ name: 'page_view', visitor })));
+
+      expect(result.event.visitor).toBe(visitor);
+    });
+
+    it('keeps the kind of visitor on any event, not only a page view', () => {
+      const result = accepted(validateIncomingEvent(incoming({ visitor: 'again_today' })));
+
+      expect(result.event.visitor).toBe('again_today');
     });
   });
 });

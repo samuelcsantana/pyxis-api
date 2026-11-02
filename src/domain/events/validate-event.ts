@@ -10,6 +10,7 @@ import {
 import { templatePath } from './path-template';
 import { looksPersonal, type PiiReason } from './pii-barrier';
 import { API_REQUEST, IDENTIFY, PAGE_VIEW } from './reserved-event-names';
+import type { VisitorKind } from './visitor-kind';
 
 export type EventRejectionReason = 'invalid_schema' | 'reserved_rules' | 'pii_user_id';
 
@@ -26,6 +27,7 @@ export interface AcceptedEvent {
   readonly userId: string | null;
   readonly path: string;
   readonly attribution: Attribution | null;
+  readonly visitor: VisitorKind | null;
   readonly properties: PropertyMap;
 }
 
@@ -156,6 +158,7 @@ export function validateIncomingEvent(input: unknown): EventValidation {
       userId: event.user_id ?? null,
       path,
       attribution: attribution.value,
+      visitor: event.visitor ?? null,
       properties: properties.value,
     },
     dropped: [...attribution.dropped, ...properties.dropped],

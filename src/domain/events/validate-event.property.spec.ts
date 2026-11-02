@@ -23,6 +23,7 @@ import { templatePath } from './path-template';
 import { looksPersonal } from './pii-barrier';
 import { API_REQUEST, API_REQUEST_METHODS, IDENTIFY, PAGE_VIEW } from './reserved-event-names';
 import { type AcceptedEvent, type EventValidation, validateIncomingEvent } from './validate-event';
+import { VISITOR_KINDS } from './visitor-kind';
 
 const REJECTION_REASONS = ['invalid_schema', 'reserved_rules', 'pii_user_id'];
 const ACCEPTED_EVENT_FIELDS = [
@@ -34,6 +35,7 @@ const ACCEPTED_EVENT_FIELDS = [
   'properties',
   'sessionId',
   'userId',
+  'visitor',
 ];
 const API_REQUEST_FIELDS = ['duration_ms', 'error_code', 'method', 'route', 'status'];
 const ROUTE_PROPERTY = 'route';
@@ -55,6 +57,7 @@ interface SentEvent {
   readonly attribution?: {
     readonly utm?: Partial<Record<(typeof UTM_FIELDS)[number], string>>;
   };
+  readonly visitor?: string;
   readonly properties?: Record<string, unknown>;
 }
 
@@ -146,6 +149,7 @@ const commonFields = fc.record(
     user_id: userId,
     path,
     attribution,
+    visitor: fc.constantFrom(...VISITOR_KINDS),
   },
   { requiredKeys: ['id', 'occurred_at', 'session_id', 'path'] },
 );
@@ -284,6 +288,18 @@ describe('validateIncomingEvent, for any input', () => {
                 (keptCampaign[field] !== null) === droppedFields.includes(`${UTM_PREFIX}${field}`),
             ),
           ).toEqual([]);
+        }),
+      ),
+      PROPERTY_PARAMETERS,
+    );
+  });
+
+  it('keeps the kind of visitor the event sent, and none when it sent none', () => {
+    fc.assert(
+      fc.property(
+        incomingEvent,
+        acceptedOnly((event, sent) => {
+          expect(event.visitor).toBe(sent.visitor ?? null);
         }),
       ),
       PROPERTY_PARAMETERS,
