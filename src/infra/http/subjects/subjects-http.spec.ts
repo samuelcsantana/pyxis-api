@@ -119,6 +119,7 @@ describe('SubjectsController', () => {
         region: 'BR-SP',
         regionName: 'São Paulo',
         city: null,
+        visitor: 'first_visit',
         properties: { plan: 'mei' },
       },
     ],
@@ -175,6 +176,8 @@ describe('SubjectsController', () => {
       country: 'BR',
       region: 'BR-SP',
       region_name: 'São Paulo',
+      city: null,
+      visitor: 'first_visit',
       properties: { plan: 'mei' },
     });
     expect(body.next_after).toBeNull();

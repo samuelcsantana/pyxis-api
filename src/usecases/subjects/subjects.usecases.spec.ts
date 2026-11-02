@@ -59,6 +59,7 @@ function stored(overrides: Partial<StoredSubjectEvent>): StoredSubjectEvent {
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
     ...overrides,
   };

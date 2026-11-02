@@ -24,6 +24,7 @@ function event(id: string): ExportedEvent {
     region: null,
     regionName: null,
     city: null,
+    visitor: null,
     properties: {},
   };
 }

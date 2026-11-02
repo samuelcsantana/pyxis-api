@@ -22,6 +22,7 @@ const EVENT: ExportedEvent = {
   region: 'BR-SP',
   regionName: 'São Paulo',
   city: 'Campinas',
+  visitor: 'first_today',
   properties: { plan: 'yearly', seats: 3 },
 };
 
@@ -30,7 +31,7 @@ describe('the events CSV', () => {
     expect(EVENT_CSV_HEADER).toBe(
       'id,occurred_at,name,path,session_id,user_id,referrer_host,utm_source,utm_medium,' +
         'utm_campaign,from_ad_click,channel,device_type,browser,os,country,region,region_name,' +
-        'city,properties\r\n',
+        'city,visitor,properties\r\n',
     );
   });
 
@@ -39,7 +40,7 @@ describe('the events CSV', () => {
       '11111111-0000-4000-8000-000000000001,2026-11-02T13:00:00.000Z,plan_selected,/pricing,' +
         '22222222-0000-4000-8000-000000000002,,' +
         'www.google.com,newsletter,,,false,campaign,desktop,chrome,windows,BR,BR-SP,São Paulo,' +
-        'Campinas,' +
+        'Campinas,first_today,' +
         '"{""plan"":""yearly"",""seats"":3}"\r\n',
     );
   });

@@ -33,6 +33,7 @@ export const subjectEventsSchema = z
         region: z.string().nullable(),
         region_name: z.string().nullable(),
         city: z.string().nullable(),
+        visitor: z.string().nullable(),
         properties: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
       }),
     ),

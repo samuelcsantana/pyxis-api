@@ -172,6 +172,7 @@ export class DrizzleProjectExportRepository implements ProjectExportRepository, 
         region: events.region,
         regionName: events.regionName,
         city: events.city,
+        visitor: events.visitor,
         properties: events.properties,
       })
       .from(events)
