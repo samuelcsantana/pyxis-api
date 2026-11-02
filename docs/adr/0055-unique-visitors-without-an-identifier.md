@@ -52,8 +52,11 @@ new against returning) while keeping the server's promise intact.
 - **Kept only when on.** Ingestion stores the kind (`events.visitor`, nullable, checked against
   the four values) only for a project with the option on; otherwise it drops it silently and the
   event stays accepted.
-- **Turning it off keeps what was stored.** A kind says how a browser's visits fall on the site's
-  calendar, not who anyone is, so it is not personal data and has no retention step of its own.
+- **Turning it off keeps what was stored.** The kinds already stored follow the rules of every
+  other field of the event: the 13-month retention, the project's deletion and the erasure of an
+  identified person. They have no retention step of their own. On a site that calls `identify`, a
+  kind stored next to a user id is personal data like the rest of that person's events, so the
+  person's copy and erasure include it.
 - **Exports carry it:** the project's CSV export and the copy of an identified person's events
   gain `visitor`.
 
