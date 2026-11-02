@@ -64,6 +64,8 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
 - **Privacy on the server.** Values that look like an email, a phone number or a tax id are
   dropped and paths re-templated; device, browser, country and region are derived, then the user
   agent and the address are discarded.
+- **Unique visitors without an identifier.** A per-project option, off by default: the browser
+  keeps only when the site's day and month end and labels each visit's first event.
 - **Dashboard queries.** Overview, devices, acquisition, features and event properties, requests,
   funnels, timelines, visits, time of day, engagement and live arrivals, over up to 400 days in
   the project's time zone, narrowed by the same visit filters.
@@ -420,6 +422,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0052](docs/adr/0052-free-accounts-with-no-events-are-deleted.md)                     | Free accounts with no events are deleted after a notice                    |
 | [0053](docs/adr/0053-one-free-account-per-mailbox.md)                                 | One free account per mailbox, not per address                              |
 | [0054](docs/adr/0054-city-as-a-per-project-option.md)                                 | The city as a per-project option, off by default                           |
+| [0055](docs/adr/0055-unique-visitors-without-an-identifier.md)                        | Unique visitors without an identifier                                      |
 
 ## Roadmap
 

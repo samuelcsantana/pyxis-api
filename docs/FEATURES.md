@@ -18,6 +18,16 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   [ADR 0045](adr/0045-a-client-that-is-no-browser-is-refused.md)), and so are batches sent
   from cloud data centers, by the network CloudFront reports
   ([ADR 0046](adr/0046-traffic-from-cloud-data-centers-is-refused.md))
+- Unique visitors without an identifier, for a project with `visitors_enabled` (off by default;
+  owners change it in Settings, the operator with `project:update --visitors-on`): an event may
+  carry `visitor` (`first_visit`, `first_this_month`, `first_today` or `again_today`), which the
+  tracker sends on a visit's first event and ingestion keeps only while the option is on, and the
+  answer to each batch of such a project gains `visitor_period` (`day_ends_at`, `month_ends_at`:
+  the next midnight and the first instant of next month in the project's time zone, in UTC), which
+  the tracker keeps to tell the kind of its next visit; an answer without it tells the tracker to
+  delete what it kept. Another value of `visitor` rejects its event; for a project with the option
+  off the field is dropped silently and the event kept
+  ([ADR 0055](adr/0055-unique-visitors-without-an-identifier.md))
 - A server-side barrier that drops any property or campaign value that looks like an email, a
   phone number or a tax id, and re-templates paths
 - Device, browser, operating system, channel, country and region derived on the server; the user
@@ -296,7 +306,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   waiting, three a day) hands the export to the jobs function, which writes the events as a gzipped
   CSV to a private bucket that deletes it after a week and e-mails the owner; `GET
 .../exports/{exportId}` shows it with a download link signed for five minutes
-  ([ADR 0024](adr/0024-exports-are-files-with-short-links.md))
+  ([ADR 0024](adr/0024-exports-are-files-with-short-links.md)). Its columns include `city` and
+  `visitor`, empty where the project keeps them off
 - Closing an account, by its owner with the e-mail address typed again: `POST
 /v1/accounts/{accountId}/close` cancels the subscription at once, refunds in full a first payment
   made in the last seven days, revokes every key of the account's projects and e-mails the date
@@ -352,8 +363,9 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   ([ADR 0041](adr/0041-a-demo-project-is-filled-with-invented-visits-every-day.md))
 
 - `DELETE /v1/subjects/{userId}` erases a person's events, including the anonymous part of the
-  visit they identified in, and `GET /v1/subjects/{userId}/events` exports them, both from the
-  site's backend with a secret project key
+  visit they identified in, and `GET /v1/subjects/{userId}/events` exports them (each event
+  with its city and kind of visitor, null where none was kept), both from the site's backend
+  with a secret project key
   ([ADR 0009](adr/0009-erase-a-person-with-their-linked-visits.md))
 
 - A daily job deletes events older than 13 months, then expired dashboard sessions and sign-in
@@ -393,6 +405,20 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   reading within a minute and the daily job erases the cities kept, in batches, within a day.
   Postal code, coordinates and metro code are never read. The network number CloudFront
   reports is read only to refuse batches from cloud data centers, and never stored
+- Unique visitors are counted without an identifier, and only for a project with
+  `visitors_enabled`. The browser keeps two instants, when the site's day and month end, the same
+  for every visitor of the site that day; from them it labels each new visit as its first, its
+  first this month, its first today or another one today. Nothing that tells one browser from
+  another is created, stored or sent, and the server cannot link two visits. Turning the option
+  off stops keeping the label within a minute (the project lookup is cached) and the tracker
+  deletes its marker at its next answered send; the labels kept stay, since they are not personal
+  data. The count has limits: a visit that ends before the tracker's first answered send (about
+  five seconds; a hidden tab sends with `sendBeacon`, which has no answer) keeps no marker, so a
+  quick visitor returns as a first visit; two tabs opened at once on the first visit of the day
+  count twice; a private window, a cleared browser, or a phone and a computer are different
+  visitors; `www` and the bare domain keep different markers unless one redirects to the other;
+  and unique visitors of different days cannot be added up
+  ([ADR 0055](adr/0055-unique-visitors-without-an-identifier.md))
 - Strict response headers: a CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default
 - `X-Forwarded-For` is never trusted for the client address
