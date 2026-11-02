@@ -4,6 +4,7 @@ import type {
   DeviceType,
   OsFamily,
 } from '../entities/tracked-event.entity';
+import type { VisitorKind } from '../events/visitor-kind';
 import type { Weighted } from './seeded-random';
 
 export interface DemoDevice {
@@ -195,6 +196,22 @@ export function demoCityOf(place: DemoPlace, sessionId: string): string | null {
     return null;
   }
   return place.cities[slot % place.cities.length] ?? null;
+}
+
+const VISITOR_SLOT_START = -2 * SESSION_SLOT_DIGITS;
+const VISITOR_SLOTS = 100;
+const DEMO_VISITOR_SHARES: readonly { readonly kind: VisitorKind; readonly below: number }[] = [
+  { kind: 'first_visit', below: 52 },
+  { kind: 'first_this_month', below: 64 },
+  { kind: 'first_today', below: 85 },
+];
+const DEMO_SAME_DAY_VISITOR: VisitorKind = 'again_today';
+
+export function demoVisitorOf(sessionId: string): VisitorKind {
+  const slot =
+    Number.parseInt(sessionId.slice(VISITOR_SLOT_START, -SESSION_SLOT_DIGITS), HEXADECIMAL) %
+    VISITOR_SLOTS;
+  return DEMO_VISITOR_SHARES.find((share) => slot < share.below)?.kind ?? DEMO_SAME_DAY_VISITOR;
 }
 
 function source(

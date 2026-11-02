@@ -13,6 +13,7 @@ import {
   DEMO_PLACES,
   DEMO_VISITS_BY_WEEKDAY,
   demoCityOf,
+  demoVisitorOf,
 } from './demo-store';
 import { seededRandom } from './seeded-random';
 
@@ -132,6 +133,32 @@ describe('demoEventsOfDay', () => {
         return first?.city == null || regionOfCity.get(first.city) === first.region;
       }),
     ).toBe(true);
+  });
+
+  it('marks only the first event of each visit with a kind of visitor, read from the visit id', () => {
+    for (const visit of VISITS) {
+      const [landing, ...rest] = visit;
+
+      expect(landing?.visitor).toBe(landing && demoVisitorOf(landing.sessionId));
+      expect(rest.every((event) => event.visitor === null)).toBe(true);
+    }
+  });
+
+  it('starts most visits as a first visit, and counts fewer unique visitors than visits each day', () => {
+    const kinds = VISITS.map((visit) => visit[0]?.visitor);
+    const share = (kind: string) =>
+      kinds.filter((visitor) => visitor === kind).length / kinds.length;
+
+    expect(share('first_visit')).toBeGreaterThan(0.45);
+    expect(share('first_visit')).toBeLessThan(0.6);
+    expect(share('again_today')).toBeGreaterThan(0.1);
+    expect(share('again_today')).toBeLessThan(share('first_today'));
+    for (const events of EVENTS_BY_DAY.values()) {
+      const landings = [...visitsOf(events).values()].map((visit) => byTime(visit)[0]);
+      const unique = landings.filter((landing) => landing?.visitor !== 'again_today');
+
+      expect(unique.length).toBeLessThan(landings.length);
+    }
   });
 
   it('identifies a person only from a successful sign-in or sign-up onward', () => {
@@ -281,5 +308,19 @@ describe('demoCityOf', () => {
     expect(
       demoCityOf({ ...lisbon, cities: [] }, '00000000-0000-4000-8000-000000000001'),
     ).toBeNull();
+  });
+});
+
+describe('demoVisitorOf', () => {
+  it.each([
+    ['00000000-0000-4000-8000-000000000001', 'first_visit'],
+    ['00000000-0000-4000-8000-000000330001', 'first_visit'],
+    ['00000000-0000-4000-8000-000000340001', 'first_this_month'],
+    ['00000000-0000-4000-8000-000000400001', 'first_today'],
+    ['00000000-0000-4000-8000-000000550001', 'again_today'],
+    ['00000000-0000-4000-8000-000000630001', 'again_today'],
+    ['00000000-0000-4000-8000-000000640001', 'first_visit'],
+  ])('reads %s as %s, from the four digits before the ones the city uses', (visitId, kind) => {
+    expect(demoVisitorOf(visitId)).toBe(kind);
   });
 });
