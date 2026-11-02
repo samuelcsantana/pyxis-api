@@ -110,6 +110,7 @@ describe('projects managed by the owner of their account', () => {
       timezone: 'America/Sao_Paulo',
       allowed_origins: ['https://owned-shop.example.com'],
       city_enabled: false,
+      visitors_enabled: false,
       public_keys: [{ id: created.public_key.id, key: created.public_key.key }],
     });
   });
@@ -132,6 +133,29 @@ describe('projects managed by the owner of their account', () => {
     expect(on.json()).toMatchObject({ id: projectId, city_enabled: true });
     expect(settingsWhileOn.json()).toMatchObject({ city_enabled: true });
     expect(off.json()).toMatchObject({ city_enabled: false });
+    expect(notBoolean.statusCode).toBe(400);
+  });
+
+  it('turns the count of unique visitors on and off, and shows it in the settings', async () => {
+    const { project_id: projectId } = await createProject();
+
+    const on = await call('PATCH', `/v1/projects/${projectId}`, {
+      payload: { visitors_enabled: true },
+    });
+    const settingsWhileOn = await call('GET', `/v1/projects/${projectId}/settings`);
+    const off = await call('PATCH', `/v1/projects/${projectId}`, {
+      payload: { visitors_enabled: false },
+    });
+    const settingsWhileOff = await call('GET', `/v1/projects/${projectId}/settings`);
+    const notBoolean = await call('PATCH', `/v1/projects/${projectId}`, {
+      payload: { visitors_enabled: 'yes' },
+    });
+
+    expect(on.statusCode).toBe(200);
+    expect(on.json()).toMatchObject({ id: projectId, visitors_enabled: true, city_enabled: false });
+    expect(settingsWhileOn.json()).toMatchObject({ visitors_enabled: true, city_enabled: false });
+    expect(off.json()).toMatchObject({ visitors_enabled: false });
+    expect(settingsWhileOff.json()).toMatchObject({ visitors_enabled: false });
     expect(notBoolean.statusCode).toBe(400);
   });
 

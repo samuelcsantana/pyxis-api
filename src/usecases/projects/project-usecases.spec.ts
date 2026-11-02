@@ -362,6 +362,18 @@ describe('UpdateProjectUseCase', () => {
     );
   });
 
+  it('creates a project that does not count unique visitors, and turns the count on and off', async () => {
+    const { store, updateProject, projectId } = await withProject();
+
+    expect((await store.findById(projectId))?.visitorsEnabled).toBe(false);
+    expect(
+      (await updateProject.execute({ projectId, visitorsEnabled: true })).visitorsEnabled,
+    ).toBe(true);
+    expect(
+      (await updateProject.execute({ projectId, visitorsEnabled: false })).visitorsEnabled,
+    ).toBe(false);
+  });
+
   it('refuses an invalid change before writing anything', async () => {
     const { store, updateProject, projectId } = await withProject();
 
@@ -446,6 +458,7 @@ describe('DeleteProjectUseCase', () => {
       timezone: 'UTC',
       conversionEvent: null,
       cityEnabled: false,
+      visitorsEnabled: false,
       createdAt: NOW,
     });
 

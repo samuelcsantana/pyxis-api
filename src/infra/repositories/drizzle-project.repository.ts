@@ -15,6 +15,7 @@ export function toProject(row: ProjectRow): Project {
     timezone: row.timezone,
     conversionEvent: row.conversionEvent,
     cityEnabled: row.cityEnabled,
+    visitorsEnabled: row.visitorsEnabled,
     createdAt: row.createdAt,
   };
 }

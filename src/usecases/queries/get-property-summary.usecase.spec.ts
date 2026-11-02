@@ -12,6 +12,7 @@ const PROJECT: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: null,
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const CLOCK = new FixedClock(new Date('2026-10-06T02:30:00.000Z'));

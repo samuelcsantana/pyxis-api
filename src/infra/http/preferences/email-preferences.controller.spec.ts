@@ -21,6 +21,7 @@ const PROJECT: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: null,
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const REQUEST = { admin: ADMIN, project: PROJECT } as FastifyRequest;

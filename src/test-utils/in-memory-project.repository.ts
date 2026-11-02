@@ -75,6 +75,7 @@ export class InMemoryProjectRepository
       ...project,
       id: this.nextId(),
       cityEnabled: false,
+      visitorsEnabled: false,
       createdAt: CREATED_AT,
     };
     this.projects.set(created.id, created);

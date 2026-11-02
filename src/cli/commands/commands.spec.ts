@@ -232,6 +232,7 @@ describe('account:show', () => {
           timezone: 'UTC',
           conversionEvent: null,
           cityEnabled: false,
+          visitorsEnabled: false,
           createdAt: new Date('2026-10-14T10:00:00.000Z'),
         },
       ],
@@ -410,6 +411,7 @@ describe('account:limits', () => {
       timezone: 'UTC',
       conversionEvent: null,
       cityEnabled: false,
+      visitorsEnabled: false,
       createdAt: new Date('2026-10-14T10:00:00.000Z'),
     };
     context.accounts.add(account, {
@@ -979,6 +981,23 @@ describe('project:update', () => {
     });
   });
 
+  it('reads --visitors-on and --visitors-off as turning the count of unique visitors on and off', () => {
+    expect(projectUpdateCommand.parse(['--project', PROJECT_ID, '--visitors-on'])).toEqual({
+      projectId: PROJECT_ID,
+      visitorsEnabled: true,
+    });
+    expect(projectUpdateCommand.parse(['--project', PROJECT_ID, '--visitors-off'])).toEqual({
+      projectId: PROJECT_ID,
+      visitorsEnabled: false,
+    });
+  });
+
+  it('reads the city and the visitors flags together', () => {
+    expect(
+      projectUpdateCommand.parse(['--project', PROJECT_ID, '--city-on', '--visitors-off']),
+    ).toEqual({ projectId: PROJECT_ID, cityEnabled: true, visitorsEnabled: false });
+  });
+
   it('reads --clear-conversion-event as clearing it', () => {
     expect(
       projectUpdateCommand.parse(['--project', PROJECT_ID, '--clear-conversion-event']),
@@ -996,8 +1015,15 @@ describe('project:update', () => {
     ],
     ['a project id that is not a UUID', ['--project', 'shop', '--timezone', 'UTC']],
     ['both city flags', ['--project', PROJECT_ID, '--city-on', '--city-off']],
+    ['both visitors flags', ['--project', PROJECT_ID, '--visitors-on', '--visitors-off']],
   ])('refuses %s', (_, argv) => {
     expect(() => projectUpdateCommand.parse(argv)).toThrow(CliUsageError);
+  });
+
+  it('names the two flags it refuses together', () => {
+    expect(() =>
+      projectUpdateCommand.parse(['--project', PROJECT_ID, '--visitors-on', '--visitors-off']),
+    ).toThrow('Use either --visitors-on or --visitors-off.');
   });
 
   it('prints the settings after the change', async () => {
@@ -1023,6 +1049,7 @@ describe('project:update', () => {
       'timezone=Europe/Lisbon',
       'conversion_event=plan_selected',
       'city_enabled=false',
+      'visitors_enabled=false',
     ]);
     expect(output.err).toEqual([]);
   });
@@ -1039,6 +1066,21 @@ describe('project:update', () => {
     expect(on.err).toEqual([expect.stringContaining('privacy notice')]);
     expect(off.out).toContain('city_enabled=false');
     expect(off.err).toEqual([expect.stringContaining('erases the cities already kept')]);
+  });
+
+  it('turns the count of unique visitors on and off, saying what each one means', async () => {
+    const { context, projectId } = await createdProject();
+    const on = captureOutput();
+    const off = captureOutput();
+
+    await projectUpdateCommand.execute(context, { projectId, visitorsEnabled: true }, on);
+    await projectUpdateCommand.execute(context, { projectId, visitorsEnabled: false }, off);
+
+    expect(on.out).toContain('visitors_enabled=true');
+    expect(on.out).toContain('city_enabled=false');
+    expect(on.err).toEqual([expect.stringContaining('privacy notice')]);
+    expect(off.out).toContain('visitors_enabled=false');
+    expect(off.err).toEqual([expect.stringContaining('already kept stay')]);
   });
 
   it('changes only the time zone when that is all it is given', async () => {

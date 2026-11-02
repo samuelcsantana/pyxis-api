@@ -17,6 +17,7 @@ const PROJECT: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const RANGE = { from: '2026-10-01', to: '2026-10-05' };

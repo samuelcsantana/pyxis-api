@@ -1,0 +1,1 @@
+ALTER TABLE "projects" ADD COLUMN "visitors_enabled" boolean DEFAULT false NOT NULL;

@@ -38,6 +38,7 @@ const PROJECT: Project = {
   timezone: 'UTC',
   conversionEvent: null,
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-11-02T00:00:00.000Z'),
 };
 
@@ -89,8 +90,13 @@ describe('managedProjectBody', () => {
       timezone: 'UTC',
       conversion_event: null,
       city_enabled: false,
+      visitors_enabled: false,
       created_at: '2026-11-02T00:00:00.000Z',
     });
+  });
+
+  it('tells whether the project counts unique visitors', () => {
+    expect(managedProjectBody({ ...PROJECT, visitorsEnabled: true }).visitors_enabled).toBe(true);
   });
 });
 
@@ -153,6 +159,7 @@ describe('ProjectsController', () => {
       timezone: 'UTC',
       conversion_event: null,
       city_enabled: true,
+      visitors_enabled: true,
     });
 
     expect(body.id).toBe(PROJECT.id);
@@ -164,6 +171,7 @@ describe('ProjectsController', () => {
       timezone: 'UTC',
       conversionEvent: null,
       cityEnabled: true,
+      visitorsEnabled: true,
     });
   });
 

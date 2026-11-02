@@ -17,6 +17,7 @@ const PROJECT: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const SESSION_ID = '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e';

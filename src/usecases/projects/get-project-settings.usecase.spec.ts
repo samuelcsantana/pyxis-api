@@ -14,6 +14,7 @@ const SHOP: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const BLOG: Project = { ...SHOP, id: '11111111-0000-4000-8000-000000000002', name: 'Blog' };

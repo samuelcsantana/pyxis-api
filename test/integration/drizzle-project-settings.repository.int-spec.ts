@@ -90,6 +90,7 @@ describe('project settings and keys against a real Postgres', () => {
       ...SHOP,
       id: expect.any(String) as string,
       cityEnabled: false,
+      visitorsEnabled: false,
       createdAt: expect.any(Date) as Date,
     });
     expect((await lookups.findByPublicKey(publicKey('A')))?.id).toBe(created.project.id);
@@ -146,6 +147,19 @@ describe('project settings and keys against a real Postgres', () => {
     });
     expect(await settings.update(project.id, { cityEnabled: false })).toMatchObject({
       cityEnabled: false,
+    });
+  });
+
+  it('creates a project that does not count unique visitors and turns the count on and off', async () => {
+    const { project } = await settings.createWithPublicKey(SHOP, publicKey('A'));
+
+    expect(project.visitorsEnabled).toBe(false);
+    expect(await settings.update(project.id, { visitorsEnabled: true })).toMatchObject({
+      visitorsEnabled: true,
+      cityEnabled: false,
+    });
+    expect(await settings.update(project.id, { visitorsEnabled: false })).toMatchObject({
+      visitorsEnabled: false,
     });
   });
 

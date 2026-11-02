@@ -12,6 +12,7 @@ const PROJECT: Project = {
   timezone: 'UTC',
   conversionEvent: 'signup_completed',
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const STEPS = JSON.stringify([

@@ -13,6 +13,7 @@ export interface ProjectChanges {
   readonly timezone?: string;
   readonly conversionEvent?: string | null;
   readonly cityEnabled?: boolean;
+  readonly visitorsEnabled?: boolean;
 }
 
 export interface CreatedProject {

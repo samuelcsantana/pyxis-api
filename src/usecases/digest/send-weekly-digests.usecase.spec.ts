@@ -19,6 +19,7 @@ const SHOP: Project = {
   timezone: 'America/Sao_Paulo',
   conversionEvent: null,
   cityEnabled: false,
+  visitorsEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),
 };
 const ISLAND: Project = { ...SHOP, id: 'island', name: 'Island', timezone: 'Etc/GMT+12' };
