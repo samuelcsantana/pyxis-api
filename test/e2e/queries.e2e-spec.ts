@@ -400,6 +400,7 @@ describe('dashboard queries', () => {
           source: null,
           campaign: null,
           user_id: 'u-1',
+          visitor: null,
         },
       ],
       next_cursor: null,
