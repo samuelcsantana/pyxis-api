@@ -19,13 +19,13 @@ import { receptionTime } from '../../domain/events/reception-time';
 import { normalizeRegion } from '../../domain/events/region';
 import { type VisitorPeriod, visitorPeriodOf } from '../../domain/events/visitor-period';
 import { EVENT_NAME_PATTERN, MAX_EVENTS_PER_BATCH } from '../../domain/events/event-limits';
-import type { PiiReason } from '../../domain/events/pii-barrier';
 import {
   type ClientHints,
   classifyUserAgent,
   isBotUserAgent,
 } from '../../domain/events/user-agent';
 import {
+  type DropReason,
   type EventRejectionReason,
   validateIncomingEvent,
 } from '../../domain/events/validate-event';
@@ -69,7 +69,7 @@ export interface EventRejection {
 export interface DroppedProperty {
   readonly eventName: string;
   readonly field: string;
-  readonly reason: PiiReason;
+  readonly reason: DropReason;
 }
 
 export interface IngestBatchResult {
