@@ -1,4 +1,5 @@
 import { type ArgumentsHost, Logger } from '@nestjs/common';
+import { DrizzleQueryError } from 'drizzle-orm';
 import { OriginNotAllowedError } from '../../../domain/errors/ingest.errors';
 import { HttpErrorFilter } from './http-error.filter';
 
@@ -62,6 +63,27 @@ describe('HttpErrorFilter', () => {
       message: 'http.unhandled_error',
       requestId: 'req-9',
       error: 'connection reset',
+    });
+  });
+
+  it('logs a failed database query by its code, never by the values it sent', () => {
+    const { host, reply } = hostFor('req-5');
+    const cause = Object.assign(new Error('unsupported Unicode escape sequence'), {
+      code: '22P05',
+    });
+    const failed = new DrizzleQueryError(
+      'insert into "events" ("properties") values ($1)',
+      ['{"plan":"pro\\u0000"}'],
+      cause,
+    );
+
+    new HttpErrorFilter().catch(failed, host);
+
+    expect(reply.statusCode).toBe(500);
+    expect(errorLog).toHaveBeenCalledWith({
+      message: 'http.unhandled_error',
+      requestId: 'req-5',
+      error: 'database query failed (22P05)',
     });
   });
 

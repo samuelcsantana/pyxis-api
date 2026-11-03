@@ -1,4 +1,5 @@
 import { type ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
+import { DrizzleQueryError } from 'drizzle-orm';
 import { OAuthProtocolError, RemoteMcpClosedError } from '../../../domain/errors/oauth.errors';
 import { ClientRateLimitedError, InvalidRequestError } from '../errors/http-errors';
 import { OAuthErrorFilter, toOAuthErrorAnswer } from './oauth-error.filter';
@@ -113,5 +114,21 @@ describe('OAuthErrorFilter', () => {
       error: 'connection reset',
     });
     expect(errorLog).toHaveBeenNthCalledWith(2, expect.objectContaining({ error: 'thrown text' }));
+  });
+
+  it('logs a failed database query by its code, never by the values it sent', () => {
+    const { host } = hostFor('req-8');
+    const cause = Object.assign(new Error('value too long'), { code: '22001' });
+
+    new OAuthErrorFilter().catch(
+      new DrizzleQueryError('insert into "oauth_clients" ("name") values ($1)', ['Agent'], cause),
+      host,
+    );
+
+    expect(errorLog).toHaveBeenCalledWith({
+      message: 'http.unhandled_error',
+      requestId: 'req-8',
+      error: 'database query failed (22001)',
+    });
   });
 });
