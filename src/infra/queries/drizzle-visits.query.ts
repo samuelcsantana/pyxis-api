@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { type SQL, sql } from 'drizzle-orm';
 import type { Channel } from '../../domain/entities/tracked-event.entity';
+import type { VisitorKind } from '../../domain/events/visitor-kind';
 import { API_REQUEST } from '../../domain/events/reserved-event-names';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import {
@@ -85,6 +86,7 @@ interface VisitRow {
   readonly source: string | null;
   readonly campaign: string | null;
   readonly userId: string | null;
+  readonly visitor: VisitorKind | null;
 }
 
 type MatchRow = { -readonly [Key in keyof VisitRow]: VisitRow[Key] | null } & { total: number };
@@ -113,6 +115,7 @@ function listItem(row: VisitRow): VisitListItem {
     source: row.source,
     campaign: row.campaign,
     userId: row.userId,
+    visitor: row.visitor,
   };
 }
 
@@ -144,7 +147,8 @@ export class DrizzleVisitsQuery implements VisitsQuery {
           ${firstOf(sql`${events.channel}`, sql`${events.channel} IS NOT NULL`)} AS "channel",
           ${firstOf(entrySource, isEntryPageView)} AS "source",
           ${firstOf(sql`${events.utmCampaign}`, isEntryPageView)} AS "campaign",
-          ${firstOf(sql`${events.userId}`, sql`${events.userId} IS NOT NULL`)} AS "userId"
+          ${firstOf(sql`${events.userId}`, sql`${events.userId} IS NOT NULL`)} AS "userId",
+          ${firstOf(sql`${events.visitor}`, sql`${events.visitor} IS NOT NULL`)} AS "visitor"
         FROM ${events}
         WHERE ${inScope(scope)}
         GROUP BY ${events.sessionId}
@@ -169,6 +173,7 @@ export class DrizzleVisitsQuery implements VisitsQuery {
       SELECT totals."total", page."sessionId", page."entryPath", page."pageViews",
         page."failedRequests", page."deviceType", page."browser", page."os", page."country",
         page."region", page."regionName", page."city", page."channel", page."source", page."campaign", page."userId",
+        page."visitor",
         ${isoUtc(sql`page."startedAtValue"`)} AS "startedAt",
         ${isoUtc(sql`page."endedAtValue"`)} AS "endedAt",
         to_jsonb(ARRAY(

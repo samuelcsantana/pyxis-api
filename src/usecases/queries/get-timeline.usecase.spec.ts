@@ -29,6 +29,7 @@ function visit(index: number): VisitSummary {
     city: null,
     channel: index === 0 ? 'paid' : null,
     userId: index === 0 ? 'ana' : null,
+    visitor: index === 0 ? 'first_this_month' : 'again_today',
   };
 }
 
@@ -89,6 +90,28 @@ describe('GetTimelineUseCase', () => {
     expect(report.nextBefore).toEqual(visit(VISITS_PER_PAGE - 1).startedAt);
     expect(query.visitCalls[0]?.before).toBe(before);
     expect(query.eventCalls[0]?.sessionIds).toHaveLength(VISITS_PER_PAGE);
+  });
+
+  it("shows each visit's kind when the project counts unique visitors", async () => {
+    const query = new StubTimelineQuery();
+    query.summaries = [visit(0), visit(1)];
+    const counting = { ...PROJECT, visitorsEnabled: true };
+
+    const report = await new GetTimelineUseCase(query).execute(counting, { userId: 'ana' }, null);
+
+    expect(report.visits.map((shown) => shown.visitor)).toEqual([
+      'first_this_month',
+      'again_today',
+    ]);
+  });
+
+  it('hides the kinds stored before the project stopped counting unique visitors', async () => {
+    const query = new StubTimelineQuery();
+    query.summaries = [visit(0)];
+
+    const report = await new GetTimelineUseCase(query).execute(PROJECT, { userId: 'ana' }, null);
+
+    expect(report.visits.map((shown) => shown.visitor)).toEqual([null]);
   });
 
   it('asks for no events when there is no visit', async () => {

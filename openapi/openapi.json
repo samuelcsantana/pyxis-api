@@ -4747,6 +4747,23 @@
                     "string",
                     "null"
                   ]
+                },
+                "visitor": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "first_visit",
+                        "first_this_month",
+                        "first_today",
+                        "again_today"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The kind its first marked event carried, null when the project does not count unique visitors or the visit carried none. first_visit, first_this_month and first_today count as a unique visitor of the day; first_visit and first_this_month as one of the month; again_today counts in neither."
                 }
               },
               "required": [
@@ -4762,6 +4779,7 @@
                 "city",
                 "channel",
                 "user_id",
+                "visitor",
                 "events"
               ],
               "type": "object"
@@ -4992,6 +5010,23 @@
                     "string",
                     "null"
                   ]
+                },
+                "visitor": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "first_visit",
+                        "first_this_month",
+                        "first_today",
+                        "again_today"
+                      ],
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The kind its first marked event carried, null when the project does not count unique visitors or the visit carried none. first_visit, first_this_month and first_today count as a unique visitor of the day; first_visit and first_this_month as one of the month; again_today counts in neither."
                 }
               },
               "required": [
@@ -5012,7 +5047,8 @@
                 "channel",
                 "source",
                 "campaign",
-                "user_id"
+                "user_id",
+                "visitor"
               ],
               "type": "object"
             },

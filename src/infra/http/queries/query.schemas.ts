@@ -19,6 +19,7 @@ import {
 } from '../../../domain/events/event-limits';
 import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import { API_REQUEST_METHODS } from '../../../domain/events/reserved-event-names';
+import { VISITOR_KINDS } from '../../../domain/events/visitor-kind';
 import { TOP_CITIES, TOP_REGIONS } from '../../../domain/queries/devices';
 import { FEATURE_KINDS } from '../../../domain/queries/features';
 import { FUNNEL_MODES, MAX_FUNNEL_STEPS, MIN_FUNNEL_STEPS } from '../../../domain/queries/funnel';
@@ -442,6 +443,15 @@ export const timelineReportSchema = z
         city: z.string().nullable(),
         channel: z.enum(CHANNELS).nullable(),
         user_id: z.string().nullable(),
+        visitor: z
+          .enum(VISITOR_KINDS)
+          .nullable()
+          .describe(
+            'The kind its first marked event carried, null when the project does not count ' +
+              'unique visitors or the visit carried none. first_visit, first_this_month and ' +
+              'first_today count as a unique visitor of the day; first_visit and ' +
+              'first_this_month as one of the month; again_today counts in neither.',
+          ),
         events: z.array(
           z.strictObject({
             id: z.uuid(),

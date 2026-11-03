@@ -6,6 +6,7 @@ import {
   type TimelineReport,
   type TimelineSubject,
   timelinePage,
+  timelineWithoutVisitorKinds,
   VISITS_PER_PAGE,
 } from '../../domain/queries/timeline';
 
@@ -21,6 +22,7 @@ export class GetTimelineUseCase {
     const summaries = await this.query.visits(project.id, subject, before, VISITS_PER_PAGE + 1);
     const shown = summaries.slice(0, VISITS_PER_PAGE).map((visit) => visit.sessionId);
     const events = shown.length === 0 ? [] : await this.query.events(project.id, shown);
-    return timelinePage(summaries, events, VISITS_PER_PAGE);
+    const report = timelinePage(summaries, events, VISITS_PER_PAGE);
+    return project.visitorsEnabled ? report : timelineWithoutVisitorKinds(report);
   }
 }

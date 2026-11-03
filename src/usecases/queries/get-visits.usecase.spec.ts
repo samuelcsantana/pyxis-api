@@ -45,6 +45,7 @@ function item(index: number): VisitListItem {
     source: 'google',
     campaign: 'spring_sale',
     userId: null,
+    visitor: 'first_visit',
   };
 }
 
@@ -64,7 +65,11 @@ describe('GetVisitsUseCase', () => {
 
     const report = await new GetVisitsUseCase(query, CLOCK).execute(PROJECT, RANGE, filters, null);
 
-    expect(report).toEqual({ visits: [item(0), item(1)], nextCursor: null, total: 2 });
+    expect(report).toEqual({
+      visits: [item(0), item(1)].map((visit) => ({ ...visit, visitor: null })),
+      nextCursor: null,
+      total: 2,
+    });
     expect(query.calls).toEqual([
       {
         scope: {
@@ -79,6 +84,35 @@ describe('GetVisitsUseCase', () => {
         limit: VISIT_LIST_PAGE_SIZE + 1,
       },
     ]);
+  });
+
+  it("shows each visit's kind when the project counts unique visitors", async () => {
+    const query = new StubVisitsQuery();
+    query.items = [item(0), { ...item(1), visitor: null }];
+    const counting = { ...PROJECT, visitorsEnabled: true };
+
+    const report = await new GetVisitsUseCase(query, CLOCK).execute(
+      counting,
+      RANGE,
+      NO_VISIT_FILTERS,
+      null,
+    );
+
+    expect(report.visits.map((visit) => visit.visitor)).toEqual(['first_visit', null]);
+  });
+
+  it('hides the kinds stored before the project stopped counting unique visitors', async () => {
+    const query = new StubVisitsQuery();
+    query.items = [item(0)];
+
+    const report = await new GetVisitsUseCase(query, CLOCK).execute(
+      PROJECT,
+      RANGE,
+      NO_VISIT_FILTERS,
+      null,
+    );
+
+    expect(report.visits.map((visit) => visit.visitor)).toEqual([null]);
   });
 
   it('keeps report filters off the scope, so the Visits filters are applied once', async () => {

@@ -1,4 +1,5 @@
 import type { Channel, PropertyMap } from '../entities/tracked-event.entity';
+import type { VisitorKind } from '../events/visitor-kind';
 
 export const VISITS_PER_PAGE = 20;
 
@@ -19,6 +20,7 @@ export interface VisitSummary {
   readonly city: string | null;
   readonly channel: Channel | null;
   readonly userId: string | null;
+  readonly visitor: VisitorKind | null;
 }
 
 export interface TimelineEvent {
@@ -73,4 +75,8 @@ export function timelinePage(
     })),
     nextBefore: oldestShown?.startedAt ?? null,
   };
+}
+
+export function timelineWithoutVisitorKinds(report: TimelineReport): TimelineReport {
+  return { ...report, visits: report.visits.map((visit) => ({ ...visit, visitor: null })) };
 }

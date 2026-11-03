@@ -95,8 +95,16 @@ const SEEDED: readonly TrackedEvent[] = [
     properties: { calculator: 'ifood' },
     ...desktop,
   }),
-  event(2, '2026-10-05T09:02:00.000Z', 'identify', { userId: 'ana', ...desktop }),
-  event(2, '2026-10-05T09:03:00.000Z', 'signup_completed', { userId: 'ana', ...desktop }),
+  event(2, '2026-10-05T09:02:00.000Z', 'identify', {
+    userId: 'ana',
+    visitor: 'first_visit',
+    ...desktop,
+  }),
+  event(2, '2026-10-05T09:03:00.000Z', 'signup_completed', {
+    userId: 'ana',
+    visitor: 'again_today',
+    ...desktop,
+  }),
   event(2, '2026-10-05T09:04:00.000Z', 'api_request', {
     userId: 'ana',
     properties: { method: 'POST', route: '/v1/orders', status: 409, duration_ms: 120 },
@@ -226,6 +234,7 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       source: 'google',
       campaign: 'spring_sale',
       userId: null,
+      visitor: null,
     });
     expect(visits[1]).toMatchObject({
       highlights: ['calculator_result_shown', 'signup_completed'],
@@ -235,6 +244,7 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       source: null,
       campaign: null,
       userId: 'ana',
+      visitor: 'first_visit',
     });
     expect(visits[2]).toMatchObject({ source: 'news.example.com', campaign: null });
     expect(visits[3]).toMatchObject({
