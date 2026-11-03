@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.42.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.42.0...v0.42.1) (2026-11-03)
+
+
+### Documentation
+
+* **readme:** say no cookies and no stored IP addresses instead of no personal data ([a155b01](https://github.com/samuelcsantana/pyxis-api/commit/a155b015e48ba59cdd4f0dabacbcce991e2b1deb))
+
 ## [0.42.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.41.0...v0.42.0) (2026-11-02)
 
 
