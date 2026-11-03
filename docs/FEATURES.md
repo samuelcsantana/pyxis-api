@@ -415,6 +415,14 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   in milliseconds sent as a property is dropped, so send durations, not timestamps
 - Paths are re-templated on the server with the SDK's rules (UUIDs, numbers, long digit runs and
   email addresses become `:id`), a second layer behind the browser's
+- Only visible text is stored. Before templating and before the barrier above, the path, the
+  `api_request` route, the campaign tags and the text properties lose every control, format and
+  surrogate character (Unicode Cc, Cf, Cs): U+0000, which Postgres cannot store and which used to
+  cost the whole batch, zero-width spaces, bidirectional marks, soft hyphens and the tag
+  characters that spell hidden text. Tab, line feed, carriage return and the zero-width joiner and
+  non-joiner are kept, for spacing, emoji sequences and scripts that need them. A campaign tag left
+  empty is dropped with the reason `no_visible_text`; a property left empty is kept empty
+  ([ADR 0056](adr/0056-ingestion-stores-only-visible-text.md))
 - Device, browser and operating system are classified by own code from the user agent and client
   hints, then the user agent is discarded; the country and the region (`BR-SP`) come from
   CloudFront, never from the IP. The city (`CloudFront-Viewer-City`) is read only for a project

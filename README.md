@@ -339,6 +339,9 @@ What differs from the hosted service:
 - **A second barrier behind the browser's.** A property or campaign value that looks like an
   email, a phone number or a tax id is dropped, a user id that looks personal rejects its event,
   and paths are re-templated with the SDK's rules.
+- **Only visible text is stored.** Control and invisible format characters are removed from paths,
+  campaign tags and properties before anything judges them
+  ([ADR 0056](docs/adr/0056-ingestion-stores-only-visible-text.md)).
 - **Strict headers.** A CSP that loads nothing, no framing, nosniff, no referrer, HSTS and
   `no-store` by default; `X-Forwarded-For` is never trusted for the client address.
 - **Limits wherever a stranger can call.** Ingestion per address and per project, counted in
@@ -424,6 +427,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0053](docs/adr/0053-one-free-account-per-mailbox.md)                                 | One free account per mailbox, not per address                              |
 | [0054](docs/adr/0054-city-as-a-per-project-option.md)                                 | The city as a per-project option, off by default                           |
 | [0055](docs/adr/0055-unique-visitors-without-an-identifier.md)                        | Unique visitors without an identifier                                      |
+| [0056](docs/adr/0056-ingestion-stores-only-visible-text.md)                           | Ingestion stores only visible text                                         |
 
 ## Roadmap
 
