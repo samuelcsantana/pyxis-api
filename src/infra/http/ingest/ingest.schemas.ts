@@ -22,7 +22,8 @@ export const batchRequestSchema = z
           id: 'IncomingEvent',
           description:
             'One event. An event that breaks these rules is counted as rejected while the rest ' +
-            'of its batch is kept.',
+            'of its batch is kept. Control and invisible format characters are removed from ' +
+            'the path, the campaign tags and the text properties before the event is judged.',
         }),
       )
       .min(1)
