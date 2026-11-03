@@ -115,6 +115,35 @@ describe('GetVisitsUseCase', () => {
     expect(report.visits.map((visit) => visit.visitor)).toEqual([null]);
   });
 
+  it('asks for the unique visitors of a span when the project counts them', async () => {
+    const query = new StubVisitsQuery();
+    query.items = [item(0)];
+    query.total = 1;
+    const counting = { ...PROJECT, visitorsEnabled: true };
+    const filters: VisitFilters = { ...NO_VISIT_FILTERS, visitors: 'day' };
+
+    const report = await new GetVisitsUseCase(query, CLOCK).execute(counting, RANGE, filters, null);
+
+    expect(report.total).toBe(1);
+    expect(query.calls[0]?.filters).toBe(filters);
+  });
+
+  it('finds no unique visitors in a project that does not count them, without asking', async () => {
+    const query = new StubVisitsQuery();
+    query.items = [item(0)];
+    query.total = 1;
+
+    const report = await new GetVisitsUseCase(query, CLOCK).execute(
+      PROJECT,
+      RANGE,
+      { ...NO_VISIT_FILTERS, visitors: 'month' },
+      null,
+    );
+
+    expect(report).toEqual({ visits: [], nextCursor: null, total: 0 });
+    expect(query.calls).toEqual([]);
+  });
+
   it('keeps report filters off the scope, so the Visits filters are applied once', async () => {
     const query = new StubVisitsQuery();
     const filtered = { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' as const } };

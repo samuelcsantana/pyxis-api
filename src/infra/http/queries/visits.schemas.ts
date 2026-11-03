@@ -4,6 +4,7 @@ import { VISITOR_KINDS } from '../../../domain/events/visitor-kind';
 import {
   MAX_VISIT_HIGHLIGHTS,
   VISIT_LIST_PAGE_SIZE,
+  VISITOR_SPANS,
   type VisitCursor,
 } from '../../../domain/queries/visits';
 import {
@@ -36,6 +37,7 @@ export const visitsQuerySchema = propertyNeedsEvent(
   rangeQuerySchema.extend({
     ...reportFilterFields,
     route: routeFilterSchema.optional(),
+    visitors: z.enum(VISITOR_SPANS).optional(),
     cursor: cursorSchema.optional(),
   }),
 );

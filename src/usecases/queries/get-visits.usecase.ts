@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import type { Project } from '../../domain/entities/project.entity';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import {
+  NO_MATCHING_VISITS,
   type VisitCursor,
   type VisitFilters,
   VISIT_LIST_PAGE_SIZE,
@@ -28,6 +29,9 @@ export class GetVisitsUseCase {
   ): Promise<VisitsReport> {
     const period = { from: requested.from, to: requested.to };
     const { current } = scopedPeriods(project, period, this.clock.now());
+    if (filters.visitors !== null && !project.visitorsEnabled) {
+      return NO_MATCHING_VISITS;
+    }
     const matches = await this.query.list(current, filters, after, VISIT_LIST_PAGE_SIZE + 1);
     const report = visitsPage(matches, VISIT_LIST_PAGE_SIZE);
     return project.visitorsEnabled ? report : withoutVisitorKinds(report);

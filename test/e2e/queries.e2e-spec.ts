@@ -429,6 +429,17 @@ describe('dashboard queries', () => {
     expect(badRoute.statusCode).toBe(400);
   });
 
+  it('answers no unique visitors for a project that does not count them, and 400 to an unknown span', async () => {
+    const range = 'from=2026-09-01&to=2026-10-05';
+
+    const unique = await get(`/v1/projects/${SHOP_ID}/visits?${range}&visitors=day`);
+    const unknown = await get(`/v1/projects/${SHOP_ID}/visits?${range}&visitors=week`);
+
+    expect(unique.statusCode).toBe(200);
+    expect(unique.json()).toMatchObject({ visits: [], next_cursor: null, total: 0 });
+    expect(unknown.statusCode).toBe(400);
+  });
+
   it('answers 400 to a visits property filter without an event', async () => {
     const response = await get(
       `/v1/projects/${SHOP_ID}/visits?from=2026-10-05&to=2026-10-05&property=plan%3Dmei`,

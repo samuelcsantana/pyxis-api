@@ -12213,6 +12213,20 @@
             }
           },
           {
+            "description": "Only the visits that counted as unique visitors, by the visitor kind of each: day keeps first_visit, first_this_month and first_today (each browser once per day, so total is the unique visitors of the day, or the sum of the days of a longer range), month keeps first_visit and first_this_month (once per calendar month), new keeps first_visit. Matches nothing when the project does not count unique visitors",
+            "in": "query",
+            "name": "visitors",
+            "required": false,
+            "schema": {
+              "enum": [
+                "day",
+                "month",
+                "new"
+              ],
+              "type": "string"
+            }
+          },
+          {
             "description": "The next_cursor of the previous page",
             "in": "query",
             "name": "cursor",

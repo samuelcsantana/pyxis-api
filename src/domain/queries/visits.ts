@@ -12,9 +12,25 @@ export interface VisitRouteFilter {
   readonly route: string;
 }
 
-export type VisitFilters = ReportFilters & { readonly route: VisitRouteFilter | null };
+export const VISITOR_SPANS = ['day', 'month', 'new'] as const;
+export type VisitorSpan = (typeof VISITOR_SPANS)[number];
 
-export const NO_VISIT_FILTERS: VisitFilters = { ...NO_REPORT_FILTERS, route: null };
+export const KINDS_OF_SPAN: Readonly<Record<VisitorSpan, readonly VisitorKind[]>> = {
+  day: ['first_visit', 'first_this_month', 'first_today'],
+  month: ['first_visit', 'first_this_month'],
+  new: ['first_visit'],
+};
+
+export type VisitFilters = ReportFilters & {
+  readonly route: VisitRouteFilter | null;
+  readonly visitors: VisitorSpan | null;
+};
+
+export const NO_VISIT_FILTERS: VisitFilters = {
+  ...NO_REPORT_FILTERS,
+  route: null,
+  visitors: null,
+};
 
 export interface VisitCursor {
   readonly startedAt: Date;
@@ -79,3 +95,5 @@ export function visitsPage(matches: VisitMatches, pageSize: number): VisitsRepor
 export function withoutVisitorKinds(report: VisitsReport): VisitsReport {
   return { ...report, visits: report.visits.map((visit) => ({ ...visit, visitor: null })) };
 }
+
+export const NO_MATCHING_VISITS: VisitsReport = { visits: [], nextCursor: null, total: 0 };
