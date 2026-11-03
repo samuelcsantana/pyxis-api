@@ -29,7 +29,10 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   off the field is dropped silently and the event kept
   ([ADR 0055](adr/0055-unique-visitors-without-an-identifier.md))
 - A server-side barrier that drops any property or campaign value that looks like an email, a
-  phone number or a tax id, and re-templates paths
+  phone number or a tax id, and re-templates paths and `api_request` routes after cutting them at
+  the first `?` or `#`, so a query string or a fragment sent straight to the API (a token, a
+  coupon, an implicit-flow `access_token`) is never stored; campaign tags arrive in their own
+  field
 - Device, browser, operating system, channel, country and region derived on the server; the user
   agent and the address are read, classified and discarded, and the city is read only for a
   project that turns it on ([ADR 0054](adr/0054-city-as-a-per-project-option.md))

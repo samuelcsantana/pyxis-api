@@ -62,8 +62,8 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   origin allowlist. Invalid events are refused one by one, a resent event is stored once, and bots
   and traffic from cloud data centers are refused.
 - **Privacy on the server.** Values that look like an email, a phone number or a tax id are
-  dropped and paths re-templated; device, browser, country and region are derived, then the user
-  agent and the address are discarded.
+  dropped and paths re-templated without their query string; device, browser, country and region
+  are derived, then the user agent and the address are discarded.
 - **Unique visitors without an identifier.** A per-project option, off by default: the browser
   keeps only when the site's day and month end and labels each visit's first event, and the
   Overview counts them per day and per calendar month.
