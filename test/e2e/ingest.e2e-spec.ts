@@ -229,6 +229,15 @@ describe('POST /v1/batch', () => {
     expect(stored).not.toContain('203.0.113.99');
   });
 
+  it('stores the path without the query string and the fragment sent straight to the API', async () => {
+    await send({ body: batch([event(121, { path: '/checkout?coupon=SPRING&token=abc#top' })]) });
+
+    const [row] = await owner<{ path: string }[]>`
+      SELECT path FROM events WHERE project_id = ${SHOP_ID} AND id = ${String(event(121).id)}
+    `;
+    expect(row).toEqual({ path: '/checkout' });
+  });
+
   it('stores the country and the region from CloudFront, and no city while the project has it off', async () => {
     await send({
       body: batch([event(52)]),

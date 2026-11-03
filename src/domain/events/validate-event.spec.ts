@@ -388,6 +388,20 @@ describe('validateIncomingEvent', () => {
       );
     });
 
+    it('drops the query string and the fragment of the path and of an api_request route', () => {
+      const page = accepted(
+        validateIncomingEvent(incoming({ path: '/checkout?coupon=SPRING&token=abc#top' })),
+      );
+      const request = accepted(
+        validateIncomingEvent(
+          apiRequest({ ...VALID_API_REQUEST, route: '/orders/42?expand=items#total' }),
+        ),
+      );
+
+      expect(page.event.path).toBe('/checkout');
+      expect(request.event.properties.route).toBe('/orders/:id');
+    });
+
     it('rejects a path that grows past 256 characters once templated', () => {
       expect(validateIncomingEvent(incoming({ path: '/1'.repeat(128) }))).toEqual({
         ok: false,

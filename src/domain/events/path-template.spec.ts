@@ -19,6 +19,13 @@ const PATH_TEMPLATE_CASES: readonly (readonly [string, string])[] = [
   ['/blog/2026/black-friday', '/blog/:id/black-friday'],
   ['/v2/plans', '/v2/plans'],
   ['/orders/:id', '/orders/:id'],
+  ['/checkout?coupon=SPRING&token=abc', '/checkout'],
+  ['/orders/42?tab=items', '/orders/:id'],
+  ['/callback#access_token=abc.def', '/callback'],
+  ['/docs/?section=install#top', '/docs'],
+  ['/search?q=a/b/1234567890', '/search'],
+  ['/?utm_source=newsletter', '/'],
+  ['/#/settings', '/'],
 ];
 
 describe('templatePath', () => {
