@@ -9,6 +9,7 @@ const ROOT = '/';
 const ENCODED_AT_SIGN = '%40';
 const UUID_SHAPE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DIGIT = /\d/;
+const QUERY_OR_FRAGMENT_MARK = /[?#]/;
 
 function digitCount(segment: string): number {
   return Array.from(segment).filter((character) => DIGIT.test(character)).length;
@@ -33,7 +34,7 @@ const identifierSegment = fc
     shortEmailAddress(MAX_EMAIL_LENGTH),
     shortEmailAddress(MAX_EMAIL_LENGTH).map((address) => address.replaceAll('@', ENCODED_AT_SIGN)),
   )
-  .filter((segment) => !segment.includes(ROOT));
+  .filter((segment) => !segment.includes(ROOT) && !QUERY_OR_FRAGMENT_MARK.test(segment));
 
 const anySegment = fc.oneof(fc.webSegment(), fc.string({ unit: 'binary' }), identifierSegment);
 
@@ -80,6 +81,18 @@ describe('templatePath, for any path', () => {
         const templated = templatePath(path);
 
         expect(templated === ROOT || (templated !== '' && !templated.endsWith(ROOT))).toBe(true);
+      }),
+      PROPERTY_PARAMETERS,
+    );
+  });
+
+  it('keeps nothing of a query string or a fragment', () => {
+    fc.assert(
+      fc.property(anyPath, fc.webQueryParameters(), fc.webFragments(), (path, query, fragment) => {
+        const templated = templatePath(`${path}?${query}#${fragment}`);
+
+        expect(QUERY_OR_FRAGMENT_MARK.test(templated)).toBe(false);
+        expect(templated).toBe(templatePath(path.split(QUERY_OR_FRAGMENT_MARK)[0] ?? ''));
       }),
       PROPERTY_PARAMETERS,
     );
