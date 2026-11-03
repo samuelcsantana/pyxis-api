@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CHANNELS } from '../../../domain/entities/tracked-event.entity';
+import { VISITOR_KINDS } from '../../../domain/events/visitor-kind';
 import {
   MAX_VISIT_HIGHLIGHTS,
   VISIT_LIST_PAGE_SIZE,
@@ -61,6 +62,15 @@ export const visitsReportSchema = z
         source: z.string().nullable(),
         campaign: z.string().nullable(),
         user_id: z.string().nullable(),
+        visitor: z
+          .enum(VISITOR_KINDS)
+          .nullable()
+          .describe(
+            'The kind its first marked event carried, null when the project does not count ' +
+              'unique visitors or the visit carried none. first_visit, first_this_month and ' +
+              'first_today count as a unique visitor of the day; first_visit and ' +
+              'first_this_month as one of the month; again_today counts in neither.',
+          ),
       }),
     ),
     next_cursor: z.string().nullable(),

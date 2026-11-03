@@ -258,6 +258,7 @@ function timelineBody(report: TimelineReport, timezone: string): TimelineReportB
       city: visit.city,
       channel: visit.channel,
       user_id: visit.userId,
+      visitor: visit.visitor,
       events: visit.events.map((event) => ({
         id: event.id,
         occurred_at: event.occurredAt.toISOString(),

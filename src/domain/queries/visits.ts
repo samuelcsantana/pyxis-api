@@ -1,5 +1,6 @@
 import type { Channel } from '../entities/tracked-event.entity';
 import type { ApiRequestMethod } from '../events/reserved-event-names';
+import type { VisitorKind } from '../events/visitor-kind';
 import type { QueryScope } from './query-scope';
 import { NO_REPORT_FILTERS, type ReportFilters } from './report-filters';
 
@@ -39,6 +40,7 @@ export interface VisitListItem {
   readonly source: string | null;
   readonly campaign: string | null;
   readonly userId: string | null;
+  readonly visitor: VisitorKind | null;
 }
 
 export interface VisitMatches {
@@ -72,4 +74,8 @@ export function visitsPage(matches: VisitMatches, pageSize: number): VisitsRepor
       last === undefined ? null : { startedAt: last.startedAt, sessionId: last.sessionId },
     total: matches.total,
   };
+}
+
+export function withoutVisitorKinds(report: VisitsReport): VisitsReport {
+  return { ...report, visits: report.visits.map((visit) => ({ ...visit, visitor: null })) };
 }

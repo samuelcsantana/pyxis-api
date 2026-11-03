@@ -213,6 +213,7 @@ const TIMELINE: TimelineReport = {
       city: 'Campinas',
       channel: 'paid',
       userId: 'ana',
+      visitor: 'again_today',
       events: [
         {
           id: '9f1c2b3a-1d2e-4f5a-8b6c-000000000001',
@@ -681,6 +682,7 @@ describe('QueriesController', () => {
           city: 'Campinas',
           channel: 'paid',
           user_id: 'ana',
+          visitor: 'again_today',
           events: [
             {
               id: '9f1c2b3a-1d2e-4f5a-8b6c-000000000001',

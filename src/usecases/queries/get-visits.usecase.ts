@@ -9,6 +9,7 @@ import {
   type VisitsQuery,
   type VisitsReport,
   visitsPage,
+  withoutVisitorKinds,
 } from '../../domain/queries/visits';
 import { type RequestedRange, scopedPeriods } from './scoped-periods';
 
@@ -28,6 +29,7 @@ export class GetVisitsUseCase {
     const period = { from: requested.from, to: requested.to };
     const { current } = scopedPeriods(project, period, this.clock.now());
     const matches = await this.query.list(current, filters, after, VISIT_LIST_PAGE_SIZE + 1);
-    return visitsPage(matches, VISIT_LIST_PAGE_SIZE);
+    const report = visitsPage(matches, VISIT_LIST_PAGE_SIZE);
+    return project.visitorsEnabled ? report : withoutVisitorKinds(report);
   }
 }

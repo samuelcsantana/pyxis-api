@@ -50,6 +50,7 @@ function visitsBody(report: VisitsReport, timezone: string): VisitsReportBody {
       source: visit.source,
       campaign: visit.campaign,
       user_id: visit.userId,
+      visitor: visit.visitor,
     })),
     next_cursor: report.nextCursor === null ? null : visitCursorText(report.nextCursor),
     total: report.total,

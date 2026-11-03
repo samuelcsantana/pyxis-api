@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { inArray, type SQL, sql } from 'drizzle-orm';
 import type { Channel, PropertyMap } from '../../domain/entities/tracked-event.entity';
+import type { VisitorKind } from '../../domain/events/visitor-kind';
 import type {
   TimelineEvent,
   TimelineQuery,
@@ -39,6 +40,7 @@ interface VisitRow {
   readonly city: string | null;
   readonly channel: Channel | null;
   readonly userId: string | null;
+  readonly visitor: VisitorKind | null;
 }
 
 interface EventRow {
@@ -72,7 +74,8 @@ export class DrizzleTimelineQuery implements TimelineQuery {
           ${events.os} AS "os", ${events.country} AS "country", ${events.region} AS "region",
           ${events.regionName} AS "regionName", ${events.city} AS "city",
           ${events.channel} AS "channel",
-          ${events.userId} AS "userId"
+          ${events.userId} AS "userId",
+          ${events.visitor} AS "visitor"
         FROM ${events}
         WHERE ${events.projectId} = ${projectId}
           AND ${events.sessionId} IN (SELECT "sessionId" FROM subject_sessions)
@@ -87,12 +90,15 @@ export class DrizzleTimelineQuery implements TimelineQuery {
             ORDER BY entry."occurredAt" LIMIT 1) AS "channel",
           (SELECT entry."userId" FROM session_events AS entry
             WHERE entry."sessionId" = session_events."sessionId" AND entry."userId" IS NOT NULL
-            ORDER BY entry."occurredAt" LIMIT 1) AS "userId"
+            ORDER BY entry."occurredAt" LIMIT 1) AS "userId",
+          (SELECT entry."visitor" FROM session_events AS entry
+            WHERE entry."sessionId" = session_events."sessionId" AND entry."visitor" IS NOT NULL
+            ORDER BY entry."occurredAt" LIMIT 1) AS "visitor"
         FROM session_events
         ORDER BY "sessionId", "occurredAt"
       )
       SELECT "sessionId", "deviceType", "browser", "os", "country", "region", "regionName",
-        "city", "channel", "userId",
+        "city", "channel", "userId", "visitor",
         ${isoUtc(sql`"startedAtValue"`)} AS "startedAt",
         ${isoUtc(sql`"endedAtValue"`)} AS "endedAt"
       FROM visits

@@ -59,8 +59,12 @@ const SEEDED: readonly TrackedEvent[] = [
   }),
   event(ANONYMOUS_VISIT, '2026-10-04T12:03:00.000Z', 'calculator_used', {
     properties: { plan: 'mei' },
+    visitor: 'first_today',
   }),
-  event(ANONYMOUS_VISIT, '2026-10-04T12:05:00.000Z', 'signup_completed', { path: '/signup' }),
+  event(ANONYMOUS_VISIT, '2026-10-04T12:05:00.000Z', 'signup_completed', {
+    path: '/signup',
+    visitor: 'again_today',
+  }),
   event(ANONYMOUS_VISIT, '2026-10-04T12:05:01.000Z', 'identify', { userId: 'ana' }),
   event(NEXT_DAY_VISIT, '2026-10-05T09:00:00.000Z', 'page_view', {
     path: '/app',
@@ -117,6 +121,7 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
         city: null,
         channel: null,
         userId: 'ana',
+        visitor: null,
       },
       {
         sessionId: ANONYMOUS_VISIT,
@@ -131,6 +136,7 @@ describe('DrizzleTimelineQuery against a real Postgres', () => {
         city: 'Campinas',
         channel: 'paid',
         userId: 'ana',
+        visitor: 'first_today',
       },
     ]);
   });
