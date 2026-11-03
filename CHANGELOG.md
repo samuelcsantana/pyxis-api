@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.43.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.42.2...v0.43.0) (2026-11-03)
+
+
+### Features
+
+* **queries:** carry each visit's visitor kind on visits and the timeline ([d9d257f](https://github.com/samuelcsantana/pyxis-api/commit/d9d257f784f7488ae3ae89695e59ba61e8fb67cd))
+* **queries:** filter the visits by the unique visitors they counted as ([2ec2b4a](https://github.com/samuelcsantana/pyxis-api/commit/2ec2b4a72696de7d261ae3efc9116cca59ffb838))
+
+
+### Documentation
+
+* **features:** the unique visitors filter of the visits list ([65aeb13](https://github.com/samuelcsantana/pyxis-api/commit/65aeb1393c97e4cb1838d56b8327f6e71b73c835))
+* **features:** the visitor kind on visits and the timeline ([ffdba30](https://github.com/samuelcsantana/pyxis-api/commit/ffdba3012ae0d7974d0b518905477360c9592a1e))
+
 ## [0.42.2](https://github.com/samuelcsantana/pyxis-api/compare/v0.42.1...v0.42.2) (2026-11-03)
 
 
