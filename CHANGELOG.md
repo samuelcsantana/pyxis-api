@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.42.2](https://github.com/samuelcsantana/pyxis-api/compare/v0.42.1...v0.42.2) (2026-11-03)
+
+
+### Bug Fixes
+
+* **ingest:** cut the query string and the fragment off paths and routes ([cfc8e01](https://github.com/samuelcsantana/pyxis-api/commit/cfc8e01f9c21aa37c4cc5533039b63babb397f4c))
+* **ingest:** store only the visible text of free-text fields ([ace231f](https://github.com/samuelcsantana/pyxis-api/commit/ace231f02e327eec470626989171a15adfe274ec))
+* **logging:** log a failed database query by its code, never its values ([7da4e58](https://github.com/samuelcsantana/pyxis-api/commit/7da4e58d36b01536a82f0e7d4668a4cb625825ba))
+
+
+### Documentation
+
+* **adr:** record why ingestion stores only visible text ([7fe9233](https://github.com/samuelcsantana/pyxis-api/commit/7fe92330752fb025bc920816e77f30e466fae4dd))
+* **openapi:** say which characters ingestion removes from an event ([53a8405](https://github.com/samuelcsantana/pyxis-api/commit/53a8405d80157f60b1c519e82d7eef364626a120))
+* say that the server cuts the query string off paths ([982ac86](https://github.com/samuelcsantana/pyxis-api/commit/982ac861638d82700bd82d997a8277afbfb98407))
+
 ## [0.42.1](https://github.com/samuelcsantana/pyxis-api/compare/v0.42.0...v0.42.1) (2026-11-03)
 
 
