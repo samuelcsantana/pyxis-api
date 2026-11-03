@@ -100,10 +100,12 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   it, newest first with a cursor) and
   `/timeline?user_id=|session_id=` (the visits of a person, the anonymous one they identified in
   included, or of one visit, newest first, 20 per page, with every event and the first id the
-  visit was identified with, so a visit opened by its id leads to its person) and
+  visit was identified with, so a visit opened by its id leads to its person, and the kind of
+  unique visitor it was) and
   `/visits` (the visits of the range, newest first, 50 per page with a cursor, each with its
-  entry page, page views, first named events, failed requests and the source and campaign it
-  came from, plus the total of matching visits; filtered by up to three pages it viewed, a star
+  entry page, page views, first named events, failed requests, the source and campaign it
+  came from and its `visitor` kind (the one the Overview counts it by, null when the project does
+  not count unique visitors), plus the total of matching visits; filtered by up to three pages it viewed, a star
   matching any characters, a named event with an optional property value, channel, device,
   browser, system, country, region, city (by its exact name, sent with its region), source,
   campaign, whether it was identified, a request route
