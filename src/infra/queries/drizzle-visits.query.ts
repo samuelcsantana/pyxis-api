@@ -5,6 +5,7 @@ import type { VisitorKind } from '../../domain/events/visitor-kind';
 import { API_REQUEST } from '../../domain/events/reserved-event-names';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import {
+  KINDS_OF_SPAN,
   MAX_VISIT_HIGHLIGHTS,
   type VisitCursor,
   type VisitFilters,
@@ -51,11 +52,22 @@ function routeConditions(filters: VisitFilters): readonly SQL[] {
   ];
 }
 
+const firstVisitorKind = firstOf(sql`${events.visitor}`, sql`${events.visitor} IS NOT NULL`);
+
+function visitorConditions(filters: VisitFilters): readonly SQL[] {
+  if (filters.visitors === null) {
+    return [];
+  }
+  const kinds = KINDS_OF_SPAN[filters.visitors].map((kind) => sql`${kind}`);
+  return [sql`${firstVisitorKind} IN (${sql.join(kinds, sql`, `)})`];
+}
+
 function matchConditions(filters: VisitFilters): readonly SQL[] {
   const failedAnywhere = filters.failed && filters.route === null;
   return [
     ...reportFilterConditions({ ...filters, failed: failedAnywhere }),
     ...routeConditions(filters),
+    ...visitorConditions(filters),
   ];
 }
 
@@ -148,7 +160,7 @@ export class DrizzleVisitsQuery implements VisitsQuery {
           ${firstOf(entrySource, isEntryPageView)} AS "source",
           ${firstOf(sql`${events.utmCampaign}`, isEntryPageView)} AS "campaign",
           ${firstOf(sql`${events.userId}`, sql`${events.userId} IS NOT NULL`)} AS "userId",
-          ${firstOf(sql`${events.visitor}`, sql`${events.visitor} IS NOT NULL`)} AS "visitor"
+          ${firstVisitorKind} AS "visitor"
         FROM ${events}
         WHERE ${inScope(scope)}
         GROUP BY ${events.sessionId}

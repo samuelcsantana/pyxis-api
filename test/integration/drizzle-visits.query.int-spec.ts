@@ -71,10 +71,12 @@ const SEEDED: readonly TrackedEvent[] = [
       utmCampaign: 'spring_sale',
       fromAdClick: true,
     },
+    visitor: 'again_today',
   }),
   event(1, '2026-10-05T10:01:00.000Z', 'calculator_result_shown', {
     path: '/calculadora-taxa-ifood',
     properties: { calculator: 'ifood' },
+    visitor: 'first_today',
   }),
   event(1, '2026-10-05T10:03:00.000Z', 'page_view', { path: '/calculadora-taxa-99food' }),
   event(1, '2026-10-05T10:04:00.000Z', 'calculator_result_shown', {
@@ -130,11 +132,13 @@ const SEEDED: readonly TrackedEvent[] = [
     region: 'PT-11',
     regionName: 'Lisboa',
     city: 'Lisboa',
+    visitor: 'first_today',
   }),
   event(7, '2026-10-05T01:00:00.000Z', 'page_view', {
     path: '/inicio',
     channel: 'referral',
     attribution: { ...NO_ATTRIBUTION, referrerHost: 'news.example.com' },
+    visitor: 'first_this_month',
   }),
   event(8, '2026-10-03T12:00:00.000Z', 'page_view', { path: '/checkout' }),
   event(8, '2026-10-03T12:01:00.000Z', 'api_request', {
@@ -234,7 +238,7 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       source: 'google',
       campaign: 'spring_sale',
       userId: null,
-      visitor: null,
+      visitor: 'again_today',
     });
     expect(visits[1]).toMatchObject({
       highlights: ['calculator_result_shown', 'signup_completed'],
@@ -254,6 +258,15 @@ describe('DrizzleVisitsQuery against a real Postgres', () => {
       city: 'Lisboa',
     });
     expect(visits[4]).toMatchObject({ source: '(direct)', campaign: null });
+  });
+
+  it('keeps the visits that counted as unique visitors of the day, of the month, or new', async () => {
+    expect(await sessions({ visitors: 'day' })).toEqual([visitId(2), visitId(7), visitId(4)]);
+    expect(await sessions({ visitors: 'month' })).toEqual([visitId(2), visitId(7)]);
+    expect(await sessions({ visitors: 'new' })).toEqual([visitId(2)]);
+    expect(
+      (await query.list(SCOPE, { ...NO_VISIT_FILTERS, visitors: 'day' }, null, ALL)).total,
+    ).toBe(3);
   });
 
   it('never lists a visit of another project', async () => {

@@ -8,7 +8,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import type { VisitFilters, VisitsReport } from '../../../domain/queries/visits';
+import {
+  VISITOR_SPANS,
+  type VisitFilters,
+  type VisitsReport,
+} from '../../../domain/queries/visits';
 import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -26,7 +30,11 @@ import {
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
 function visitFilters(query: VisitsQueryParams): VisitFilters {
-  return { ...reportFiltersOf(query), route: query.route ?? null };
+  return {
+    ...reportFiltersOf(query),
+    route: query.route ?? null,
+    visitors: query.visitors ?? null,
+  };
 }
 
 function visitsBody(report: VisitsReport, timezone: string): VisitsReportBody {
@@ -94,6 +102,17 @@ export class VisitsController {
       'Only the visits that made this request, as method and route: POST /orders/:id; with ' +
       'failed=true, only those where a call to it failed',
     schema: { type: 'string' },
+  })
+  @ApiQuery({
+    name: 'visitors',
+    required: false,
+    description:
+      'Only the visits that counted as unique visitors, by the visitor kind of each: day keeps ' +
+      'first_visit, first_this_month and first_today (each browser once per day, so total is ' +
+      'the unique visitors of the day, or the sum of the days of a longer range), month keeps ' +
+      'first_visit and first_this_month (once per calendar month), new keeps first_visit. ' +
+      'Matches nothing when the project does not count unique visitors',
+    schema: { type: 'string', enum: [...VISITOR_SPANS] },
   })
   @ApiQuery({
     name: 'cursor',
