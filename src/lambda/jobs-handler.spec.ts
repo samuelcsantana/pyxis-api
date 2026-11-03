@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import { DrizzleQueryError } from 'drizzle-orm';
 import {
   createJobsHandler,
   DAILY_JOB,
@@ -206,6 +207,28 @@ describe('createJobsHandler', () => {
     expect(error).toHaveBeenCalledWith({
       message: 'jobs.demo_traffic_failed',
       reason: 'insert timed out',
+    });
+    error.mockRestore();
+  });
+
+  it('logs a demo traffic insert that failed by its database code, not the values it sent', async () => {
+    const error = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const cause = Object.assign(new Error('canceling statement due to statement timeout'), {
+      code: '57014',
+    });
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      generateDemoTraffic: () =>
+        Promise.reject(
+          new DrizzleQueryError('insert into "events" ("path") values ($1)', ['/pricing'], cause),
+        ),
+    });
+
+    await handler();
+
+    expect(error).toHaveBeenCalledWith({
+      message: 'jobs.demo_traffic_failed',
+      reason: 'database query failed (57014)',
     });
     error.mockRestore();
   });

@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { OAuthProtocolError } from '../../../domain/errors/oauth.errors';
+import { describeError } from '../../logging/describe-error';
 import { toErrorAnswer } from '../errors/error-answer';
 
 export interface OAuthErrorBody {
@@ -75,7 +76,7 @@ export class OAuthErrorFilter implements ExceptionFilter {
       this.logger.error({
         message: 'http.unhandled_error',
         requestId: http.getRequest<FastifyRequest>().requestId,
-        error: exception instanceof Error ? exception.message : String(exception),
+        error: describeError(exception),
       });
     }
     void reply.status(answer.status).headers(answer.headers).send(answer.body);

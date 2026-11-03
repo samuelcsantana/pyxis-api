@@ -1,5 +1,6 @@
 import { type ArgumentsHost, Catch, type ExceptionFilter, Logger } from '@nestjs/common';
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { describeError } from '../../logging/describe-error';
 import { toErrorAnswer } from './error-answer';
 
 @Catch()
@@ -15,7 +16,7 @@ export class HttpErrorFilter implements ExceptionFilter {
       this.logger.error({
         message: 'http.unhandled_error',
         requestId: request.requestId,
-        error: exception instanceof Error ? exception.message : String(exception),
+        error: describeError(exception),
       });
     }
     void reply.status(body.status_code).headers(headers).send(body);

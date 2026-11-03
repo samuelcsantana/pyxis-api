@@ -2,6 +2,7 @@ import type { OperatorNoticesReport } from '../usecases/notices/send-operator-no
 import { Logger } from '@nestjs/common';
 import type { DatabaseSizeReport } from '../domain/monitoring/database-size';
 import { EXPORT_JOB } from '../infra/exports/lambda-export-dispatcher';
+import { describeError } from '../infra/logging/describe-error';
 import type { AccountUsageReport } from '../usecases/accounts/measure-account-usage.usecase';
 import type { AccountLifecycleReport } from '../usecases/accounts/run-account-lifecycle.usecase';
 import type { DemoTrafficReport } from '../usecases/demo-traffic/generate-demo-traffic.usecase';
@@ -87,7 +88,7 @@ async function bestEffortRefreshProjectIcons(
   } catch (error) {
     logger.error({
       message: 'jobs.project_icons_failed',
-      reason: error instanceof Error ? error.message : String(error),
+      reason: describeError(error),
     });
     return null;
   }
@@ -101,7 +102,7 @@ async function bestEffortGenerateDemoTraffic(
   } catch (error) {
     logger.error({
       message: 'jobs.demo_traffic_failed',
-      reason: error instanceof Error ? error.message : String(error),
+      reason: describeError(error),
     });
     return null;
   }
