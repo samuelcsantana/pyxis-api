@@ -110,8 +110,10 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   browser, system, country, region, city (by its exact name, sent with its region), source,
   campaign, whether it was identified, a request route
   (`POST /orders/:id`) and
-  whether a request, or a request to that route, failed; a visit is one browser tab, and nothing
-  links two of them) and
+  whether a request, or a request to that route, failed, and `visitors=day|month|new` to keep
+  only the visits that counted as unique visitors (each browser once per day or per calendar
+  month, or only new ones, so the total matches the Overview; nothing for a project that does
+  not count them); a visit is one browser tab, and nothing links two of them) and
   `/settings` (read-only: time zone, conversion event, allowed origins, first and latest event,
   how many months events are kept, the live public keys, and when each live secret key was
   created; a secret key never leaves the API, not even as its hash) and
