@@ -50,6 +50,10 @@ const MAX_DOCUMENT_DIGITS = 14;
 const MAX_PATH_SEGMENTS = 6;
 const LONG_NUMBER_TEXT = /^\d{10,20}$/;
 const MIN_ACCEPTED_SHARE = 0.5;
+const HIDDEN_CHARACTERS = ['\u0000', '\u0085', '­', '​', '‮', '⁨', '﻿'];
+const TAG_LETTER_A = '\u{E0041}';
+const LONE_SURROGATE = '\ud800';
+const HIDDEN_CHARACTER = /(?![\t\n\r‌‍])[\p{Cc}\p{Cf}\p{Cs}]/u;
 
 interface SentEvent {
   readonly name: string;
@@ -61,6 +65,8 @@ interface SentEvent {
   readonly properties?: Record<string, unknown>;
 }
 
+const hiddenCharacter = fc.constantFrom(...HIDDEN_CHARACTERS, TAG_LETTER_A, LONE_SURROGATE);
+
 function personalText(maxLength: number): fc.Arbitrary<string> {
   return fc.oneof(
     shortEmailAddress(maxLength),
@@ -71,6 +77,7 @@ function personalText(maxLength: number): fc.Arbitrary<string> {
 function freeText(maxLength: number): fc.Arbitrary<string> {
   return fc.oneof(
     fc.string({ unit: 'binary', minLength: 1, maxLength }),
+    fc.string({ unit: hiddenCharacter, minLength: 1, maxLength }),
     personalText(maxLength),
     fc.uuid(),
   );
@@ -78,6 +85,7 @@ function freeText(maxLength: number): fc.Arbitrary<string> {
 
 const pathSegment = fc.oneof(
   fc.webSegment(),
+  fc.tuple(hiddenCharacter, fc.webSegment()).map(([hidden, segment]) => `${hidden}${segment}`),
   fc.uuid(),
   fc.stringMatching(/^\d{1,14}$/),
   shortEmailAddress(MAX_ROUTE_LENGTH),
@@ -300,6 +308,26 @@ describe('validateIncomingEvent, for any input', () => {
         incomingEvent,
         acceptedOnly((event, sent) => {
           expect(event.visitor).toBe(sent.visitor ?? null);
+        }),
+      ),
+      PROPERTY_PARAMETERS,
+    );
+  });
+
+  it('keeps no hidden character in the path, a property or a campaign tag', () => {
+    fc.assert(
+      fc.property(
+        incomingEvent,
+        acceptedOnly((event) => {
+          const texts = [
+            event.path,
+            ...Object.values(event.properties),
+            event.attribution?.utmSource,
+            event.attribution?.utmMedium,
+            event.attribution?.utmCampaign,
+          ].filter((value): value is string => typeof value === 'string');
+
+          expect(texts.filter((text) => HIDDEN_CHARACTER.test(text))).toEqual([]);
         }),
       ),
       PROPERTY_PARAMETERS,

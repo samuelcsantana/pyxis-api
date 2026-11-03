@@ -304,6 +304,81 @@ describe('validateIncomingEvent', () => {
       });
       expect(result.dropped).toEqual([{ field: 'utm.campaign', reason: 'email' }]);
     });
+
+    it('drops a phone number split by invisible characters, judged once they are gone', () => {
+      const result = accepted(
+        validateIncomingEvent(incoming({ properties: { phone: '11​98765​4321' } })),
+      );
+
+      expect(result.event.properties).toEqual({});
+      expect(result.dropped).toEqual([{ field: 'properties.phone', reason: 'long_number' }]);
+    });
+  });
+
+  describe('hidden characters', () => {
+    it('removes them from a text property and keeps what is visible', () => {
+      const result = accepted(
+        validateIncomingEvent(
+          incoming({
+            properties: {
+              plan: 'pro\u0000\u{E0049}\u{E0047}\u{E004E}',
+              label: '⁨Sign up⁩',
+              team: '\u{1F468}‍\u{1F469}‍\u{1F467}',
+              blank: '​',
+              seats: 3,
+              trial: true,
+            },
+          }),
+        ),
+      );
+
+      expect(result.event.properties).toEqual({
+        plan: 'pro',
+        label: 'Sign up',
+        team: '\u{1F468}‍\u{1F469}‍\u{1F467}',
+        blank: '',
+        seats: 3,
+        trial: true,
+      });
+      expect(result.dropped).toEqual([]);
+    });
+
+    it('removes them from the path before templating it', () => {
+      expect(
+        accepted(validateIncomingEvent(incoming({ path: '/orders/​1234\u0000/' }))).event.path,
+      ).toBe('/orders/:id');
+    });
+
+    it('removes them from the route of an api_request before templating it', () => {
+      const result = accepted(
+        validateIncomingEvent(apiRequest({ ...VALID_API_REQUEST, route: '/orders/12‮34' })),
+      );
+
+      expect(result.event.properties.route).toBe('/orders/:id');
+    });
+
+    it('removes them from a campaign tag, and drops a tag left with no visible text', () => {
+      const result = accepted(
+        validateIncomingEvent(
+          incoming({
+            name: 'page_view',
+            attribution: {
+              utm: { source: 'news­letter', medium: '​​', campaign: 'spring' },
+              from_ad_click: false,
+            },
+          }),
+        ),
+      );
+
+      expect(result.event.attribution).toEqual({
+        referrerHost: null,
+        utmSource: 'newsletter',
+        utmMedium: null,
+        utmCampaign: 'spring',
+        fromAdClick: false,
+      });
+      expect(result.dropped).toEqual([{ field: 'utm.medium', reason: 'no_visible_text' }]);
+    });
   });
 
   describe('normalization', () => {

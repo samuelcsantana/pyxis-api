@@ -143,6 +143,32 @@ describe('POST /v1/batch', () => {
     expect(response.json()).toEqual({ accepted: 2, duplicates: 0, rejected: 1 });
   });
 
+  it('stores a batch whose texts carry characters Postgres cannot hold, without them', async () => {
+    const custom = { name: 'plan_selected' };
+    const response = await send({
+      body: batch([
+        event(111, { ...custom, properties: { plan: 'pro\u0000' } }),
+        event(112, { ...custom, properties: { plan: 'pro\ud800' } }),
+        event(113, { path: '/pricing\u0000' }),
+        event(114),
+      ]),
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toEqual({ accepted: 4, duplicates: 0, rejected: 0 });
+    const stored = await owner<{ path: string; properties: Record<string, unknown> }[]>`
+      SELECT path, properties FROM events
+      WHERE project_id = ${SHOP_ID}
+        AND id IN (${String(event(111).id)}, ${String(event(112).id)}, ${String(event(113).id)})
+      ORDER BY id
+    `;
+    expect(stored).toEqual([
+      { path: '/pricing', properties: { plan: 'pro' } },
+      { path: '/pricing', properties: { plan: 'pro' } },
+      { path: '/pricing', properties: {} },
+    ]);
+  });
+
   it('rejects every event of a bot', async () => {
     const response = await send({
       body: batch([event(41), event(42)]),

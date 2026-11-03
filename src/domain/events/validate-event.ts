@@ -10,13 +10,16 @@ import {
 import { templatePath } from './path-template';
 import { looksPersonal, type PiiReason } from './pii-barrier';
 import { API_REQUEST, IDENTIFY, PAGE_VIEW } from './reserved-event-names';
+import { visibleText } from './visible-text';
 import type { VisitorKind } from './visitor-kind';
 
 export type EventRejectionReason = 'invalid_schema' | 'reserved_rules' | 'pii_user_id';
 
+export type DropReason = PiiReason | 'no_visible_text';
+
 export interface DroppedField {
   readonly field: string;
-  readonly reason: PiiReason;
+  readonly reason: DropReason;
 }
 
 export interface AcceptedEvent {
@@ -43,6 +46,7 @@ interface Screened<T> {
 const NO_PROPERTIES: Screened<PropertyMap> = { value: {}, dropped: [] };
 const WWW_PREFIX = /^www\./;
 const ERROR_CODE_FIELD = 'properties.error_code';
+const NO_VISIBLE_TEXT: DropReason = 'no_visible_text';
 
 function reject(reason: EventRejectionReason): EventValidation {
   return { ok: false, reason };
@@ -51,7 +55,8 @@ function reject(reason: EventRejectionReason): EventValidation {
 function screenGenericProperties(properties: EventProperties | undefined): Screened<PropertyMap> {
   const kept: Record<string, PropertyValue> = {};
   const dropped: DroppedField[] = [];
-  for (const [key, value] of Object.entries(properties ?? {})) {
+  for (const [key, sent] of Object.entries(properties ?? {})) {
+    const value = typeof sent === 'string' ? visibleText(sent) : sent;
     const reason = typeof value === 'boolean' ? null : looksPersonal(value);
     if (reason === null) {
       kept[key] = value;
@@ -69,7 +74,7 @@ function screenApiRequestProperties(
   if (!parsed.success) {
     return 'reserved_rules';
   }
-  const route = templatePath(parsed.data.route);
+  const route = templatePath(visibleText(parsed.data.route));
   if (route.length > MAX_ROUTE_LENGTH) {
     return 'invalid_schema';
   }
@@ -109,11 +114,12 @@ function screenAttribution(
   }
   const dropped: DroppedField[] = [];
   const screenUtm = (field: 'source' | 'medium' | 'campaign'): string | null => {
-    const value = attribution.utm?.[field];
-    if (value === undefined) {
+    const sent = attribution.utm?.[field];
+    if (sent === undefined) {
       return null;
     }
-    const reason = looksPersonal(value);
+    const value = visibleText(sent);
+    const reason = value === '' ? NO_VISIBLE_TEXT : looksPersonal(value);
     if (reason === null) {
       return value;
     }
@@ -143,7 +149,7 @@ export function validateIncomingEvent(input: unknown): EventValidation {
   if (event.user_id !== undefined && looksPersonal(event.user_id) !== null) {
     return reject('pii_user_id');
   }
-  const path = templatePath(event.path);
+  const path = templatePath(visibleText(event.path));
   if (path.length > MAX_PATH_LENGTH) {
     return reject('invalid_schema');
   }
