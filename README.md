@@ -428,6 +428,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0054](docs/adr/0054-city-as-a-per-project-option.md)                                 | The city as a per-project option, off by default                           |
 | [0055](docs/adr/0055-unique-visitors-without-an-identifier.md)                        | Unique visitors without an identifier                                      |
 | [0056](docs/adr/0056-ingestion-stores-only-visible-text.md)                           | Ingestion stores only visible text                                         |
+| [0057](docs/adr/0057-pro-features-are-gated-by-the-account-status.md)                 | Pro features are gated by the account status                               |
 
 ## Roadmap
 
