@@ -119,3 +119,11 @@ export class WithdrawalWindowClosedError extends DomainError {
     super('The 7 days to withdraw from the first payment of this subscription are over.');
   }
 }
+
+export class PlanRequiredError extends DomainError {
+  readonly code = 'plan_required';
+
+  constructor(readonly feature: string) {
+    super(`This feature (${feature}) is on the Pro plan: subscribe to use it.`);
+  }
+}
