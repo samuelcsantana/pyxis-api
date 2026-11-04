@@ -209,12 +209,19 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   ([ADR 0036](adr/0036-a-larger-plan-is-limits-on-the-account.md))
 - A free plan, named Hobby to customers (the paid one is Pro) in every e-mail and in all seven
   languages, as the account status `free`: 10,000 events a month, 1 project and 1 person, the
-  owner alone, with every feature; it has access and no subscription, its owner gets the notices
+  owner alone, with every analytics feature; it has access and no subscription, its owner gets the notices
   sent to every owner, the operator's limits still apply on top, and its measuring pauses at
   100% of the month instead of 150%: its notices are the 80% warning and the pause, which speak
   of the free plan's limit and link to subscribing in Account and billing. `GET /v1/me/accounts`
   answers `pause_at_events`, so the dashboard never copies the ratio
   ([ADR 0048](adr/0048-a-free-plan-is-a-status-with-its-own-limits.md))
+- Pro-only features: one rule, read on each use from the account status, decides whether a
+  project's account may use an integration kept for the paid plan (a public share link, Slack
+  alerts, annotations by token, the GA4 import, Search Console); `trialing`, `active`, `past_due`,
+  `ending` and `comped` may, `free` may not and is answered `403 plan_required` with the feature's
+  name. Nothing is stored, so an account that leaves Pro loses the use and keeps its data; the
+  operator's own projects may use them all
+  ([ADR 0057](adr/0057-pro-features-are-gated-by-the-account-status.md))
 - Sign-up into the free plan, without a card, behind `FREE_PLAN_OPEN`: completing sign-up takes a
   place while the plan holds fewer than `FREE_ACCOUNTS_MAX` accounts (counted under a Postgres
   advisory lock, so two sign-ups never share the last place), and turns an owner's unfinished
