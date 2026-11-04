@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.44.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.43.0...v0.44.0) (2026-11-04)
+
+
+### Features
+
+* **mail:** name the plans Hobby and Pro in every e-mail ([f0ab281](https://github.com/samuelcsantana/pyxis-api/commit/f0ab28137f6ad9f90d98b8c3bef162a52f55bc86))
+
 ## [0.43.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.42.2...v0.43.0) (2026-11-03)
 
 
