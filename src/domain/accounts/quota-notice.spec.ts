@@ -57,45 +57,45 @@ describe('quotaLevelOf on the free plan', () => {
 
 describe('quotaNoticeDue', () => {
   it('owes nothing below 80%, to a comped account, or for a level already told', () => {
-    expect(quotaNoticeDue(usage(79_999), CONTEXT)).toBeNull();
-    expect(quotaNoticeDue(usage(200_000, 'comped'), CONTEXT)).toBeNull();
-    expect(quotaNoticeDue(usage(85_000), { ...CONTEXT, notifiedLevel: 80 })).toBeNull();
-    expect(quotaNoticeDue(usage(85_000), { ...CONTEXT, notifiedLevel: 150 })).toBeNull();
+    expect(quotaNoticeDue(usage(199_999), CONTEXT)).toBeNull();
+    expect(quotaNoticeDue(usage(500_000, 'comped'), CONTEXT)).toBeNull();
+    expect(quotaNoticeDue(usage(212_500), { ...CONTEXT, notifiedLevel: 80 })).toBeNull();
+    expect(quotaNoticeDue(usage(212_500), { ...CONTEXT, notifiedLevel: 150 })).toBeNull();
   });
 
   it('owes the highest level reached, skipping the ones jumped over', () => {
-    expect(quotaNoticeDue(usage(160_000), CONTEXT)).toEqual({
+    expect(quotaNoticeDue(usage(400_000), CONTEXT)).toEqual({
       level: 150,
       notice: {
         kind: 'quota_paused',
         plan: 'paid',
-        events: 160_000,
-        limit: 100_000,
+        events: 400_000,
+        limit: 250_000,
         month: '2026-10',
         measuredAt: CONTEXT.measuredAt,
         resumesAt: CONTEXT.monthEnd,
       },
     });
-    expect(quotaNoticeDue(usage(120_000), { ...CONTEXT, notifiedLevel: 80 })).toMatchObject({
+    expect(quotaNoticeDue(usage(300_000), { ...CONTEXT, notifiedLevel: 80 })).toMatchObject({
       level: 100,
       notice: {
         kind: 'quota_warning',
         plan: 'paid',
         percent: 100,
-        pause: { atEvents: 150_000, until: CONTEXT.monthEnd },
+        pause: { atEvents: 375_000, until: CONTEXT.monthEnd },
       },
     });
   });
 
   it('warns an exempt account at 100% with no word of a pause, even past 150%', () => {
-    const exempt = { ...usage(160_000), pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z') };
+    const exempt = { ...usage(400_000), pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z') };
 
     expect(quotaNoticeDue(exempt, CONTEXT)).toMatchObject({
       level: 100,
       notice: { kind: 'quota_warning', percent: 100, pause: null },
     });
     expect(quotaNoticeDue(exempt, { ...CONTEXT, notifiedLevel: 100 })).toBeNull();
-    expect(quotaNoticeDue({ ...exempt, events: 85_000 }, CONTEXT)).toMatchObject({
+    expect(quotaNoticeDue({ ...exempt, events: 212_500 }, CONTEXT)).toMatchObject({
       level: 80,
       notice: { pause: null },
     });

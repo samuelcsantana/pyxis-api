@@ -5,6 +5,8 @@ import { hashSecretKey } from '../../src/domain/keys/project-keys';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testOwnerUrl } from './test-database';
 
+const PAID_PLAN_PROJECTS = 10;
+
 describe('openCliContext against a real Postgres', () => {
   let owner: postgres.Sql;
 
@@ -73,13 +75,17 @@ describe('openCliContext against a real Postgres', () => {
     }
   });
 
-  it('opens a free account, creates its projects up to the plan limit and shows it', async () => {
+  it("opens a comped account, creates the paid plan's ten projects, refuses an eleventh and shows it", async () => {
     const context = openCliContext({ MIGRATION_DATABASE_URL: testOwnerUrl() });
     try {
       const account = await context.createCompedAccount.execute({
         ownerEmail: 'friend@example.com',
       });
-      for (const name of ['one', 'two', 'three']) {
+      const names = Array.from(
+        { length: PAID_PLAN_PROJECTS },
+        (_, index) => `site-${String(index + 1)}`,
+      );
+      for (const name of names) {
         await context.createProject.execute({
           name,
           allowedOrigins: [`https://${name}.example.com`],
@@ -89,8 +95,8 @@ describe('openCliContext against a real Postgres', () => {
 
       await expect(
         context.createProject.execute({
-          name: 'four',
-          allowedOrigins: ['https://four.example.com'],
+          name: 'one-too-many',
+          allowedOrigins: ['https://one-too-many.example.com'],
           accountId: account.accountId,
         }),
       ).rejects.toMatchObject({ code: 'project_limit_reached' });
@@ -100,7 +106,7 @@ describe('openCliContext against a real Postgres', () => {
         ownerEmail: 'friend@example.com',
         people: 1,
       });
-      expect(summary.projects.map(({ name }) => name)).toEqual(['one', 'two', 'three']);
+      expect(summary.projects.map(({ name }) => name).sort()).toEqual([...names].sort());
     } finally {
       await context.close();
     }

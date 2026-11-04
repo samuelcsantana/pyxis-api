@@ -1,4 +1,5 @@
 import type { AccountStatus } from '../../domain/accounts/account-status';
+import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
 import {
   AccountNotFoundError,
   AccountSuspendedError,
@@ -155,15 +156,20 @@ describe('CreateOwnedProjectUseCase', () => {
     }
   });
 
-  it("keeps the account to the plan's three projects", async () => {
+  it("takes the paid plan's tenth project and refuses the eleventh", async () => {
     const { createOwnedProject, account } = await setup();
     const create = () =>
       createOwnedProject.execute({ ...SHOP, adminUserId: OWNER_ID, accountId: account.id });
-    await create();
-    await create();
-    await create();
+    for (let made = 1; made < HOSTED_PLAN_LIMITS.projects; made += 1) {
+      await create();
+    }
 
-    await expect(create()).rejects.toBeInstanceOf(ProjectLimitReachedError);
+    await expect(create()).resolves.toEqual(
+      expect.objectContaining({ projectId: expect.any(String) as string }),
+    );
+    const refused = create();
+    await expect(refused).rejects.toBeInstanceOf(ProjectLimitReachedError);
+    await expect(refused).rejects.toMatchObject({ limit: HOSTED_PLAN_LIMITS.projects });
   });
 });
 

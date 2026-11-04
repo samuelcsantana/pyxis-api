@@ -186,13 +186,13 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   ([ADR 0038](adr/0038-the-mcp-endpoint-runs-the-tools-inside-the-api.md))
 
 - Accounts for the hosted plan: an account is who pays, with one owner and the projects it holds
-  (3 at most on the paid plan and 1 on the free plan, counted under a lock so two requests cannot
+  (10 at most on the paid plan and 1 on the free plan, counted under a lock so two requests cannot
   both take the last place). A project without an account is the operator's own, as every
   project was before, with no plan and no quota
   ([ADR 0016](adr/0016-accounts-own-projects.md))
 - A monthly quota for those accounts: the daily job counts each account's events in the current
   calendar month (UTC) and keeps the figure; an account past its plan's pause point (150% of the
-  paid plan's 100,000 events, 100% of the free plan's 10,000) is paused until the month turns, and
+  paid plan's 250,000 events, 100% of the free plan's 10,000) is paused until the month turns, and
   its batches are answered `403 quota_exceeded`, readable by the site's origin so the tracker
   drops them instead of retrying. Accounts the operator gives (`comped`) and the operator's
   projects are never paused
@@ -311,7 +311,7 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   ([ADR 0020](adr/0020-owners-manage-their-projects-from-the-dashboard.md))
 - People of a project: `GET /v1/projects/{projectId}/people` for anyone who reads it; the owner
   adds an address (`POST`, with an invitation e-mail in the language of the page) and takes
-  someone off (`DELETE .../people/{adminUserId}`). The plan's people (3 on the paid plan, 1 on the
+  someone off (`DELETE .../people/{adminUserId}`). The plan's people (10 on the paid plan, 1 on the
   free plan) are counted across the account's projects, the owner included, under the account
   lock; the owner always stays
   ([ADR 0021](adr/0021-people-are-counted-across-the-account.md))

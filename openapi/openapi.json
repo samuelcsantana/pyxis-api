@@ -5815,7 +5815,7 @@
     },
     "/v1/accounts/{accountId}/projects": {
       "post": {
-        "description": "Up to the plan’s three projects; the account needs a running subscription.",
+        "description": "Up to the account’s project limit (`limits.projects` in `GET /v1/me/accounts`); the account needs access to its plan.",
         "operationId": "ProjectsController_create",
         "parameters": [
           {
@@ -11052,7 +11052,7 @@
         ]
       },
       "post": {
-        "description": "Up to the plan’s three people in the account, the owner included; the account needs a running subscription.",
+        "description": "Up to the account’s people limit, the owner included (`limits.people` in `GET /v1/me/accounts`); the account needs access to its plan.",
         "operationId": "PeopleController_add",
         "parameters": [
           {

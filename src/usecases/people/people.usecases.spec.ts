@@ -1,5 +1,6 @@
 import { Logger } from '@nestjs/common';
 import type { AccountStatus } from '../../domain/accounts/account-status';
+import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
 import { SubscriptionRequiredError } from '../../domain/errors/account.errors';
 import {
   OwnerStaysError,
@@ -119,7 +120,7 @@ describe('AddProjectPersonUseCase', () => {
     expect(mail.invitations).toHaveLength(1);
   });
 
-  it('keeps the account to three people, the owner included, counting a person once', async () => {
+  it("keeps the account to the paid plan's ten people, the owner included, counting a person once", async () => {
     const { addPerson, owner, shop, createInAccount } = await setup();
     const blog = await createInAccount('Blog');
     const add = (projectId: string, email: string) =>
@@ -130,11 +131,17 @@ describe('AddProjectPersonUseCase', () => {
         email,
         language: 'en',
       });
-    await add(shop.id, 'ana@example.com');
-    await add(shop.id, 'bia@example.com');
+    for (let guest = 1; guest < HOSTED_PLAN_LIMITS.people - 1; guest += 1) {
+      await add(shop.id, `guest${String(guest)}@example.com`);
+    }
 
-    await expect(add(shop.id, 'carla@example.com')).rejects.toBeInstanceOf(PeopleLimitReachedError);
-    await expect(add(blog.id, 'ana@example.com')).resolves.toEqual(
+    await expect(add(shop.id, 'tenth@example.com')).resolves.toEqual(
+      expect.objectContaining({ added: true }),
+    );
+    await expect(add(shop.id, 'eleventh@example.com')).rejects.toBeInstanceOf(
+      PeopleLimitReachedError,
+    );
+    await expect(add(blog.id, 'guest1@example.com')).resolves.toEqual(
       expect.objectContaining({ added: true }),
     );
   });

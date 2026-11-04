@@ -40,9 +40,9 @@ function setup(measured: readonly AccountMonthUsage[]) {
 describe('MeasureAccountUsageUseCase', () => {
   it('records the month so far for every account and pauses only paid ones past 150%', async () => {
     const { repository, useCase } = setup([
-      usage(OVER, 160_000),
+      usage(OVER, 400_000),
       usage(UNDER, 50_000, { status: 'trialing' }),
-      usage(COMPED, 400_000, { status: 'comped' }),
+      usage(COMPED, 1_000_000, { status: 'comped' }),
     ]);
 
     const report = await useCase.execute();
@@ -64,10 +64,10 @@ describe('MeasureAccountUsageUseCase', () => {
 
   it('tells each owner once per level, in their language, and never a comped account', async () => {
     const { repository, mail, useCase } = setup([
-      usage(OVER, 160_000),
-      usage(NEAR, 85_000),
+      usage(OVER, 400_000),
+      usage(NEAR, 212_500),
       usage(UNDER, 50_000),
-      usage(COMPED, 400_000, { status: 'comped' }),
+      usage(COMPED, 1_000_000, { status: 'comped' }),
     ]);
 
     const first = await useCase.execute();
@@ -82,8 +82,8 @@ describe('MeasureAccountUsageUseCase', () => {
         notice: {
           kind: 'quota_paused',
           plan: 'paid',
-          events: 160_000,
-          limit: 100_000,
+          events: 400_000,
+          limit: 250_000,
           month: '2026-10',
           measuredAt: NOW,
           resumesAt: NOVEMBER_FIRST,
@@ -96,11 +96,11 @@ describe('MeasureAccountUsageUseCase', () => {
           kind: 'quota_warning',
           plan: 'paid',
           percent: 80,
-          events: 85_000,
-          limit: 100_000,
+          events: 212_500,
+          limit: 250_000,
           month: '2026-10',
           measuredAt: NOW,
-          pause: { atEvents: 150_000, until: NOVEMBER_FIRST },
+          pause: { atEvents: 375_000, until: NOVEMBER_FIRST },
         },
       },
     ]);
@@ -110,7 +110,7 @@ describe('MeasureAccountUsageUseCase', () => {
 
   it('neither pauses nor tells a pause to an account exempt from it past 150%', async () => {
     const { repository, mail, useCase } = setup([
-      usage(OVER, 160_000, { pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z') }),
+      usage(OVER, 400_000, { pauseExemptUntil: new Date('2026-12-01T00:00:00.000Z') }),
     ]);
 
     const report = await useCase.execute();
@@ -123,7 +123,7 @@ describe('MeasureAccountUsageUseCase', () => {
   });
 
   it('tells the next level once the account climbs past it', async () => {
-    const { mail, useCase } = setup([usage(NEAR, 101_000, { notifiedLevel: 80 })]);
+    const { mail, useCase } = setup([usage(NEAR, 252_500, { notifiedLevel: 80 })]);
 
     await useCase.execute();
 
@@ -133,7 +133,7 @@ describe('MeasureAccountUsageUseCase', () => {
   });
 
   it('keeps going when one e-mail fails, and tells that owner again the next day', async () => {
-    const { repository, mail, useCase } = setup([usage(OVER, 160_000), usage(NEAR, 85_000)]);
+    const { repository, mail, useCase } = setup([usage(OVER, 400_000), usage(NEAR, 212_500)]);
     mail.failFor('1@example.com', new Error('Resend answered 500'));
 
     const report = await useCase.execute();

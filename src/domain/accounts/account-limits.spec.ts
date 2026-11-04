@@ -21,12 +21,12 @@ describe('planLimitsOf', () => {
   });
 
   it.each(['incomplete', 'trialing', 'active', 'past_due', 'ending', 'ended', 'comped'] as const)(
-    'gives a %s account the paid plan: 100,000 events, 3 projects and 3 people',
+    'gives a %s account the paid plan: 250,000 events, 10 projects and 10 people',
     (status) => {
       expect(planLimitsOf(account(status))).toEqual({
-        eventsPerMonth: 100_000,
-        projects: 3,
-        people: 3,
+        eventsPerMonth: 250_000,
+        projects: 10,
+        people: 10,
       });
     },
   );
@@ -47,16 +47,16 @@ describe('planLimitsOf', () => {
   it('lets each limit set on a paid account win over the paid plan', () => {
     expect(
       planLimitsOf(
-        account('active', { eventsPerMonthLimit: 1_000_000, projectsLimit: 10, peopleLimit: 8 }),
+        account('active', { eventsPerMonthLimit: 1_000_000, projectsLimit: 20, peopleLimit: 8 }),
       ),
-    ).toEqual({ eventsPerMonth: 1_000_000, projects: 10, people: 8 });
+    ).toEqual({ eventsPerMonth: 1_000_000, projects: 20, people: 8 });
   });
 });
 
 describe('eventsPerMonthOf', () => {
   it('reads the plan of the status unless the account has its own monthly limit', () => {
     expect(eventsPerMonthOf(account('free'))).toBe(10_000);
-    expect(eventsPerMonthOf(account('active'))).toBe(100_000);
+    expect(eventsPerMonthOf(account('active'))).toBe(250_000);
     expect(eventsPerMonthOf(account('free', { eventsPerMonthLimit: 50_000 }))).toBe(50_000);
   });
 });
@@ -70,8 +70,8 @@ describe('ingestionPauseThresholdOf', () => {
   });
 
   it('pauses the paid plan at 150% of its monthly events', () => {
-    expect(ingestionPauseThresholdOf(account('active'))).toBe(150_000);
-    expect(ingestionPauseThresholdOf(account('comped'))).toBe(150_000);
+    expect(ingestionPauseThresholdOf(account('active'))).toBe(375_000);
+    expect(ingestionPauseThresholdOf(account('comped'))).toBe(375_000);
     expect(ingestionPauseThresholdOf(account('active', { eventsPerMonthLimit: 1_000_000 }))).toBe(
       1_500_000,
     );
