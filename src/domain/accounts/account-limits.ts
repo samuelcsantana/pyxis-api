@@ -1,4 +1,4 @@
-import type { AccountStatus } from './account-status';
+import { type AccountStatus, isOnFreePlan } from './account-status';
 import {
   FREE_PLAN_LIMITS,
   FREE_PLAN_PAUSE_RATIO,
@@ -55,10 +55,6 @@ export const MAX_PLAN_LIMITS: PlanLimits = {
 export const RESET_LIMITS: PlanLimitChanges = NO_LIMIT_OVERRIDES;
 
 const LIMIT_NAMES: readonly PlanLimitName[] = ['eventsPerMonth', 'projects', 'people'];
-
-function isOnFreePlan(status: AccountStatus): boolean {
-  return status === 'free';
-}
 
 function basePlanLimitsOf(status: AccountStatus): PlanLimits {
   return isOnFreePlan(status) ? FREE_PLAN_LIMITS : HOSTED_PLAN_LIMITS;

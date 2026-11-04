@@ -2,6 +2,7 @@ import {
   AccountNotFoundError,
   AccountSuspendedError,
   DeletionOnHoldError,
+  PlanRequiredError,
   ProjectLimitReachedError,
 } from './account.errors';
 import { DomainError } from './domain.error';
@@ -12,6 +13,7 @@ describe('account errors', () => {
     [new ProjectLimitReachedError(3), 'project_limit_reached'],
     [new AccountSuspendedError(), 'account_suspended'],
     [new DeletionOnHoldError(), 'deletion_on_hold'],
+    [new PlanRequiredError('slack_alerts'), 'plan_required'],
   ])('%s carries a stable machine code', (error, code) => {
     expect(error).toBeInstanceOf(DomainError);
     expect(error.code).toBe(code);
@@ -30,5 +32,15 @@ describe('account errors', () => {
       'https://shop.example.com',
     );
     expect(new AccountSuspendedError().allowedOrigin).toBeNull();
+  });
+});
+
+describe('PlanRequiredError', () => {
+  it('names the feature the account needs the Pro plan for', () => {
+    const error = new PlanRequiredError('public_share_link');
+
+    expect(error.feature).toBe('public_share_link');
+    expect(error.message).toContain('public_share_link');
+    expect(error.message).toContain('Pro plan');
   });
 });

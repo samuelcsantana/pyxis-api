@@ -34,3 +34,11 @@ const STATUSES_WITH_A_SUBSCRIPTION: ReadonlySet<AccountStatus> = new Set([
 export function hasRunningSubscription(status: AccountStatus): boolean {
   return STATUSES_WITH_A_SUBSCRIPTION.has(status);
 }
+
+export function isOnFreePlan(status: AccountStatus): boolean {
+  return status === 'free';
+}
+
+export function isOnProPlan(status: AccountStatus): boolean {
+  return hasAccess(status) && !isOnFreePlan(status);
+}

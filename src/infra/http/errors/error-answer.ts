@@ -51,6 +51,7 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['invalid_project_settings', HttpStatus.BAD_REQUEST],
   ['project_limit_reached', HttpStatus.CONFLICT],
   ['subscription_required', HttpStatus.CONFLICT],
+  ['plan_required', HttpStatus.FORBIDDEN],
   ['project_name_mismatch', HttpStatus.CONFLICT],
   ['key_not_found', HttpStatus.NOT_FOUND],
   ['last_public_key', HttpStatus.CONFLICT],
