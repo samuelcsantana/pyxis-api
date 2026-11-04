@@ -72,9 +72,9 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   the project's time zone, narrowed by the same visit filters.
 - **Sign-in.** A six-digit code by e-mail, exchanged for an opaque session the admin can end one
   by one or everywhere at once.
-- **Accounts and billing.** Sign-up on a free plan without a card, the paid plan through Stripe
-  Checkout and its webhook, a monthly quota measured daily, projects, keys and people managed by
-  the account's owner, and the end of an account in steps.
+- **Accounts and billing.** Sign-up on the free Hobby plan without a card, the paid Pro plan
+  through Stripe Checkout and its webhook, a monthly quota measured daily, projects, keys and
+  people managed by the account's owner, and the end of an account in steps.
 - **Agents.** Read-only access tokens, an OAuth 2.1 server for the Claude connector and the remote
   MCP endpoint with the sixteen tools of [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp).
 - **A person's data.** Their events erased or exported on request, from the site's backend with a

@@ -68,8 +68,8 @@ describe('buildAccountNoticeEmail', () => {
     const english = buildAccountNoticeEmail(WITHDRAWN, 'en', LINKS, null);
     const portuguese = buildAccountNoticeEmail(WITHDRAWN, 'pt-BR', LINKS, null);
 
-    expect(english.subject).toBe('You withdrew from the Pyxis paid plan');
-    expect(english.html).toContain('your account is back on the free plan, with its projects');
+    expect(english.subject).toBe('You withdrew from the Pyxis Pro plan');
+    expect(english.html).toContain('your account is back on the Hobby plan, with its projects');
     expect(english.html).toContain('R$39.00 was refunded to your card.');
     expect(portuguese.html).toContain('R$\u00a039,00 foram devolvidos ao seu cartão.');
   });
@@ -87,7 +87,7 @@ describe('buildAccountNoticeEmail', () => {
     expect(portuguese.html).toContain(
       'nas Configurações de cada projeto até 20 de dezembro de 2026',
     );
-    expect(fitting.html).toContain('The free plan’s limits apply again from now');
+    expect(fitting.html).toContain('The Hobby plan’s limits apply again from now');
     expect(fitting.html).not.toContain('Remove what is over');
   });
 
@@ -102,11 +102,11 @@ describe('buildAccountNoticeEmail', () => {
     const english = buildAccountNoticeEmail(BACK_TO_FREE, 'en', LINKS, null);
     const portuguese = buildAccountNoticeEmail(BACK_TO_FREE, 'pt-BR', LINKS, null);
 
-    expect(english.subject).toBe('Your Pyxis account is back on the free plan');
+    expect(english.subject).toBe('Your Pyxis account is back on the Hobby plan');
     expect(english.html).toContain('your sites keep sending events to Pyxis');
-    expect(english.html).toContain('The free plan measures up to 10,000 events a month.');
+    expect(english.html).toContain('The Hobby plan measures up to 10,000 events a month.');
     expect(english.text).toContain('close the account there');
-    expect(portuguese.html).toContain('O plano grátis mede até 10.000 eventos por mês.');
+    expect(portuguese.html).toContain('O plano Hobby mede até 10.000 eventos por mês.');
   });
 
   it('warns the owner of a free account with no events: the criterion, the date and how to keep it', () => {
@@ -114,7 +114,7 @@ describe('buildAccountNoticeEmail', () => {
     const idle = buildAccountNoticeEmail(IDLE, 'pt-BR', LINKS, null);
 
     expect(empty.subject).toBe('Your free Pyxis account will be deleted on December 14, 2026');
-    expect(empty.html).toContain('in the 30 days since it started on the free plan');
+    expect(empty.html).toContain('in the 30 days since it started on the Hobby plan');
     expect(empty.html).toContain('install Pyxis on your site from the Install page');
     expect(empty.html).toContain('reply to this email before December 14, 2026');
     expect(idle.subject).toBe('Sua conta grátis do Pyxis será apagada em 14 de dezembro de 2026');

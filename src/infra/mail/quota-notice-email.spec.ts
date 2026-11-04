@@ -138,7 +138,7 @@ describe('buildQuotaNoticeEmail in Portuguese and Spanish', () => {
 
     expect(email.subject).toBe('Your Pyxis account used 80% of October’s events');
     expect(flowing(email.text)).toContain(
-      'If the account reaches 10,000 events this month, the free plan’s limit, measuring pauses',
+      'If the account reaches 10,000 events this month, the Hobby plan’s limit, measuring pauses',
     );
     expect(flowing(email.text)).toContain(
       'To keep measuring past it, subscribe in Account and billing.',
@@ -156,7 +156,7 @@ describe('buildQuotaNoticeEmail in Portuguese and Spanish', () => {
     const email = buildQuotaNoticeEmail(FREE_PAUSED, 'pt-BR', LINKS, null);
 
     expect(flowing(email.text)).toContain(
-      'Sua conta recebeu 10.004 eventos em outubro, os 10.000 do plano grátis.',
+      'Sua conta recebeu 10.004 eventos em outubro, os 10.000 do plano Hobby.',
     );
     expect(flowing(email.text)).toContain('a medição volta em até um minuto');
     expect(email.text).toContain('Conta e cobrança: https://dashboard.example.com/account');

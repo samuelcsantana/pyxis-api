@@ -56,7 +56,7 @@ describe('buildWelcomeEmail', () => {
     const email = buildWelcomeEmail(FREE, 'en', LINKS, null);
 
     expect(email.subject).toBe('Welcome to Pyxis');
-    expect(email.html).toContain('Your account is on the free plan.');
+    expect(email.html).toContain('Your account is on the Hobby plan.');
     expect(email.html).toContain('up to 10,000 events a month, 1 project and 1 person');
     expect(email.html).toContain('Measuring pauses when the month reaches 10,000 events');
     expect(email.html).toContain('create your first project in the dashboard');

@@ -207,7 +207,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   (`account:limits`), used by the measurement, its notices, project creation, adding people and
   `GET /v1/me/accounts`; lowering a limit deletes nothing
   ([ADR 0036](adr/0036-a-larger-plan-is-limits-on-the-account.md))
-- A free plan, as the account status `free`: 10,000 events a month, 1 project and 1 person, the
+- A free plan, named Hobby to customers (the paid one is Pro) in every e-mail and in all seven
+  languages, as the account status `free`: 10,000 events a month, 1 project and 1 person, the
   owner alone, with every feature; it has access and no subscription, its owner gets the notices
   sent to every owner, the operator's limits still apply on top, and its measuring pauses at
   100% of the month instead of 150%: its notices are the 80% warning and the pause, which speak

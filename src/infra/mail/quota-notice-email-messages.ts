@@ -82,12 +82,12 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `To talk about a larger plan, reply to this e-mail or write to ${address}.`,
     free: {
       warningPause: (w) =>
-        `If the account reaches ${w.pauseAtEvents} events this month, the free plan’s limit, measuring pauses until ${w.pauseUntil} and the events sent meanwhile are dropped.`,
+        `If the account reaches ${w.pauseAtEvents} events this month, the Hobby plan’s limit, measuring pauses until ${w.pauseUntil} and the events sent meanwhile are dropped.`,
       warningSubscribe: 'To keep measuring past it, subscribe in Account and billing.',
       pausedPreheader: (w) =>
-        `Your account received ${w.events} events in ${w.month}, the free plan’s limit.`,
+        `Your account received ${w.events} events in ${w.month}, the Hobby plan’s limit.`,
       pausedCount: (w) =>
-        `Your account received ${w.events} events in ${w.month}, the ${w.limit} of the free plan.`,
+        `Your account received ${w.events} events in ${w.month}, the ${w.limit} of the Hobby plan.`,
       pausedSubscribe:
         'To measure again before then, subscribe in Account and billing: measuring resumes within a minute.',
       accountLink: 'Account and billing',
@@ -123,12 +123,12 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `Para conversar sobre um plano maior, responda a este e-mail ou escreva para ${address}.`,
     free: {
       warningPause: (w) =>
-        `Se a conta chegar a ${w.pauseAtEvents} eventos neste mês, o limite do plano grátis, a medição pausa até ${w.pauseUntil} e os eventos enviados nesse meio-tempo são descartados.`,
+        `Se a conta chegar a ${w.pauseAtEvents} eventos neste mês, o limite do plano Hobby, a medição pausa até ${w.pauseUntil} e os eventos enviados nesse meio-tempo são descartados.`,
       warningSubscribe: 'Para continuar medindo depois disso, assine em Conta e cobrança.',
       pausedPreheader: (w) =>
-        `Sua conta recebeu ${w.events} eventos em ${w.month}, o limite do plano grátis.`,
+        `Sua conta recebeu ${w.events} eventos em ${w.month}, o limite do plano Hobby.`,
       pausedCount: (w) =>
-        `Sua conta recebeu ${w.events} eventos em ${w.month}, os ${w.limit} do plano grátis.`,
+        `Sua conta recebeu ${w.events} eventos em ${w.month}, os ${w.limit} do plano Hobby.`,
       pausedSubscribe:
         'Para voltar a medir antes disso, assine em Conta e cobrança: a medição volta em até um minuto.',
       accountLink: 'Conta e cobrança',
@@ -165,12 +165,12 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `Para hablar de un plan más grande, responde a este correo o escribe a ${address}.`,
     free: {
       warningPause: (w) =>
-        `Si la cuenta llega a ${w.pauseAtEvents} eventos este mes, el límite del plan gratis, la medición se pausa hasta el ${w.pauseUntil} y los eventos enviados mientras tanto se descartan.`,
+        `Si la cuenta llega a ${w.pauseAtEvents} eventos este mes, el límite del plan Hobby, la medición se pausa hasta el ${w.pauseUntil} y los eventos enviados mientras tanto se descartan.`,
       warningSubscribe: 'Para seguir midiendo después, suscríbete en Cuenta y facturación.',
       pausedPreheader: (w) =>
-        `Tu cuenta recibió ${w.events} eventos en ${w.month}, el límite del plan gratis.`,
+        `Tu cuenta recibió ${w.events} eventos en ${w.month}, el límite del plan Hobby.`,
       pausedCount: (w) =>
-        `Tu cuenta recibió ${w.events} eventos en ${w.month}, los ${w.limit} del plan gratis.`,
+        `Tu cuenta recibió ${w.events} eventos en ${w.month}, los ${w.limit} del plan Hobby.`,
       pausedSubscribe:
         'Para volver a medir antes, suscríbete en Cuenta y facturación: la medición se reanuda en menos de un minuto.',
       accountLink: 'Cuenta y facturación',
@@ -214,13 +214,13 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `${address}.`,
     free: {
       warningPause: (w) =>
-        `Erreicht das Konto in diesem Monat ${w.pauseAtEvents} Ereignisse, die Grenze des kostenlosen Plans, wird die Messung bis zum ${w.pauseUntil} pausiert, und die in der Zwischenzeit gesendeten Ereignisse werden verworfen.`,
+        `Erreicht das Konto in diesem Monat ${w.pauseAtEvents} Ereignisse, die Grenze des Hobby-Plans, wird die Messung bis zum ${w.pauseUntil} pausiert, und die in der Zwischenzeit gesendeten Ereignisse werden verworfen.`,
       warningSubscribe:
         'Um danach weiter zu messen, schließ unter „Konto und Abrechnung“ ein Abo ab.',
       pausedPreheader: (w) =>
-        `Dein Konto hat im ${w.month} ${w.events} Ereignisse empfangen, die Grenze des kostenlosen Plans.`,
+        `Dein Konto hat im ${w.month} ${w.events} Ereignisse empfangen, die Grenze des Hobby-Plans.`,
       pausedCount: (w) =>
-        `Dein Konto hat im ${w.month} ${w.events} Ereignisse empfangen, die ${w.limit} des kostenlosen Plans.`,
+        `Dein Konto hat im ${w.month} ${w.events} Ereignisse empfangen, die ${w.limit} des Hobby-Plans.`,
       pausedSubscribe:
         'Um schon vorher wieder zu messen, schließ unter „Konto und Abrechnung“ ein Abo ab: Die Messung läuft innerhalb einer Minute wieder an.',
       accountLink: 'Konto und Abrechnung',
@@ -266,13 +266,13 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `Pour parler d’une formule supérieure, répondez à cet e-mail ou écrivez à ${address}.`,
     free: {
       warningPause: (w) =>
-        `Si le compte atteint ${w.pauseAtEvents} événements ce mois-ci, la limite de la formule gratuite, la mesure est mise en pause jusqu’au ${w.pauseUntil} et les événements envoyés entre-temps sont perdus.`,
+        `Si le compte atteint ${w.pauseAtEvents} événements ce mois-ci, la limite de la formule Hobby, la mesure est mise en pause jusqu’au ${w.pauseUntil} et les événements envoyés entre-temps sont perdus.`,
       warningSubscribe:
         'Pour continuer la mesure au-delà, abonnez-vous depuis Compte et facturation.',
       pausedPreheader: (w) =>
-        `Votre compte a reçu ${w.events} événements en ${w.month}, soit la limite de la formule gratuite.`,
+        `Votre compte a reçu ${w.events} événements en ${w.month}, soit la limite de la formule Hobby.`,
       pausedCount: (w) =>
-        `Votre compte a reçu ${w.events} événements en ${w.month}, soit les ${w.limit} prévus par la formule gratuite.`,
+        `Votre compte a reçu ${w.events} événements en ${w.month}, soit les ${w.limit} prévus par la formule Hobby.`,
       pausedSubscribe:
         'Pour reprendre la mesure plus tôt, abonnez-vous depuis Compte et facturation\u00a0: la mesure reprend en moins d’une minute.',
       accountLink: 'Compte et facturation',
@@ -314,12 +314,12 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `Per parlare di un piano più grande, rispondi a questa email o scrivi a ${address}.`,
     free: {
       warningPause: (w) =>
-        `Se l’account arriva a ${w.pauseAtEvents} eventi questo mese, il limite del piano gratuito, la misurazione va in pausa fino al giorno ${w.pauseUntil} e gli eventi inviati nel frattempo vengono scartati.`,
+        `Se l’account arriva a ${w.pauseAtEvents} eventi questo mese, il limite del piano Hobby, la misurazione va in pausa fino al giorno ${w.pauseUntil} e gli eventi inviati nel frattempo vengono scartati.`,
       warningSubscribe: 'Per continuare a misurare oltre, abbonati da Account e fatturazione.',
       pausedPreheader: (w) =>
-        `Il tuo account ha ricevuto ${w.events} eventi a ${w.month}, il limite del piano gratuito.`,
+        `Il tuo account ha ricevuto ${w.events} eventi a ${w.month}, il limite del piano Hobby.`,
       pausedCount: (w) =>
-        `Il tuo account ha ricevuto ${w.events} eventi a ${w.month}, i ${w.limit} previsti dal piano gratuito.`,
+        `Il tuo account ha ricevuto ${w.events} eventi a ${w.month}, i ${w.limit} previsti dal piano Hobby.`,
       pausedSubscribe:
         'Per tornare a misurare prima, abbonati da Account e fatturazione: la misurazione riprende entro un minuto.',
       accountLink: 'Account e fatturazione',
@@ -362,13 +362,13 @@ export const QUOTA_NOTICE_EMAIL_MESSAGES: Readonly<
       `${address}.`,
     free: {
       warningPause: (w) =>
-        `Bereikt het account deze maand ${w.pauseAtEvents} events, de limiet van het gratis abonnement, dan wordt het meten gepauzeerd tot ${w.pauseUntil} en worden de events die in de tussentijd worden verstuurd weggegooid.`,
+        `Bereikt het account deze maand ${w.pauseAtEvents} events, de limiet van het Hobby-abonnement, dan wordt het meten gepauzeerd tot ${w.pauseUntil} en worden de events die in de tussentijd worden verstuurd weggegooid.`,
       warningSubscribe:
         'Wil je daarna blijven meten? Neem een abonnement via Account en facturatie.',
       pausedPreheader: (w) =>
-        `Je account heeft in ${w.month} ${w.events} events ontvangen, de limiet van het gratis abonnement.`,
+        `Je account heeft in ${w.month} ${w.events} events ontvangen, de limiet van het Hobby-abonnement.`,
       pausedCount: (w) =>
-        `Je account heeft in ${w.month} ${w.events} events ontvangen, de ${w.limit} van het gratis abonnement.`,
+        `Je account heeft in ${w.month} ${w.events} events ontvangen, de ${w.limit} van het Hobby-abonnement.`,
       pausedSubscribe:
         'Wil je eerder weer meten? Neem een abonnement via Account en facturatie: het meten wordt binnen een minuut hervat.',
       accountLink: 'Account en facturatie',
