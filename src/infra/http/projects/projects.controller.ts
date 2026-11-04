@@ -91,7 +91,9 @@ export class ProjectsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Create a project in an account the admin owns',
-    description: 'Up to the plan’s three projects; the account needs a running subscription.',
+    description:
+      'Up to the account’s project limit (`limits.projects` in `GET /v1/me/accounts`); the ' +
+      'account needs access to its plan.',
   })
   @ApiParam({ name: 'accountId', schema: { type: 'string', format: 'uuid' } })
   @ApiResponse({ status: HttpStatus.CREATED, standardSchema: createdProjectSchema })

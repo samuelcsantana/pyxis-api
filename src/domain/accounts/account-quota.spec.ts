@@ -22,8 +22,8 @@ function usage(events: number, status: AccountMonthUsage['status'] = 'active'): 
 
 describe('ingestionPauseFor', () => {
   it('pauses an account at 150% of the plan, until the month ends', () => {
-    expect(ingestionPauseFor(usage(150_000), MONTH_END, MEASURED_AT)).toBe(MONTH_END);
-    expect(ingestionPauseFor(usage(149_999), MONTH_END, MEASURED_AT)).toBeNull();
+    expect(ingestionPauseFor(usage(375_000), MONTH_END, MEASURED_AT)).toBe(MONTH_END);
+    expect(ingestionPauseFor(usage(374_999), MONTH_END, MEASURED_AT)).toBeNull();
   });
 
   it('pauses at 150% of the limit set for the account, when one is set', () => {
@@ -54,7 +54,7 @@ describe('ingestionPauseFor', () => {
   });
 
   it('does not pause an exempt account until the exemption is over', () => {
-    const exempt = { ...usage(200_000), pauseExemptUntil: new Date('2026-10-25T00:00:00.000Z') };
+    const exempt = { ...usage(400_000), pauseExemptUntil: new Date('2026-10-25T00:00:00.000Z') };
 
     expect(ingestionPauseFor(exempt, MONTH_END, MEASURED_AT)).toBeNull();
     expect(ingestionPauseFor(exempt, MONTH_END, new Date('2026-10-25T00:00:00.000Z'))).toBe(

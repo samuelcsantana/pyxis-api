@@ -15,6 +15,7 @@ const OWNER_ID = '4e5f6a7b-8c9d-4e0f-9a1b-2c3d4e5f6a01';
 const ACCOUNT_ID = '4e5f6a7b-8c9d-4e0f-9a1b-2c3d4e5f6a11';
 const SHOP_ID = '4e5f6a7b-8c9d-4e0f-9a1b-2c3d4e5f6a21';
 const OWNER_EMAIL = 'people-owner@example.com';
+const PAID_PLAN_PEOPLE = 10;
 const OWNER_SESSION = 'e2e-people-owner-session';
 const GUEST_SESSION = 'e2e-people-guest-session';
 
@@ -150,15 +151,23 @@ describe('the people of a project', () => {
     expect((await call('GET', people, { session: GUEST_SESSION })).statusCode).toBe(404);
   });
 
-  it("stops at the plan's three people, the owner included", async () => {
-    await call('POST', people, { payload: { email: 'people-guest@example.com' } });
-    await call('POST', people, { payload: { email: 'people-second@example.com' } });
+  it("takes the paid plan's tenth person and stops at the eleventh, the owner included", async () => {
+    const guestsBeforeTheLast = PAID_PLAN_PEOPLE - 2;
+    for (let guest = 1; guest <= guestsBeforeTheLast; guest += 1) {
+      await call('POST', people, {
+        payload: { email: `people-guest-${String(guest)}@example.com` },
+      });
+    }
 
-    const third = await call('POST', people, { payload: { email: 'people-third@example.com' } });
+    const tenth = await call('POST', people, { payload: { email: 'people-tenth@example.com' } });
+    const eleventh = await call('POST', people, {
+      payload: { email: 'people-eleventh@example.com' },
+    });
 
-    expect(third.statusCode).toBe(409);
-    expect(third.json()).toMatchObject({ error: 'people_limit_reached' });
-    expect(mail.invitations).toHaveLength(2);
+    expect(tenth.statusCode).toBe(200);
+    expect(eleventh.statusCode).toBe(409);
+    expect(eleventh.json()).toMatchObject({ error: 'people_limit_reached' });
+    expect(mail.invitations).toHaveLength(PAID_PLAN_PEOPLE - 1);
   });
 
   it('needs the dashboard and a session to add, and a valid address', async () => {

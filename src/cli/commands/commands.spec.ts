@@ -251,9 +251,9 @@ describe('account:show', () => {
       `account_id=${account.id}`,
       'status=active',
       'owner_email=owner@example.com',
-      'projects=1/3',
-      'people=2/3',
-      'events_2026-10=not measured yet/100000',
+      'projects=1/10',
+      'people=2/10',
+      'events_2026-10=not measured yet/250000',
       'ingestion_paused_until=',
       'quota_pause_exempt_until=',
       'suspended_at=',
@@ -270,7 +270,7 @@ describe('account:show', () => {
     const pausedUntil = new Date('2026-11-01T00:00:00.000Z');
     await context.accountUsage.record(
       '2026-10',
-      [{ accountId: account.id, events: 151_000, ingestionPausedUntil: pausedUntil }],
+      [{ accountId: account.id, events: 376_000, ingestionPausedUntil: pausedUntil }],
       measuredAt,
     );
     context.accounts.add({ ...account, ingestionPausedUntil: pausedUntil });
@@ -282,9 +282,9 @@ describe('account:show', () => {
       `account_id=${account.id}`,
       'status=active',
       'owner_email=owner@example.com',
-      'projects=0/3',
-      'people=0/3',
-      'events_2026-10=151000/100000',
+      'projects=0/10',
+      'people=0/10',
+      'events_2026-10=376000/250000',
       'measured_at=2026-10-06T03:00:00.000Z',
       'ingestion_paused_until=2026-11-01T00:00:00.000Z',
       'quota_pause_exempt_until=',
@@ -388,15 +388,15 @@ describe('account:limits', () => {
 
     await accountLimitsCommand.execute(
       context,
-      { accountId: account.id, changes: { eventsPerMonthLimit: 1_000_000, projectsLimit: 10 } },
+      { accountId: account.id, changes: { eventsPerMonthLimit: 1_000_000, projectsLimit: 20 } },
       output,
     );
 
     expect(output.out).toEqual([
       `account_id=${account.id}`,
       'events_per_month=1000000',
-      'projects=0/10',
-      'people=0/3',
+      'projects=0/20',
+      'people=0/10',
     ]);
     expect(output.err).toEqual([expect.stringContaining('from now on')]);
   });

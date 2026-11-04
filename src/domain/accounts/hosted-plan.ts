@@ -1,7 +1,7 @@
 export const HOSTED_PLAN_LIMITS = {
-  eventsPerMonth: 100_000,
-  projects: 3,
-  people: 3,
+  eventsPerMonth: 250_000,
+  projects: 10,
+  people: 10,
 } as const;
 
 export const HOSTED_PLAN_PAUSE_RATIO = 1.5;

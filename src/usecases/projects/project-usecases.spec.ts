@@ -1,4 +1,5 @@
 import { NO_LIMIT_OVERRIDES } from '../../domain/accounts/account-limits';
+import { HOSTED_PLAN_LIMITS } from '../../domain/accounts/hosted-plan';
 import type { Account } from '../../domain/entities/account.entity';
 import { AccountNotFoundError, ProjectLimitReachedError } from '../../domain/errors/account.errors';
 import {
@@ -203,16 +204,17 @@ describe('CreateProjectUseCase in an account', () => {
     const { store, accounts, createProject, deleteProject } = setup();
     store.addAccount(ACCOUNT_ID, OWNER_ID);
     accounts.add(accountWith());
-    await createProject.execute(inAccount('one'));
-    await createProject.execute(inAccount('two'));
-    const third = await createProject.execute(inAccount('three'));
+    for (let made = 1; made < HOSTED_PLAN_LIMITS.projects; made += 1) {
+      await createProject.execute(inAccount(`site-${String(made)}`));
+    }
+    const last = await createProject.execute(inAccount('last'));
 
-    const refused = createProject.execute(inAccount('four'));
+    const refused = createProject.execute(inAccount('one-too-many'));
 
     await expect(refused).rejects.toBeInstanceOf(ProjectLimitReachedError);
-    await expect(refused).rejects.toMatchObject({ limit: 3 });
-    await deleteProject.execute({ projectId: third.projectId, confirmName: 'three' });
-    await expect(createProject.execute(inAccount('four'))).resolves.toMatchObject({
+    await expect(refused).rejects.toMatchObject({ limit: HOSTED_PLAN_LIMITS.projects });
+    await deleteProject.execute({ projectId: last.projectId, confirmName: 'last' });
+    await expect(createProject.execute(inAccount('one-too-many'))).resolves.toMatchObject({
       publicKey: expect.any(String) as string,
     });
   });

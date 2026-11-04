@@ -15,6 +15,8 @@ const STRANGER_ID = '3d4e5f6a-7b8c-4d9e-8f0a-1b2c3d4e5f02';
 const ACCOUNT_ID = '3d4e5f6a-7b8c-4d9e-8f0a-1b2c3d4e5f11';
 const OWNER_COOKIE = `${SESSION_COOKIE_NAME}=e2e-projects-owner-session`;
 const STRANGER_COOKIE = `${SESSION_COOKIE_NAME}=e2e-projects-stranger-session`;
+const PAID_PLAN_PROJECTS = 10;
+
 const SHOP = {
   name: 'Owned shop',
   allowed_origins: ['https://owned-shop.example.com'],
@@ -280,14 +282,16 @@ describe('projects managed by the owner of their account', () => {
     expect(await owner`SELECT 1 FROM projects WHERE id = ${projectId}`).toHaveLength(0);
   });
 
-  it("stops at the plan's three projects", async () => {
-    await createProject('One');
-    await createProject('Two');
-    await createProject('Three');
+  it("takes the paid plan's tenth project and stops at the eleventh", async () => {
+    for (let made = 1; made < PAID_PLAN_PROJECTS; made += 1) {
+      await createProject(`Site ${String(made)}`);
+    }
 
-    const fourth = await call('POST', `/v1/accounts/${ACCOUNT_ID}/projects`, { payload: SHOP });
+    const tenth = await call('POST', `/v1/accounts/${ACCOUNT_ID}/projects`, { payload: SHOP });
+    const eleventh = await call('POST', `/v1/accounts/${ACCOUNT_ID}/projects`, { payload: SHOP });
 
-    expect(fourth.statusCode).toBe(409);
-    expect(fourth.json()).toMatchObject({ error: 'project_limit_reached' });
+    expect(tenth.statusCode).toBe(201);
+    expect(eleventh.statusCode).toBe(409);
+    expect(eleventh.json()).toMatchObject({ error: 'project_limit_reached' });
   });
 });

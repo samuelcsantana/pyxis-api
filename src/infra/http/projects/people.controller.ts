@@ -84,8 +84,8 @@ export class PeopleController {
   @ApiOperation({
     summary: 'Add someone to a project the admin owns, and e-mail them an invitation',
     description:
-      'Up to the plan’s three people in the account, the owner included; the account needs a ' +
-      'running subscription.',
+      'Up to the account’s people limit, the owner included (`limits.people` in ' +
+      '`GET /v1/me/accounts`); the account needs access to its plan.',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: addedPersonSchema })
   @ApiResponse({ status: HttpStatus.BAD_REQUEST, standardSchema: errorResponseSchema })
