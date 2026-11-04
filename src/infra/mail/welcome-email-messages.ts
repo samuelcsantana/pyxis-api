@@ -53,13 +53,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'You accepted the Terms of Use, the Data Processing Agreement and the Privacy Policy, ' +
       `version ${terms.version}, written in Brazilian Portuguese: ${terms.url}`,
-    freePreheader: 'Your account is on the free plan.',
+    freePreheader: 'Your account is on the Hobby plan.',
     freeConfirmed: (plan) =>
-      `Your account is on the free plan, with no card: up to ${plan.events} events a month, ` +
+      `Your account is on the Hobby plan, with no card: up to ${plan.events} events a month, ` +
       `${counted(plan.projects, 'project', 'projects')} and ` +
       `${counted(plan.people, 'person', 'people')}, with every feature. Measuring pauses when ` +
       `the month reaches ${plan.pauseAt} events and comes back on the 1st. You can subscribe ` +
-      'to the paid plan at any time, in Account and billing.',
+      'to the Pro plan at any time, in Account and billing.',
     freeInactivity:
       'A free account that stores no events in its first 30 days, or none for 90 days in a row, is deleted seven days after an email notice; a paid account never is.',
     freeReason: 'You received this email because you created a Pyxis account.',
@@ -87,13 +87,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'Você aceitou os Termos de Uso, o Acordo de Tratamento de Dados e a Política de ' +
       `Privacidade, versão ${terms.version}: ${terms.url}`,
-    freePreheader: 'Sua conta está no plano grátis.',
+    freePreheader: 'Sua conta está no plano Hobby.',
     freeConfirmed: (plan) =>
-      `Sua conta está no plano grátis, sem cartão: até ${plan.events} eventos por mês, ` +
+      `Sua conta está no plano Hobby, sem cartão: até ${plan.events} eventos por mês, ` +
       `${counted(plan.projects, 'projeto', 'projetos')} e ` +
       `${counted(plan.people, 'pessoa', 'pessoas')}, com todas as funções. A medição pausa ` +
       `quando o mês chega a ${plan.pauseAt} eventos e volta no dia 1º. Você pode assinar o ` +
-      'plano pago quando quiser, em Conta e cobrança.',
+      'plano Pro quando quiser, em Conta e cobrança.',
     freeInactivity:
       'Uma conta grátis que não guardar nenhum evento nos primeiros 30 dias, ou ficar 90 dias seguidos sem eventos, é apagada sete dias depois de um aviso por e-mail; uma conta paga nunca é.',
     freeReason: 'Você recebeu este e-mail porque criou uma conta no Pyxis.',
@@ -121,13 +121,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'Aceptaste los Términos de Uso, el Acuerdo de Tratamiento de Datos y la Política de ' +
       `Privacidad, versión ${terms.version}, redactados en portugués de Brasil: ${terms.url}`,
-    freePreheader: 'Tu cuenta está en el plan gratis.',
+    freePreheader: 'Tu cuenta está en el plan Hobby.',
     freeConfirmed: (plan) =>
-      `Tu cuenta está en el plan gratis, sin tarjeta: hasta ${plan.events} eventos al mes, ` +
+      `Tu cuenta está en el plan Hobby, sin tarjeta: hasta ${plan.events} eventos al mes, ` +
       `${counted(plan.projects, 'proyecto', 'proyectos')} y ` +
       `${counted(plan.people, 'persona', 'personas')}, con todas las funciones. La medición se ` +
       `pausa cuando el mes llega a ${plan.pauseAt} eventos y vuelve el día 1. Puedes ` +
-      'suscribirte al plan de pago cuando quieras, en Cuenta y facturación.',
+      'suscribirte al plan Pro cuando quieras, en Cuenta y facturación.',
     freeInactivity:
       'Una cuenta gratis que no guarde ningún evento en sus primeros 30 días, o pase 90 días seguidos sin eventos, se elimina siete días después de un aviso por correo; una cuenta de pago, nunca.',
     freeReason: 'Recibiste este correo porque creaste una cuenta en Pyxis.',
@@ -158,13 +158,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       'Du hast die Nutzungsbedingungen, den Auftragsverarbeitungsvertrag und die ' +
       `Datenschutzerklärung in Version ${terms.version} akzeptiert, verfasst auf brasilianischem ` +
       `Portugiesisch: ${terms.url}`,
-    freePreheader: 'Dein Konto ist im kostenlosen Plan.',
+    freePreheader: 'Dein Konto ist im Hobby-Plan.',
     freeConfirmed: (plan) =>
-      `Dein Konto ist im kostenlosen Plan, ohne Karte: bis zu ${plan.events} Ereignisse im ` +
+      `Dein Konto ist im Hobby-Plan, ohne Karte: bis zu ${plan.events} Ereignisse im ` +
       `Monat, ${counted(plan.projects, 'Projekt', 'Projekte')} und ` +
       `${counted(plan.people, 'Person', 'Personen')}, mit allen Funktionen. Die Messung ` +
       `pausiert, wenn der Monat ${plan.pauseAt} Ereignisse erreicht, und läuft am 1. wieder ` +
-      'an. Du kannst den kostenpflichtigen Plan jederzeit unter Konto und Abrechnung abonnieren.',
+      'an. Du kannst den Pro-Plan jederzeit unter Konto und Abrechnung abonnieren.',
     freeInactivity:
       'Ein kostenloses Konto, das in den ersten 30 Tagen keine Ereignisse speichert oder 90 Tage am Stück ohne Ereignisse bleibt, wird sieben Tage nach einer Benachrichtigung per E-Mail gelöscht; ein kostenpflichtiges Konto nie.',
     freeReason: 'Du hast diese E-Mail bekommen, weil du ein Pyxis-Konto erstellt hast.',
@@ -195,13 +195,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       `Politique de confidentialité, version ${terms.version}, rédigés en portugais du ` +
       `Brésil\u00a0: ` +
       terms.url,
-    freePreheader: 'Votre compte est sur la formule gratuite.',
+    freePreheader: 'Votre compte est sur la formule Hobby.',
     freeConfirmed: (plan) =>
-      `Votre compte est sur la formule gratuite, sans carte\u00a0: jusqu’à ${plan.events} ` +
+      `Votre compte est sur la formule Hobby, sans carte\u00a0: jusqu’à ${plan.events} ` +
       `événements par mois, ${counted(plan.projects, 'projet', 'projets')} et ` +
       `${counted(plan.people, 'personne', 'personnes')}, avec toutes les fonctions. La mesure ` +
       `se met en pause quand le mois atteint ${plan.pauseAt} événements et reprend le 1er. ` +
-      'Vous pouvez vous abonner à la formule payante à tout moment, dans Compte et facturation.',
+      'Vous pouvez vous abonner à la formule Pro à tout moment, dans Compte et facturation.',
     freeInactivity:
       'Un compte gratuit qui n’enregistre aucun événement pendant ses 30 premiers jours, ou aucun pendant 90 jours d’affilée, est supprimé sept jours après un avis par e-mail\u00a0; un compte payant ne l’est jamais.',
     freeReason: 'Vous recevez cet e-mail parce que vous avez créé un compte Pyxis.',
@@ -231,13 +231,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
     terms: (terms) =>
       'Hai accettato i Termini di utilizzo, l’Accordo sul trattamento dei dati e l’Informativa ' +
       `sulla privacy, versione ${terms.version}, redatti in portoghese brasiliano: ${terms.url}`,
-    freePreheader: 'Il tuo account è nel piano gratuito.',
+    freePreheader: 'Il tuo account è nel piano Hobby.',
     freeConfirmed: (plan) =>
-      `Il tuo account è nel piano gratuito, senza carta: fino a ${plan.events} eventi al mese, ` +
+      `Il tuo account è nel piano Hobby, senza carta: fino a ${plan.events} eventi al mese, ` +
       `${counted(plan.projects, 'progetto', 'progetti')} e ` +
       `${counted(plan.people, 'persona', 'persone')}, con tutte le funzioni. La misurazione va ` +
       `in pausa quando il mese arriva a ${plan.pauseAt} eventi e riprende il giorno 1. Puoi ` +
-      'abbonarti al piano a pagamento quando vuoi, in Account e fatturazione.',
+      'abbonarti al piano Pro quando vuoi, in Account e fatturazione.',
     freeInactivity:
       'Un account gratuito che non registra nessun evento nei primi 30 giorni, o nessuno per 90 giorni di fila, viene eliminato sette giorni dopo un avviso via email; un account a pagamento mai.',
     freeReason: 'Hai ricevuto questa email perché hai creato un account Pyxis.',
@@ -267,13 +267,13 @@ export const WELCOME_EMAIL_MESSAGES: Readonly<Record<EmailLanguage, WelcomeEmail
       'Je bent akkoord gegaan met de Gebruiksvoorwaarden, de Verwerkersovereenkomst en het ' +
       `Privacybeleid, versie ${terms.version}, opgesteld in het Braziliaans-Portugees: ` +
       terms.url,
-    freePreheader: 'Je account staat op het gratis abonnement.',
+    freePreheader: 'Je account staat op het Hobby-abonnement.',
     freeConfirmed: (plan) =>
-      `Je account staat op het gratis abonnement, zonder kaart: maximaal ${plan.events} events ` +
+      `Je account staat op het Hobby-abonnement, zonder kaart: maximaal ${plan.events} events ` +
       `per maand, ${counted(plan.projects, 'project', 'projecten')} en ` +
       `${counted(plan.people, 'persoon', 'personen')}, met alle functies. Het meten pauzeert ` +
       `wanneer de maand ${plan.pauseAt} events bereikt en gaat op de 1e weer verder. Je kunt ` +
-      'op elk moment het betaalde abonnement nemen, onder Account en facturatie.',
+      'op elk moment het Pro-abonnement nemen, onder Account en facturatie.',
     freeInactivity:
       'Een gratis account dat in de eerste 30 dagen geen enkel event opslaat, of 90 dagen achter elkaar geen, wordt zeven dagen na een melding per e-mail verwijderd; een betaald account nooit.',
     freeReason: 'Je ontvangt deze e-mail omdat je een Pyxis-account hebt aangemaakt.',

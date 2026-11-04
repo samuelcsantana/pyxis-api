@@ -24,10 +24,10 @@ describe('buildSubscriptionConfirmedEmail', () => {
     const email = buildSubscriptionConfirmedEmail(MONTHLY, 'en', LINKS, null);
 
     expect(email.subject).toBe('Your Pyxis subscription is confirmed');
-    expect(email.html).toContain('Your account is now on the paid plan, billed monthly.');
+    expect(email.html).toContain('Your account is now on the Pro plan, billed monthly.');
     expect(email.html).toContain('it resumes within a minute');
     expect(email.html).toContain('You can withdraw within 7 days of this first payment');
-    expect(email.html).toContain('the account goes back to the free plan');
+    expect(email.html).toContain('the account goes back to the Hobby plan');
     expect(email.html).toContain('version 1.3, written in Brazilian Portuguese');
     expect(email.text).toContain('https://example.com/termos');
     expect(email.text).toContain('because you subscribed to Pyxis');
@@ -37,7 +37,7 @@ describe('buildSubscriptionConfirmedEmail', () => {
     const email = buildSubscriptionConfirmedEmail(UNKNOWN_INTERVAL, 'pt-BR', LINKS, null);
 
     expect(email.subject).toBe('Sua assinatura do Pyxis está confirmada');
-    expect(email.html).toContain('Sua conta agora está no plano pago. Se a medição');
+    expect(email.html).toContain('Sua conta agora está no plano Pro. Se a medição');
     expect(email.html).not.toContain('com cobrança');
     expect(email.text).not.toContain('Termos de Uso');
   });
