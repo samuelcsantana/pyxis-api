@@ -8,8 +8,10 @@ import {
   UnknownProjectKeyError,
 } from '../../../domain/errors/ingest.errors';
 import { ProjectSuspendedError } from '../../../domain/errors/project.errors';
+import { ShareLinkLockedError } from '../../../domain/errors/share-link.errors';
 import type { ErrorResponse } from '../ingest/ingest.schemas';
 import {
+  CLIENT_RATE_LIMITED_MESSAGE,
   ClientRateLimitedError,
   DashboardOriginRequiredError,
   InvalidBatchError,
@@ -56,6 +58,9 @@ const DOMAIN_STATUSES: ReadonlyMap<string, number> = new Map([
   ['invalid_share_link', HttpStatus.BAD_REQUEST],
   ['share_link_not_found', HttpStatus.NOT_FOUND],
   ['share_link_limit_reached', HttpStatus.CONFLICT],
+  ['share_password_required', HttpStatus.UNAUTHORIZED],
+  ['wrong_share_password', HttpStatus.UNAUTHORIZED],
+  ['share_password_not_set', HttpStatus.CONFLICT],
   ['invalid_annotation', HttpStatus.BAD_REQUEST],
   ['annotation_not_found', HttpStatus.NOT_FOUND],
   ['annotation_limit_reached', HttpStatus.CONFLICT],
@@ -153,6 +158,11 @@ function domainAnswer(exception: DomainError): ErrorAnswer {
   const status = DOMAIN_STATUSES.get(exception.code);
   if (status === undefined) {
     return INTERNAL_ERROR;
+  }
+  if (exception instanceof ShareLinkLockedError) {
+    return answer(HttpStatus.TOO_MANY_REQUESTS, exception.code, CLIENT_RATE_LIMITED_MESSAGE, {
+      [RETRY_AFTER_HEADER]: String(exception.retryAfterSeconds),
+    });
   }
   if (exception instanceof ProjectRateLimitedError) {
     return answer(status, exception.code, exception.message, {

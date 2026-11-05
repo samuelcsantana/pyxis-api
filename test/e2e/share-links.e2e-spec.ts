@@ -3,8 +3,12 @@ import postgres from 'postgres';
 import { sha256Hex } from '../../src/domain/auth/hashing';
 import { CLOCK } from '../../src/domain/services/clock';
 import { SHARE_TOKEN_PATTERN } from '../../src/domain/share-links/share-link';
+import { MAX_FAILED_UNLOCKS } from '../../src/domain/share-links/share-unlock';
 import { SESSION_COOKIE_NAME } from '../../src/infra/http/auth/session-cookie';
-import { SHARED_REPORT_REQUESTS_PER_WINDOW } from '../../src/infra/http/rate-limit/rate-limits';
+import {
+  SHARE_UNLOCKS_PER_WINDOW,
+  SHARED_REPORT_REQUESTS_PER_WINDOW,
+} from '../../src/infra/http/rate-limit/rate-limits';
 import { FixedClock } from '../../src/test-utils/fixed-clock';
 import { createTestApp } from './create-test-app';
 import { e2eOwnerUrl } from './e2e-database';
@@ -53,6 +57,7 @@ interface ShareLinkBody {
   readonly name: string;
   readonly created_at: string;
   readonly expires_at: string | null;
+  readonly password_protected: boolean;
   readonly token?: string;
 }
 
@@ -61,6 +66,7 @@ interface Call {
   readonly origin?: string | null;
   readonly payload?: object;
   readonly clientIp?: string;
+  readonly authorization?: string;
 }
 
 describe('share links, over HTTP', () => {
@@ -70,7 +76,7 @@ describe('share links, over HTTP', () => {
   let clientIpSequence = 0;
   const clock = new FixedClock(NOW);
 
-  const call = (method: 'GET' | 'POST' | 'DELETE', url: string, options: Call = {}) => {
+  const call = (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', url: string, options: Call = {}) => {
     clientIpSequence += 1;
     const cookie = options.cookie === undefined ? OWNER_COOKIE : options.cookie;
     const origin = options.origin === undefined ? E2E_DASHBOARD_ORIGIN : options.origin;
@@ -82,6 +88,7 @@ describe('share links, over HTTP', () => {
         [E2E_CLIENT_IP_HEADER]: options.clientIp ?? `198.51.100.${String(clientIpSequence % 250)}`,
         ...(cookie === null ? {} : { cookie }),
         ...(origin === null ? {} : { origin }),
+        ...(options.authorization === undefined ? {} : { authorization: options.authorization }),
       },
     });
   };
@@ -161,12 +168,19 @@ describe('share links, over HTTP', () => {
       name: 'For the agency',
       created_at: NOW.toISOString(),
       expires_at: null,
+      password_protected: false,
       token: expect.stringMatching(SHARE_TOKEN_PATTERN) as string,
     });
     const listed = await call('GET', linksUrl(), { origin: null });
     expect(listed.json()).toEqual({
       links: [
-        { id: created.id, name: 'For the agency', created_at: NOW.toISOString(), expires_at: null },
+        {
+          id: created.id,
+          name: 'For the agency',
+          created_at: NOW.toISOString(),
+          expires_at: null,
+          password_protected: false,
+        },
       ],
     });
     const stored = await owner<{ token_hash: string }[]>`
@@ -181,6 +195,7 @@ describe('share links, over HTTP', () => {
 
     expect(opened.statusCode).toBe(200);
     expect(opened.json()).toEqual({
+      password_required: false,
       project: {
         name: 'Shared shop',
         timezone: 'UTC',
@@ -363,5 +378,167 @@ describe('share links, over HTTP', () => {
     const response = await call('GET', `/v1/shared/${token}`, { cookie: null });
 
     expect(response.headers['access-control-allow-origin']).toBe(E2E_DASHBOARD_ORIGIN);
+  });
+
+  describe('with a password', () => {
+    const PASSWORD = 'correct horse';
+    const reportsOf = (token: string) => [
+      ...SHARED_REPORT_QUERIES.map(([report, query]) => `/v1/shared/${token}/${report}?${query}`),
+      `/v1/shared/${token}/annotations?${RANGE}`,
+    ];
+    const unlock = (token: string, password: string, clientIp?: string) =>
+      call('POST', `/v1/shared/${token}/unlock`, {
+        cookie: null,
+        origin: null,
+        payload: { password },
+        ...(clientIp === undefined ? {} : { clientIp }),
+      });
+    const unlocked = (url: string, proof: string) =>
+      call('GET', url, { cookie: null, origin: null, authorization: `Bearer ${proof}` });
+    const proofOf = async (token: string, password = PASSWORD) => {
+      const response = await unlock(token, password);
+      expect(response.statusCode).toBe(200);
+      return response.json<{ unlock: string; expires_at: string }>();
+    };
+
+    it('says only that a password is required, and opens no report by the token alone', async () => {
+      const link = await createLink({ name: 'Board', password: PASSWORD });
+
+      const info = await anonymous(`/v1/shared/${link.token}`);
+      const reports = await Promise.all(reportsOf(link.token).map((url) => anonymous(url)));
+
+      expect(link.password_protected).toBe(true);
+      expect(info.statusCode).toBe(200);
+      expect(info.json()).toEqual({ password_required: true });
+      expect(new Set(reports.map((answer) => answer.statusCode))).toEqual(new Set([401]));
+      expect(reports[0]?.json()).toMatchObject({ error: 'share_password_required' });
+    });
+
+    it('opens every report with the unlock the right password trades for', async () => {
+      const { token } = await createLink({ name: 'Board', password: PASSWORD });
+
+      const wrong = await unlock(token, 'wrong horse');
+      const { unlock: proof, expires_at } = await proofOf(token);
+      const info = await unlocked(`/v1/shared/${token}`, proof);
+      const reports = await Promise.all(reportsOf(token).map((url) => unlocked(url, proof)));
+
+      expect(wrong.statusCode).toBe(401);
+      expect(wrong.json()).toMatchObject({ error: 'wrong_share_password' });
+      expect(expires_at).toBe(new Date(NOW.getTime() + 8 * ONE_HOUR_MS).toISOString());
+      expect(info.json()).toMatchObject({
+        password_required: false,
+        project: { name: 'Shared shop' },
+      });
+      expect(new Set(reports.map((answer) => answer.statusCode))).toEqual(new Set([200]));
+    });
+
+    it('opens no other link with the unlock of one', async () => {
+      const first = await createLink({ name: 'First', password: PASSWORD });
+      const second = await createLink({ name: 'Second', password: PASSWORD });
+      const { unlock: proof } = await proofOf(first.token);
+
+      const response = await unlocked(`/v1/shared/${second.token}/overview?${RANGE}`, proof);
+
+      expect(response.statusCode).toBe(401);
+    });
+
+    it('stops the unlocks and the old password when the owner changes it', async () => {
+      const link = await createLink({ name: 'Board', password: PASSWORD });
+      const { unlock: proof } = await proofOf(link.token);
+
+      const changed = await call('PATCH', `${linksUrl()}/${link.id}`, {
+        payload: { password: 'battery staple' },
+      });
+
+      expect(changed.statusCode).toBe(200);
+      expect(changed.json()).toMatchObject({ id: link.id, password_protected: true });
+      expect((await unlocked(`/v1/shared/${link.token}/overview?${RANGE}`, proof)).statusCode).toBe(
+        401,
+      );
+      expect((await unlock(link.token, PASSWORD)).statusCode).toBe(401);
+      expect((await unlock(link.token, 'battery staple')).statusCode).toBe(200);
+    });
+
+    it('opens by the token alone again when the owner removes the password', async () => {
+      const link = await createLink({ name: 'Board', password: PASSWORD });
+
+      await call('PATCH', `${linksUrl()}/${link.id}`, { payload: { password: null } });
+
+      expect((await anonymous(`/v1/shared/${link.token}/overview?${RANGE}`)).statusCode).toBe(200);
+      expect((await unlock(link.token, PASSWORD)).json()).toMatchObject({
+        error: 'share_password_not_set',
+      });
+    });
+
+    it('answers a closed link with the one 404, even for the right password', async () => {
+      const link = await createLink({ name: 'Board', password: PASSWORD });
+      await call('DELETE', `${linksUrl()}/${link.id}`);
+
+      const revoked = await unlock(link.token, PASSWORD);
+      const unknown = await unlock(`pyxis_sh_${'X'.repeat(32)}`, PASSWORD);
+
+      expect([revoked.statusCode, unknown.statusCode]).toEqual([404, 404]);
+      expect(revoked.body).toBe(unknown.body);
+    });
+
+    it('locks a link after 50 wrong passwords with the answer of a busy address', async () => {
+      const link = await createLink({ name: 'Board', password: PASSWORD });
+      for (let attempt = 0; attempt < MAX_FAILED_UNLOCKS; attempt += 1) {
+        const wrong = await unlock(link.token, 'wrong horse', `203.0.113.${String(attempt)}`);
+        expect(wrong.statusCode).toBe(401);
+      }
+      const busyAddress = '203.0.113.200';
+      for (let attempt = 0; attempt < SHARE_UNLOCKS_PER_WINDOW; attempt += 1) {
+        await unlock(`pyxis_sh_${'W'.repeat(32)}`, PASSWORD, busyAddress);
+      }
+
+      const locked = await unlock(link.token, PASSWORD, '203.0.113.150');
+      const throttled = await unlock(`pyxis_sh_${'W'.repeat(32)}`, PASSWORD, busyAddress);
+
+      expect([locked.statusCode, throttled.statusCode]).toEqual([429, 429]);
+      expect(locked.json()).toEqual(throttled.json());
+      expect(Number(locked.headers['retry-after'])).toBeGreaterThan(0);
+      expect(Number(throttled.headers['retry-after'])).toBeGreaterThan(0);
+    });
+
+    it('lets only the owner set a password, on Pro', async () => {
+      const link = await createLink({ name: 'Board' });
+      const byMember = await call('PATCH', `${linksUrl()}/${link.id}`, {
+        cookie: MEMBER_COOKIE,
+        payload: { password: PASSWORD },
+      });
+      await setStatus('free');
+
+      const onFree = await call('PATCH', `${linksUrl()}/${link.id}`, {
+        payload: { password: PASSWORD },
+      });
+
+      expect(byMember.statusCode).toBe(404);
+      expect(onFree.statusCode).toBe(403);
+      expect(onFree.json()).toMatchObject({ error: 'plan_required' });
+    });
+
+    it.each([
+      ['a password of seven characters', { name: 'Board', password: 'x'.repeat(7) }],
+      ['a password far too long', { name: 'Board', password: 'x'.repeat(513) }],
+    ])('refuses a link with %s', async (_case, payload) => {
+      const response = await call('POST', linksUrl(), { payload });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('lets the browser send the unlock to the shared routes', async () => {
+      const response = await app.inject({
+        method: 'OPTIONS',
+        url: '/v1/shared/pyxis_sh_abc/overview',
+        headers: {
+          origin: E2E_DASHBOARD_ORIGIN,
+          'access-control-request-method': 'GET',
+          'access-control-request-headers': 'authorization',
+        },
+      });
+
+      expect(response.headers['access-control-allow-headers']).toBe('Content-Type, Authorization');
+    });
   });
 });

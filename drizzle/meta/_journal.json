@@ -337,6 +337,13 @@
       "when": 1793896937191,
       "tag": "0047_annotations",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1793902737081,
+      "tag": "0048_share-link-password",
+      "breakpoints": true
     }
   ]
 }

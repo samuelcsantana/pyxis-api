@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { ACCESS_TOKEN_SECURITY, CONNECTION_TOKEN_SECURITY } from '../auth/read-access.decorator';
+import { SHARE_UNLOCK_SCHEME } from '../share-links/shared-reports.controller';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { jsonSchemaConverter } from './json-schema-converter';
 
@@ -12,6 +13,15 @@ const SECRET_KEY_BEARER = {
   scheme: 'bearer',
   bearerFormat: 'opaque',
   description: 'A secret project key: pyxis_sk_ followed by 32 letters and digits',
+} as const;
+
+const SHARE_UNLOCK_BEARER = {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'opaque',
+  description:
+    'The unlock of a password-protected share link, from POST /v1/shared/{token}/unlock: ' +
+    'pyxis_su_ followed by 32 letters and digits, valid a few hours, for that link only',
 } as const;
 
 const ACCESS_TOKEN_BEARER = {
@@ -52,6 +62,7 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addBearerAuth(SECRET_KEY_BEARER, 'secret_key')
     .addBearerAuth(ACCESS_TOKEN_BEARER, ACCESS_TOKEN_SECURITY)
     .addBearerAuth(CONNECTION_TOKEN_BEARER, CONNECTION_TOKEN_SECURITY)
+    .addBearerAuth(SHARE_UNLOCK_BEARER, SHARE_UNLOCK_SCHEME)
     .build();
   return SwaggerModule.createDocument(app, config, { standardSchemaConverter: jsonSchemaConverter });
 }

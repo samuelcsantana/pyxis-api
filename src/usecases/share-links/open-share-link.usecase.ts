@@ -17,7 +17,9 @@ import {
 } from '../../domain/repositories/project-settings.repository';
 import {
   SHARE_LINK_REPOSITORY,
+  SHARE_UNLOCK_REPOSITORY,
   type ShareLinkRepository,
+  type ShareUnlockRepository,
 } from '../../domain/repositories/share-link.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { isShareLinkOpen, isShareToken, type ShareLink } from '../../domain/share-links/share-link';
@@ -26,6 +28,7 @@ export interface SharedProject {
   readonly link: ShareLink;
   readonly project: Project;
   readonly goals: readonly Goal[];
+  readonly unlocked: boolean;
 }
 
 type AccountLookup =
@@ -38,12 +41,14 @@ export class OpenShareLinkUseCase {
     @Inject(PROJECT_SETTINGS_REPOSITORY) private readonly projects: ProjectSettingsRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
     @Inject(GOAL_REPOSITORY) private readonly goals: GoalRepository,
+    @Inject(SHARE_UNLOCK_REPOSITORY) private readonly unlocks: ShareUnlockRepository,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
-  async execute(token: string): Promise<SharedProject> {
+  async execute(token: string, unlock: string | null = null): Promise<SharedProject> {
+    const now = this.clock.now();
     const link = isShareToken(token) ? await this.links.findByTokenHash(sha256Hex(token)) : null;
-    if (link === null || !isShareLinkOpen(link, this.clock.now())) {
+    if (link === null || !isShareLinkOpen(link, now)) {
       throw new ShareLinkNotFoundError();
     }
     const [project, owner] = await Promise.all([
@@ -53,7 +58,18 @@ export class OpenShareLinkUseCase {
     if (project === null || !owner.found || !mayShare(owner.account)) {
       throw new ShareLinkNotFoundError();
     }
-    return { link, project, goals: await this.goals.listByProject(project.id) };
+    const [goals, unlocked] = await Promise.all([
+      this.goals.listByProject(project.id),
+      this.isUnlocked(link, unlock, now),
+    ]);
+    return { link, project, goals, unlocked };
+  }
+
+  private async isUnlocked(link: ShareLink, unlock: string | null, now: Date): Promise<boolean> {
+    if (!link.passwordProtected) {
+      return true;
+    }
+    return unlock !== null && (await this.unlocks.isLive(link.id, sha256Hex(unlock), now));
   }
 
   private async accountOf(projectId: string): Promise<AccountLookup> {

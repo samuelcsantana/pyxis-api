@@ -1,8 +1,12 @@
 import { type ExecutionContext } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import type { AdminUser } from '../../../domain/entities/admin-user.entity';
 import type { Project } from '../../../domain/entities/project.entity';
-import { ShareLinkNotFoundError } from '../../../domain/errors/share-link.errors';
+import {
+  ShareLinkNotFoundError,
+  SharePasswordRequiredError,
+} from '../../../domain/errors/share-link.errors';
 import type { Goal } from '../../../domain/goals/goal';
 import { VISITORS_OFF } from '../../../domain/queries/visitors';
 import type { OverviewReport } from '../../../domain/queries/overview';
@@ -32,6 +36,10 @@ import type {
   RevokeShareLinkCommand,
   RevokeShareLinkUseCase,
 } from '../../../usecases/share-links/revoke-share-link.usecase';
+import type {
+  SetShareLinkPasswordCommand,
+  SetShareLinkPasswordUseCase,
+} from '../../../usecases/share-links/set-share-link-password.usecase';
 import type { ListAnnotationsUseCase } from '../../../usecases/annotations/list-annotations.usecase';
 import { annotationListSchema } from '../annotations/annotations.schemas';
 import { goalsSummarySchema } from '../goals/goals.schemas';
@@ -46,12 +54,14 @@ import {
   overviewReportSchema,
 } from '../queries/query.schemas';
 import { timeOfDayReportSchema } from '../queries/time-of-day.schemas';
-import { ShareLinkGuard, shareLinkOf } from './share-link.guard';
+import { isShareUnlocked, ShareLinkGuard, shareLinkOf } from './share-link.guard';
 import { ShareLinksController } from './share-links.controller';
 import {
   createdShareLinkSchema,
   createShareLinkSchema,
   sharedProjectSchema,
+  shareLinkPasswordSchema,
+  shareLinkSchema,
   shareLinksSchema,
 } from './share-links.schemas';
 import {
@@ -102,14 +112,17 @@ const LINK: ShareLink = {
   name: 'For the agency',
   createdAt: new Date('2026-11-05T12:00:00.000Z'),
   expiresAt: new Date('2026-12-05T12:00:00.000Z'),
+  passwordProtected: false,
 };
 const LINK_BODY = {
   id: LINK.id,
   name: 'For the agency',
   created_at: '2026-11-05T12:00:00.000Z',
   expires_at: '2026-12-05T12:00:00.000Z',
+  password_protected: false,
 };
 const TOKEN = `pyxis_sh_${'A'.repeat(32)}`;
+const UNLOCK = `pyxis_su_${'U'.repeat(32)}`;
 const RANGE = { from: '2026-11-01', to: '2026-11-05' };
 const STEPS = [
   { type: 'page', path: '/pricing' },
@@ -161,13 +174,20 @@ const ENGAGEMENT: EngagementReport = {
   exitPages: [{ path: '/thanks', visits: 1 }],
 };
 
-function contextOf(request: FastifyRequest): ExecutionContext {
-  return { switchToHttp: () => ({ getRequest: () => request }) } as unknown as ExecutionContext;
+function contextOf(
+  request: FastifyRequest,
+  handler: (...args: never[]) => unknown = () => undefined,
+): ExecutionContext {
+  return {
+    switchToHttp: () => ({ getRequest: () => request }),
+    getHandler: () => handler,
+  } as unknown as ExecutionContext;
 }
 
 function sharedRequest(): FastifyRequest {
   return {
     shareLink: LINK,
+    shareUnlocked: true,
     project: PROJECT,
     goals: [PURCHASE, THANKS],
   } as unknown as FastifyRequest;
@@ -259,41 +279,90 @@ function rangeOf(call: unknown[] | undefined, index = 1): RequestedRange {
 }
 
 describe('ShareLinkGuard', () => {
+  function guardOpening(unlocked: boolean) {
+    const opened: unknown[][] = [];
+    const guard = new ShareLinkGuard(
+      {
+        execute: (...args: unknown[]) => {
+          opened.push(args);
+          return Promise.resolve({ link: LINK, project: PROJECT, goals: [PURCHASE], unlocked });
+        },
+      } as unknown as OpenShareLinkUseCase,
+      new Reflector(),
+    );
+    return { guard, opened };
+  }
+
   it('opens the token of the path and puts the link, project and goals on the request', async () => {
-    const opened: string[] = [];
-    const guard = new ShareLinkGuard({
-      execute: (token: string) => {
-        opened.push(token);
-        return Promise.resolve({ link: LINK, project: PROJECT, goals: [PURCHASE] });
-      },
-    } as unknown as OpenShareLinkUseCase);
-    const request = { params: { token: TOKEN } } as unknown as FastifyRequest;
+    const { guard, opened } = guardOpening(true);
+    const request = { params: { token: TOKEN }, headers: {} } as unknown as FastifyRequest;
 
     await expect(guard.canActivate(contextOf(request))).resolves.toBe(true);
 
-    expect(opened).toEqual([TOKEN]);
+    expect(opened).toEqual([[TOKEN, null]]);
     expect(shareLinkOf(request)).toBe(LINK);
+    expect(isShareUnlocked(request)).toBe(true);
     expect(projectOf(request)).toBe(PROJECT);
     expect(goalsOf(request)).toEqual([PURCHASE]);
   });
 
-  it('opens an empty token when the path has none, which no link has', async () => {
-    const opened: string[] = [];
-    const guard = new ShareLinkGuard({
-      execute: (token: string) => {
-        opened.push(token);
-        return Promise.reject(new ShareLinkNotFoundError());
-      },
-    } as unknown as OpenShareLinkUseCase);
+  it('passes on the unlock sent as a bearer', async () => {
+    const { guard, opened } = guardOpening(true);
+    const request = {
+      params: { token: TOKEN },
+      headers: { authorization: `Bearer ${UNLOCK}` },
+    } as unknown as FastifyRequest;
+
+    await guard.canActivate(contextOf(request));
+
+    expect(opened).toEqual([[TOKEN, UNLOCK]]);
+  });
+
+  it('refuses a report of a locked link with share_password_required', async () => {
+    const { guard } = guardOpening(false);
+    const request = { params: { token: TOKEN }, headers: {} } as unknown as FastifyRequest;
+
+    await expect(guard.canActivate(contextOf(request))).rejects.toBeInstanceOf(
+      SharePasswordRequiredError,
+    );
+  });
+
+  it('lets a route marked for it read a locked link, and says it is locked', async () => {
+    const { guard } = guardOpening(false);
+    const request = { params: { token: TOKEN }, headers: {} } as unknown as FastifyRequest;
 
     await expect(
-      guard.canActivate(contextOf({ params: {} } as unknown as FastifyRequest)),
+      guard.canActivate(
+        contextOf(
+          request,
+          Reflect.get(SharedReportsController.prototype, 'project') as () => unknown,
+        ),
+      ),
+    ).resolves.toBe(true);
+    expect(isShareUnlocked(request)).toBe(false);
+  });
+
+  it('opens an empty token when the path has none, which no link has', async () => {
+    const opened: unknown[][] = [];
+    const guard = new ShareLinkGuard(
+      {
+        execute: (...args: unknown[]) => {
+          opened.push(args);
+          return Promise.reject(new ShareLinkNotFoundError());
+        },
+      } as unknown as OpenShareLinkUseCase,
+      new Reflector(),
+    );
+
+    await expect(
+      guard.canActivate(contextOf({ params: {}, headers: {} } as unknown as FastifyRequest)),
     ).rejects.toBeInstanceOf(ShareLinkNotFoundError);
-    expect(opened).toEqual(['']);
+    expect(opened).toEqual([['', null]]);
   });
 
   it('refuses to read a link the guard did not open', () => {
     expect(() => shareLinkOf({} as FastifyRequest)).toThrow('ShareLinkGuard must run');
+    expect(() => isShareUnlocked({} as FastifyRequest)).toThrow('ShareLinkGuard must run');
   });
 });
 
@@ -304,6 +373,7 @@ describe('SharedReportsController', () => {
     const body = controller.project(sharedRequest());
 
     expect(sharedProjectSchema.parse(body)).toEqual({
+      password_required: false,
       project: {
         name: 'Shop',
         timezone: 'America/Sao_Paulo',
@@ -323,7 +393,19 @@ describe('SharedReportsController', () => {
     const { controller } = sharedController();
     const request = { ...sharedRequest(), shareLink: { ...LINK, expiresAt: null } };
 
-    expect(controller.project(request as unknown as FastifyRequest).expires_at).toBeNull();
+    expect(controller.project(request as unknown as FastifyRequest)).toMatchObject({
+      password_required: false,
+      expires_at: null,
+    });
+  });
+
+  it('answers only password_required for a locked link, nothing about the project', () => {
+    const { controller } = sharedController();
+    const request = { ...sharedRequest(), shareUnlocked: false };
+
+    expect(
+      sharedProjectSchema.parse(controller.project(request as unknown as FastifyRequest)),
+    ).toEqual({ password_required: true });
   });
 
   it('reads the overview of the shared project for the chosen goal', async () => {
@@ -457,13 +539,19 @@ describe('ShareLinksController', () => {
     const created: CreateShareLinkCommand[] = [];
     const listed: ListShareLinksCommand[] = [];
     const revoked: RevokeShareLinkCommand[] = [];
+    const passwords: SetShareLinkPasswordCommand[] = [];
     return {
       controller: new ShareLinksController(
         {
           execute: (command: CreateShareLinkCommand) => {
             created.push(command);
             return Promise.resolve({
-              link: { ...LINK, name: command.name, expiresAt: command.expiresAt },
+              link: {
+                ...LINK,
+                name: command.name,
+                expiresAt: command.expiresAt,
+                passwordProtected: command.password !== null,
+              },
               token: TOKEN,
             });
           },
@@ -480,10 +568,17 @@ describe('ShareLinksController', () => {
             return Promise.resolve();
           },
         } as unknown as RevokeShareLinkUseCase,
+        {
+          execute: (command: SetShareLinkPasswordCommand) => {
+            passwords.push(command);
+            return Promise.resolve({ ...LINK, passwordProtected: command.password !== null });
+          },
+        } as unknown as SetShareLinkPasswordUseCase,
       ),
       created,
       listed,
       revoked,
+      passwords,
     };
   }
 
@@ -505,6 +600,7 @@ describe('ShareLinksController', () => {
         projectId: PROJECT.id,
         name: 'For the agency',
         expiresAt: LINK.expiresAt,
+        password: null,
       },
     ]);
   });
@@ -531,6 +627,46 @@ describe('ShareLinksController', () => {
     expect(listed).toEqual([{ adminUserId: ADMIN.id, projectId: PROJECT.id }]);
   });
 
+  it('creates a link with a password, kept as typed', async () => {
+    const { controller, created } = ownerController();
+
+    const body = await controller.create(
+      ownerRequest,
+      PROJECT.id,
+      createShareLinkSchema.parse({ name: 'Board', password: ' correct horse ' }),
+    );
+
+    expect(body.password_protected).toBe(true);
+    expect(created[0]?.password).toBe(' correct horse ');
+  });
+
+  it.each([
+    ['sets', 'battery staple', true],
+    ['removes', null, false],
+  ])('%s the password of a link', async (_case, password, isProtected) => {
+    const { controller, passwords } = ownerController();
+
+    const body = await controller.changePassword(
+      ownerRequest,
+      PROJECT.id,
+      LINK.id,
+      shareLinkPasswordSchema.parse({ password }),
+    );
+
+    expect(shareLinkSchema.parse(body)).toEqual({ ...LINK_BODY, password_protected: isProtected });
+    expect(passwords).toEqual([
+      { adminUserId: ADMIN.id, projectId: PROJECT.id, linkId: LINK.id, password },
+    ]);
+  });
+
+  it.each([
+    ['no password field', {}],
+    ['a password of a number', { password: 12345678 }],
+    ['a password too long for the edge', { password: 'x'.repeat(513) }],
+  ])('refuses a password body with %s at the edge', (_case, body) => {
+    expect(shareLinkPasswordSchema.safeParse(body).success).toBe(false);
+  });
+
   it('revokes one link of the project', async () => {
     const { controller, revoked } = ownerController();
 
@@ -540,7 +676,7 @@ describe('ShareLinksController', () => {
   });
 
   it.each([
-    ['an unknown field', { name: 'Board', password: 'secret' }],
+    ['an unknown field', { name: 'Board', pin: 'secret' }],
     ['an expiry with no time', { name: 'Board', expires_at: '2026-12-05' }],
     ['a blank name', { name: '   ' }],
   ])('refuses a body with %s at the edge', (_case, body) => {

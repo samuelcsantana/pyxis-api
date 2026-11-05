@@ -7,11 +7,13 @@ export class InvalidBatchError extends Error {
   }
 }
 
+export const CLIENT_RATE_LIMITED_MESSAGE = 'Too many batches from this address; retry later.';
+
 export class ClientRateLimitedError extends Error {
   readonly code = 'rate_limited';
 
   constructor(readonly retryAfterSeconds: number) {
-    super('Too many batches from this address; retry later.');
+    super(CLIENT_RATE_LIMITED_MESSAGE);
     this.name = 'ClientRateLimitedError';
   }
 }

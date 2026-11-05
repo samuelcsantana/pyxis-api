@@ -15,7 +15,9 @@ import {
   type ShareLinkRepository,
 } from '../../domain/repositories/share-link.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
+import { PASSWORD_HASHER, type PasswordHasher } from '../../domain/services/password-hasher';
 import { RANDOM_SOURCE, type RandomSource } from '../../domain/services/random-source';
+import { requireSharePassword } from '../../domain/share-links/share-unlock';
 import {
   generateShareToken,
   MAX_SHARE_LINKS_PER_PROJECT,
@@ -30,6 +32,7 @@ export interface CreateShareLinkCommand {
   readonly projectId: string;
   readonly name: string;
   readonly expiresAt: Date | null;
+  readonly password: string | null;
 }
 
 export interface CreatedShareLink {
@@ -46,6 +49,7 @@ export class CreateShareLinkUseCase {
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
     @Inject(SHARE_LINK_REPOSITORY) private readonly links: ShareLinkRepository,
     @Inject(RANDOM_SOURCE) private readonly random: RandomSource,
+    @Inject(PASSWORD_HASHER) private readonly passwords: PasswordHasher,
     @Inject(CLOCK) private readonly clock: Clock,
   ) {}
 
@@ -55,6 +59,7 @@ export class CreateShareLinkUseCase {
       name: requireShareLinkName(command.name),
       expiresAt: requireShareLinkExpiry(command.expiresAt, now),
     };
+    const password = command.password === null ? null : requireSharePassword(command.password);
     const owned = await changeableProject(
       this.projects,
       this.accounts,
@@ -63,8 +68,15 @@ export class CreateShareLinkUseCase {
     );
     requireProFeature(owned.account, 'public_share_link');
     const token = generateShareToken(this.random);
+    const passwordHash = password === null ? null : await this.passwords.hash(password);
     const created = await this.links.create(
-      { ...draft, projectId: owned.project.id, tokenHash: sha256Hex(token), createdAt: now },
+      {
+        ...draft,
+        projectId: owned.project.id,
+        tokenHash: sha256Hex(token),
+        passwordHash,
+        createdAt: now,
+      },
       MAX_SHARE_LINKS_PER_PROJECT,
     );
     if (created.outcome === 'limit_reached') {

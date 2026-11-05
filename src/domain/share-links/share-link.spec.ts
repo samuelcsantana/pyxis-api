@@ -20,6 +20,7 @@ function link(expiresAt: Date | null): ShareLink {
     name: 'Board',
     createdAt: NOW,
     expiresAt,
+    passwordProtected: false,
   };
 }
 
