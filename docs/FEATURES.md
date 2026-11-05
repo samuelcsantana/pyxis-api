@@ -329,6 +329,13 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   each Acquisition source, campaign and channel (a new `channels` list, every channel with its
   visits, conversions and revenue), and each funnel event step, from the event that completed it
   ([ADR 0059](adr/0059-revenue-is-a-property-of-the-goal-event.md))
+- Annotations, in both plans: a note of 1 to 140 characters (spaces collapsed) on a day of the
+  project, today at the latest in its time zone. The account's owner writes them from the
+  dashboard (`POST /v1/projects/{projectId}/annotations` with `day` and `text`, `PATCH` and
+  `DELETE .../annotations/{annotationId}`; 1,000 per project, `409 annotation_limit_reached`);
+  anyone who reads the project lists a range with `GET .../annotations?from=&to=` (session or
+  access token), by day. Access tokens stay read-only; writing by token is an open decision
+  ([ADR 0062](adr/0062-annotations-are-notes-on-a-day-written-by-the-owner.md))
 - Share links, on Pro: the account's owner creates a read-only link from the dashboard (`POST
 /v1/projects/{projectId}/share-links` with a name and an optional `expires_at`; the
   `pyxis_sh_` token is answered once and kept only as its hash; ten per project,
@@ -336,7 +343,7 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   (`GET`, on any plan) and revokes one at once (`DELETE .../share-links/{linkId}`, on any plan).
   Without a session, `GET /v1/shared/{token}` answers the project's name, time zone, currency and
   goals, and `overview`, `time-of-day`, `goals/summary`, `acquisition`, `devices`, `features`,
-  `engagement`, `funnel` and `funnel/segments` under it answer what the dashboard answers, with
+  `engagement`, `funnel`, `funnel/segments` and `annotations` under it answer what the dashboard answers, with
   the same range, filters and `goal`, except the `identity` and `property` filters (`400`).
   Nothing that lists a visit or a person is shared (visits,
   timeline, requests, funnel subjects, property values). An unknown, revoked or expired link, an

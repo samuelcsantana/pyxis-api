@@ -373,6 +373,76 @@
         ],
         "type": "object"
       },
+      "Annotation": {
+        "additionalProperties": false,
+        "description": "A short note on a day of the project.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "day",
+          "text",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "AnnotationChanges": {
+        "additionalProperties": false,
+        "properties": {
+          "day": {
+            "description": "The day the note marks, in the project time zone; today at the latest",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "text": {
+            "description": "The note, 1 to 140 characters once its spaces are collapsed into one and trimmed",
+            "maxLength": 280,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AnnotationList": {
+        "additionalProperties": false,
+        "description": "The notes on the days of the range, by day, then in the order they were written.",
+        "properties": {
+          "annotations": {
+            "items": {
+              "$ref": "#/components/schemas/Annotation"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "annotations"
+        ],
+        "type": "object"
+      },
       "ArrivalsReport": {
         "additionalProperties": false,
         "description": "What reached the project since a moment and happened inside the range of days, kind by kind. Only times and counts: no ids, names or paths.",
@@ -2843,6 +2913,27 @@
         },
         "required": [
           "accounts"
+        ],
+        "type": "object"
+      },
+      "NewAnnotation": {
+        "additionalProperties": false,
+        "properties": {
+          "day": {
+            "description": "The day the note marks, in the project time zone; today at the latest",
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "text": {
+            "description": "The note, 1 to 140 characters once its spaces are collapsed into one and trimmed",
+            "maxLength": 280,
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "text"
         ],
         "type": "object"
       },
@@ -8182,6 +8273,378 @@
         "summary": "Visits per day and channel, and the sources that brought them",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/annotations": {
+      "get": {
+        "operationId": "AnnotationsController_list",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotationList"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "access_token": []
+          },
+          {
+            "connection_token": []
+          },
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The notes on the days of a range, for anyone who reads the project",
+        "tags": [
+          "annotations"
+        ]
+      },
+      "post": {
+        "description": "In both plans. At most 1000 notes per project.",
+        "operationId": "AnnotationSettingsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewAnnotation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Annotation"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the annotation is not one of its annotations (annotation_not_found)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project already has the most notes it may keep (annotation_limit_reached), or the account has no running subscription (subscription_required)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Write a note on a day of a project the admin owns",
+        "tags": [
+          "annotations"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/annotations/{annotationId}": {
+      "delete": {
+        "operationId": "AnnotationSettingsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "annotationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the annotation is not one of its annotations (annotation_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Delete a note",
+        "tags": [
+          "annotations"
+        ]
+      },
+      "patch": {
+        "operationId": "AnnotationSettingsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "annotationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnotationChanges"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Annotation"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the annotation is not one of its annotations (annotation_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Move a note to another day, or rewrite it",
+        "tags": [
+          "annotations"
         ]
       }
     },
@@ -14297,6 +14760,89 @@
           }
         },
         "summary": "Visits per day and channel, and the sources that brought them",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/annotations": {
+      "get": {
+        "operationId": "SharedReportsController_annotations",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnotationList"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "The notes on the days of a range, which explain the charts",
         "tags": [
           "shared reports"
         ]
