@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.47.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.46.0...v0.47.0) (2026-11-05)
+
+
+### Features
+
+* **share-links:** create, list, revoke and open share links ([1fbb397](https://github.com/samuelcsantana/pyxis-api/commit/1fbb39799f34dafacf6f26861c6838d0823699bc))
+* **share-links:** keep share links per project, as the hash of their token ([87dbb60](https://github.com/samuelcsantana/pyxis-api/commit/87dbb60ae6bd5d94f7ccf480587c70d65b0955e6))
+* **share-links:** serve the aggregate reports of a share link without a session ([b36cb16](https://github.com/samuelcsantana/pyxis-api/commit/b36cb165edcb5cab705b71f1dd160bbb0be51a9d))
+
+
+### Refactoring
+
+* **queries:** export the report bodies for a second set of routes ([47df0a7](https://github.com/samuelcsantana/pyxis-api/commit/47df0a7106028697df5c90d0f7f5aaa291ce66d8))
+
+
+### Documentation
+
+* **share-links:** record the public share link and export its routes ([80d9c1e](https://github.com/samuelcsantana/pyxis-api/commit/80d9c1e132d3b54d539cff5a31e99e030e5a44c2))
+
 ## [0.46.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.45.0...v0.46.0) (2026-11-05)
 
 
