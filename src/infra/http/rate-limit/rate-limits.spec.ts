@@ -22,6 +22,9 @@ import {
   SHARE_UNLOCK_THROTTLER,
   SHARE_UNLOCKS_PER_WINDOW,
   SIGN_IN_REQUESTS_PER_WINDOW,
+  SLACK_TEST_RATE_WINDOW_MS,
+  SLACK_TEST_THROTTLER,
+  SLACK_TESTS_PER_WINDOW,
   SUBJECT_RATE_WINDOW_MS,
   SUBJECT_REQUESTS_PER_WINDOW,
   SUBJECTS_THROTTLER,
@@ -84,6 +87,7 @@ describe('rate limits', () => {
       { name: 'arrivals', ttl: 60_000, limit: 30 },
       { name: 'shared-reports', ttl: 60_000, limit: 120 },
       { name: 'share-unlock', ttl: 900_000, limit: 20 },
+      { name: 'slack-test', ttl: 900_000, limit: 10 },
     ]);
   });
 
@@ -119,6 +123,14 @@ describe('rate limits', () => {
     });
   });
 
+  it('lets one address post ten Slack test messages every fifteen minutes', () => {
+    expect({ SLACK_TEST_THROTTLER, SLACK_TESTS_PER_WINDOW, SLACK_TEST_RATE_WINDOW_MS }).toEqual({
+      SLACK_TEST_THROTTLER: 'slack-test',
+      SLACK_TESTS_PER_WINDOW: 10,
+      SLACK_TEST_RATE_WINDOW_MS: 900_000,
+    });
+  });
+
   it('skips every registered throttler but the ones a route uses', () => {
     expect(skipThrottlersExcept(AUTH_THROTTLER)).toEqual({
       ingest: true,
@@ -128,6 +140,7 @@ describe('rate limits', () => {
       arrivals: true,
       'shared-reports': true,
       'share-unlock': true,
+      'slack-test': true,
     });
     expect(skipThrottlersExcept(INGEST_THROTTLER, OAUTH_THROTTLER)).toEqual({
       auth: true,
@@ -136,6 +149,7 @@ describe('rate limits', () => {
       arrivals: true,
       'shared-reports': true,
       'share-unlock': true,
+      'slack-test': true,
     });
     expect(Object.keys(skipThrottlersExcept())).toEqual(THROTTLERS.map(({ name }) => name));
   });

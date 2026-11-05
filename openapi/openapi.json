@@ -4910,6 +4910,20 @@
         ],
         "type": "object"
       },
+      "SetSlackWebhook": {
+        "additionalProperties": false,
+        "properties": {
+          "url": {
+            "description": "The Slack Incoming Webhook address, https://hooks.slack.com/services/…; no other host is accepted. Stored encrypted and never answered back",
+            "maxLength": 256,
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
       "SharedProject": {
         "description": "What a share link opens: the name and settings the shared reports need, and its goals; only password_required: true for a password-protected link not unlocked yet.",
         "oneOf": [
@@ -5268,6 +5282,83 @@
           "terms_version",
           "terms_url",
           "free_plan"
+        ],
+        "type": "object"
+      },
+      "SlackTest": {
+        "additionalProperties": false,
+        "properties": {
+          "outcome": {
+            "description": "sent: Slack accepted the test message; broken: Slack answered that the webhook no longer exists, and it is now marked broken; failed: Slack could not be reached, try again later",
+            "enum": [
+              "sent",
+              "broken",
+              "failed"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "SlackWebhook": {
+        "additionalProperties": false,
+        "description": "The Slack webhook the daily alerts of the project are posted to, masked. A broken one receives nothing until the owner pastes a working address.",
+        "properties": {
+          "webhook": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "broken_at": {
+                    "anyOf": [
+                      {
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "When Slack answered that the webhook no longer exists; null: it works"
+                  },
+                  "broken_reason": {
+                    "description": "What Slack answered then, such as no_service or channel_not_found",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "connected_at": {
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                    "type": "string"
+                  },
+                  "masked_url": {
+                    "description": "hooks.slack.com/…/ and the last four characters, enough to recognize it",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "masked_url",
+                  "connected_at",
+                  "broken_at",
+                  "broken_reason"
+                ],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null: no webhook is set"
+          }
+        },
+        "required": [
+          "webhook"
         ],
         "type": "object"
       },
@@ -14019,6 +14110,327 @@
         "summary": "Set, change or remove the password of a share link",
         "tags": [
           "share links"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/slack-webhook": {
+      "delete": {
+        "description": "Removed on any plan; nothing is posted to it again.",
+        "operationId": "SlackWebhookController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The webhook is gone."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or it has no Slack webhook (slack_webhook_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Remove the Slack webhook, at once",
+        "tags": [
+          "slack alerts"
+        ]
+      },
+      "get": {
+        "description": "Answered on any plan, so an account that left Pro can still see and remove it.",
+        "operationId": "SlackWebhookController_show",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlackWebhook"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or it has no Slack webhook (slack_webhook_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The Slack webhook of a project the admin owns, masked",
+        "tags": [
+          "slack alerts"
+        ]
+      },
+      "put": {
+        "description": "Pro only, owner only. Only https://hooks.slack.com/services/… is accepted. The address is stored encrypted (AES-256-GCM) and answered back only masked; a broken mark is cleared.",
+        "operationId": "SlackWebhookController_set",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetSlackWebhook"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlackWebhook"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The address is not a Slack Incoming Webhook (invalid_slack_webhook)."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, the account is suspended (account_suspended), or its plan does not include Slack alerts (plan_required)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or it has no Slack webhook (slack_webhook_not_found)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription (subscription_required)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Slack alerts are not configured on this server (slack_unavailable)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Set or replace the Slack webhook the daily alerts are posted to",
+        "tags": [
+          "slack alerts"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/slack-webhook/test": {
+      "post": {
+        "description": "Pro only, owner only, in the language of the admin. When Slack answers that the webhook no longer exists, it is marked broken.",
+        "operationId": "SlackWebhookController_test",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SlackTest"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, the account is suspended (account_suspended), or its plan does not include Slack alerts (plan_required)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or it has no Slack webhook (slack_webhook_not_found)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The account has no running subscription (subscription_required)."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many tests from this address (rate_limited)."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Slack alerts are not configured on this server (slack_unavailable)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Post a fixed test message to the Slack webhook",
+        "tags": [
+          "slack alerts"
         ]
       }
     },

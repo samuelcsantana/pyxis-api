@@ -16,6 +16,7 @@ import { ProjectsModule } from './infra/http/projects/projects.module';
 import { QueriesModule } from './infra/http/queries/queries.module';
 import { RateLimitModule } from './infra/http/rate-limit/rate-limit.module';
 import { ShareLinksModule } from './infra/http/share-links/share-links.module';
+import { SlackModule } from './infra/http/slack/slack.module';
 import { SubjectsModule } from './infra/http/subjects/subjects.module';
 
 @Module({
@@ -34,6 +35,7 @@ import { SubjectsModule } from './infra/http/subjects/subjects.module';
     GoalsModule,
     AnnotationsModule,
     ShareLinksModule,
+    SlackModule,
     SubjectsModule,
     OAuthModule,
     McpModule,
