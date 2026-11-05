@@ -16,6 +16,7 @@ const PROJECT = {
   name: 'Shop',
   timezone: 'America/Sao_Paulo',
   conversion_event: 'signup_completed',
+  currency: 'BRL',
   first_event_at: '2026-10-01T12:00:00.000Z',
   last_event_at: '2026-10-14T23:00:00.000Z',
 };
