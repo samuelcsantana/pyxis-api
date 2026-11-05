@@ -15,7 +15,7 @@ const AS_OF = new Date('2026-10-23T17:05:12.000Z');
 const SCOPE: QueryScope = {
   projectId: 'project-1',
   timeZone: 'America/Sao_Paulo',
-  conversionEvent: 'signup_completed',
+  conversion: { type: 'event', name: 'signup_completed' },
   range: { from: '2026-10-23', to: '2026-10-23' },
   filters: NO_REPORT_FILTERS,
 };

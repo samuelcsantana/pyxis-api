@@ -9,6 +9,7 @@ import {
 } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
+import { conversionTarget } from '../../../domain/goals/goal';
 import { GetArrivalsUseCase } from '../../../usecases/queries/get-arrivals.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -24,8 +25,9 @@ import {
   arrivalsReportSchema,
 } from './arrivals.schemas';
 import { ArrivalsThrottlerGuard } from './arrivals-throttler.guard';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
+import { ApiGoal } from './report-filter-params';
 
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
@@ -52,6 +54,7 @@ export class ArrivalsController {
     description: 'Count what arrived after this moment; earlier than 7 days ago counts from then',
     schema: { type: 'string', format: 'date-time' },
   })
+  @ApiGoal()
   @ApiOperation({
     summary: 'What reached the project since a moment, inside the range, kind by kind',
   })
@@ -68,7 +71,11 @@ export class ArrivalsController {
   ): Promise<ArrivalsReportBody> {
     const report = await this.getArrivals.execute(
       projectOf(request),
-      { from: query.from, to: query.to },
+      {
+        from: query.from,
+        to: query.to,
+        conversion: conversionTarget(goalsOf(request), query.goal),
+      },
       new Date(query.since),
     );
     return arrivalsBody(report);

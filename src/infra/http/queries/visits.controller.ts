@@ -17,8 +17,9 @@ import { GetVisitsUseCase } from '../../../usecases/queries/get-visits.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
+import type { Goal } from '../../../domain/goals/goal';
 import { SchemaPipe } from '../schema-pipe';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiReportFilters, reportFiltersOf } from './report-filter-params';
 import {
   visitCursorText,
@@ -29,9 +30,9 @@ import {
 } from './visits.schemas';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
 
-function visitFilters(query: VisitsQueryParams): VisitFilters {
+function visitFilters(query: VisitsQueryParams, goals: readonly Goal[]): VisitFilters {
   return {
-    ...reportFiltersOf(query),
+    ...reportFiltersOf(query, goals),
     route: query.route ?? null,
     visitors: query.visitors ?? null,
   };
@@ -131,7 +132,7 @@ export class VisitsController {
     const report = await this.getVisits.execute(
       project,
       range,
-      visitFilters(query),
+      visitFilters(query, goalsOf(request)),
       query.cursor ?? null,
     );
     return visitsBody(report, project.timezone);

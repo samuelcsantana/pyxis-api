@@ -100,7 +100,7 @@ export function filteredScope(filters: Partial<ReportFilters> = {}): QueryScope 
   return {
     projectId: FILTERED_PROJECT_ID,
     timeZone: 'UTC',
-    conversionEvent: 'signup_completed',
+    conversion: { type: 'event', name: 'signup_completed' },
     range: { from: FILTERED_DAY, to: FILTERED_DAY },
     filters: { ...NO_REPORT_FILTERS, ...filters },
   };

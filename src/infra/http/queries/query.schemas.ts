@@ -38,6 +38,8 @@ const FAILED_VALUES = ['true', 'false'] as const;
 
 const pathFilterSchema = z.string().startsWith('/').max(MAX_PATH_LENGTH);
 
+export const goalIdSchema = z.uuid().transform((id) => id.toLowerCase());
+
 const pathFiltersSchema = z
   .union([pathFilterSchema, z.array(pathFilterSchema).max(MAX_VISIT_PATH_FILTERS)])
   .transform((paths) => (typeof paths === 'string' ? [paths] : paths));
@@ -76,6 +78,7 @@ export const reportFilterFields = {
     .enum(FAILED_VALUES)
     .transform((value) => value === 'true')
     .optional(),
+  reached_goal: goalIdSchema.optional(),
 };
 
 export type ReportFilterParams = z.output<z.ZodObject<typeof reportFilterFields>>;
@@ -126,6 +129,10 @@ export const rangeQuerySchema = z.strictObject({
 
 export const filteredRangeQuerySchema = propertyNeedsEvent(
   rangeQuerySchema.extend(reportFilterFields),
+);
+
+export const conversionRangeQuerySchema = propertyNeedsEvent(
+  rangeQuerySchema.extend({ ...reportFilterFields, goal: goalIdSchema.optional() }),
 );
 
 const kpiSchema = z.strictObject({
@@ -551,6 +558,7 @@ export const requestsReportSchema = z
   });
 
 export type FilteredRangeQuery = z.infer<typeof filteredRangeQuerySchema>;
+export type ConversionRangeQuery = z.infer<typeof conversionRangeQuerySchema>;
 export type FeaturesQuery = z.infer<typeof featuresQuerySchema>;
 export type RequestsQuery = z.infer<typeof requestsQuerySchema>;
 export type FunnelQuery = z.infer<typeof funnelQuerySchema>;

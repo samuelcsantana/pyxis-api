@@ -56,8 +56,8 @@ function previousDay(day: DayTotals, scope: QueryScope): PreviousDay {
     events: day.events,
     visits: day.visits,
     identifiedUsers: day.identifiedUsers,
-    conversions: scope.conversionEvent === null ? null : day.conversions,
-    convertingVisits: scope.conversionEvent === null ? null : day.convertingVisits,
+    conversions: scope.conversion === null ? null : day.conversions,
+    convertingVisits: scope.conversion === null ? null : day.convertingVisits,
     writeErrors: failures(day),
   };
 }
@@ -99,7 +99,7 @@ export class GetOverviewUseCase {
           daily: days.map((day) => day.identifiedUsers),
         },
         conversions:
-          project.conversionEvent === null
+          current.conversion === null
             ? null
             : {
                 current: now.conversions,
@@ -107,7 +107,7 @@ export class GetOverviewUseCase {
                 daily: days.map((day) => day.conversions),
               },
         convertingVisits:
-          project.conversionEvent === null
+          current.conversion === null
             ? null
             : {
                 current: now.convertingVisits,

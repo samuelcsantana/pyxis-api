@@ -4,6 +4,7 @@ import type {
   DeviceType,
   OsFamily,
 } from '../entities/tracked-event.entity';
+import type { GoalTarget } from '../goals/goal';
 
 export const MAX_VISIT_PATH_FILTERS = 3;
 
@@ -34,6 +35,7 @@ export interface ReportFilters {
   readonly source: string | null;
   readonly campaign: string | null;
   readonly failed: boolean;
+  readonly reachedGoal: GoalTarget | null;
 }
 
 export const NO_REPORT_FILTERS: ReportFilters = {
@@ -50,4 +52,5 @@ export const NO_REPORT_FILTERS: ReportFilters = {
   source: null,
   campaign: null,
   failed: false,
+  reachedGoal: null,
 };

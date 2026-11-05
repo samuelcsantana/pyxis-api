@@ -51,7 +51,7 @@ describe('FunnelSubjectsController', () => {
     });
 
     const body = await controller.subjects(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       funnelSubjectsQuerySchema.parse({
         ...BASE,
         step: '2',
@@ -64,7 +64,7 @@ describe('FunnelSubjectsController', () => {
     expect(calls).toEqual([
       [
         PROJECT,
-        { ...RANGE, filters: { ...NO_REPORT_FILTERS, channel: 'paid' } },
+        { ...RANGE, filters: { ...NO_REPORT_FILTERS, channel: 'paid' }, conversion: null },
         {
           mode: 'visit',
           steps: JSON.parse(STEPS) as unknown,
@@ -85,7 +85,7 @@ describe('FunnelSubjectsController', () => {
     const { controller, calls } = controllerAnswering({ subjects: [], nextCursor: null });
 
     const body = await controller.subjects(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       funnelSubjectsQuerySchema.parse({ ...BASE, step: '1', outcome: 'reached' }),
     );
 

@@ -36,14 +36,21 @@ describe('ArrivalsController', () => {
     };
     const controller = new ArrivalsController(useCase as unknown as GetArrivalsUseCase);
 
-    const body = await controller.arrivals({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-23',
-      to: '2026-10-23',
-      since: '2026-10-23T14:00:00-03:00',
-    });
+    const body = await controller.arrivals(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-23',
+        to: '2026-10-23',
+        since: '2026-10-23T14:00:00-03:00',
+      },
+    );
 
     expect(calls).toEqual([
-      [PROJECT, { from: '2026-10-23', to: '2026-10-23' }, new Date('2026-10-23T17:00:00.000Z')],
+      [
+        PROJECT,
+        { from: '2026-10-23', to: '2026-10-23', conversion: null },
+        new Date('2026-10-23T17:00:00.000Z'),
+      ],
     ]);
     expect(arrivalsReportSchema.parse(body)).toEqual({
       as_of: '2026-10-23T17:05:12.000Z',
@@ -62,11 +69,14 @@ describe('ArrivalsController', () => {
     };
     const controller = new ArrivalsController(useCase as unknown as GetArrivalsUseCase);
 
-    const body = await controller.arrivals({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-23',
-      to: '2026-10-23',
-      since: '2026-10-23T17:00:00Z',
-    });
+    const body = await controller.arrivals(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-23',
+        to: '2026-10-23',
+        since: '2026-10-23T17:00:00Z',
+      },
+    );
 
     expect(body.conversions).toEqual({ times: ['2026-10-23T17:04:59.000Z'], more: false });
   });

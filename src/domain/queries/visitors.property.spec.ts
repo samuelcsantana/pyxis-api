@@ -52,7 +52,7 @@ describe('visitorMonths, for any range and any counts', () => {
         const scope = {
           projectId: 'c1d2e3f4-a5b6-4c7d-8e9f-a0b1c2d3e4f5',
           timeZone: 'UTC',
-          conversionEvent: null,
+          conversion: null,
           range,
           filters: NO_REPORT_FILTERS,
         };

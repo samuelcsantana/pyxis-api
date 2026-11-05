@@ -1,5 +1,6 @@
 import type { FastifyRequest } from 'fastify';
 import type { Project } from '../../../domain/entities/project.entity';
+import type { Goal } from '../../../domain/goals/goal';
 import { type AcquisitionReport, noChannelVisits } from '../../../domain/queries/acquisition';
 import type { DevicesReport } from '../../../domain/queries/devices';
 import type { FeaturesReport } from '../../../domain/queries/features';
@@ -18,6 +19,7 @@ import type { GetOverviewUseCase } from '../../../usecases/queries/get-overview.
 import { QueriesController } from './queries.controller';
 import {
   acquisitionReportSchema,
+  conversionRangeQuerySchema,
   featuresQuerySchema,
   filteredRangeQuerySchema,
   devicesReportSchema,
@@ -30,6 +32,21 @@ import {
   timelineQuerySchema,
   timelineReportSchema,
 } from './query.schemas';
+
+const SIGNUP_GOAL: Goal = {
+  id: '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d',
+  projectId: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
+  name: 'Signed up',
+  target: { type: 'event', name: 'signup_completed' },
+  position: 1,
+  createdAt: new Date('2026-11-04T12:00:00.000Z'),
+};
+const THANKS_GOAL: Goal = {
+  ...SIGNUP_GOAL,
+  id: '8b2c3d4e-5f6a-4b7c-9d8e-0f1a2b3c4d5e',
+  target: { type: 'page', path: '/thanks/*' },
+  position: 2,
+};
 
 const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
@@ -270,9 +287,12 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
     const range = { from: '2026-10-04', to: '2026-10-05' };
 
-    const body = await controller.overview({ project: PROJECT } as FastifyRequest, range);
+    const body = await controller.overview(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      range,
+    );
 
-    expect(calls).toEqual([[PROJECT, { ...range, filters: NO_REPORT_FILTERS }]]);
+    expect(calls).toEqual([[PROJECT, { ...range, filters: NO_REPORT_FILTERS, conversion: null }]]);
     expect(overviewReportSchema.parse(body)).toEqual(body);
     expect(body.kpis.identified_users).toEqual({ current: 1, previous: 0, daily: [0, 1] });
     expect(body.kpis.converting_visits).toEqual({ current: 1, previous: 1, daily: [1, 0] });
@@ -296,9 +316,11 @@ describe('QueriesController', () => {
     const range = { from: '2026-10-04', to: '2026-10-05' };
 
     await controller.overview(
-      { project: PROJECT } as FastifyRequest,
-      filteredRangeQuerySchema.parse({
+      { project: PROJECT, goals: [SIGNUP_GOAL, THANKS_GOAL] } as unknown as FastifyRequest,
+      conversionRangeQuerySchema.parse({
         ...range,
+        goal: THANKS_GOAL.id.toUpperCase(),
+        reached_goal: SIGNUP_GOAL.id,
         path: ['/pricing', '/docs'],
         event: 'plan_selected',
         property: 'plan=pro',
@@ -335,7 +357,9 @@ describe('QueriesController', () => {
             source: 'google',
             campaign: 'spring_sale',
             failed: true,
+            reachedGoal: SIGNUP_GOAL.target,
           },
+          conversion: THANKS_GOAL.target,
         },
       ],
     ]);
@@ -344,10 +368,13 @@ describe('QueriesController', () => {
   it('answers a null cutoff when the range is over', async () => {
     const { controller } = controllerAnswering({ ...REPORT, comparisonCutoff: null });
 
-    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-04',
-      to: '2026-10-05',
-    });
+    const body = await controller.overview(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-04',
+        to: '2026-10-05',
+      },
+    );
 
     expect(overviewReportSchema.parse(body).comparison_cutoff).toBeNull();
   });
@@ -355,10 +382,13 @@ describe('QueriesController', () => {
   it('answers the unique visitors of both periods in snake case when the project counts them', async () => {
     const { controller } = controllerAnswering({ ...REPORT, visitors: COUNTED_VISITORS });
 
-    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-04',
-      to: '2026-10-05',
-    });
+    const body = await controller.overview(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-04',
+        to: '2026-10-05',
+      },
+    );
 
     expect(overviewReportSchema.parse(body).visitors).toEqual({
       enabled: true,
@@ -378,10 +408,13 @@ describe('QueriesController', () => {
   it('answers empty visitor lists when the project does not count visitors', async () => {
     const { controller } = controllerAnswering(REPORT);
 
-    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-04',
-      to: '2026-10-05',
-    });
+    const body = await controller.overview(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-04',
+        to: '2026-10-05',
+      },
+    );
 
     expect(overviewReportSchema.parse(body).visitors).toEqual({
       enabled: false,
@@ -398,10 +431,13 @@ describe('QueriesController', () => {
       kpis: { ...REPORT.kpis, conversions: null, convertingVisits: null },
     });
 
-    const body = await controller.overview({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-04',
-      to: '2026-10-05',
-    });
+    const body = await controller.overview(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-04',
+        to: '2026-10-05',
+      },
+    );
 
     expect(body.kpis.conversions).toBeNull();
     expect(body.kpis.converting_visits).toBeNull();
@@ -412,12 +448,15 @@ describe('QueriesController', () => {
     const range = { from: '2026-10-04', to: '2026-10-05' };
 
     const body = await controller.devices(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       filteredRangeQuerySchema.parse({ ...range, browser: 'safari' }),
     );
 
     expect(calls).toEqual([
-      [PROJECT, { ...range, filters: { ...NO_REPORT_FILTERS, browser: 'safari' } }],
+      [
+        PROJECT,
+        { ...range, filters: { ...NO_REPORT_FILTERS, browser: 'safari' }, conversion: null },
+      ],
     ]);
     expect(devicesReportSchema.parse(body)).toEqual({
       device_types: [{ value: 'mobile', visits: 4, conversions: 2, converting_visits: 1 }],
@@ -463,11 +502,13 @@ describe('QueriesController', () => {
     const range = { from: '2026-10-05', to: '2026-10-05' };
 
     const body = await controller.acquisition(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       filteredRangeQuerySchema.parse({ ...range, os: 'ios' }),
     );
 
-    expect(calls).toEqual([[PROJECT, { ...range, filters: { ...NO_REPORT_FILTERS, os: 'ios' } }]]);
+    expect(calls).toEqual([
+      [PROJECT, { ...range, filters: { ...NO_REPORT_FILTERS, os: 'ios' }, conversion: null }],
+    ]);
     expect(acquisitionReportSchema.parse(body)).toEqual({
       days: [{ date: '2026-10-05', by_channel: { ...noChannelVisits(), paid: 2 } }],
       sources: [
@@ -500,7 +541,7 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
 
     const body = await controller.features(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       featuresQuerySchema.parse({
         from: '2026-10-04',
         to: '2026-10-05',
@@ -516,6 +557,7 @@ describe('QueriesController', () => {
           from: '2026-10-04',
           to: '2026-10-05',
           filters: { ...NO_REPORT_FILTERS, event: { name: 'signup_completed', property: null } },
+          conversion: null,
         },
         'events',
       ],
@@ -529,15 +571,21 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
     const range = { from: '2026-10-05', to: '2026-10-05' };
 
-    const body = await controller.requests({ project: PROJECT } as FastifyRequest, {
+    const body = await controller.requests(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        ...range,
+        screen: '/pricing',
+        kind: 'writes',
+        route: { method: 'POST', route: '/v1/plans' },
+      },
+    );
+    await controller.requests({ project: PROJECT, goals: [] } as unknown as FastifyRequest, {
       ...range,
-      screen: '/pricing',
-      kind: 'writes',
-      route: { method: 'POST', route: '/v1/plans' },
+      kind: 'reads',
     });
-    await controller.requests({ project: PROJECT } as FastifyRequest, { ...range, kind: 'reads' });
 
-    const unfiltered = { ...range, filters: NO_REPORT_FILTERS };
+    const unfiltered = { ...range, filters: NO_REPORT_FILTERS, conversion: null };
     expect(calls).toEqual([
       [PROJECT, unfiltered, '/pricing', 'writes', { method: 'POST', route: '/v1/plans' }],
       [PROJECT, unfiltered, null, 'reads', null],
@@ -579,11 +627,14 @@ describe('QueriesController', () => {
       routeDays: null,
     });
 
-    const body = await controller.requests({ project: PROJECT } as FastifyRequest, {
-      from: '2026-10-05',
-      to: '2026-10-05',
-      kind: 'writes',
-    });
+    const body = await controller.requests(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      {
+        from: '2026-10-05',
+        to: '2026-10-05',
+        kind: 'writes',
+      },
+    );
 
     expect(body.route_days).toBeNull();
   });
@@ -592,7 +643,7 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
 
     await controller.requests(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       requestsQuerySchema.parse({
         from: '2026-10-05',
         to: '2026-10-05',
@@ -604,7 +655,12 @@ describe('QueriesController', () => {
     expect(calls).toEqual([
       [
         PROJECT,
-        { from: '2026-10-05', to: '2026-10-05', filters: { ...NO_REPORT_FILTERS, failed: true } },
+        {
+          from: '2026-10-05',
+          to: '2026-10-05',
+          filters: { ...NO_REPORT_FILTERS, failed: true },
+          conversion: null,
+        },
         null,
         'writes',
         { method: 'POST', route: '/v1/plans' },
@@ -636,7 +692,10 @@ describe('QueriesController', () => {
       country: 'PT',
     });
 
-    const body = await controller.funnel({ project: PROJECT } as FastifyRequest, query);
+    const body = await controller.funnel(
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
+      query,
+    );
 
     expect(funnelReportSchema.parse(body)).toEqual({
       steps: [
@@ -648,7 +707,12 @@ describe('QueriesController', () => {
     expect(calls).toEqual([
       [
         PROJECT,
-        { from: '2026-10-01', to: '2026-10-05', filters: { ...NO_REPORT_FILTERS, country: 'PT' } },
+        {
+          from: '2026-10-01',
+          to: '2026-10-05',
+          filters: { ...NO_REPORT_FILTERS, country: 'PT' },
+          conversion: null,
+        },
         'visit',
         [
           { type: 'page', path: '/calculator-*' },
@@ -662,7 +726,7 @@ describe('QueriesController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
 
     const body = await controller.timeline(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       timelineQuerySchema.parse({ user_id: 'ana', before: '2026-10-05T00:00:00.000Z' }),
     );
 
@@ -706,7 +770,7 @@ describe('QueriesController', () => {
     });
 
     const body = await controller.timeline(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       timelineQuerySchema.parse({ session_id: '0b7e1c2d-3f4a-4b5c-9d6e-7f8a9b0c1d2e' }),
     );
 

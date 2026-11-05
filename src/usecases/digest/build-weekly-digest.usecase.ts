@@ -35,7 +35,8 @@ export class BuildWeeklyDigestUseCase {
     const current: QueryScope = {
       projectId: project.id,
       timeZone: project.timezone,
-      conversionEvent: project.conversionEvent,
+      conversion:
+        project.conversionEvent === null ? null : { type: 'event', name: project.conversionEvent },
       range: week,
       filters: NO_REPORT_FILTERS,
     };

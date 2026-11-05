@@ -22,7 +22,7 @@ export class GetDevicesUseCase {
 
   async execute(project: Project, requested: RequestedRange): Promise<DevicesReport> {
     const { current } = scopedPeriods(project, requested, this.clock.now());
-    const countConversions = project.conversionEvent !== null;
+    const countConversions = current.conversion !== null;
     const shares = async (dimension: DeviceDimension) =>
       topValuesAndOther(await this.query.breakdown(current, dimension), countConversions);
     const [deviceType, browser, os, countryCounts, regionCounts, cityCounts, reachCounts] =

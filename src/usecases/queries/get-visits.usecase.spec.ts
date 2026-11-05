@@ -75,7 +75,7 @@ describe('GetVisitsUseCase', () => {
         scope: {
           projectId: 'project-1',
           timeZone: 'America/Sao_Paulo',
-          conversionEvent: 'signup_completed',
+          conversion: null,
           range: RANGE,
           filters: NO_REPORT_FILTERS,
         },

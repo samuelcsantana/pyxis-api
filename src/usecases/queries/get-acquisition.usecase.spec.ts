@@ -1,4 +1,5 @@
 import type { Project } from '../../domain/entities/project.entity';
+import type { GoalTarget } from '../../domain/goals/goal';
 import { InvalidRangeError } from '../../domain/errors/query.errors';
 import { noChannelVisits, TOP_CAMPAIGNS, TOP_SOURCES } from '../../domain/queries/acquisition';
 import { FixedClock } from '../../test-utils/fixed-clock';
@@ -28,13 +29,21 @@ const SOURCE = {
 
 const CAMPAIGN = { ...SOURCE, campaign: 'spring_sale', visits: 3 } as const;
 
+function conversionOf(project: Project): GoalTarget | null {
+  return project.conversionEvent === null ? null : { type: 'event', name: project.conversionEvent };
+}
+
 function setup(project: Project = PROJECT) {
   const query = new StubAcquisitionQuery();
   const useCase = new GetAcquisitionUseCase(
     query,
     new FixedClock(new Date('2026-10-06T02:30:00.000Z')),
   );
-  return { query, run: (from: string, to: string) => useCase.execute(project, { from, to }) };
+  return {
+    query,
+    run: (from: string, to: string) =>
+      useCase.execute(project, { from, to, conversion: conversionOf(project) }),
+  };
 }
 
 describe('GetAcquisitionUseCase', () => {

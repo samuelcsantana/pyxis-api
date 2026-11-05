@@ -8,7 +8,7 @@ import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
 import { type EngagementReportBody, engagementReportSchema } from './engagement.schemas';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { type FilteredRangeQuery, filteredRangeQuerySchema } from './query.schemas';
 import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
@@ -59,7 +59,10 @@ export class EngagementController {
     query: FilteredRangeQuery,
   ): Promise<EngagementReportBody> {
     return engagementBody(
-      await this.getEngagement.execute(projectOf(request), filteredRangeOf(query)),
+      await this.getEngagement.execute(
+        projectOf(request),
+        filteredRangeOf(query, goalsOf(request)),
+      ),
     );
   }
 }

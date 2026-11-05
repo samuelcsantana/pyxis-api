@@ -92,7 +92,7 @@ describe('demo traffic against a real Postgres', () => {
     const days = await query.visitorDays({
       projectId: DEMO_ID,
       timeZone: 'UTC',
-      conversionEvent: 'signup_completed',
+      conversion: { type: 'event', name: 'signup_completed' },
       range: { from: '2026-07-20', to: '2026-10-19' },
       filters: NO_REPORT_FILTERS,
     });

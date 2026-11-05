@@ -35,6 +35,10 @@ describe('dashboard queries', () => {
              (${FOREIGN_ID}, 'Someone else', ${['https://else.example.com']}, 'UTC', NULL)
     `;
     await owner`
+      INSERT INTO goals (project_id, name, kind, event_name, position)
+      VALUES (${SHOP_ID}, 'signup_completed', 'event', 'signup_completed', 1)
+    `;
+    await owner`
       INSERT INTO admin_users (id, email)
       VALUES (${ADMIN_ID}, 'queries@example.com'), (${OTHER_ADMIN_ID}, 'other@example.com')
     `;

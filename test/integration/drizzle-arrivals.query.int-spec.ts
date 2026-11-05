@@ -80,7 +80,7 @@ const TODAY: ArrivalsAsk = {
   scope: {
     projectId: SHOP_ID,
     timeZone: 'America/Sao_Paulo',
-    conversionEvent: 'signup_completed',
+    conversion: { type: 'event', name: 'signup_completed' },
     range: { from: '2026-10-23', to: '2026-10-23' },
     filters: NO_REPORT_FILTERS,
   },
@@ -139,7 +139,7 @@ describe('DrizzleArrivalsQuery against a real Postgres', () => {
   it('asks for no conversions when the project has no conversion event', async () => {
     const arrived = await query.arrivals({
       ...TODAY,
-      scope: { ...TODAY.scope, conversionEvent: null },
+      scope: { ...TODAY.scope, conversion: null },
     });
 
     expect(arrived.conversions).toBeNull();

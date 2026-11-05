@@ -27,7 +27,7 @@ export class GetAcquisitionUseCase {
       this.query.sources(current, TOP_SOURCES),
       this.query.campaigns(current, TOP_CAMPAIGNS),
     ]);
-    const countConversions = project.conversionEvent !== null;
+    const countConversions = current.conversion !== null;
     return {
       days: channelsPerDay(daysIn(current.range), byDay),
       sources: sources.map((source) => withConversionsWhenCounted(source, countConversions)),

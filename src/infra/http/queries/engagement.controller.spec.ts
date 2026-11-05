@@ -38,12 +38,15 @@ describe('EngagementController', () => {
     const controller = new EngagementController(useCase as unknown as GetEngagementUseCase);
 
     const body = await controller.engagement(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       filteredRangeQuerySchema.parse({ ...RANGE, device: 'mobile' }),
     );
 
     expect(calls).toEqual([
-      [PROJECT, { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' } }],
+      [
+        PROJECT,
+        { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' }, conversion: null },
+      ],
     ]);
     const parsed = engagementReportSchema.parse(body);
     expect(parsed).toMatchObject({

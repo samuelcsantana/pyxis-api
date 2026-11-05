@@ -98,7 +98,7 @@ const SEEDED: readonly TrackedEvent[] = [
 const SCOPE: QueryScope = {
   projectId: SHOP_ID,
   timeZone: 'America/Sao_Paulo',
-  conversionEvent: 'signup_completed',
+  conversion: { type: 'event', name: 'signup_completed' },
   range: { from: '2026-10-04', to: '2026-10-05' },
   filters: NO_REPORT_FILTERS,
 };
@@ -147,10 +147,39 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
   });
 
   it('counts no conversion when the project has no conversion event', async () => {
-    expect(await query.totals({ ...SCOPE, conversionEvent: null })).toMatchObject({
+    expect(await query.totals({ ...SCOPE, conversion: null })).toMatchObject({
       conversions: 0,
       convertingVisits: 0,
     });
+  });
+
+  it('counts the page views a page goal matches, a star for any characters', async () => {
+    expect(
+      await query.totals({ ...SCOPE, conversion: { type: 'page', path: '/pric*' } }),
+    ).toMatchObject({ conversions: 2, convertingVisits: 2 });
+  });
+
+  it('reads an underscore or a percent sign in a page goal literally', async () => {
+    expect(
+      await query.totals({ ...SCOPE, conversion: { type: 'page', path: '/pric_ng' } }),
+    ).toMatchObject({ conversions: 0, convertingVisits: 0 });
+    expect(
+      await query.totals({ ...SCOPE, conversion: { type: 'page', path: '/%' } }),
+    ).toMatchObject({ conversions: 0 });
+  });
+
+  it('keeps only the visits that reached a goal', async () => {
+    const reachedPlan = {
+      ...SCOPE,
+      filters: { ...NO_REPORT_FILTERS, reachedGoal: { type: 'event', name: 'plan_selected' } },
+    } satisfies QueryScope;
+    const reachedPricing = {
+      ...SCOPE,
+      filters: { ...NO_REPORT_FILTERS, reachedGoal: { type: 'page', path: '/pricing' } },
+    } satisfies QueryScope;
+
+    expect(await query.totals(reachedPlan)).toMatchObject({ visits: 1, conversions: 0 });
+    expect(await query.totals(reachedPricing)).toMatchObject({ visits: 2, conversions: 2 });
   });
 
   it('counts a visit that converted twice as one converting visit', async () => {
