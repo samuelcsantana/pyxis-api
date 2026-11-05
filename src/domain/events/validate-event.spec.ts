@@ -305,6 +305,35 @@ describe('validateIncomingEvent', () => {
       expect(result.dropped).toEqual([{ field: 'utm.campaign', reason: 'email' }]);
     });
 
+    it('keeps a revenue that is a number from 0 up to the shape bound, untouched', () => {
+      const result = accepted(
+        validateIncomingEvent(incoming({ properties: { revenue: 129.9, plan: 'pro' } })),
+      );
+      const zero = accepted(validateIncomingEvent(incoming({ properties: { revenue: 0 } })));
+      const largest = accepted(
+        validateIncomingEvent(incoming({ properties: { revenue: 999_999_999.99 } })),
+      );
+
+      expect(result.event.properties).toEqual({ revenue: 129.9, plan: 'pro' });
+      expect(result.dropped).toEqual([]);
+      expect(zero.event.properties).toEqual({ revenue: 0 });
+      expect(largest.event.properties).toEqual({ revenue: 999_999_999.99 });
+    });
+
+    it.each([
+      ['a text', '129.90'],
+      ['a negative amount', -5],
+      ['an amount with ten integer digits', 5_000_000_000],
+      ['a yes or no', true],
+    ])('drops a revenue that is %s, as invalid_revenue, and keeps the event', (_case, revenue) => {
+      const result = accepted(
+        validateIncomingEvent(incoming({ properties: { revenue, plan: 'pro' } })),
+      );
+
+      expect(result.event.properties).toEqual({ plan: 'pro' });
+      expect(result.dropped).toEqual([{ field: 'properties.revenue', reason: 'invalid_revenue' }]);
+    });
+
     it('drops a phone number split by invisible characters, judged once they are gone', () => {
       const result = accepted(
         validateIncomingEvent(incoming({ properties: { phone: '11​98765​4321' } })),

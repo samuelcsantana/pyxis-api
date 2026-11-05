@@ -10,12 +10,13 @@ import {
 import { templatePath } from './path-template';
 import { looksPersonal, type PiiReason } from './pii-barrier';
 import { API_REQUEST, IDENTIFY, PAGE_VIEW } from './reserved-event-names';
+import { isValidRevenue, REVENUE_PROPERTY } from './revenue';
 import { visibleText } from './visible-text';
 import type { VisitorKind } from './visitor-kind';
 
 export type EventRejectionReason = 'invalid_schema' | 'reserved_rules' | 'pii_user_id';
 
-export type DropReason = PiiReason | 'no_visible_text';
+export type DropReason = PiiReason | 'no_visible_text' | 'invalid_revenue';
 
 export interface DroppedField {
   readonly field: string;
@@ -47,6 +48,7 @@ const NO_PROPERTIES: Screened<PropertyMap> = { value: {}, dropped: [] };
 const WWW_PREFIX = /^www\./;
 const ERROR_CODE_FIELD = 'properties.error_code';
 const NO_VISIBLE_TEXT: DropReason = 'no_visible_text';
+const INVALID_REVENUE: DropReason = 'invalid_revenue';
 
 function reject(reason: EventRejectionReason): EventValidation {
   return { ok: false, reason };
@@ -56,6 +58,10 @@ function screenGenericProperties(properties: EventProperties | undefined): Scree
   const kept: Record<string, PropertyValue> = {};
   const dropped: DroppedField[] = [];
   for (const [key, sent] of Object.entries(properties ?? {})) {
+    if (key === REVENUE_PROPERTY && !isValidRevenue(sent)) {
+      dropped.push({ field: `properties.${key}`, reason: INVALID_REVENUE });
+      continue;
+    }
     const value = typeof sent === 'string' ? visibleText(sent) : sent;
     const reason = typeof value === 'boolean' ? null : looksPersonal(value);
     if (reason === null) {
