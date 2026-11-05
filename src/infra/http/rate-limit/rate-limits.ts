@@ -28,6 +28,10 @@ export const SHARED_REPORTS_THROTTLER = 'shared-reports';
 export const SHARED_REPORT_REQUESTS_PER_WINDOW = 120;
 export const SHARED_REPORTS_RATE_WINDOW_MS = 60_000;
 
+export const SHARE_UNLOCK_THROTTLER = 'share-unlock';
+export const SHARE_UNLOCKS_PER_WINDOW = 20;
+export const SHARE_UNLOCK_RATE_WINDOW_MS = 15 * 60 * 1000;
+
 export const THROTTLERS = [
   { name: INGEST_THROTTLER, ttl: CLIENT_RATE_WINDOW_MS, limit: CLIENT_BATCHES_PER_WINDOW },
   { name: AUTH_THROTTLER, ttl: SIGN_IN_RATE_WINDOW_MS, limit: SIGN_IN_REQUESTS_PER_WINDOW },
@@ -43,6 +47,11 @@ export const THROTTLERS = [
     name: SHARED_REPORTS_THROTTLER,
     ttl: SHARED_REPORTS_RATE_WINDOW_MS,
     limit: SHARED_REPORT_REQUESTS_PER_WINDOW,
+  },
+  {
+    name: SHARE_UNLOCK_THROTTLER,
+    ttl: SHARE_UNLOCK_RATE_WINDOW_MS,
+    limit: SHARE_UNLOCKS_PER_WINDOW,
   },
 ] as const;
 

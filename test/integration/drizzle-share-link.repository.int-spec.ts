@@ -7,6 +7,7 @@ import {
 } from '../../src/infra/database/postgres-client';
 import { DrizzleProjectSettingsRepository } from '../../src/infra/repositories/drizzle-project-settings.repository';
 import { DrizzleShareLinkRepository } from '../../src/infra/repositories/drizzle-share-link.repository';
+import { DrizzleShareUnlockRepository } from '../../src/infra/repositories/drizzle-share-unlock.repository';
 import { connectAsOwner, emptyIngestionTables, migrateTestDatabase } from './migrated-database';
 import { testAppUrl } from './test-database';
 
@@ -32,6 +33,7 @@ describe('share links against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
   let links: DrizzleShareLinkRepository;
+  let unlocks: DrizzleShareUnlockRepository;
   let settings: DrizzleProjectSettingsRepository;
 
   beforeAll(async () => {
@@ -40,6 +42,7 @@ describe('share links against a real Postgres', () => {
     app = createPostgresClient(testAppUrl());
     const db = createDrizzleDatabase(app);
     links = new DrizzleShareLinkRepository(db);
+    unlocks = new DrizzleShareUnlockRepository(db);
     settings = new DrizzleProjectSettingsRepository(db);
   });
 
@@ -65,6 +68,7 @@ describe('share links against a real Postgres', () => {
       projectId,
       name: `Link ${letter}`,
       tokenHash: tokenHash(letter),
+      passwordHash: null,
       createdAt,
       expiresAt: null,
     };
@@ -83,6 +87,7 @@ describe('share links against a real Postgres', () => {
         name: 'Link a',
         createdAt: CREATED_AT,
         expiresAt: EXPIRES_AT,
+        passwordProtected: false,
       },
     });
     const [row] = await owner<{ token_hash: string; password_hash: string | null }[]>`
@@ -156,5 +161,104 @@ describe('share links against a real Postgres', () => {
     await owner`DELETE FROM projects WHERE id = ${projectId}`;
 
     await expect(links.findByTokenHash(tokenHash('a'))).resolves.toBeNull();
+  });
+
+  describe('a password and its unlocks', () => {
+    const HOUR_MS = 3_600_000;
+    const WINDOW_MS = 15 * 60_000;
+    const inAnHour = new Date(CREATED_AT.getTime() + HOUR_MS);
+
+    async function protectedLink(letter = 'a') {
+      const projectId = await newProject(letter.toUpperCase());
+      const created = await links.create(
+        { ...draft(projectId, letter), passwordHash: 'scrypt$hash' },
+        10,
+      );
+      if (created.outcome !== 'created') {
+        throw new Error('The link was not created.');
+      }
+      return { projectId, link: created.link };
+    }
+
+    it('keeps the hash and answers only that the link is protected', async () => {
+      const { link } = await protectedLink();
+
+      expect(link.passwordProtected).toBe(true);
+      await expect(links.passwordHashOf(link.id)).resolves.toBe('scrypt$hash');
+      await expect(links.passwordHashOf(MISSING_ID)).resolves.toBeNull();
+      await expect(links.findByTokenHash(tokenHash('a'))).resolves.toMatchObject({
+        passwordProtected: true,
+      });
+    });
+
+    it('counts wrong passwords in a window that starts again once over', async () => {
+      const { link } = await protectedLink();
+      const later = new Date(CREATED_AT.getTime() + 60_000);
+      const afterWindow = new Date(CREATED_AT.getTime() + WINDOW_MS);
+
+      await links.recordUnlockFailure(link.id, CREATED_AT, WINDOW_MS);
+      await links.recordUnlockFailure(link.id, later, WINDOW_MS);
+      const counted = await links.unlockFailuresOf(link.id);
+      await links.recordUnlockFailure(link.id, afterWindow, WINDOW_MS);
+
+      expect(counted).toEqual({ count: 2, since: CREATED_AT });
+      await expect(links.unlockFailuresOf(link.id)).resolves.toEqual({
+        count: 1,
+        since: afterWindow,
+      });
+      await expect(links.unlockFailuresOf(MISSING_ID)).resolves.toEqual({ count: 0, since: null });
+    });
+
+    it('takes an unlock as live for its link only, until it expires', async () => {
+      const { link } = await protectedLink('a');
+      const other = await protectedLink('b');
+      await unlocks.issue(link.id, tokenHash('u'), CREATED_AT, inAnHour);
+
+      await expect(unlocks.isLive(link.id, tokenHash('u'), CREATED_AT)).resolves.toBe(true);
+      await expect(unlocks.isLive(other.link.id, tokenHash('u'), CREATED_AT)).resolves.toBe(false);
+      await expect(unlocks.isLive(link.id, tokenHash('v'), CREATED_AT)).resolves.toBe(false);
+      await expect(unlocks.isLive(link.id, tokenHash('u'), inAnHour)).resolves.toBe(false);
+    });
+
+    it('sweeps the expired unlocks of the link when it issues a new one', async () => {
+      const { link } = await protectedLink();
+      await unlocks.issue(link.id, tokenHash('u'), CREATED_AT, inAnHour);
+
+      await unlocks.issue(
+        link.id,
+        tokenHash('v'),
+        inAnHour,
+        new Date(inAnHour.getTime() + HOUR_MS),
+      );
+
+      const rows = await owner<{ token_hash: string }[]>`SELECT token_hash FROM share_link_unlocks`;
+      expect(rows).toEqual([{ token_hash: tokenHash('v') }]);
+    });
+
+    it('changes or removes the password, stopping the unlocks and the counted failures', async () => {
+      const { projectId, link } = await protectedLink();
+      await unlocks.issue(link.id, tokenHash('u'), CREATED_AT, inAnHour);
+      await links.recordUnlockFailure(link.id, CREATED_AT, WINDOW_MS);
+
+      const changed = await links.setPassword(projectId, link.id, 'scrypt$other');
+
+      expect(changed).toMatchObject({ id: link.id, passwordProtected: true });
+      await expect(links.passwordHashOf(link.id)).resolves.toBe('scrypt$other');
+      await expect(unlocks.isLive(link.id, tokenHash('u'), CREATED_AT)).resolves.toBe(false);
+      await expect(links.unlockFailuresOf(link.id)).resolves.toEqual({ count: 0, since: null });
+      await expect(links.setPassword(projectId, link.id, null)).resolves.toMatchObject({
+        passwordProtected: false,
+      });
+      await expect(links.setPassword(projectId, MISSING_ID, null)).resolves.toBeNull();
+    });
+
+    it('takes the unlocks with the link when it is revoked', async () => {
+      const { projectId, link } = await protectedLink();
+      await unlocks.issue(link.id, tokenHash('u'), CREATED_AT, inAnHour);
+
+      await links.delete(projectId, link.id);
+
+      expect(await owner`SELECT 1 FROM share_link_unlocks`).toHaveLength(0);
+    });
   });
 });

@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import {
+  allowedHeadersFor,
   DASHBOARD_PREFLIGHT_MAX_AGE_SECONDS,
   isDashboardPath,
   registerDashboardCors,
@@ -95,6 +96,24 @@ describe('registerDashboardCors', () => {
       'access-control-allow-headers': 'Content-Type',
       'access-control-max-age': String(DASHBOARD_PREFLIGHT_MAX_AGE_SECONDS),
     });
+  });
+
+  it('lets the dashboard send an unlock as Authorization to the shared routes only', async () => {
+    const shared = await fastify.inject({
+      method: 'OPTIONS',
+      url: '/v1/shared/pyxis_sh_abc/overview?from=a&to=b',
+      headers: {
+        origin: DASHBOARD_ORIGIN,
+        'access-control-request-method': 'GET',
+        'access-control-request-headers': 'authorization',
+      },
+    });
+
+    expect(shared.statusCode).toBe(204);
+    expect(shared.headers['access-control-allow-headers']).toBe('Content-Type, Authorization');
+    expect(allowedHeadersFor('/v1/shared')).toBe('Content-Type, Authorization');
+    expect(allowedHeadersFor('/v1/projects/p1/overview')).toBe('Content-Type');
+    expect(allowedHeadersFor('/v1/sharedly')).toBe('Content-Type');
   });
 
   it('closes the preflight of another origin without granting anything', async () => {

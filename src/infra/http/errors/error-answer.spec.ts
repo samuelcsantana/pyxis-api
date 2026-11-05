@@ -6,7 +6,11 @@ import {
 import {
   InvalidShareLinkError,
   ShareLinkLimitReachedError,
+  ShareLinkLockedError,
   ShareLinkNotFoundError,
+  SharePasswordNotSetError,
+  SharePasswordRequiredError,
+  WrongSharePasswordError,
 } from '../../../domain/errors/share-link.errors';
 import {
   GoalLimitReachedError,
@@ -106,6 +110,9 @@ describe('toErrorAnswer', () => {
     [new InvalidShareLinkError('name', 'Bad name.'), 400, 'invalid_share_link'],
     [new ShareLinkNotFoundError(), 404, 'share_link_not_found'],
     [new ShareLinkLimitReachedError(10), 409, 'share_link_limit_reached'],
+    [new SharePasswordRequiredError(), 401, 'share_password_required'],
+    [new WrongSharePasswordError(), 401, 'wrong_share_password'],
+    [new SharePasswordNotSetError(), 409, 'share_password_not_set'],
     [new InvalidAnnotationError('text', 'Too long.'), 400, 'invalid_annotation'],
     [new AnnotationNotFoundError(), 404, 'annotation_not_found'],
     [new AnnotationLimitReachedError(1000), 409, 'annotation_limit_reached'],
@@ -245,6 +252,12 @@ describe('toErrorAnswer', () => {
       headers: { 'retry-after': '42' },
       unexpected: false,
     });
+  });
+
+  it('answers a locked share link exactly as a rate-limited address, so neither says which', () => {
+    expect(toErrorAnswer(new ShareLinkLockedError(42))).toEqual(
+      toErrorAnswer(new ClientRateLimitedError(42)),
+    );
   });
 
   it('answers a Nest HTTP exception with a generic message that echoes nothing', () => {

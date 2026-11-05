@@ -20,8 +20,10 @@ import { InMemoryAccountRepository } from '../../test-utils/in-memory-account.re
 import { InMemoryAdminUserRepository } from '../../test-utils/in-memory-admin-user.repository';
 import { InMemoryGoalRepository } from '../../test-utils/in-memory-goal.repository';
 import { InMemoryProjectRepository } from '../../test-utils/in-memory-project.repository';
+import { FakePasswordHasher } from '../../test-utils/fake-password-hasher';
 import {
   InMemoryShareLinkRepository,
+  InMemoryShareUnlockRepository,
   shareLinkIdOf,
 } from '../../test-utils/in-memory-share-link.repository';
 import { SequenceRandomSource } from '../../test-utils/sequence-random-source';
@@ -53,7 +55,8 @@ async function setup(status: AccountStatus = 'active') {
     allowedOrigins: ['https://shop.example.com'],
     accountId: account.id,
   });
-  const links = new InMemoryShareLinkRepository();
+  const unlocks = new InMemoryShareUnlockRepository();
+  const links = new InMemoryShareLinkRepository(unlocks);
   const goals = new InMemoryGoalRepository();
   await goals.create(projectId, { name: 'Signed up', target: SIGNUP }, 1);
   const clock = new FixedClock(NOW);
@@ -63,12 +66,20 @@ async function setup(status: AccountStatus = 'active') {
     account,
     projectId,
     links,
+    unlocks,
     goals,
     clock,
-    createLink: new CreateShareLinkUseCase(store, accounts, links, randomSource(), clock),
+    createLink: new CreateShareLinkUseCase(
+      store,
+      accounts,
+      links,
+      randomSource(),
+      new FakePasswordHasher(),
+      clock,
+    ),
     listLinks: new ListShareLinksUseCase(store, accounts, links),
     revokeLink: new RevokeShareLinkUseCase(store, accounts, links),
-    openLink: new OpenShareLinkUseCase(links, store, accounts, goals, clock),
+    openLink: new OpenShareLinkUseCase(links, store, accounts, goals, unlocks, clock),
   };
 }
 
@@ -81,6 +92,7 @@ describe('CreateShareLinkUseCase', () => {
       projectId,
       name: '  For the agency ',
       expiresAt: TOMORROW,
+      password: null,
     });
 
     expect(created.token).toMatch(SHARE_TOKEN_PATTERN);
@@ -90,6 +102,7 @@ describe('CreateShareLinkUseCase', () => {
       name: 'For the agency',
       createdAt: NOW,
       expiresAt: TOMORROW,
+      passwordProtected: false,
     });
     expect(links.tokenHashes).toEqual([sha256Hex(created.token)]);
   });
@@ -102,6 +115,7 @@ describe('CreateShareLinkUseCase', () => {
       projectId,
       name: 'Board',
       expiresAt: null,
+      password: null,
     });
 
     expect(created.link.expiresAt).toBeNull();
@@ -113,7 +127,13 @@ describe('CreateShareLinkUseCase', () => {
       const { createLink, projectId } = await setup(status);
 
       await expect(
-        createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'Board', expiresAt: null }),
+        createLink.execute({
+          adminUserId: OWNER_ID,
+          projectId,
+          name: 'Board',
+          expiresAt: null,
+          password: null,
+        }),
       ).resolves.toMatchObject({ link: { name: 'Board' } });
     },
   );
@@ -122,10 +142,22 @@ describe('CreateShareLinkUseCase', () => {
     const { createLink, links, projectId } = await setup('free');
 
     await expect(
-      createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'Board', expiresAt: null }),
+      createLink.execute({
+        adminUserId: OWNER_ID,
+        projectId,
+        name: 'Board',
+        expiresAt: null,
+        password: null,
+      }),
     ).rejects.toMatchObject({ code: 'plan_required', feature: 'public_share_link' });
     await expect(
-      createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'Board', expiresAt: null }),
+      createLink.execute({
+        adminUserId: OWNER_ID,
+        projectId,
+        name: 'Board',
+        expiresAt: null,
+        password: null,
+      }),
     ).rejects.toBeInstanceOf(PlanRequiredError);
     expect(links.stored).toEqual([]);
   });
@@ -134,7 +166,13 @@ describe('CreateShareLinkUseCase', () => {
     const { createLink, projectId } = await setup('ended');
 
     await expect(
-      createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'Board', expiresAt: null }),
+      createLink.execute({
+        adminUserId: OWNER_ID,
+        projectId,
+        name: 'Board',
+        expiresAt: null,
+        password: null,
+      }),
     ).rejects.toBeInstanceOf(SubscriptionRequiredError);
   });
 
@@ -142,7 +180,13 @@ describe('CreateShareLinkUseCase', () => {
     const { createLink, projectId } = await setup();
 
     await expect(
-      createLink.execute({ adminUserId: MEMBER_ID, projectId, name: 'Board', expiresAt: null }),
+      createLink.execute({
+        adminUserId: MEMBER_ID,
+        projectId,
+        name: 'Board',
+        expiresAt: null,
+        password: null,
+      }),
     ).rejects.toBeInstanceOf(ProjectNotFoundError);
   });
 
@@ -154,23 +198,38 @@ describe('CreateShareLinkUseCase', () => {
         projectId,
         name: `Link ${String(index)}`,
         expiresAt: null,
+        password: null,
       });
     }
 
     await expect(
-      createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'One more', expiresAt: null }),
+      createLink.execute({
+        adminUserId: OWNER_ID,
+        projectId,
+        name: 'One more',
+        expiresAt: null,
+        password: null,
+      }),
     ).rejects.toBeInstanceOf(ShareLinkLimitReachedError);
   });
 
   it.each([
-    ['an empty name', '  ', null, 'name'],
-    ['a name too long', 'x'.repeat(65), null, 'name'],
-    ['an expiry in the past', 'Board', new Date(NOW.getTime() - ONE_DAY_MS), 'expires_at'],
-    ['an expiry right now', 'Board', NOW, 'expires_at'],
-  ])('refuses %s before touching the store', async (_case, name, expiresAt, field) => {
+    ['an empty name', '  ', null, null, 'name'],
+    ['a name too long', 'x'.repeat(65), null, null, 'name'],
+    ['an expiry in the past', 'Board', new Date(NOW.getTime() - ONE_DAY_MS), null, 'expires_at'],
+    ['an expiry right now', 'Board', NOW, null, 'expires_at'],
+    ['a password of seven characters', 'Board', null, 'x'.repeat(7), 'password'],
+    ['a password of 129 characters', 'Board', null, 'x'.repeat(129), 'password'],
+  ])('refuses %s before touching the store', async (_case, name, expiresAt, password, field) => {
     const { createLink, links, projectId } = await setup();
 
-    const refusal = createLink.execute({ adminUserId: OWNER_ID, projectId, name, expiresAt });
+    const refusal = createLink.execute({
+      adminUserId: OWNER_ID,
+      projectId,
+      name,
+      expiresAt,
+      password,
+    });
 
     await expect(refusal).rejects.toBeInstanceOf(InvalidShareLinkError);
     await expect(refusal).rejects.toMatchObject({ field });
@@ -181,16 +240,35 @@ describe('CreateShareLinkUseCase', () => {
 describe('ListShareLinksUseCase', () => {
   it('lists the links of the project, without their tokens', async () => {
     const { createLink, listLinks, projectId } = await setup();
-    await createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'Board', expiresAt: null });
+    await createLink.execute({
+      adminUserId: OWNER_ID,
+      projectId,
+      name: 'Board',
+      expiresAt: null,
+      password: null,
+    });
 
     await expect(listLinks.execute({ adminUserId: OWNER_ID, projectId })).resolves.toEqual([
-      { id: shareLinkIdOf(1), projectId, name: 'Board', createdAt: NOW, expiresAt: null },
+      {
+        id: shareLinkIdOf(1),
+        projectId,
+        name: 'Board',
+        createdAt: NOW,
+        expiresAt: null,
+        passwordProtected: false,
+      },
     ]);
   });
 
   it('still lists them for an account that left Pro, so the owner can revoke them', async () => {
     const { createLink, listLinks, accounts, account, projectId } = await setup();
-    await createLink.execute({ adminUserId: OWNER_ID, projectId, name: 'Board', expiresAt: null });
+    await createLink.execute({
+      adminUserId: OWNER_ID,
+      projectId,
+      name: 'Board',
+      expiresAt: null,
+      password: null,
+    });
     accounts.add({ ...account, status: 'free' });
 
     await expect(listLinks.execute({ adminUserId: OWNER_ID, projectId })).resolves.toHaveLength(1);
@@ -213,6 +291,7 @@ describe('RevokeShareLinkUseCase', () => {
       projectId,
       name: 'Board',
       expiresAt: null,
+      password: null,
     });
 
     await revokeLink.execute({ adminUserId: OWNER_ID, projectId, linkId: link.id });
@@ -246,6 +325,7 @@ describe('OpenShareLinkUseCase', () => {
       projectId: context.projectId,
       name: 'Board',
       expiresAt,
+      password: null,
     });
     context.accounts.add({ ...context.account, status });
     return { ...context, token };
@@ -312,7 +392,14 @@ describe('OpenShareLinkUseCase', () => {
     const noAccounts = new InMemoryAccountRepository(new InMemoryAdminUserRepository());
 
     await expect(
-      new OpenShareLinkUseCase(links, store, noAccounts, goals, clock).execute(token),
+      new OpenShareLinkUseCase(
+        links,
+        store,
+        noAccounts,
+        goals,
+        new InMemoryShareUnlockRepository(),
+        clock,
+      ).execute(token),
     ).rejects.toBeInstanceOf(ShareLinkNotFoundError);
   });
 
@@ -325,6 +412,7 @@ describe('OpenShareLinkUseCase', () => {
         new InMemoryProjectRepository(),
         accounts,
         goals,
+        new InMemoryShareUnlockRepository(),
         clock,
       ).execute(token),
     ).rejects.toBeInstanceOf(ShareLinkNotFoundError);
@@ -340,7 +428,14 @@ describe('OpenShareLinkUseCase', () => {
     const links = new InMemoryShareLinkRepository();
     const token = `pyxis_sh_${'B'.repeat(32)}`;
     await links.create(
-      { projectId, name: 'Public', tokenHash: sha256Hex(token), createdAt: NOW, expiresAt: null },
+      {
+        projectId,
+        name: 'Public',
+        tokenHash: sha256Hex(token),
+        passwordHash: null,
+        createdAt: NOW,
+        expiresAt: null,
+      },
       MAX_SHARE_LINKS_PER_PROJECT,
     );
     const openLink = new OpenShareLinkUseCase(
@@ -348,6 +443,7 @@ describe('OpenShareLinkUseCase', () => {
       store,
       accounts,
       new InMemoryGoalRepository(),
+      new InMemoryShareUnlockRepository(),
       new FixedClock(NOW),
     );
 

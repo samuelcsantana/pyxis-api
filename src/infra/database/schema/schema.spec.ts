@@ -24,6 +24,7 @@ import {
   projects,
   reviewerCodes,
   shareLinks,
+  shareLinkUnlocks,
   termsAcceptances,
   trialCards,
 } from '.';
@@ -50,7 +51,8 @@ function foreignKeyTargets(
     | typeof goals
     | typeof alertDeliveries
     | typeof annotations
-    | typeof shareLinks,
+    | typeof shareLinks
+    | typeof shareLinkUnlocks,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -200,6 +202,18 @@ describe('database schema', () => {
     expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
     expect(config.indexes.map((index) => index.config.name)).toEqual([
       'annotations_project_id_day_idx',
+    ]);
+  });
+
+  it('keeps each unlock of a share link as a unique hash, gone with its link', () => {
+    const config = getTableConfig(shareLinkUnlocks);
+    const columns = Object.fromEntries(config.columns.map((column) => [column.name, column]));
+
+    expect(foreignKeyTargets(shareLinkUnlocks)).toEqual(['share_links.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+    expect(columns.token_hash?.isUnique).toBe(true);
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'share_link_unlocks_share_link_id_idx',
     ]);
   });
 

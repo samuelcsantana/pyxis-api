@@ -18,6 +18,9 @@ import {
   SHARED_REPORT_REQUESTS_PER_WINDOW,
   SHARED_REPORTS_RATE_WINDOW_MS,
   SHARED_REPORTS_THROTTLER,
+  SHARE_UNLOCK_RATE_WINDOW_MS,
+  SHARE_UNLOCK_THROTTLER,
+  SHARE_UNLOCKS_PER_WINDOW,
   SIGN_IN_REQUESTS_PER_WINDOW,
   SUBJECT_RATE_WINDOW_MS,
   SUBJECT_REQUESTS_PER_WINDOW,
@@ -80,6 +83,7 @@ describe('rate limits', () => {
       { name: 'oauth', ttl: 60_000, limit: 600 },
       { name: 'arrivals', ttl: 60_000, limit: 30 },
       { name: 'shared-reports', ttl: 60_000, limit: 120 },
+      { name: 'share-unlock', ttl: 900_000, limit: 20 },
     ]);
   });
 
@@ -103,6 +107,18 @@ describe('rate limits', () => {
     });
   });
 
+  it('lets one address try twenty share link passwords every fifteen minutes', () => {
+    expect({
+      SHARE_UNLOCK_THROTTLER,
+      SHARE_UNLOCKS_PER_WINDOW,
+      SHARE_UNLOCK_RATE_WINDOW_MS,
+    }).toEqual({
+      SHARE_UNLOCK_THROTTLER: 'share-unlock',
+      SHARE_UNLOCKS_PER_WINDOW: 20,
+      SHARE_UNLOCK_RATE_WINDOW_MS: 900_000,
+    });
+  });
+
   it('skips every registered throttler but the ones a route uses', () => {
     expect(skipThrottlersExcept(AUTH_THROTTLER)).toEqual({
       ingest: true,
@@ -111,6 +127,7 @@ describe('rate limits', () => {
       oauth: true,
       arrivals: true,
       'shared-reports': true,
+      'share-unlock': true,
     });
     expect(skipThrottlersExcept(INGEST_THROTTLER, OAUTH_THROTTLER)).toEqual({
       auth: true,
@@ -118,6 +135,7 @@ describe('rate limits', () => {
       'access-tokens': true,
       arrivals: true,
       'shared-reports': true,
+      'share-unlock': true,
     });
     expect(Object.keys(skipThrottlersExcept())).toEqual(THROTTLERS.map(({ name }) => name));
   });

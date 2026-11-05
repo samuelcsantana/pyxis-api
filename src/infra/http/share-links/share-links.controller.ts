@@ -6,6 +6,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -15,6 +16,7 @@ import type { FastifyRequest } from 'fastify';
 import { CreateShareLinkUseCase } from '../../../usecases/share-links/create-share-link.usecase';
 import { ListShareLinksUseCase } from '../../../usecases/share-links/list-share-links.usecase';
 import { RevokeShareLinkUseCase } from '../../../usecases/share-links/revoke-share-link.usecase';
+import { SetShareLinkPasswordUseCase } from '../../../usecases/share-links/set-share-link-password.usecase';
 import { adminOf, DashboardOriginGuard, SessionGuard } from '../auth/auth.guards';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
@@ -25,7 +27,11 @@ import {
   createdShareLinkSchema,
   type CreateShareLinkBody,
   createShareLinkSchema,
+  type ShareLinkBody,
   shareLinkBody,
+  type ShareLinkPasswordBody,
+  shareLinkPasswordSchema,
+  shareLinkSchema,
   type ShareLinksBody,
   shareLinksSchema,
 } from './share-links.schemas';
@@ -48,6 +54,7 @@ export class ShareLinksController {
     private readonly createShareLink: CreateShareLinkUseCase,
     private readonly listShareLinks: ListShareLinksUseCase,
     private readonly revokeShareLink: RevokeShareLinkUseCase,
+    private readonly setShareLinkPassword: SetShareLinkPasswordUseCase,
   ) {}
 
   @Get()
@@ -104,8 +111,43 @@ export class ShareLinksController {
       projectId,
       name: body.name,
       expiresAt: body.expires_at === null ? null : new Date(body.expires_at),
+      password: body.password,
     });
     return { ...shareLinkBody(created.link), token: created.token };
+  }
+
+  @Patch(':linkId')
+  @UseGuards(DashboardOriginGuard, SessionGuard)
+  @ApiOperation({
+    summary: 'Set, change or remove the password of a share link',
+    description:
+      'Pro only, like creating a link. The password is stored only as a scrypt hash, and every ' +
+      'unlock of the link stops working at once.',
+  })
+  @ApiParam({ name: 'linkId', schema: { type: 'string', format: 'uuid' } })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: shareLinkSchema })
+  @ApiResponse({
+    status: HttpStatus.FORBIDDEN,
+    description:
+      'The request did not come from the dashboard, the account is suspended ' +
+      '(account_suspended), or its plan does not include share links (plan_required).',
+    standardSchema: errorResponseSchema,
+  })
+  async changePassword(
+    @Req() request: FastifyRequest,
+    @Param('projectId', new SchemaPipe(idSchema)) projectId: string,
+    @Param('linkId', new SchemaPipe(idSchema)) linkId: string,
+    @Body({ schema: shareLinkPasswordSchema, pipes: [new SchemaPipe(shareLinkPasswordSchema)] })
+    body: ShareLinkPasswordBody,
+  ): Promise<ShareLinkBody> {
+    return shareLinkBody(
+      await this.setShareLinkPassword.execute({
+        adminUserId: adminOf(request).id,
+        projectId,
+        linkId,
+        password: body.password,
+      }),
+    );
   }
 
   @Delete(':linkId')

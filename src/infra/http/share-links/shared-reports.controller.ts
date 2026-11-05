@@ -1,5 +1,12 @@
 import { Controller, Get, HttpStatus, Query, Req, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiParam,
+  ApiQuery,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { FUNNEL_SEGMENT_DIMENSIONS } from '../../../domain/queries/funnel';
@@ -61,7 +68,12 @@ import { type TimeOfDayReportBody, timeOfDayReportSchema } from '../queries/time
 import { ClientAddressThrottlerGuard } from '../rate-limit/client-address-throttler.guard';
 import { SHARED_REPORTS_THROTTLER, skipThrottlersExcept } from '../rate-limit/rate-limits';
 import { SchemaPipe } from '../schema-pipe';
-import { ShareLinkGuard, shareLinkOf } from './share-link.guard';
+import {
+  AllowLockedShareLink,
+  isShareUnlocked,
+  ShareLinkGuard,
+  shareLinkOf,
+} from './share-link.guard';
 import {
   FILTERS_NOT_SHARED,
   type SharedConversionRangeQuery,
@@ -76,12 +88,23 @@ import {
   sharedFunnelSegmentsQuerySchema,
 } from './shared-query.schemas';
 import {
+  LOCKED_PROJECT_BODY,
   type SharedProjectBody,
   sharedProjectBody,
   sharedProjectSchema,
 } from './share-links.schemas';
 
+export const SHARE_UNLOCK_SCHEME = 'share_unlock';
+
 @ApiTags('shared reports')
+@ApiBearerAuth(SHARE_UNLOCK_SCHEME)
+@ApiResponse({
+  status: HttpStatus.UNAUTHORIZED,
+  description:
+    'The link has a password and no live unlock of this link was sent ' +
+    '(share_password_required): POST /v1/shared/{token}/unlock first.',
+  standardSchema: errorResponseSchema,
+})
 @ApiParam({
   name: 'token',
   description: 'The token answered when the link was created',
@@ -118,12 +141,18 @@ export class SharedReportsController {
   ) {}
 
   @Get()
+  @AllowLockedShareLink()
   @ApiOperation({
     summary: 'The project a share link opens, with its goals',
-    description: 'No session: the token is the credential. Only aggregate reports are shared.',
+    description:
+      'No session: the token is the credential. Only aggregate reports are shared. A link with ' +
+      'a password answers only password_required: true until it is unlocked.',
   })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: sharedProjectSchema })
   project(@Req() request: FastifyRequest): SharedProjectBody {
+    if (!isShareUnlocked(request)) {
+      return LOCKED_PROJECT_BODY;
+    }
     return sharedProjectBody(shareLinkOf(request), projectOf(request), goalsOf(request));
   }
 

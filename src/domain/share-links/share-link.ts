@@ -13,6 +13,7 @@ export interface ShareLink {
   readonly name: string;
   readonly createdAt: Date;
   readonly expiresAt: Date | null;
+  readonly passwordProtected: boolean;
 }
 
 export interface ShareLinkDraft {
