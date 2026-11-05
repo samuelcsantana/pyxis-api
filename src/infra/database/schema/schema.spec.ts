@@ -9,6 +9,7 @@ import {
   adminUsers,
   digestDeliveries,
   events,
+  goals,
   noticeDeliveries,
   notices,
   oauthAuthorizationRequests,
@@ -42,7 +43,8 @@ function foreignKeyTargets(
     | typeof oauthConnections
     | typeof oauthAuthorizationRequests
     | typeof oauthConnectionTokens
-    | typeof reviewerCodes,
+    | typeof reviewerCodes
+    | typeof goals,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -127,6 +129,17 @@ describe('database schema', () => {
       ['project_keys_project_id_idx', false],
       ['project_keys_public_key_unique', true],
       ['project_keys_secret_hash_unique', true],
+    ]);
+  });
+
+  it('keeps the goals of a project in a unique order, each an event or a page, gone with it', () => {
+    const config = getTableConfig(goals);
+
+    expect(foreignKeyTargets(goals)).toEqual(['projects.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+    expect(config.checks.map((check) => check.name)).toEqual(['goals_target_check']);
+    expect(config.indexes.map((index) => [index.config.name, index.config.unique])).toEqual([
+      ['goals_project_position_key', true],
     ]);
   });
 
