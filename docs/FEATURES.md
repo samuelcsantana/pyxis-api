@@ -78,7 +78,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   clicks; a visit's source is its campaign source, else its referring host, else `(ad click)`
   when it came from an ad click, else `(direct)`); wherever
   conversions are counted, both the conversion events and the converting visits (visits that
-  sent the conversion event at least once) are given, so a conversion rate never passes 100 %,
+  reached the goal at least once) are given, so a conversion rate never passes 100 %, and
+  `goal=<id>` picks the goal they count (the first goal without it),
   `/features?kind=events|screens` (the most used named events or screens, with daily counts) and
   `/features/properties?name=` (how one named event's property values break down: per key, the
   ten most frequent values with their count and visits, and the count of the rest),
@@ -307,6 +308,16 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   the owner only. An ended account not yet deleted subscribes again through the same Checkout, with
   no trial, even while sign-up is closed, and leaving that Checkout goes back to `/account`
   ([ADR 0019](adr/0019-sign-up-behind-a-switch-and-the-terms-version.md))
+- Goals: up to ten per project, each a named event or a page path pattern (`*` for any
+  characters, matched as a Funnel page step), in both plans. `GET
+/v1/projects/{projectId}/goals` lists them in order for anyone who reads the project, and
+  `/goals/summary` gives each one's conversions, converting visits and rate over a range and the
+  visit filters, in one pass; the owner creates (`POST`), renames or retargets (`PATCH
+/goals/{goalId}`) and deletes them from the dashboard, `409 goal_limit_reached` past ten. The
+  first goal is what the reports count as conversions when not told which; `reached_goal=<id>`
+  keeps the visits that reached a goal in any report. The former conversion event became each
+  project's first goal, and `conversion_event` stays in the answers as the first goal's event
+  name, writable as before ([ADR 0058](adr/0058-goals-replace-the-conversion-event.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
   required): `POST /v1/accounts/{accountId}/projects` (within the plan's projects), `PATCH
 /v1/projects/{projectId}` (name, up to five origins, time zone, conversion event),
