@@ -25,6 +25,12 @@ export function emailLinksFor(dashboardOrigin: string): EmailLinks {
   };
 }
 
+export const EMAIL_SETTINGS_SECTION = 'settings#settings/email';
+
+export function emailSettingsUrl(links: EmailLinks, projectId: string): string {
+  return `${links.dashboardUrl}${encodeURIComponent(projectId)}/${EMAIL_SETTINGS_SECTION}`;
+}
+
 export const TEXT_LINE_WIDTH = 72;
 
 const CONTENT_WIDTH_PX = 560;

@@ -10,6 +10,7 @@ import {
   type EmailContent,
   type EmailLinks,
   emailDocument,
+  emailSettingsUrl,
   heading,
   inkLink,
   LAYOUT_TABLE,
@@ -232,7 +233,7 @@ function overviewUrl(digest: WeeklyDigest, links: EmailLinks): string {
 }
 
 function settingsUrl(digest: WeeklyDigest, links: EmailLinks): string {
-  return `${links.dashboardUrl}${encodeURIComponent(digest.projectId)}/settings`;
+  return emailSettingsUrl(links, digest.projectId);
 }
 
 function weekLine({ digest, messages, formats }: Wording): string {
