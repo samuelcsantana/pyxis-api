@@ -4,8 +4,8 @@ Date: 2026-11-05
 
 ## Status
 
-Accepted for the dashboard and the readers. Writing an annotation with a token is left open (see
-"Open decision"). Builds on [ADR 0015](0015-read-only-access-tokens-for-agents.md) (access tokens
+Accepted. Writing a note with a token was decided on 2026-11-05, after the first version of this
+record left it open: the project's secret key (point 7). Builds on [ADR 0015](0015-read-only-access-tokens-for-agents.md) (access tokens
 are read-only), [ADR 0020](0020-owners-manage-their-projects-from-the-dashboard.md) (the owner
 changes the project), [ADR 0057](0057-pro-features-are-gated-by-the-account-status.md) (the Pro
 feature `annotations_by_token`) and
@@ -42,25 +42,30 @@ chart. Pyxis keeps no such note, so the explanation lives in someone's memory.
    with the project. Nothing else deletes them: unlike events, they hold no visitor data.
 6. **Logs carry ids only.** Creating a note logs the project and the note's id, never its text.
 
-## Open decision: writing a note with a token
+7. **A deploy or a script writes a note with the project's secret key, on Pro.**
+   `POST /v1/annotations` with `Authorization: Bearer pyxis_sk_…` and the same `{ day, text }`
+   writes on the key's own project: the body names no project, so a key can only ever write
+   where it belongs, and a body that tries to name one is refused like any unknown field. It
+   takes the dashboard's rules (day, length, the 1,000 limit, the same `annotation.created` log),
+   the same guards and rate limits as the other secret-key routes (per address, then per key),
+   and `requireProFeature(account, 'annotations_by_token')` after the access checks: the free
+   plan answers `403 plan_required`. The access tokens stay read-only.
 
-Decision D65 asks for notes written by token (a deploy pipeline marking each release), and D66
-keeps that on Pro (`annotations_by_token`). The access tokens of ADR 0015 are read-only by
-design and cover every project of the admin who made them; giving them a write is a security
-change, so it is not made here. The options:
-
-- **A. The project's secret key (`pyxis_sk_`), on a new `POST /v1/annotations`.** One project
-  per key, already held by the site's backend and already allowed to write (erasure, exports);
-  a CI job that deploys the site usually has it. Gated by `requireProFeature`.
-- **B. A write scope on access tokens,** chosen when the token is made. One token would write to
-  every project its admin owns, a wider reach than a deploy needs.
-- **C. A new per-project annotation token,** the narrowest, at the cost of a third kind of
-  credential to create, list and revoke.
+   Decision D65 asked for notes written by token, and D66 kept that on Pro. Three credentials
+   were weighed:
+   - **A, chosen: the project's secret key.** One project per key; it is already held by the
+     site's backend and already writes (a person's erasure and export); a CI job that deploys
+     the site usually has it, so marking a release needs no new credential.
+   - **B, a write scope on access tokens.** An access token covers every project its admin
+     owns, wider than a deploy needs, and ADR 0015 promises it never writes.
+   - **C, a new per-project annotation token.** The narrowest, at the cost of a third kind of
+     credential to create, list and revoke, for a note no more sensitive than what the secret
+     key already does.
 
 ## Consequences
 
 - The dashboard draws the notes from one call per chart range, and the share page from the same
   answer under the token.
 - The MCP server can cite the notes of a range through the existing access tokens.
-- Whoever decides the open question adds one route and one guard; the table and the rules here
-  do not change.
+- A deploy marks its release with one `curl` and the secret key it already has; revoking that
+  key in the dashboard stops it, as it stops erasure and export with it.
