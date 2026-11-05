@@ -330,6 +330,13 @@
       "when": 1793892837727,
       "tag": "0046_email-alerts",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1793896937191,
+      "tag": "0047_annotations",
+      "breakpoints": true
     }
   ]
 }

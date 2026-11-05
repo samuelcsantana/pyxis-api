@@ -1,4 +1,9 @@
 import {
+  AnnotationLimitReachedError,
+  AnnotationNotFoundError,
+  InvalidAnnotationError,
+} from '../../../domain/errors/annotation.errors';
+import {
   InvalidShareLinkError,
   ShareLinkLimitReachedError,
   ShareLinkNotFoundError,
@@ -101,6 +106,9 @@ describe('toErrorAnswer', () => {
     [new InvalidShareLinkError('name', 'Bad name.'), 400, 'invalid_share_link'],
     [new ShareLinkNotFoundError(), 404, 'share_link_not_found'],
     [new ShareLinkLimitReachedError(10), 409, 'share_link_limit_reached'],
+    [new InvalidAnnotationError('text', 'Too long.'), 400, 'invalid_annotation'],
+    [new AnnotationNotFoundError(), 404, 'annotation_not_found'],
+    [new AnnotationLimitReachedError(1000), 409, 'annotation_limit_reached'],
     [new SubscriptionRequiredError(), 409, 'subscription_required'],
     [new PlanRequiredError('slack_alerts'), 403, 'plan_required'],
     [new ProjectNameMismatchError(), 409, 'project_name_mismatch'],

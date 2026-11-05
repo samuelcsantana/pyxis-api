@@ -1,4 +1,5 @@
 export * from './alerts';
+export * from './annotations';
 export * from './accounts';
 export * from './admins';
 export * from './digest';
