@@ -5,7 +5,7 @@ export type PiiReason = 'email' | 'long_number';
 const EMAIL_SHAPE = /[^\s@]+@[^\s@]+\.[^\s@]+/;
 const DIGITS_AND_SEPARATORS = /^[\d.\-/()+ ]+$/;
 const MIN_PERSONAL_DIGITS = 10;
-const SMALLEST_PERSONAL_INTEGER = 10 ** (MIN_PERSONAL_DIGITS - 1);
+export const SMALLEST_PERSONAL_INTEGER = 10 ** (MIN_PERSONAL_DIGITS - 1);
 
 function textLooksPersonal(text: string): PiiReason | null {
   if (isUuid(text)) {
