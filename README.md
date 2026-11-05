@@ -70,7 +70,7 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
 - **Dashboard queries.** Overview, devices, acquisition, features and event properties, requests,
   funnels, timelines, visits, time of day, engagement and live arrivals, over up to 400 days in
   the project's time zone, narrowed by the same visit filters, with up to ten goals and their
-  revenue.
+  revenue, and notes on the days.
 - **Share links.** On Pro, a revocable link that opens a project's aggregate reports, never a visit.
 - **Sign-in.** A six-digit code by e-mail, exchanged for an opaque session the admin can end one
   by one or everywhere at once.
@@ -435,6 +435,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0059](docs/adr/0059-revenue-is-a-property-of-the-goal-event.md)                      | Revenue is a property of the goal's event                                  |
 | [0060](docs/adr/0060-a-public-share-link-opens-only-aggregate-reports.md)             | A public share link opens only aggregate reports                           |
 | [0061](docs/adr/0061-email-alerts-from-the-daily-run.md)                              | E-mail alerts from the daily run                                           |
+| [0062](docs/adr/0062-annotations-are-notes-on-a-day-written-by-the-owner.md)          | Annotations are notes on a day, written by the owner                       |
 
 ## Roadmap
 
