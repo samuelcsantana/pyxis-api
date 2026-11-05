@@ -12,3 +12,4 @@ export * from './project-icons';
 export * from './project-keys';
 export * from './projects';
 export * from './share-links';
+export * from './slack';

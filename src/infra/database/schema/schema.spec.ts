@@ -25,6 +25,8 @@ import {
   reviewerCodes,
   shareLinks,
   shareLinkUnlocks,
+  projectSlackWebhooks,
+  slackAlertDeliveries,
   termsAcceptances,
   trialCards,
 } from '.';
@@ -52,7 +54,9 @@ function foreignKeyTargets(
     | typeof alertDeliveries
     | typeof annotations
     | typeof shareLinks
-    | typeof shareLinkUnlocks,
+    | typeof shareLinkUnlocks
+    | typeof projectSlackWebhooks
+    | typeof slackAlertDeliveries,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -180,6 +184,32 @@ describe('database schema', () => {
       'day',
     ]);
     expect(config.checks.map((check) => check.name)).toEqual(['alert_deliveries_kind_check']);
+  });
+
+  it('keeps at most one sealed Slack webhook per project, gone with the project', () => {
+    const config = getTableConfig(projectSlackWebhooks);
+    const columns = Object.fromEntries(config.columns.map((column) => [column.name, column]));
+
+    expect(foreignKeyTargets(projectSlackWebhooks)).toEqual(['projects.id']);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual(['cascade']);
+    expect(columns.project_id?.primary).toBe(true);
+    expect(columns.sealed_url?.notNull).toBe(true);
+    expect(columns.hint?.getSQLType()).toBe('varchar(4)');
+    expect(columns.broken_at?.notNull).toBe(false);
+    expect(columns.broken_reason?.getSQLType()).toBe('varchar(64)');
+  });
+
+  it('posts one Slack alert per project, kind and day, gone with the project', () => {
+    const config = getTableConfig(slackAlertDeliveries);
+
+    expect(foreignKeyTargets(slackAlertDeliveries)).toEqual(['projects.id']);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual(['cascade']);
+    expect(config.primaryKeys[0]?.columns.map((column) => column.name)).toEqual([
+      'project_id',
+      'kind',
+      'day',
+    ]);
+    expect(config.checks.map((check) => check.name)).toEqual(['slack_alert_deliveries_kind_check']);
   });
 
   it('turns every alert on for a new access to a project', () => {
