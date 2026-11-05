@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.46.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.45.0...v0.46.0) (2026-11-05)
+
+
+### Features
+
+* **ingest:** drop a revenue property that is not a usable amount ([fbe7b4c](https://github.com/samuelcsantana/pyxis-api/commit/fbe7b4c0e3e07b8db97d8c9070c200d8ba4416a0))
+* **projects:** give each project a currency, BRL by default ([2762b95](https://github.com/samuelcsantana/pyxis-api/commit/2762b95ff6d0623cf59691efa8b126dd008c35d4))
+* **queries:** sum revenue per goal in the overview, goals, acquisition and funnel ([c06bfa9](https://github.com/samuelcsantana/pyxis-api/commit/c06bfa92609ddc0a778f1ba05ac6074bcf645cad))
+
+
+### Documentation
+
+* record revenue in ADR 0059, the features list and the OpenAPI export ([3cebdc8](https://github.com/samuelcsantana/pyxis-api/commit/3cebdc8c8ac2e329eda542b35a9aea94f7f9e6c4))
+
 ## [0.45.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.44.0...v0.45.0) (2026-11-05)
 
 
