@@ -36,7 +36,7 @@ const DROP: ProjectAlert = {
   comparedConversions: 12,
 };
 const ALERTS = [SILENCE, SPIKE, DROP] as const;
-const SETTINGS_URL = `https://dashboard.example.com/${PROJECT_ID}/settings`;
+const SETTINGS_URL = `https://dashboard.example.com/${PROJECT_ID}/settings#settings/email`;
 
 function flat(content: string): string {
   return content.replace(/\s+/g, ' ');
@@ -96,6 +96,16 @@ describe('buildProjectAlertEmail', () => {
     expect(email.text).toContain(SETTINGS_URL);
     expect(flat(email.text)).toContain('at most once a day for each kind.');
   });
+
+  it.each(EMAIL_LANGUAGES)(
+    'opens Settings on the e-mail section, where the switches are, in %s',
+    (language) => {
+      const email = buildProjectAlertEmail(SPIKE, language, LINKS, null);
+
+      expect(linksOf(email.html)).toContain(SETTINGS_URL);
+      expect(email.text).toContain(SETTINGS_URL);
+    },
+  );
 
   it('writes the numbers and days in the reader’s language', () => {
     const email = buildProjectAlertEmail(SILENCE, 'pt-BR', LINKS, null);

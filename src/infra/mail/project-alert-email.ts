@@ -7,6 +7,7 @@ import {
   type EmailContent,
   type EmailLinks,
   emailDocument,
+  emailSettingsUrl,
   heading,
   inkLink,
   paragraph,
@@ -159,7 +160,7 @@ function buildHtml(
       paragraph(FOOTNOTE, escapeHtml(messages.reason(projectNameOf(alert)))),
       paragraph(
         FOOTNOTE,
-        `${escapeHtml(text.turnOff)} ${inkLink(projectUrl(alert, links, 'settings'), messages.settings)}.`,
+        `${escapeHtml(text.turnOff)} ${inkLink(emailSettingsUrl(links, alert.projectId), messages.settings)}.`,
       ),
       paragraph({ ...FOOTNOTE, margin: '0' }, escapeHtml(messages.about)),
       '</td>',
@@ -191,7 +192,7 @@ function buildText(
     ...supportTextLines(support),
     ...wrapped(messages.reason(projectNameOf(alert))),
     ...wrapped(`${text.turnOff} ${messages.settings}:`),
-    projectUrl(alert, links, 'settings'),
+    emailSettingsUrl(links, alert.projectId),
     ...wrapped(messages.about),
   ].join('\n');
 }
