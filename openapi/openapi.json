@@ -1767,6 +1767,199 @@
         ],
         "type": "object"
       },
+      "Goal": {
+        "additionalProperties": false,
+        "description": "A goal of the project.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "event": {
+            "description": "The named event that reaches the goal; null for a page",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "description": "The page path that reaches the goal; null for an event",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "position": {
+            "description": "The order of the goal; the lowest is the default goal of the reports",
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          },
+          "type": {
+            "enum": [
+              "event",
+              "page"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "event",
+          "path",
+          "position",
+          "created_at"
+        ],
+        "type": "object"
+      },
+      "GoalChanges": {
+        "additionalProperties": false,
+        "description": "The name, or what reaches the goal (an event or a page path, which replaces the other).",
+        "properties": {
+          "event": {
+            "description": "Reached when the visit sends this named event",
+            "pattern": "^[a-z][a-z0-9_]{0,63}$",
+            "type": "string"
+          },
+          "name": {
+            "description": "What the goal is called",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "description": "Reached when the visit views a page this path matches; a star matches any characters",
+            "format": "starts_with",
+            "maxLength": 256,
+            "pattern": "^\\/.*",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "GoalList": {
+        "additionalProperties": false,
+        "description": "The goals of the project in their order. The first is the one the reports count as conversions when they are not told which; it starts as the former conversion event.",
+        "properties": {
+          "goals": {
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "goals"
+        ],
+        "type": "object"
+      },
+      "GoalsSummary": {
+        "additionalProperties": false,
+        "description": "Each goal of the project, in order, with its conversions in the range and filters, and the visits of the range and filters it is measured against.",
+        "properties": {
+          "goals": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "conversion_rate": {
+                  "description": "converting_visits divided by visits, from 0 to 1; null without visits",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "conversions": {
+                  "description": "The events or page views that reached the goal",
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "converting_visits": {
+                  "description": "The visits that reached the goal at least once",
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "created_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "event": {
+                  "description": "The named event that reaches the goal; null for a page",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "path": {
+                  "description": "The page path that reaches the goal; null for an event",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "position": {
+                  "description": "The order of the goal; the lowest is the default goal of the reports",
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "type": {
+                  "enum": [
+                    "event",
+                    "page"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "type",
+                "event",
+                "path",
+                "position",
+                "created_at",
+                "conversions",
+                "converting_visits",
+                "conversion_rate"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "visits": {
+            "maximum": 9007199254740991,
+            "minimum": -9007199254740991,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "visits",
+          "goals"
+        ],
+        "type": "object"
+      },
       "IncomingEvent": {
         "additionalProperties": false,
         "description": "One event. An event that breaks these rules is counted as rejected while the rest of its batch is kept. Control and invisible format characters are removed from the path, the campaign tags and the text properties before the event is judged.",
@@ -2427,6 +2620,55 @@
           "accounts"
         ],
         "type": "object"
+      },
+      "NewGoal": {
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "properties": {
+              "event": {
+                "description": "Reached when the visit sends this named event",
+                "pattern": "^[a-z][a-z0-9_]{0,63}$",
+                "type": "string"
+              },
+              "name": {
+                "description": "What the goal is called",
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "event"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "description": "What the goal is called",
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              "path": {
+                "description": "Reached when the visit views a page this path matches; a star matches any characters",
+                "format": "starts_with",
+                "maxLength": 256,
+                "pattern": "^\\/.*",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "path"
+            ],
+            "type": "object"
+          }
+        ],
+        "description": "A goal to add to the project, up to 10: a name and either an event or a page path."
       },
       "NewProject": {
         "additionalProperties": false,
@@ -7458,6 +7700,26 @@
             }
           },
           {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -7567,6 +7829,16 @@
             "required": true,
             "schema": {
               "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -7945,6 +8217,26 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -8378,6 +8670,16 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -8828,6 +9130,16 @@
             }
           },
           {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -9115,6 +9427,16 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -9432,6 +9754,16 @@
             }
           },
           {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -9729,6 +10061,16 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -10034,6 +10376,16 @@
             }
           },
           {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -10335,6 +10687,16 @@
             }
           },
           {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "description": "The step, 1 for the first; dropped needs 2 or more",
             "in": "query",
             "name": "step",
@@ -10441,6 +10803,629 @@
         "summary": "The visits or people who reached, or dropped at, one funnel step",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/goals": {
+      "get": {
+        "operationId": "GoalsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalList"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it, or a goal id is not one of its goals (goal_not_found)."
+          }
+        },
+        "security": [
+          {
+            "access_token": []
+          },
+          {
+            "connection_token": []
+          },
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The goals of the project, in order",
+        "tags": [
+          "goals"
+        ]
+      },
+      "post": {
+        "description": "At most ten goals; the new one goes last.",
+        "operationId": "GoalSettingsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewGoal"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns, or the goal is not one of its goals; the answer is the same."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project already has ten goals (goal_limit_reached), or the account has no running subscription."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Add a goal to a project the admin owns",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/goals/{goalId}": {
+      "delete": {
+        "description": "Its events stay; the next goal in order becomes the default of the reports.",
+        "operationId": "GoalSettingsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns, or the goal is not one of its goals; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Delete a goal",
+        "tags": [
+          "goals"
+        ]
+      },
+      "patch": {
+        "operationId": "GoalSettingsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "goalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoalChanges"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Goal"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, or the account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns, or the goal is not one of its goals; the answer is the same."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Rename a goal, or change what reaches it",
+        "tags": [
+          "goals"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/goals/summary": {
+      "get": {
+        "operationId": "GoalsController_summary",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "key=value: the event above carried this property value; needs event",
+            "in": "query",
+            "name": "property",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "identified: the visits that sent a user id; anonymous: those that never did",
+            "in": "query",
+            "name": "identity",
+            "required": false,
+            "schema": {
+              "enum": [
+                "identified",
+                "anonymous"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalsSummary"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is suspended for abuse (account_suspended)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project does not exist or the admin may not read it, or a goal id is not one of its goals (goal_not_found)."
+          }
+        },
+        "security": [
+          {
+            "access_token": []
+          },
+          {
+            "connection_token": []
+          },
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The conversions and conversion rate of each goal in a range",
+        "tags": [
+          "goals"
         ]
       }
     },
@@ -10903,6 +11888,26 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -11461,6 +12466,16 @@
             }
           },
           {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
             "in": "path",
             "name": "projectId",
             "required": true,
@@ -11810,6 +12825,16 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },
@@ -12200,6 +13225,16 @@
                 "true",
                 "false"
               ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
               "type": "string"
             }
           },

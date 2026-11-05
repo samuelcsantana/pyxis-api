@@ -69,7 +69,7 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   Overview counts them per day and per calendar month.
 - **Dashboard queries.** Overview, devices, acquisition, features and event properties, requests,
   funnels, timelines, visits, time of day, engagement and live arrivals, over up to 400 days in
-  the project's time zone, narrowed by the same visit filters.
+  the project's time zone, narrowed by the same visit filters, with up to ten goals per project.
 - **Sign-in.** A six-digit code by e-mail, exchanged for an opaque session the admin can end one
   by one or everywhere at once.
 - **Accounts and billing.** Sign-up on the free Hobby plan without a card, the paid Pro plan
@@ -429,6 +429,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0055](docs/adr/0055-unique-visitors-without-an-identifier.md)                        | Unique visitors without an identifier                                      |
 | [0056](docs/adr/0056-ingestion-stores-only-visible-text.md)                           | Ingestion stores only visible text                                         |
 | [0057](docs/adr/0057-pro-features-are-gated-by-the-account-status.md)                 | Pro features are gated by the account status                               |
+| [0058](docs/adr/0058-goals-replace-the-conversion-event.md)                           | Goals replace the single conversion event                                  |
 
 ## Roadmap
 
