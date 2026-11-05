@@ -3,6 +3,7 @@ locals {
     "DATABASE_URL",
     "EDGE_SHARED_SECRET",
     "RESEND_API_KEY",
+    "SLACK_WEBHOOK_KEYS",
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
   ]
@@ -161,6 +162,17 @@ resource "aws_ssm_parameter" "jobs_stripe_secret_key" {
   type        = "SecureString"
   value       = "placeholder-set-in-the-console"
   description = "The Stripe key the daily job reconciles the subscriptions with; the same value as /app/STRIPE_SECRET_KEY."
+
+  lifecycle {
+    ignore_changes = [value]
+  }
+}
+
+resource "aws_ssm_parameter" "jobs_slack_webhook_keys" {
+  name        = "/${var.project}/jobs/SLACK_WEBHOOK_KEYS"
+  type        = "SecureString"
+  value       = "placeholder-set-in-the-console"
+  description = "The AES-256-GCM keys the daily alerts open the Slack webhooks with; the same value as /app/SLACK_WEBHOOK_KEYS."
 
   lifecycle {
     ignore_changes = [value]
