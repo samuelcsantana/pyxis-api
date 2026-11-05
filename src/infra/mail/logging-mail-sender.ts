@@ -1,3 +1,4 @@
+import type { ProjectAlert } from '../../domain/alerts/project-alert';
 import type { NoticeText } from '../../domain/notices/operator-notice';
 import { Logger } from '@nestjs/common';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
@@ -102,6 +103,16 @@ export class LoggingMailSender implements MailSender {
 
   sendOperatorNotice(_email: string, notice: NoticeText, language: EmailLanguage): Promise<void> {
     this.logger.log({ message: 'mail.operator_notice', subject: notice.subject, language });
+    return Promise.resolve();
+  }
+
+  sendProjectAlert(_email: string, alert: ProjectAlert, language: EmailLanguage): Promise<void> {
+    this.logger.log({
+      message: 'mail.project_alert',
+      projectId: alert.projectId,
+      kind: alert.kind,
+      language,
+    });
     return Promise.resolve();
   }
 

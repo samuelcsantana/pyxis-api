@@ -1,4 +1,5 @@
 import type { AccountNotice } from '../accounts/account-notice';
+import type { ProjectAlert } from '../alerts/project-alert';
 import type { InstallReminder } from '../accounts/install-reminder';
 import type { QuotaNotice } from '../accounts/quota-notice';
 import type { SubscriptionConfirmation } from '../accounts/subscription-confirmation';
@@ -29,6 +30,7 @@ export interface MailSender {
   ): Promise<void>;
   sendExportReady(email: string, ready: ExportReady, language: EmailLanguage): Promise<void>;
   sendOperatorNotice(email: string, notice: NoticeText, language: EmailLanguage): Promise<void>;
+  sendProjectAlert(email: string, alert: ProjectAlert, language: EmailLanguage): Promise<void>;
 }
 
 export const MAIL_SENDER = Symbol('MailSender');

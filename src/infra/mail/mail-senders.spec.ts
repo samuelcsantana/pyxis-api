@@ -1,4 +1,6 @@
+import type { ProjectAlert } from '../../domain/alerts/project-alert';
 import { buildOperatorNoticeEmail } from './operator-notice-email';
+import { buildProjectAlertEmail } from './project-alert-email';
 import { Logger } from '@nestjs/common';
 import type { WeeklyDigest } from '../../domain/digest/weekly-digest';
 import { createMailSender } from './create-mail-sender';
@@ -18,6 +20,16 @@ import { buildExportReadyEmail } from './export-ready-email';
 import { buildSignInCodeEmail, buildSignUpCodeEmail } from './sign-in-code-email';
 import { buildWeeklyDigestEmail } from './weekly-digest-email';
 
+const ALERT: ProjectAlert = {
+  kind: 'failed_writes',
+  projectId: 'p-1',
+  projectName: 'Shop',
+  timeZone: 'UTC',
+  day: '2026-11-04',
+  failed: 12,
+  total: 40,
+  usualRate: 0.02,
+};
 const FROM = 'Pyxis <noreply@pyxis-analytics.dev>';
 const API_KEY = 'test-api-key';
 const DASHBOARD_ORIGIN = 'https://dashboard.example.com';
@@ -208,6 +220,24 @@ describe('ResendMailSender', () => {
     });
   });
 
+  it('sends a project alert with replies going to the support address', async () => {
+    const send = okResend();
+
+    await new ResendMailSender(API_KEY, FROM, LINKS, send, SUPPORT).sendProjectAlert(
+      'owner@example.com',
+      ALERT,
+      'fr',
+    );
+
+    const [, init] = send.mock.calls[0] ?? [];
+    expect(JSON.parse(init?.body as string)).toEqual({
+      from: FROM,
+      to: 'owner@example.com',
+      reply_to: SUPPORT,
+      ...buildProjectAlertEmail(ALERT, 'fr', LINKS, SUPPORT),
+    });
+  });
+
   it('sends the welcome with replies going to the support address', async () => {
     const send = okResend();
     const welcome = { plan: { kind: 'subscription' as const }, terms: null };
@@ -393,6 +423,17 @@ describe('SesMailSender', () => {
     );
 
     expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe('Prices change');
+    expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
+  });
+
+  it('sends a project alert through SES too', async () => {
+    const { sent, send } = recordingSes();
+
+    await new SesMailSender(FROM, LINKS, send).sendProjectAlert('owner@example.com', ALERT, 'it');
+
+    expect(sent[0]?.Content?.Simple?.Subject?.Data).toBe(
+      buildProjectAlertEmail(ALERT, 'it', LINKS, null).subject,
+    );
     expect(sent[0]?.Destination).toEqual({ ToAddresses: ['owner@example.com'] });
   });
 
@@ -658,6 +699,19 @@ describe('LoggingMailSender', () => {
 
     expect(logs).toEqual([
       { message: 'mail.operator_notice', subject: 'Prices change', language: 'pt-BR' },
+    ]);
+  });
+
+  it('logs a project alert by its project and kind, never the address', async () => {
+    const logs: unknown[] = [];
+    jest.spyOn(Logger.prototype, 'log').mockImplementation((message: unknown) => {
+      logs.push(message);
+    });
+
+    await new LoggingMailSender().sendProjectAlert('owner@example.com', ALERT, 'nl');
+
+    expect(logs).toEqual([
+      { message: 'mail.project_alert', projectId: 'p-1', kind: 'failed_writes', language: 'nl' },
     ]);
   });
 

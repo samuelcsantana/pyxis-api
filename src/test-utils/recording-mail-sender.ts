@@ -1,3 +1,4 @@
+import type { ProjectAlert } from '../domain/alerts/project-alert';
 import type { AccountNotice } from '../domain/accounts/account-notice';
 import type { InstallReminder } from '../domain/accounts/install-reminder';
 import type { QuotaNotice } from '../domain/accounts/quota-notice';
@@ -70,6 +71,12 @@ export interface SentOperatorNotice {
   readonly language: EmailLanguage;
 }
 
+export interface SentProjectAlert {
+  readonly email: string;
+  readonly alert: ProjectAlert;
+  readonly language: EmailLanguage;
+}
+
 export class RecordingMailSender implements MailSender {
   readonly sent: SentSignInCode[] = [];
   readonly signUpCodes: SentSignInCode[] = [];
@@ -82,6 +89,7 @@ export class RecordingMailSender implements MailSender {
   readonly subscriptionConfirmations: SentSubscriptionConfirmation[] = [];
   readonly exportsReady: SentExportReady[] = [];
   readonly operatorNotices: SentOperatorNotice[] = [];
+  readonly projectAlerts: SentProjectAlert[] = [];
   private failure: Error | null = null;
   private readonly failingAddresses = new Map<string, Error>();
 
@@ -195,6 +203,15 @@ export class RecordingMailSender implements MailSender {
       return Promise.reject(failure);
     }
     this.operatorNotices.push({ email, notice, language });
+    return Promise.resolve();
+  }
+
+  sendProjectAlert(email: string, alert: ProjectAlert, language: EmailLanguage): Promise<void> {
+    const failure = this.failingAddresses.get(email);
+    if (failure !== undefined) {
+      return Promise.reject(failure);
+    }
+    this.projectAlerts.push({ email, alert, language });
     return Promise.resolve();
   }
 }

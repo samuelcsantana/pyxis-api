@@ -27,7 +27,7 @@ import {
   type WeeklyDigestEmailMessages,
 } from './weekly-digest-email-messages';
 
-const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
+export const INTL_LOCALES: Readonly<Record<EmailLanguage, string>> = {
   en: 'en-US',
   'pt-BR': 'pt-BR',
   es: 'es',
@@ -82,7 +82,7 @@ function calendarDay(isoDate: string): Date {
   return new Date(`${isoDate}T00:00:00.000Z`);
 }
 
-function plainSpaces(text: string): string {
+export function plainSpaces(text: string): string {
   return text.replace(NARROW_SPACES, ' ');
 }
 
