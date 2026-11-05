@@ -7,6 +7,7 @@ import {
   adminProjectAccess,
   adminSessions,
   adminUsers,
+  alertDeliveries,
   digestDeliveries,
   events,
   goals,
@@ -46,6 +47,7 @@ function foreignKeyTargets(
     | typeof oauthConnectionTokens
     | typeof reviewerCodes
     | typeof goals
+    | typeof alertDeliveries
     | typeof shareLinks,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
@@ -157,6 +159,36 @@ describe('database schema', () => {
     expect(config.indexes.map((index) => [index.config.name, index.config.unique])).toEqual([
       ['share_links_project_id_idx', false],
     ]);
+  });
+
+  it('keeps one alert per project, person, kind and day, gone with the project or the person', () => {
+    const config = getTableConfig(alertDeliveries);
+
+    expect(foreignKeyTargets(alertDeliveries)).toEqual(['projects.id', 'admin_users.id']);
+    expect(config.foreignKeys.map((foreignKey) => foreignKey.onDelete)).toEqual([
+      'cascade',
+      'cascade',
+    ]);
+    expect(config.primaryKeys[0]?.columns.map((column) => column.name)).toEqual([
+      'project_id',
+      'admin_user_id',
+      'kind',
+      'day',
+    ]);
+    expect(config.checks.map((check) => check.name)).toEqual(['alert_deliveries_kind_check']);
+  });
+
+  it('turns every alert on for a new access to a project', () => {
+    const columns = Object.fromEntries(
+      getTableConfig(adminProjectAccess).columns.map((column) => [column.name, column.default]),
+    );
+
+    expect(columns).toMatchObject({
+      weekly_digest: true,
+      no_events_alert: true,
+      failed_writes_alert: true,
+      conversion_drop_alert: true,
+    });
   });
 
   it('gives projects a UTC default time zone and no conversion event', () => {

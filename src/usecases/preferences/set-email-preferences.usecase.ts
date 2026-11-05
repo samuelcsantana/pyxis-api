@@ -1,6 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import type { AdminUser } from '../../domain/entities/admin-user.entity';
-import type { EmailPreferences } from '../../domain/entities/email-preferences.entity';
+import type {
+  EmailPreferenceChanges,
+  EmailPreferences,
+} from '../../domain/entities/email-preferences.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import { ProjectNotFoundError } from '../../domain/errors/project.errors';
 import {
@@ -19,7 +22,7 @@ export class SetEmailPreferencesUseCase {
   async execute(
     admin: AdminUser,
     project: Project,
-    wanted: EmailPreferences,
+    wanted: EmailPreferenceChanges,
   ): Promise<EmailPreferences> {
     const saved = await this.preferences.save(admin.id, project.id, wanted);
     if (saved === null) {
@@ -29,7 +32,7 @@ export class SetEmailPreferencesUseCase {
       message: 'email_preferences.updated',
       adminUserId: admin.id,
       projectId: project.id,
-      weeklyDigest: saved.weeklyDigest,
+      ...saved,
     });
     return saved;
   }

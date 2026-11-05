@@ -1,10 +1,20 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq } from 'drizzle-orm';
-import type { EmailPreferences } from '../../domain/entities/email-preferences.entity';
+import type {
+  EmailPreferenceChanges,
+  EmailPreferences,
+} from '../../domain/entities/email-preferences.entity';
 import type { EmailPreferencesRepository } from '../../domain/repositories/email-preferences.repository';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { adminProjectAccess } from '../database/schema/admins';
+
+const preferenceColumns = {
+  weeklyDigest: adminProjectAccess.weeklyDigest,
+  noEventsAlert: adminProjectAccess.noEventsAlert,
+  failedWritesAlert: adminProjectAccess.failedWritesAlert,
+  conversionDropAlert: adminProjectAccess.conversionDropAlert,
+};
 
 function accessOf(adminUserId: string, projectId: string) {
   return and(
@@ -19,7 +29,7 @@ export class DrizzleEmailPreferencesRepository implements EmailPreferencesReposi
 
   async preferencesOf(adminUserId: string, projectId: string): Promise<EmailPreferences | null> {
     const [row] = await this.db
-      .select({ weeklyDigest: adminProjectAccess.weeklyDigest })
+      .select(preferenceColumns)
       .from(adminProjectAccess)
       .where(accessOf(adminUserId, projectId))
       .limit(1);
@@ -29,13 +39,13 @@ export class DrizzleEmailPreferencesRepository implements EmailPreferencesReposi
   async save(
     adminUserId: string,
     projectId: string,
-    preferences: EmailPreferences,
+    changes: EmailPreferenceChanges,
   ): Promise<EmailPreferences | null> {
     const [row] = await this.db
       .update(adminProjectAccess)
-      .set({ weeklyDigest: preferences.weeklyDigest })
+      .set(changes)
       .where(accessOf(adminUserId, projectId))
-      .returning({ weeklyDigest: adminProjectAccess.weeklyDigest });
+      .returning(preferenceColumns);
     return row ?? null;
   }
 }
