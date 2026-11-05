@@ -33,8 +33,8 @@ describe('GetFunnelUseCase', () => {
     const { query, useCase } = setup();
     query.report = {
       steps: [
-        { count: 10, medianSecondsFromPrevious: null },
-        { count: 4, medianSecondsFromPrevious: 95 },
+        { count: 10, medianSecondsFromPrevious: null, revenue: null },
+        { count: 4, medianSecondsFromPrevious: 95, revenue: 389.7 },
       ],
       medianSecondsOverall: 95,
     };

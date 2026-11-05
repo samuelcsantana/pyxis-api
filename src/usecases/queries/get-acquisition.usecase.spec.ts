@@ -1,3 +1,4 @@
+import { CHANNELS } from '../../domain/entities/tracked-event.entity';
 import type { Project } from '../../domain/entities/project.entity';
 import type { GoalTarget } from '../../domain/goals/goal';
 import { InvalidRangeError } from '../../domain/errors/query.errors';
@@ -26,6 +27,24 @@ const SOURCE = {
   conversions: 3,
   convertingVisits: 2,
   fromAdClickVisits: 3,
+  revenue: 389.7,
+} as const;
+
+const PAID = {
+  channel: 'paid',
+  visits: 4,
+  conversions: 3,
+  convertingVisits: 2,
+  fromAdClickVisits: 3,
+  revenue: 389.7,
+} as const;
+
+const NO_VISITS = {
+  visits: 0,
+  conversions: 0,
+  convertingVisits: 0,
+  fromAdClickVisits: 0,
+  revenue: 0,
 } as const;
 
 const CAMPAIGN = { ...SOURCE, campaign: 'spring_sale', visits: 3 } as const;
@@ -62,19 +81,51 @@ describe('GetAcquisitionUseCase', () => {
     ]);
     expect(report.sources).toEqual([SOURCE]);
     expect(report.campaigns).toEqual([CAMPAIGN]);
+    expect(report.channels.map(({ channel }) => channel)).toEqual([...CHANNELS]);
     expect(query.limits).toEqual([TOP_SOURCES, TOP_CAMPAIGNS]);
     expect(query.scopes[0]?.range).toEqual({ from: '2026-10-04', to: '2026-10-05' });
   });
 
-  it('answers null conversions without a conversion event', async () => {
-    const { query, run } = setup({ ...PROJECT, conversionEvent: null });
-    query.bySource = [SOURCE];
-    query.byCampaign = [CAMPAIGN];
+  it('gives every channel, in order, zero for those that brought no visit', async () => {
+    const { query, run } = setup();
+    query.byChannel = [PAID];
 
     const report = await run('2026-10-05', '2026-10-05');
 
-    expect(report.sources).toEqual([{ ...SOURCE, conversions: null, convertingVisits: null }]);
-    expect(report.campaigns).toEqual([{ ...CAMPAIGN, conversions: null, convertingVisits: null }]);
+    expect(report.channels).toEqual(
+      CHANNELS.map((channel) => (channel === 'paid' ? PAID : { channel, ...NO_VISITS })),
+    );
+  });
+
+  it('answers null conversions and revenue without a goal', async () => {
+    const { query, run } = setup({ ...PROJECT, conversionEvent: null });
+    query.bySource = [SOURCE];
+    query.byCampaign = [CAMPAIGN];
+    query.byChannel = [PAID];
+
+    const report = await run('2026-10-05', '2026-10-05');
+    const uncounted = { conversions: null, convertingVisits: null, revenue: null };
+
+    expect(report.sources).toEqual([{ ...SOURCE, ...uncounted }]);
+    expect(report.campaigns).toEqual([{ ...CAMPAIGN, ...uncounted }]);
+    expect(report.channels[CHANNELS.indexOf('paid')]).toEqual({ ...PAID, ...uncounted });
+  });
+
+  it('counts conversions but no revenue for a page goal', async () => {
+    const query = new StubAcquisitionQuery();
+    const useCase = new GetAcquisitionUseCase(
+      query,
+      new FixedClock(new Date('2026-10-06T02:30:00.000Z')),
+    );
+    query.bySource = [SOURCE];
+
+    const report = await useCase.execute(PROJECT, {
+      from: '2026-10-05',
+      to: '2026-10-05',
+      conversion: { type: 'page', path: '/thanks' },
+    });
+
+    expect(report.sources).toEqual([{ ...SOURCE, revenue: null }]);
   });
 
   it('refuses an invalid range', async () => {

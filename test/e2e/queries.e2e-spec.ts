@@ -1,3 +1,4 @@
+import { CHANNELS } from '../../src/domain/entities/tracked-event.entity';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import postgres from 'postgres';
 import { sha256Hex } from '../../src/domain/auth/hashing';
@@ -90,6 +91,7 @@ describe('dashboard queries', () => {
         identified_users: { current: 1, previous: 0, daily: [0, 1] },
         conversions: { current: 1, previous: 0, daily: [0, 1] },
         converting_visits: { current: 1, previous: 0, daily: [0, 1] },
+        revenue: { current: 0, previous: 0, daily: [0, 0] },
         write_errors: {
           current: { failed: 1, total: 1 },
           previous: { failed: 0, total: 0 },
@@ -190,9 +192,18 @@ describe('dashboard queries', () => {
           conversions: 0,
           converting_visits: 0,
           from_ad_click_visits: 1,
+          revenue: 0,
         },
       ],
       campaigns: [],
+      channels: CHANNELS.map((channel) => ({
+        channel,
+        visits: channel === 'paid' ? 1 : 0,
+        conversions: 0,
+        converting_visits: 0,
+        from_ad_click_visits: channel === 'paid' ? 1 : 0,
+        revenue: 0,
+      })),
     });
   });
 
@@ -296,8 +307,8 @@ describe('dashboard queries', () => {
 
     const timed = {
       steps: [
-        { count: 1, median_seconds_from_previous: null },
-        { count: 1, median_seconds_from_previous: 60 },
+        { count: 1, median_seconds_from_previous: null, revenue: null },
+        { count: 1, median_seconds_from_previous: 60, revenue: 0 },
       ],
       median_seconds_overall: 60,
     };

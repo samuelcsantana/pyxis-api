@@ -6,7 +6,7 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { matchesGoal, visits } from './definitions';
+import { matchesGoal, revenueWhere, visits } from './definitions';
 import { inScope } from './report-filters';
 
 function countsPerGoal(goals: readonly Goal[], count: (goal: Goal) => SQL): SQL {
@@ -22,6 +22,7 @@ export class DrizzleGoalsSummaryQuery implements GoalsSummaryQuery {
       visits: number;
       conversions: number[];
       convertingVisits: number[];
+      revenue: number[];
     }>(sql`
       SELECT ${visits} AS "visits",
         ${countsPerGoal(goals, (goal) => sql`count(*) FILTER (WHERE ${matchesGoal(goal.target)})::int`)}
@@ -30,7 +31,8 @@ export class DrizzleGoalsSummaryQuery implements GoalsSummaryQuery {
           goals,
           (goal) =>
             sql`count(DISTINCT ${events.sessionId}) FILTER (WHERE ${matchesGoal(goal.target)})::int`,
-        )} AS "convertingVisits"
+        )} AS "convertingVisits",
+        ${countsPerGoal(goals, (goal) => revenueWhere(matchesGoal(goal.target)))} AS "revenue"
       FROM ${events}
       WHERE ${inScope(scope)}`);
     const [aggregate] = rows as unknown as readonly [GoalsSummaryCounts];

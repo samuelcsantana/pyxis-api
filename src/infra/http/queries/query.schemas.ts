@@ -141,6 +141,12 @@ const kpiSchema = z.strictObject({
   daily: z.array(z.int()),
 });
 
+const moneyKpiSchema = z.strictObject({
+  current: z.number(),
+  previous: z.number(),
+  daily: z.array(z.number()),
+});
+
 const failureCountSchema = z.strictObject({ failed: z.int(), total: z.int() });
 
 const CALENDAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -221,6 +227,12 @@ export const overviewReportSchema = z
       converting_visits: kpiSchema
         .nullable()
         .describe('Visits that sent the conversion event at least once; null without one'),
+      revenue: moneyKpiSchema
+        .nullable()
+        .describe(
+          'The sum of the revenue property on the events of the goal counted, in the project ' +
+            'currency; null when that goal is a page or the project has no goal',
+        ),
       write_errors: z.strictObject({
         current: failureCountSchema,
         previous: failureCountSchema,
@@ -341,14 +353,25 @@ export const devicesReportSchema = z
       'visits without a city (every visit, for a project with the city off).',
   });
 
-const sourceShareShape = {
-  source: z.string(),
-  medium: z.string().nullable(),
+const channelShareShape = {
   channel: z.enum(CHANNELS),
   visits: z.int(),
   conversions: z.int().nullable(),
   converting_visits: z.int().nullable(),
   from_ad_click_visits: z.int(),
+  revenue: z
+    .number()
+    .nullable()
+    .describe(
+      'The sum of the revenue property on the conversions of these visits, in the project ' +
+        'currency; null when the goal counted is a page or the project has no goal',
+    ),
+};
+
+const sourceShareShape = {
+  source: z.string(),
+  medium: z.string().nullable(),
+  ...channelShareShape,
 };
 
 export const acquisitionReportSchema = z
@@ -358,6 +381,9 @@ export const acquisitionReportSchema = z
     ),
     sources: z.array(z.strictObject(sourceShareShape)),
     campaigns: z.array(z.strictObject({ campaign: z.string(), ...sourceShareShape })),
+    channels: z
+      .array(z.strictObject(channelShareShape))
+      .describe('Every channel, in a fixed order, with the visits that entered through it'),
   })
   .meta({
     id: 'AcquisitionReport',
@@ -413,7 +439,18 @@ export const funnelQuerySchema = propertyNeedsEvent(funnelFieldsSchema);
 export const funnelReportSchema = z
   .strictObject({
     steps: z.array(
-      z.strictObject({ count: z.int(), median_seconds_from_previous: z.int().nullable() }),
+      z.strictObject({
+        count: z.int(),
+        median_seconds_from_previous: z.int().nullable(),
+        revenue: z
+          .number()
+          .nullable()
+          .describe(
+            'For an event step, the sum of the revenue property on the event that completed ' +
+              'the step for each visit or person (its first occurrence after the previous ' +
+              'step), in the project currency; null for a page step',
+          ),
+      }),
     ),
     median_seconds_overall: z.int().nullable(),
   })

@@ -98,6 +98,13 @@ export const goalsSummarySchema = z
           .number()
           .nullable()
           .describe('converting_visits divided by visits, from 0 to 1; null without visits'),
+        revenue: z
+          .number()
+          .nullable()
+          .describe(
+            'The sum of the revenue property on the events of the goal, in the project ' +
+              'currency; null for a page goal',
+          ),
       }),
     ),
   })
@@ -141,6 +148,7 @@ export function goalsSummaryBody(report: GoalsSummaryReport): GoalsSummaryBody {
       conversions: summary.conversions,
       converting_visits: summary.convertingVisits,
       conversion_rate: summary.conversionRate,
+      revenue: summary.revenue,
     })),
   };
 }

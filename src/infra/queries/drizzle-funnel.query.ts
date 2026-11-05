@@ -18,19 +18,23 @@ import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
+import { carriesRevenue } from '../../domain/queries/revenue';
+import { validRevenue } from './definitions';
 import { inScope } from './report-filters';
 
 function subjectEvents(scope: QueryScope, mode: FunnelMode): SQL {
   if (mode === 'visit') {
     return sql`
       SELECT ${events.sessionId}::text AS "subject", ${events.occurredAt} AS "at",
-        ${events.name} AS "name", ${events.path} AS "path"
+        ${events.name} AS "name", ${events.path} AS "path", ${events.id} AS "id",
+        ${validRevenue} AS "revenue"
       FROM ${events}
       WHERE ${inScope(scope)}`;
   }
   return sql`
     SELECT linked."userId" AS "subject", ${events.occurredAt} AS "at",
-      ${events.name} AS "name", ${events.path} AS "path"
+      ${events.name} AS "name", ${events.path} AS "path", ${events.id} AS "id",
+      ${validRevenue} AS "revenue"
     FROM ${events}
     JOIN (
       SELECT DISTINCT ON (${events.sessionId})
@@ -53,10 +57,14 @@ function stepName(index: number): SQL {
   return sql.raw(`step_${String(index)}`);
 }
 
+const revenueOfTheReachingEvent = sql`(array_agg(subject_events."revenue"
+  ORDER BY subject_events."at", subject_events."id"))[1] AS "revenue"`;
+
 function stepTable(step: FunnelStep, index: number): SQL {
   if (index === 0) {
     return sql`${stepName(index)} AS (
-      SELECT subject_events."subject", min(subject_events."at") AS "at"
+      SELECT subject_events."subject", min(subject_events."at") AS "at",
+        ${revenueOfTheReachingEvent}
       FROM subject_events
       WHERE ${matches(step)}
       GROUP BY subject_events."subject"
@@ -64,7 +72,8 @@ function stepTable(step: FunnelStep, index: number): SQL {
   }
   const previous = stepName(index - 1);
   return sql`${stepName(index)} AS (
-    SELECT subject_events."subject", min(subject_events."at") AS "at"
+    SELECT subject_events."subject", min(subject_events."at") AS "at",
+      ${revenueOfTheReachingEvent}
     FROM ${previous}
     JOIN subject_events ON subject_events."subject" = ${previous}."subject"
       AND subject_events."at" >= ${previous}."at"
@@ -137,18 +146,23 @@ export class DrizzleFunnelQuery implements FunnelQuery {
       (_, index) =>
         sql`(SELECT count(*)::int FROM ${stepName(index)}) AS ${sql.raw(`"${column('count_', index)}"`)}`,
     );
+    const revenues = steps.map(
+      (_, index) =>
+        sql`(SELECT coalesce(sum("revenue"), 0)::float8 FROM ${stepName(index)}) AS ${sql.raw(`"${column('revenue_', index)}"`)}`,
+    );
     const times = steps
       .slice(1)
       .map((_, offset) => medianSecondsBetween(offset + 1, offset, column('seconds_', offset + 1)));
     const rows = await this.db.execute<Record<string, number | null>>(sql`
       WITH subject_events AS (${subjectEvents(scope, mode)}),
       ${sql.join(tables, sql`, `)}
-      SELECT ${sql.join([...counts, ...times, medianSecondsBetween(last, 0, 'overall')], sql`, `)}`);
+      SELECT ${sql.join([...counts, ...revenues, ...times, medianSecondsBetween(last, 0, 'overall')], sql`, `)}`);
     const [row] = rows as unknown as readonly [MeasureRow];
     return {
-      steps: steps.map((_, index) => ({
+      steps: steps.map((step, index) => ({
         count: Number(row[column('count_', index)]),
         medianSecondsFromPrevious: row[column('seconds_', index)] ?? null,
+        revenue: carriesRevenue(step) ? Number(row[column('revenue_', index)]) : null,
       })),
       medianSecondsOverall: row.overall ?? null,
     };

@@ -1,5 +1,6 @@
 import { type SQL, sql } from 'drizzle-orm';
 import { API_REQUEST, IDENTIFY, PAGE_VIEW } from '../../domain/events/reserved-event-names';
+import { REVENUE_CEILING, REVENUE_PROPERTY } from '../../domain/events/revenue';
 import type { GoalTarget } from '../../domain/goals/goal';
 import { AD_CLICK_SOURCE, DIRECT_SOURCE } from '../../domain/queries/acquisition';
 import { likePattern } from '../../domain/queries/funnel';
@@ -55,6 +56,20 @@ export function matchesGoal(target: GoalTarget | null): SQL {
 
 export function isConversion(scope: QueryScope): SQL {
   return matchesGoal(scope.conversion);
+}
+
+const revenueNumber = sql`CASE WHEN jsonb_typeof(${events.properties} -> ${REVENUE_PROPERTY}::text) = 'number'
+  THEN (${events.properties} ->> ${REVENUE_PROPERTY}::text)::numeric END`;
+
+export const validRevenue = sql`CASE WHEN ${revenueNumber} >= 0
+  AND ${revenueNumber} < ${REVENUE_CEILING}::numeric THEN ${revenueNumber} END`;
+
+export function revenueWhere(condition: SQL): SQL {
+  return sql`coalesce(sum(${validRevenue}) FILTER (WHERE ${condition}), 0)::float8`;
+}
+
+export function conversionRevenue(scope: QueryScope): SQL {
+  return revenueWhere(isConversion(scope));
 }
 
 export const visits = sql`count(DISTINCT ${events.sessionId}) FILTER (WHERE ${isPageView})::int`;

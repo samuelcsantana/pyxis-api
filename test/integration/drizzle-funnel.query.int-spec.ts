@@ -146,9 +146,9 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
   it('times each step from the previous one, and the whole funnel, by their median', async () => {
     expect(await query.measure(SCOPE, 'user', CALCULATOR)).toEqual({
       steps: [
-        { count: 1, medianSecondsFromPrevious: null },
-        { count: 1, medianSecondsFromPrevious: 300 },
-        { count: 1, medianSecondsFromPrevious: 75_300 },
+        { count: 1, medianSecondsFromPrevious: null, revenue: null },
+        { count: 1, medianSecondsFromPrevious: 300, revenue: 0 },
+        { count: 1, medianSecondsFromPrevious: 75_300, revenue: 0 },
       ],
       medianSecondsOverall: 75_600,
     });
@@ -157,9 +157,9 @@ describe('DrizzleFunnelQuery against a real Postgres', () => {
   it('has no time for a step nobody reached, nor for a funnel nobody finished', async () => {
     expect(await query.measure(SCOPE, 'visit', CALCULATOR)).toEqual({
       steps: [
-        { count: 2, medianSecondsFromPrevious: null },
-        { count: 1, medianSecondsFromPrevious: 300 },
-        { count: 0, medianSecondsFromPrevious: null },
+        { count: 2, medianSecondsFromPrevious: null, revenue: null },
+        { count: 1, medianSecondsFromPrevious: 300, revenue: 0 },
+        { count: 0, medianSecondsFromPrevious: null, revenue: 0 },
       ],
       medianSecondsOverall: null,
     });

@@ -136,6 +136,39 @@ describe('GetOverviewUseCase', () => {
     expect(kpis.convertingVisits).toBeNull();
   });
 
+  it('sums the revenue of an event goal against the previous period, every day filled', async () => {
+    const { query, run } = setup();
+    query.revenueByFrom.set('2026-10-03', 259.8);
+    query.revenueByFrom.set('2026-09-30', 100);
+    query.sparseRevenueDays = [{ date: '2026-10-04', revenue: 259.8 }];
+
+    const { kpis } = await run('2026-10-03', '2026-10-05');
+
+    expect(kpis.revenue).toEqual({ current: 259.8, previous: 100, daily: [0, 259.8, 0] });
+    expect(query.revenueScopes.map(({ range }) => range.from)).toEqual([
+      '2026-10-03',
+      '2026-09-30',
+      '2026-10-03',
+    ]);
+  });
+
+  it.each([
+    ['a page goal', { type: 'page', path: '/thanks' } as const],
+    ['no goal', null],
+  ])('has no revenue, and does not ask for it, with %s', async (_case, conversion) => {
+    const query = new StubOverviewQuery();
+    const useCase = new GetOverviewUseCase(query, new FixedClock(LATE_EVENING_IN_SAO_PAULO));
+
+    const { kpis } = await useCase.execute(PROJECT, {
+      from: '2026-10-05',
+      to: '2026-10-05',
+      conversion,
+    });
+
+    expect(kpis.revenue).toBeNull();
+    expect(query.revenueScopes).toEqual([]);
+  });
+
   it('stops the previous period at the local time of now when the range ends today', async () => {
     const { query, run } = setup();
 

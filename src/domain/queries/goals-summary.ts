@@ -1,10 +1,12 @@
 import type { Goal } from '../goals/goal';
 import type { QueryScope } from './query-scope';
+import { carriesRevenue } from './revenue';
 
 export interface GoalsSummaryCounts {
   readonly visits: number;
   readonly conversions: readonly number[];
   readonly convertingVisits: readonly number[];
+  readonly revenue: readonly number[];
 }
 
 export interface GoalsSummaryQuery {
@@ -18,6 +20,7 @@ export interface GoalSummary {
   readonly conversions: number;
   readonly convertingVisits: number;
   readonly conversionRate: number | null;
+  readonly revenue: number | null;
 }
 
 export interface GoalsSummaryReport {
@@ -42,6 +45,7 @@ export function goalsSummary(
         conversions: counts.conversions[index] ?? 0,
         convertingVisits,
         conversionRate: conversionRate(convertingVisits, counts.visits),
+        revenue: carriesRevenue(goal.target) ? (counts.revenue[index] ?? 0) : null,
       };
     }),
   };
