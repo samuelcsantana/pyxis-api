@@ -6709,6 +6709,94 @@
         ]
       }
     },
+    "/v1/annotations": {
+      "post": {
+        "description": "Pro only. Sent from a server with Authorization: Bearer pyxis_sk_…, never from a page. The same rules as the dashboard: today at the latest in the project time zone, 1 to 140 characters, at most 1000 notes per project.",
+        "operationId": "AnnotationsByKeyController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewAnnotation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Annotation"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No live secret key was sent (unknown_key)."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project's account is not on Pro (plan_required) or is suspended (account_suspended)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project already has the most notes it may keep (annotation_limit_reached), or the account has no running subscription (subscription_required)."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many calls from this address, or with this key."
+          }
+        },
+        "security": [
+          {
+            "secret_key": []
+          }
+        ],
+        "summary": "Write a note on a day of the secret key's project, from a deploy or a script",
+        "tags": [
+          "annotations"
+        ]
+      }
+    },
     "/v1/auth/logout": {
       "post": {
         "operationId": "AuthController_logout",

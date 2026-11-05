@@ -334,7 +334,10 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   dashboard (`POST /v1/projects/{projectId}/annotations` with `day` and `text`, `PATCH` and
   `DELETE .../annotations/{annotationId}`; 1,000 per project, `409 annotation_limit_reached`);
   anyone who reads the project lists a range with `GET .../annotations?from=&to=` (session or
-  access token), by day. Access tokens stay read-only; writing by token is an open decision
+  access token), by day. On Pro, a deploy or a script writes one on the key's own project with
+  `POST /v1/annotations` and the project's secret key (`Authorization: Bearer pyxis_sk_…`, same
+  body and rules, rate limited like the other secret-key routes; `403 plan_required` on the free
+  plan); access tokens stay read-only
   ([ADR 0062](adr/0062-annotations-are-notes-on-a-day-written-by-the-owner.md))
 - Share links, on Pro: the account's owner creates a read-only link from the dashboard (`POST
 /v1/projects/{projectId}/share-links` with a name and an optional `expires_at`; the
