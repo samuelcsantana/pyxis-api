@@ -77,7 +77,7 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   through Stripe Checkout and its webhook, a monthly quota measured daily, projects, keys and
   people managed by the account's owner, and the end of an account in steps.
 - **Agents.** Read-only access tokens, an OAuth 2.1 server for the Claude connector and the remote
-  MCP endpoint with the sixteen tools of [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp).
+  MCP endpoint with the seventeen tools of [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp).
 - **A person's data.** Their events erased or exported on request, from the site's backend with a
   secret key; every event deleted after 13 months.
 - **E-mails.** Sign-in codes, invitations, the welcome, one install reminder, notices and a weekly
