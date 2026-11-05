@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { validateServerEnv } from './config/env.schema';
 import { DatabaseModule } from './infra/database/database.module';
 import { AccountsModule } from './infra/http/accounts/accounts.module';
+import { AnnotationsModule } from './infra/http/annotations/annotations.module';
 import { AuthModule } from './infra/http/auth/auth.module';
 import { BillingModule } from './infra/http/billing/billing.module';
 import { GoalsModule } from './infra/http/goals/goals.module';
@@ -31,6 +32,7 @@ import { SubjectsModule } from './infra/http/subjects/subjects.module';
     AccountsModule,
     ProjectsModule,
     GoalsModule,
+    AnnotationsModule,
     ShareLinksModule,
     SubjectsModule,
     OAuthModule,

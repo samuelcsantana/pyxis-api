@@ -4,6 +4,7 @@ import { SkipThrottle } from '@nestjs/throttler';
 import type { FastifyRequest } from 'fastify';
 import { FUNNEL_SEGMENT_DIMENSIONS } from '../../../domain/queries/funnel';
 import { SHARE_TOKEN_PATTERN } from '../../../domain/share-links/share-link';
+import { ListAnnotationsUseCase } from '../../../usecases/annotations/list-annotations.usecase';
 import { GetAcquisitionUseCase } from '../../../usecases/queries/get-acquisition.usecase';
 import { GetDevicesUseCase } from '../../../usecases/queries/get-devices.usecase';
 import { GetEngagementUseCase } from '../../../usecases/queries/get-engagement.usecase';
@@ -18,6 +19,11 @@ import {
   goalsSummaryBody,
   goalsSummarySchema,
 } from '../goals/goals.schemas';
+import {
+  type AnnotationListBody,
+  annotationListBody,
+  annotationListSchema,
+} from '../annotations/annotations.schemas';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { engagementBody } from '../queries/engagement.controller';
 import { type EngagementReportBody, engagementReportSchema } from '../queries/engagement.schemas';
@@ -46,6 +52,8 @@ import {
   funnelReportSchema,
   type OverviewReportBody,
   overviewReportSchema,
+  type RangeQuery,
+  rangeQuerySchema,
 } from '../queries/query.schemas';
 import { ApiGoal, ApiReportFilters, filteredRangeOf } from '../queries/report-filter-params';
 import { timeOfDayBody } from '../queries/time-of-day.controller';
@@ -106,6 +114,7 @@ export class SharedReportsController {
     private readonly getEngagement: GetEngagementUseCase,
     private readonly getFunnel: GetFunnelUseCase,
     private readonly getFunnelSegments: GetFunnelSegmentsUseCase,
+    private readonly listAnnotations: ListAnnotationsUseCase,
   ) {}
 
   @Get()
@@ -116,6 +125,20 @@ export class SharedReportsController {
   @ApiResponse({ status: HttpStatus.OK, standardSchema: sharedProjectSchema })
   project(@Req() request: FastifyRequest): SharedProjectBody {
     return sharedProjectBody(shareLinkOf(request), projectOf(request), goalsOf(request));
+  }
+
+  @Get('annotations')
+  @ApiRange()
+  @ApiOperation({ summary: 'The notes on the days of a range, which explain the charts' })
+  @ApiResponse({ status: HttpStatus.OK, standardSchema: annotationListSchema })
+  async annotations(
+    @Req() request: FastifyRequest,
+    @Query({ schema: rangeQuerySchema, pipes: [new SchemaPipe(rangeQuerySchema)] })
+    query: RangeQuery,
+  ): Promise<AnnotationListBody> {
+    return annotationListBody(
+      await this.listAnnotations.execute(projectOf(request), query.from, query.to),
+    );
   }
 
   @Get('overview')
