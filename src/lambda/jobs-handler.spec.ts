@@ -23,6 +23,15 @@ const ICONS = { found: 2, removed: 0, unreachable: 1 };
 const EXPORTS = { done: 1, failed: 0 };
 const NOTICES = { sent: 3, failed: 0 };
 const ALERTS = { projects: 4, raised: 2, sent: 3, alreadySent: 0, failed: 0, failedProjects: 0 };
+const SLACK_ALERTS = {
+  projects: 2,
+  raised: 1,
+  sent: 1,
+  alreadySent: 0,
+  failed: 0,
+  broken: 0,
+  failedProjects: 0,
+};
 const DEMO_TRAFFIC = { projects: 1, inserted: 480 };
 const LIFECYCLE = {
   freePlacesOpened: 0,
@@ -98,6 +107,10 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
       order.push('alerts');
       return Promise.resolve(ALERTS);
     },
+    sendSlackAlerts: () => {
+      order.push('slack alerts');
+      return Promise.resolve(SLACK_ALERTS);
+    },
     refreshProjectIcons: () => {
       order.push('icons');
       return Promise.resolve(ICONS);
@@ -131,6 +144,7 @@ describe('createJobsHandler', () => {
         exports: EXPORTS,
         operatorNotices: NOTICES,
         alerts: ALERTS,
+        slackAlerts: SLACK_ALERTS,
         projectIcons: ICONS,
         demoTraffic: DEMO_TRAFFIC,
       });
@@ -143,6 +157,7 @@ describe('createJobsHandler', () => {
         'exports',
         'notices',
         'alerts',
+        'slack alerts',
         'icons',
         'demo traffic',
       ]);
@@ -202,6 +217,28 @@ describe('createJobsHandler', () => {
     });
     expect(errors).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'jobs.alerts_failed', reason: 'mail down' }),
+    );
+    errors.mockRestore();
+  });
+
+  it('finishes the daily jobs when the Slack alerts fail, logging what it swallowed', async () => {
+    const errors = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      sendSlackAlerts: () => Promise.reject(new Error('database went away')),
+    });
+
+    await expect(handler()).resolves.toMatchObject({
+      job: 'daily',
+      alerts: ALERTS,
+      slackAlerts: null,
+      projectIcons: ICONS,
+    });
+    expect(errors).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'jobs.slack_alerts_failed',
+        reason: 'database went away',
+      }),
     );
     errors.mockRestore();
   });

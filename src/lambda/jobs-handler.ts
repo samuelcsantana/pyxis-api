@@ -7,6 +7,7 @@ import type { AccountUsageReport } from '../usecases/accounts/measure-account-us
 import type { AccountLifecycleReport } from '../usecases/accounts/run-account-lifecycle.usecase';
 import type { DemoTrafficReport } from '../usecases/demo-traffic/generate-demo-traffic.usecase';
 import type { AlertsReport } from '../usecases/alerts/send-project-alerts.usecase';
+import type { SlackAlertsReport } from '../usecases/slack/send-slack-alerts.usecase';
 import type { DigestReport } from '../usecases/digest/send-weekly-digests.usecase';
 import type { ProjectIconsReport } from '../usecases/projects/refresh-project-icons.usecase';
 import type { RetentionReport } from '../usecases/retention/run-retention.usecase';
@@ -32,6 +33,7 @@ export interface JobsHandlerDependencies {
   readonly processStalledExports: () => Promise<StalledExportsReport>;
   readonly sendOperatorNotices: () => Promise<OperatorNoticesReport>;
   readonly sendProjectAlerts: () => Promise<AlertsReport>;
+  readonly sendSlackAlerts: () => Promise<SlackAlertsReport>;
   readonly generateDemoTraffic: () => Promise<DemoTrafficReport>;
 }
 
@@ -46,6 +48,7 @@ export type JobsOutcome =
       readonly exports: StalledExportsReport;
       readonly operatorNotices: OperatorNoticesReport;
       readonly alerts: AlertsReport | null;
+      readonly slackAlerts: SlackAlertsReport | null;
       readonly projectIcons: ProjectIconsReport | null;
       readonly demoTraffic: DemoTrafficReport | null;
     }
@@ -111,6 +114,20 @@ async function bestEffortSendProjectAlerts(
   }
 }
 
+async function bestEffortSendSlackAlerts(
+  send: () => Promise<SlackAlertsReport>,
+): Promise<SlackAlertsReport | null> {
+  try {
+    return await send();
+  } catch (error) {
+    logger.error({
+      message: 'jobs.slack_alerts_failed',
+      reason: describeError(error),
+    });
+    return null;
+  }
+}
+
 async function bestEffortGenerateDemoTraffic(
   generate: () => Promise<DemoTrafficReport>,
 ): Promise<DemoTrafficReport | null> {
@@ -152,6 +169,7 @@ export function createJobsHandler(
     const stalledExports = await dependencies.processStalledExports();
     const operatorNotices = await dependencies.sendOperatorNotices();
     const alerts = await bestEffortSendProjectAlerts(dependencies.sendProjectAlerts);
+    const slackAlerts = await bestEffortSendSlackAlerts(dependencies.sendSlackAlerts);
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
     const demoTraffic = await bestEffortGenerateDemoTraffic(dependencies.generateDemoTraffic);
     logger.log({ message: DAILY_JOB_DONE });
@@ -165,6 +183,7 @@ export function createJobsHandler(
       exports: stalledExports,
       operatorNotices,
       alerts,
+      slackAlerts,
       projectIcons,
       demoTraffic,
     };
