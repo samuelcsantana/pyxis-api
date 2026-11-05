@@ -81,8 +81,8 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   MCP endpoint with the seventeen tools of [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp).
 - **A person's data.** Their events erased or exported on request, from the site's backend with a
   secret key; every event deleted after 13 months.
-- **E-mails.** Sign-in codes, invitations, the welcome, one install reminder, notices and a weekly
-  digest, each in its reader's language.
+- **E-mails.** Sign-in codes, invitations, the welcome, one install reminder, notices, a weekly
+  digest and daily alerts, each in its reader's language.
 - **Operator commands.** Suspend, hold, limit or close an account, a project, a person or a token
   from the command line.
 
@@ -434,6 +434,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0058](docs/adr/0058-goals-replace-the-conversion-event.md)                           | Goals replace the single conversion event                                  |
 | [0059](docs/adr/0059-revenue-is-a-property-of-the-goal-event.md)                      | Revenue is a property of the goal's event                                  |
 | [0060](docs/adr/0060-a-public-share-link-opens-only-aggregate-reports.md)             | A public share link opens only aggregate reports                           |
+| [0061](docs/adr/0061-email-alerts-from-the-daily-run.md)                              | E-mail alerts from the daily run                                           |
 
 ## Roadmap
 
