@@ -226,4 +226,104 @@ describe('annotations, over HTTP', () => {
     await owner`DELETE FROM share_links WHERE project_id = ${projectId}`;
     await owner`UPDATE accounts SET status = 'free' WHERE id = ${ACCOUNT_ID}`;
   });
+
+  describe('written with the project secret key, from a deploy', () => {
+    let blogId = '';
+    let shopKey = '';
+    let blogKey = '';
+
+    const byKey = (key: string, payload: object) =>
+      app.inject({
+        method: 'POST',
+        url: '/v1/annotations',
+        payload,
+        headers: { authorization: `Bearer ${key}`, [E2E_CLIENT_IP_HEADER]: '198.51.100.92' },
+      });
+    const secretKeyOf = async (id: string) =>
+      (await call('POST', `/v1/projects/${id}/keys`, { payload: { kind: 'secret' } })).json<{
+        key: string;
+      }>().key;
+    const notesOf = async (id: string) =>
+      (await call('GET', `/v1/projects/${id}/annotations?${RANGE}`)).json<{
+        annotations: AnnotationBody[];
+      }>().annotations;
+
+    beforeAll(async () => {
+      await owner`UPDATE accounts SET status = 'active' WHERE id = ${ACCOUNT_ID}`;
+      const blog = await call('POST', `/v1/accounts/${ACCOUNT_ID}/projects`, {
+        payload: {
+          name: 'Annotated blog',
+          allowed_origins: ['https://annotated-blog.example.com'],
+          timezone: 'UTC',
+        },
+      });
+      blogId = blog.json<{ project_id: string }>().project_id;
+      shopKey = await secretKeyOf(projectId);
+      blogKey = await secretKeyOf(blogId);
+    });
+
+    afterEach(async () => {
+      await owner`UPDATE accounts SET status = 'active' WHERE id = ${ACCOUNT_ID}`;
+      await owner`DELETE FROM annotations WHERE project_id = ${blogId}`;
+    });
+
+    afterAll(async () => {
+      await owner`UPDATE accounts SET status = 'free' WHERE id = ${ACCOUNT_ID}`;
+    });
+
+    it('writes the note on the key’s project on Pro, listed like any other', async () => {
+      const response = await byKey(shopKey, { day: '2026-11-04', text: 'Released v2.4.0' });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.json()).toMatchObject({ day: '2026-11-04', text: 'Released v2.4.0' });
+      expect((await notesOf(projectId)).map(({ text }) => text)).toEqual(['Released v2.4.0']);
+      expect(await notesOf(blogId)).toEqual([]);
+    });
+
+    it('writes with another project’s key only on that project, never this one', async () => {
+      const own = await byKey(blogKey, { day: '2026-11-04', text: 'Blog release' });
+      const aimed = await byKey(blogKey, {
+        day: '2026-11-04',
+        text: 'Shop release',
+        project_id: projectId,
+      });
+
+      expect(own.statusCode).toBe(201);
+      expect(aimed.statusCode).toBe(400);
+      expect(await notesOf(projectId)).toEqual([]);
+      expect((await notesOf(blogId)).map(({ text }) => text)).toEqual(['Blog release']);
+    });
+
+    it('refuses the free plan with plan_required', async () => {
+      await owner`UPDATE accounts SET status = 'free' WHERE id = ${ACCOUNT_ID}`;
+
+      const response = await byKey(shopKey, { day: '2026-11-04', text: 'Released' });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json()).toMatchObject({
+        error: 'plan_required',
+        message: expect.stringContaining('annotations_by_token') as string,
+      });
+      expect(await notesOf(projectId)).toEqual([]);
+    });
+
+    it.each([
+      ['a key that does not exist', `pyxis_sk_${'Z'.repeat(32)}`],
+      ['a public key', `pyxis_pk_${'Z'.repeat(32)}`],
+      ['an access token', ACCESS_TOKEN],
+    ])('answers 401 to %s', async (_case, key) => {
+      const response = await byKey(key, { day: '2026-11-04', text: 'Released' });
+
+      expect(response.statusCode).toBe(401);
+      expect(response.json()).toMatchObject({ error: 'unknown_key' });
+    });
+
+    it('applies the dashboard’s rules to the day and the text', async () => {
+      const tomorrow = await byKey(shopKey, { day: '2026-11-05', text: 'Soon' });
+      const tooLong = await byKey(shopKey, { day: '2026-11-04', text: 'x'.repeat(141) });
+
+      expect([tomorrow.statusCode, tooLong.statusCode]).toEqual([400, 400]);
+      expect(tomorrow.json()).toMatchObject({ error: 'invalid_annotation' });
+    });
+  });
 });
