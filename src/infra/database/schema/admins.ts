@@ -21,6 +21,7 @@ import {
   TAG_SEPARATOR,
 } from '../../../domain/auth/mailbox';
 import { DEFAULT_EMAIL_LANGUAGE, type EmailLanguage } from '../../../domain/auth/email-language';
+import { ALERTS_BY_DEFAULT } from '../../../domain/alerts/project-alert';
 import { WEEKLY_DIGEST_BY_DEFAULT } from '../../../domain/entities/email-preferences.entity';
 import type {
   BrowserFamily,
@@ -83,6 +84,9 @@ export const adminProjectAccess = pgTable(
       .notNull()
       .references(() => projects.id, { onDelete: 'cascade' }),
     weeklyDigest: boolean('weekly_digest').notNull().default(WEEKLY_DIGEST_BY_DEFAULT),
+    noEventsAlert: boolean('no_events_alert').notNull().default(ALERTS_BY_DEFAULT),
+    failedWritesAlert: boolean('failed_writes_alert').notNull().default(ALERTS_BY_DEFAULT),
+    conversionDropAlert: boolean('conversion_drop_alert').notNull().default(ALERTS_BY_DEFAULT),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [

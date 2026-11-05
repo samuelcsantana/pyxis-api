@@ -11,6 +11,13 @@ import { testAppUrl } from './test-database';
 const SHOP_ID = 'a3f1c2d4-5b6e-4f70-8192-a3b4c5d6e7f8';
 const BLOG_ID = 'b4e2d3c5-6c7f-4081-9203-b4c5d6e7f809';
 
+const EVERYTHING_ON = {
+  weeklyDigest: true,
+  noEventsAlert: true,
+  failedWritesAlert: true,
+  conversionDropAlert: true,
+};
+
 describe('DrizzleEmailPreferencesRepository against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
@@ -38,10 +45,19 @@ describe('DrizzleEmailPreferencesRepository against a real Postgres', () => {
     await owner.end();
   });
 
-  it('turns the weekly digest on for every new access', async () => {
+  it('turns the weekly digest and every alert on for every new access', async () => {
     const ana = await admins.grantAccess('ana@example.com', SHOP_ID);
 
-    expect(await preferences.preferencesOf(ana.id, SHOP_ID)).toEqual({ weeklyDigest: true });
+    expect(await preferences.preferencesOf(ana.id, SHOP_ID)).toEqual(EVERYTHING_ON);
+  });
+
+  it('changes only the preferences sent', async () => {
+    const ana = await admins.grantAccess('ana@example.com', SHOP_ID);
+
+    await preferences.save(ana.id, SHOP_ID, { noEventsAlert: false });
+    const saved = await preferences.save(ana.id, SHOP_ID, { conversionDropAlert: false });
+
+    expect(saved).toEqual({ ...EVERYTHING_ON, noEventsAlert: false, conversionDropAlert: false });
   });
 
   it('turns it off for one admin and one project only', async () => {
@@ -50,12 +66,16 @@ describe('DrizzleEmailPreferencesRepository against a real Postgres', () => {
     const bruno = await admins.grantAccess('bruno@example.com', SHOP_ID);
 
     expect(await preferences.save(ana.id, SHOP_ID, { weeklyDigest: false })).toEqual({
+      ...EVERYTHING_ON,
       weeklyDigest: false,
     });
 
-    expect(await preferences.preferencesOf(ana.id, SHOP_ID)).toEqual({ weeklyDigest: false });
-    expect(await preferences.preferencesOf(ana.id, BLOG_ID)).toEqual({ weeklyDigest: true });
-    expect(await preferences.preferencesOf(bruno.id, SHOP_ID)).toEqual({ weeklyDigest: true });
+    expect(await preferences.preferencesOf(ana.id, SHOP_ID)).toEqual({
+      ...EVERYTHING_ON,
+      weeklyDigest: false,
+    });
+    expect(await preferences.preferencesOf(ana.id, BLOG_ID)).toEqual(EVERYTHING_ON);
+    expect(await preferences.preferencesOf(bruno.id, SHOP_ID)).toEqual(EVERYTHING_ON);
   });
 
   it('neither reads nor grants a project the admin has no access to', async () => {

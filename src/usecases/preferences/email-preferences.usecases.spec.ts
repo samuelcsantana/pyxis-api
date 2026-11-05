@@ -25,6 +25,12 @@ const SHOP: Project = {
   createdAt: new Date('2026-10-01T00:00:00.000Z'),
 };
 const BLOG: Project = { ...SHOP, id: '00000000-0000-4000-b000-000000000002', name: 'Blog' };
+const EVERYTHING_ON = {
+  weeklyDigest: true,
+  noEventsAlert: true,
+  failedWritesAlert: true,
+  conversionDropAlert: true,
+};
 
 function setup() {
   const preferences = new InMemoryEmailPreferencesRepository();
@@ -49,25 +55,38 @@ describe('e-mail preferences', () => {
     jest.restoreAllMocks();
   });
 
-  it('sends the weekly digest to an admin who never chose', async () => {
+  it('sends the weekly digest and every alert to an admin who never chose', async () => {
     const { get } = setup();
 
-    expect(await get.execute(ADMIN, SHOP)).toEqual({ weeklyDigest: true });
+    expect(await get.execute(ADMIN, SHOP)).toEqual(EVERYTHING_ON);
+  });
+
+  it('turns one alert off and keeps the other preferences', async () => {
+    const { get, set } = setup();
+
+    await set.execute(ADMIN, SHOP, { conversionDropAlert: false });
+
+    expect(await get.execute(ADMIN, SHOP)).toEqual({
+      ...EVERYTHING_ON,
+      conversionDropAlert: false,
+    });
   });
 
   it('turns the weekly digest off for one project and logs it without the e-mail', async () => {
     const { get, set } = setup();
 
     expect(await set.execute(ADMIN, SHOP, { weeklyDigest: false })).toEqual({
+      ...EVERYTHING_ON,
       weeklyDigest: false,
     });
 
-    expect(await get.execute(ADMIN, SHOP)).toEqual({ weeklyDigest: false });
+    expect(await get.execute(ADMIN, SHOP)).toEqual({ ...EVERYTHING_ON, weeklyDigest: false });
     expect(logs).toEqual([
       {
         message: 'email_preferences.updated',
         adminUserId: ADMIN.id,
         projectId: SHOP.id,
+        ...EVERYTHING_ON,
         weeklyDigest: false,
       },
     ]);

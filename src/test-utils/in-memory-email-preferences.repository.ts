@@ -1,6 +1,7 @@
 import {
+  DEFAULT_EMAIL_PREFERENCES,
+  type EmailPreferenceChanges,
   type EmailPreferences,
-  WEEKLY_DIGEST_BY_DEFAULT,
 } from '../domain/entities/email-preferences.entity';
 import type { EmailPreferencesRepository } from '../domain/repositories/email-preferences.repository';
 
@@ -12,7 +13,7 @@ export class InMemoryEmailPreferencesRepository implements EmailPreferencesRepos
   private readonly stored = new Map<string, EmailPreferences>();
 
   grant(adminUserId: string, projectId: string): void {
-    this.stored.set(accessKey(adminUserId, projectId), { weeklyDigest: WEEKLY_DIGEST_BY_DEFAULT });
+    this.stored.set(accessKey(adminUserId, projectId), DEFAULT_EMAIL_PREFERENCES);
   }
 
   preferencesOf(adminUserId: string, projectId: string): Promise<EmailPreferences | null> {
@@ -22,13 +23,14 @@ export class InMemoryEmailPreferencesRepository implements EmailPreferencesRepos
   save(
     adminUserId: string,
     projectId: string,
-    preferences: EmailPreferences,
+    changes: EmailPreferenceChanges,
   ): Promise<EmailPreferences | null> {
     const key = accessKey(adminUserId, projectId);
-    if (!this.stored.has(key)) {
+    const current = this.stored.get(key);
+    if (current === undefined) {
       return Promise.resolve(null);
     }
-    const saved = { weeklyDigest: preferences.weeklyDigest };
+    const saved = { ...current, ...changes };
     this.stored.set(key, saved);
     return Promise.resolve(saved);
   }
