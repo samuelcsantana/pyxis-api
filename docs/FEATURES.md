@@ -481,6 +481,15 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   to check and to the switch in Settings; a failed e-mail or a project that cannot be read never
   stops the others. Accounts without access, suspended or paused by their quota are not judged
   ([ADR 0061](adr/0061-email-alerts-from-the-daily-run.md))
+- Alerts in Slack, Pro only: the project's owner pastes a Slack Incoming Webhook
+  (`PUT /v1/projects/{projectId}/slack-webhook`; only `https://hooks.slack.com/services/…` is
+  accepted, never another host or a redirect) and the daily run posts every raised alert there
+  too, once per kind and day, in the owner's language. The address is sealed with AES-256-GCM
+  and answered back only as `hooks.slack.com/…/` and its last four characters; `POST …/test`
+  posts a fixed message (ten per address every fifteen minutes). When Slack answers that the
+  webhook no longer exists it is marked broken, with Slack's reason, and skipped until the owner
+  pastes it again. An account that leaves Pro stops posting but keeps the value, visible and
+  removable on any plan ([ADR 0064](adr/0064-slack-alerts-through-a-sealed-incoming-webhook.md))
 
 ## Privacy and security, in detail
 

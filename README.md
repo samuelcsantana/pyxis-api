@@ -82,7 +82,7 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
 - **A person's data.** Their events erased or exported on request, from the site's backend with a
   secret key; every event deleted after 13 months.
 - **E-mails.** Sign-in codes, invitations, the welcome, one install reminder, notices, a weekly
-  digest and daily alerts, each in its reader's language.
+  digest and daily alerts, each in its reader's language; on Pro, the alerts in Slack too.
 - **Operator commands.** Suspend, hold, limit or close an account, a project, a person or a token
   from the command line.
 
@@ -437,6 +437,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0061](docs/adr/0061-email-alerts-from-the-daily-run.md)                              | E-mail alerts from the daily run                                           |
 | [0062](docs/adr/0062-annotations-are-notes-on-a-day-written-by-the-owner.md)          | Annotations are notes on a day, written by the owner                       |
 | [0063](docs/adr/0063-a-share-link-password-is-traded-for-a-stored-unlock.md)          | A share link's password is traded for a stored unlock                      |
+| [0064](docs/adr/0064-slack-alerts-through-a-sealed-incoming-webhook.md)               | Slack alerts through a sealed Incoming Webhook                             |
 
 ## Roadmap
 
