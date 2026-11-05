@@ -173,7 +173,7 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   see and end their connections with `GET` and `DELETE /v1/me/connections`
   ([ADR 0037](adr/0037-the-api-is-its-own-oauth-server-for-claude.md))
 
-- The remote MCP server at `POST /mcp`, behind the same switch: the sixteen read-only tools of
+- The remote MCP server at `POST /mcp`, behind the same switch: the seventeen read-only tools of
   [`pyxis-mcp`](https://github.com/samuelcsantana/pyxis-mcp), over stateless Streamable HTTP with
   JSON answers. It takes the access token of a connection (`pyxis_oat_`) or a read-only token
   (`pyxis_at_`, for applications that send a header instead of signing in) and nothing else.

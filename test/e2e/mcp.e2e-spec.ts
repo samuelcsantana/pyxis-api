@@ -213,9 +213,10 @@ describe('the remote MCP endpoint', () => {
         'funnel',
         'visit_timeline',
         'property_summary',
+        'goals',
       ]),
     );
-    expect(tools).toHaveLength(16);
+    expect(tools).toHaveLength(17);
 
     const projects = await post(toolCall('list_projects'), withBearer(token));
     expect(projects.statusCode).toBe(200);
