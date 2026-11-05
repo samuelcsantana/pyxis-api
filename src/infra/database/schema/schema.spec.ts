@@ -8,6 +8,7 @@ import {
   adminSessions,
   adminUsers,
   alertDeliveries,
+  annotations,
   digestDeliveries,
   events,
   goals,
@@ -48,6 +49,7 @@ function foreignKeyTargets(
     | typeof reviewerCodes
     | typeof goals
     | typeof alertDeliveries
+    | typeof annotations
     | typeof shareLinks,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
@@ -189,6 +191,16 @@ describe('database schema', () => {
       failed_writes_alert: true,
       conversion_drop_alert: true,
     });
+  });
+
+  it('keeps the notes of a project by day, gone with the project', () => {
+    const config = getTableConfig(annotations);
+
+    expect(foreignKeyTargets(annotations)).toEqual(['projects.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+    expect(config.indexes.map((index) => index.config.name)).toEqual([
+      'annotations_project_id_day_idx',
+    ]);
   });
 
   it('gives projects a UTC default time zone and no conversion event', () => {
