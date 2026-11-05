@@ -57,6 +57,18 @@ describe('LazyMailSender', () => {
       'en',
     );
     await sender.sendWeeklyDigest('ana@example.com', { projectId: 'p' } as WeeklyDigest, 'es');
+    await sender.sendProjectAlert(
+      'ana@example.com',
+      {
+        kind: 'no_events',
+        projectId: 'p-1',
+        projectName: 'Shop',
+        timeZone: 'UTC',
+        lastEventAt: new Date('2026-11-04T00:00:00.000Z'),
+        visitsBefore: 30,
+      },
+      'en',
+    );
 
     expect(create).toHaveBeenCalledTimes(1);
     expect(recording.sent).toHaveLength(1);
@@ -74,6 +86,7 @@ describe('LazyMailSender', () => {
     expect(recording.exportsReady).toHaveLength(1);
     expect(recording.operatorNotices).toHaveLength(1);
     expect(recording.digests).toHaveLength(1);
+    expect(recording.projectAlerts).toHaveLength(1);
   });
 
   it('passes on the failure of the sender it created', async () => {

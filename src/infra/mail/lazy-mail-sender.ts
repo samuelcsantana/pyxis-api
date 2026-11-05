@@ -1,3 +1,4 @@
+import type { ProjectAlert } from '../../domain/alerts/project-alert';
 import type { NoticeText } from '../../domain/notices/operator-notice';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { InstallReminder } from '../../domain/accounts/install-reminder';
@@ -85,6 +86,14 @@ export class LazyMailSender implements MailSender {
     language: EmailLanguage,
   ): Promise<void> {
     await this.resolved().sendOperatorNotice(email, notice, language);
+  }
+
+  async sendProjectAlert(
+    email: string,
+    alert: ProjectAlert,
+    language: EmailLanguage,
+  ): Promise<void> {
+    await this.resolved().sendProjectAlert(email, alert, language);
   }
 
   private resolved(): MailSender {

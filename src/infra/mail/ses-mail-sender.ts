@@ -1,4 +1,5 @@
 import { SendEmailCommand, type SendEmailCommandInput, SESv2Client } from '@aws-sdk/client-sesv2';
+import type { ProjectAlert } from '../../domain/alerts/project-alert';
 import type { AccountNotice } from '../../domain/accounts/account-notice';
 import type { InstallReminder } from '../../domain/accounts/install-reminder';
 import type { QuotaNotice } from '../../domain/accounts/quota-notice';
@@ -13,6 +14,7 @@ import { buildAccountNoticeEmail } from './account-notice-email';
 import type { EmailContent, EmailLinks } from './email-layout';
 import { buildExportReadyEmail } from './export-ready-email';
 import { buildOperatorNoticeEmail } from './operator-notice-email';
+import { buildProjectAlertEmail } from './project-alert-email';
 import type { NoticeText } from '../../domain/notices/operator-notice';
 import { buildInvitationEmail } from './invitation-email';
 import { buildQuotaNoticeEmail } from './quota-notice-email';
@@ -134,6 +136,13 @@ export class SesMailSender implements MailSender {
     return this.deliver(
       email,
       buildOperatorNoticeEmail(notice, language, this.links, this.supportEmail),
+      this.supportEmail,
+    );
+  }
+  sendProjectAlert(email: string, alert: ProjectAlert, language: EmailLanguage): Promise<void> {
+    return this.deliver(
+      email,
+      buildProjectAlertEmail(alert, language, this.links, this.supportEmail),
       this.supportEmail,
     );
   }
