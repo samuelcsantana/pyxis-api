@@ -70,6 +70,11 @@ import {
   InvalidBatchError,
   InvalidRequestError,
 } from './http-errors';
+import {
+  InvalidSlackWebhookError,
+  SlackUnavailableError,
+  SlackWebhookNotFoundError,
+} from '../../../domain/errors/slack.errors';
 
 class UnmappedDomainError extends DomainError {
   readonly code = 'not_mapped';
@@ -116,6 +121,9 @@ describe('toErrorAnswer', () => {
     [new InvalidAnnotationError('text', 'Too long.'), 400, 'invalid_annotation'],
     [new AnnotationNotFoundError(), 404, 'annotation_not_found'],
     [new AnnotationLimitReachedError(1000), 409, 'annotation_limit_reached'],
+    [new InvalidSlackWebhookError(), 400, 'invalid_slack_webhook'],
+    [new SlackWebhookNotFoundError(), 404, 'slack_webhook_not_found'],
+    [new SlackUnavailableError(), 503, 'slack_unavailable'],
     [new SubscriptionRequiredError(), 409, 'subscription_required'],
     [new PlanRequiredError('slack_alerts'), 403, 'plan_required'],
     [new ProjectNameMismatchError(), 409, 'project_name_mismatch'],
