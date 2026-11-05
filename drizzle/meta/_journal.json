@@ -302,6 +302,13 @@
       "when": 1793657580072,
       "tag": "0042_install-reminder",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1793839426773,
+      "tag": "0043_project-goals",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,8 @@
+import {
+  GoalLimitReachedError,
+  GoalNotFoundError,
+  InvalidGoalError,
+} from '../../../domain/errors/goal.errors';
 import { HttpException, NotFoundException } from '@nestjs/common';
 import {
   BillingUnavailableError,
@@ -85,6 +90,9 @@ describe('toErrorAnswer', () => {
     [new BillingUnavailableError('subscriptions.retrieve failed'), 503, 'billing_unavailable'],
     [new InvalidProjectSettingsError('origin', 'Bad origin.'), 400, 'invalid_project_settings'],
     [new ProjectLimitReachedError(3), 409, 'project_limit_reached'],
+    [new InvalidGoalError('name', 'Bad name.'), 400, 'invalid_goal'],
+    [new GoalNotFoundError(), 404, 'goal_not_found'],
+    [new GoalLimitReachedError(10), 409, 'goal_limit_reached'],
     [new SubscriptionRequiredError(), 409, 'subscription_required'],
     [new PlanRequiredError('slack_alerts'), 403, 'plan_required'],
     [new ProjectNameMismatchError(), 409, 'project_name_mismatch'],
