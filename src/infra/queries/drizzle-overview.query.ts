@@ -13,7 +13,14 @@ import type { VisitorDay, VisitorKindCounts } from '../../domain/queries/visitor
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { isNamedEvent, isPageView, localDay, periodTotalsColumns } from './definitions';
+import type { RevenueDay } from '../../domain/queries/revenue';
+import {
+  conversionRevenue,
+  isNamedEvent,
+  isPageView,
+  localDay,
+  periodTotalsColumns,
+} from './definitions';
 import { inScope } from './report-filters';
 
 function firstVisitorKinds(scope: QueryScope): SQL {
@@ -41,6 +48,25 @@ export class DrizzleOverviewQuery implements OverviewQuery {
       WHERE ${inScope(scope)}`);
     const [aggregate] = rows as unknown as readonly [PeriodTotals];
     return aggregate;
+  }
+
+  async revenueTotal(scope: QueryScope): Promise<number> {
+    const rows = await this.db.execute<{ revenue: number }>(sql`
+      SELECT ${conversionRevenue(scope)} AS "revenue"
+      FROM ${events}
+      WHERE ${inScope(scope)}`);
+    const [aggregate] = rows as unknown as readonly [{ revenue: number }];
+    return aggregate.revenue;
+  }
+
+  async revenueDays(scope: QueryScope): Promise<readonly RevenueDay[]> {
+    const rows = await this.db.execute<{ date: string; revenue: number }>(sql`
+      SELECT ${localDay(scope)} AS "date", ${conversionRevenue(scope)} AS "revenue"
+      FROM ${events}
+      WHERE ${inScope(scope)}
+      GROUP BY 1
+      ORDER BY 1`);
+    return [...rows];
   }
 
   async days(scope: QueryScope): Promise<readonly DayTotals[]> {

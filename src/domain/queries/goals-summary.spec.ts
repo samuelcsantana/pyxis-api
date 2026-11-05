@@ -23,21 +23,29 @@ describe('conversionRate', () => {
 });
 
 describe('goalsSummary', () => {
-  it('pairs each goal with its counts in order and rates it against the visits', () => {
+  it('pairs each goal with its counts in order, rates it and gives revenue to event goals only', () => {
     expect(
-      goalsSummary([SIGNUP, THANKS], { visits: 40, conversions: [6, 3], convertingVisits: [4, 2] }),
+      goalsSummary([SIGNUP, THANKS], {
+        visits: 40,
+        conversions: [6, 3],
+        convertingVisits: [4, 2],
+        revenue: [779.4, 0],
+      }),
     ).toEqual({
       visits: 40,
       goals: [
-        { goal: SIGNUP, conversions: 6, convertingVisits: 4, conversionRate: 0.1 },
-        { goal: THANKS, conversions: 3, convertingVisits: 2, conversionRate: 0.05 },
+        { goal: SIGNUP, conversions: 6, convertingVisits: 4, conversionRate: 0.1, revenue: 779.4 },
+        { goal: THANKS, conversions: 3, convertingVisits: 2, conversionRate: 0.05, revenue: null },
       ],
     });
   });
 
   it('counts zero for a goal the counts do not reach', () => {
     expect(
-      goalsSummary([SIGNUP], { visits: 0, conversions: [], convertingVisits: [] }).goals,
-    ).toEqual([{ goal: SIGNUP, conversions: 0, convertingVisits: 0, conversionRate: null }]);
+      goalsSummary([SIGNUP], { visits: 0, conversions: [], convertingVisits: [], revenue: [] })
+        .goals,
+    ).toEqual([
+      { goal: SIGNUP, conversions: 0, convertingVisits: 0, conversionRate: null, revenue: 0 },
+    ]);
   });
 });

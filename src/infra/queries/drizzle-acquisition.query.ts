@@ -3,14 +3,16 @@ import { type SQL, sql } from 'drizzle-orm';
 import type {
   AcquisitionQuery,
   CampaignCount,
+  ChannelCount,
   ChannelDayCount,
   SourceCount,
 } from '../../domain/queries/acquisition';
+import { CHANNELS } from '../../domain/entities/tracked-event.entity';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { DRIZZLE_CLIENT } from '../database/drizzle.constants';
 import type { DrizzleDatabase } from '../database/drizzle.types';
 import { events } from '../database/schema/events';
-import { entrySource, isConversion, isEntryPageView, localDay } from './definitions';
+import { entrySource, isConversion, isEntryPageView, localDay, validRevenue } from './definitions';
 import { inScope } from './report-filters';
 
 function sessionEntries(scope: QueryScope): SQL {
@@ -40,6 +42,12 @@ const BY_SOURCE: EntryGrouping = {
   only: sql`true`,
 };
 
+const BY_CHANNEL: EntryGrouping = {
+  keys: sql`entries."channel"`,
+  order: sql`entries."channel"`,
+  only: sql`true`,
+};
+
 const BY_CAMPAIGN: EntryGrouping = {
   keys: sql`entries."campaign", entries."source", entries."medium", entries."channel"`,
   order: sql`entries."campaign", entries."source", entries."medium" NULLS FIRST`,
@@ -50,7 +58,8 @@ function entryTotals(scope: QueryScope, grouping: EntryGrouping, limit: number):
   return sql`
     WITH entries AS (${sessionEntries(scope)}),
     conversions AS (
-      SELECT ${events.sessionId} AS "sessionId", count(*)::int AS "conversions"
+      SELECT ${events.sessionId} AS "sessionId", count(*)::int AS "conversions",
+        sum(${validRevenue}) AS "revenue"
       FROM ${events}
       WHERE ${inScope(scope)} AND ${isConversion(scope)}
       GROUP BY ${events.sessionId}
@@ -59,7 +68,8 @@ function entryTotals(scope: QueryScope, grouping: EntryGrouping, limit: number):
       count(*)::int AS "visits",
       coalesce(sum(conversions."conversions"), 0)::int AS "conversions",
       count(conversions."sessionId")::int AS "convertingVisits",
-      count(*) FILTER (WHERE entries."fromAdClick")::int AS "fromAdClickVisits"
+      count(*) FILTER (WHERE entries."fromAdClick")::int AS "fromAdClickVisits",
+      coalesce(sum(conversions."revenue"), 0)::float8 AS "revenue"
     FROM entries
     LEFT JOIN conversions ON conversions."sessionId" = entries."sessionId"
     WHERE ${grouping.only}
@@ -95,6 +105,13 @@ export class DrizzleAcquisitionQuery implements AcquisitionQuery {
     const rows = await this.db.execute<{
       -readonly [Key in keyof CampaignCount]: CampaignCount[Key];
     }>(entryTotals(scope, BY_CAMPAIGN, limit));
+    return [...rows];
+  }
+
+  async channels(scope: QueryScope): Promise<readonly ChannelCount[]> {
+    const rows = await this.db.execute<{
+      -readonly [Key in keyof ChannelCount]: ChannelCount[Key];
+    }>(entryTotals(scope, BY_CHANNEL, CHANNELS.length));
     return [...rows];
   }
 }

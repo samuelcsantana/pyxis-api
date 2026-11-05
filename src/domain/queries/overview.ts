@@ -1,4 +1,5 @@
 import type { QueryScope } from './query-scope';
+import type { RevenueDay } from './revenue';
 import type { VisitorDay, VisitorsReport } from './visitors';
 
 export const TOP_ITEMS = 10;
@@ -36,6 +37,8 @@ export interface OverviewQuery {
   topPages(scope: QueryScope, limit: number): Promise<readonly PageCount[]>;
   topEvents(scope: QueryScope, limit: number): Promise<readonly EventCount[]>;
   visitorDays(scope: QueryScope): Promise<readonly VisitorDay[]>;
+  revenueTotal(scope: QueryScope): Promise<number>;
+  revenueDays(scope: QueryScope): Promise<readonly RevenueDay[]>;
 }
 
 export const OVERVIEW_QUERY = Symbol('OverviewQuery');
@@ -77,6 +80,7 @@ export interface OverviewReport {
     readonly identifiedUsers: Kpi;
     readonly conversions: Kpi | null;
     readonly convertingVisits: Kpi | null;
+    readonly revenue: Kpi | null;
     readonly writeErrors: WriteErrorsKpi;
   };
   readonly days: readonly DayActivity[];

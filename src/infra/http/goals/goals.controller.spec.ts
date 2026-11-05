@@ -110,8 +110,8 @@ describe('GoalsController', () => {
     const { controller, asked } = readController({
       visits: 20,
       goals: [
-        { goal: SIGNUP, conversions: 6, convertingVisits: 4, conversionRate: 0.2 },
-        { goal: THANKS, conversions: 0, convertingVisits: 0, conversionRate: 0 },
+        { goal: SIGNUP, conversions: 6, convertingVisits: 4, conversionRate: 0.2, revenue: 519.6 },
+        { goal: THANKS, conversions: 0, convertingVisits: 0, conversionRate: 0, revenue: null },
       ],
     });
 
@@ -124,8 +124,14 @@ describe('GoalsController', () => {
     expect(goalsSummarySchema.parse(body)).toEqual({
       visits: 20,
       goals: [
-        { ...SIGNUP_BODY, conversions: 6, converting_visits: 4, conversion_rate: 0.2 },
-        { ...THANKS_BODY, conversions: 0, converting_visits: 0, conversion_rate: 0 },
+        {
+          ...SIGNUP_BODY,
+          conversions: 6,
+          converting_visits: 4,
+          conversion_rate: 0.2,
+          revenue: 519.6,
+        },
+        { ...THANKS_BODY, conversions: 0, converting_visits: 0, conversion_rate: 0, revenue: null },
       ],
     });
     expect(asked[0]?.[2].filters?.reachedGoal).toEqual(THANKS.target);

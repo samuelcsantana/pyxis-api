@@ -1,6 +1,7 @@
 import type {
   AcquisitionQuery,
   CampaignCount,
+  ChannelCount,
   ChannelDayCount,
   SourceCount,
 } from '../domain/queries/acquisition';
@@ -12,6 +13,7 @@ export class StubAcquisitionQuery implements AcquisitionQuery {
   byDay: readonly ChannelDayCount[] = [];
   bySource: readonly SourceCount[] = [];
   byCampaign: readonly CampaignCount[] = [];
+  byChannel: readonly ChannelCount[] = [];
 
   visitsByDayAndChannel(scope: QueryScope): Promise<readonly ChannelDayCount[]> {
     this.scopes.push(scope);
@@ -28,5 +30,10 @@ export class StubAcquisitionQuery implements AcquisitionQuery {
     this.scopes.push(scope);
     this.limits.push(limit);
     return Promise.resolve(this.byCampaign);
+  }
+
+  channels(scope: QueryScope): Promise<readonly ChannelCount[]> {
+    this.scopes.push(scope);
+    return Promise.resolve(this.byChannel);
   }
 }

@@ -8,7 +8,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import type { AcquisitionReport, SourceShare } from '../../../domain/queries/acquisition';
+import type {
+  AcquisitionReport,
+  ChannelShare,
+  SourceShare,
+} from '../../../domain/queries/acquisition';
 import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
 import type { FeaturesReport } from '../../../domain/queries/features';
 import type { RequestsReport } from '../../../domain/queries/requests';
@@ -94,13 +98,14 @@ function visitorsBody(visitors: VisitorsReport) {
 }
 
 function overviewBody(report: OverviewReport): OverviewReportBody {
-  const { conversions, convertingVisits } = report.kpis;
+  const { conversions, convertingVisits, revenue } = report.kpis;
   return {
     kpis: {
       visits: kpiBody(report.kpis.visits),
       identified_users: kpiBody(report.kpis.identifiedUsers),
       conversions: conversions === null ? null : kpiBody(conversions),
       converting_visits: convertingVisits === null ? null : kpiBody(convertingVisits),
+      revenue: revenue === null ? null : kpiBody(revenue),
       write_errors: writeErrorsBody(report.kpis.writeErrors),
     },
     days: report.days.map((day) => ({
@@ -176,6 +181,18 @@ function sourceShareBody(share: SourceShare) {
     conversions: share.conversions,
     converting_visits: share.convertingVisits,
     from_ad_click_visits: share.fromAdClickVisits,
+    revenue: share.revenue,
+  };
+}
+
+function channelShareBody(share: ChannelShare) {
+  return {
+    channel: share.channel,
+    visits: share.visits,
+    conversions: share.conversions,
+    converting_visits: share.convertingVisits,
+    from_ad_click_visits: share.fromAdClickVisits,
+    revenue: share.revenue,
   };
 }
 
@@ -187,6 +204,7 @@ function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
       campaign: share.campaign,
       ...sourceShareBody(share),
     })),
+    channels: report.channels.map(channelShareBody),
   };
 }
 
@@ -448,6 +466,7 @@ export class QueriesController {
       steps: report.steps.map((step) => ({
         count: step.count,
         median_seconds_from_previous: step.medianSecondsFromPrevious,
+        revenue: step.revenue,
       })),
       median_seconds_overall: report.medianSecondsOverall,
     };

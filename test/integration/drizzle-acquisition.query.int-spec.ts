@@ -152,6 +152,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 2,
         convertingVisits: 1,
         fromAdClickVisits: 2,
+        revenue: 0,
       },
       {
         source: '(direct)',
@@ -161,6 +162,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 0,
+        revenue: 0,
       },
       {
         source: 'duckduckgo.com',
@@ -170,6 +172,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 0,
+        revenue: 0,
       },
     ]);
   });
@@ -185,6 +188,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 0,
+        revenue: 0,
       },
       {
         campaign: 'spring_sale',
@@ -195,6 +199,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 2,
         convertingVisits: 1,
         fromAdClickVisits: 1,
+        revenue: 0,
       },
     ]);
   });
@@ -209,6 +214,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 2,
+        revenue: 0,
       },
       {
         source: '(direct)',
@@ -218,6 +224,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 0,
+        revenue: 0,
       },
       {
         source: 'google',
@@ -227,6 +234,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 1,
+        revenue: 0,
       },
       {
         source: 'www.google.com',
@@ -236,6 +244,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 0,
         convertingVisits: 0,
         fromAdClickVisits: 1,
+        revenue: 0,
       },
     ]);
   });
@@ -271,6 +280,7 @@ describe('DrizzleAcquisitionQuery against a real Postgres', () => {
         conversions: 1,
         convertingVisits: 1,
         fromAdClickVisits: 1,
+        revenue: 0,
       },
     ]);
     expect(await query.campaigns(filteredScope(MOBILE_ONLY), 20)).toMatchObject([

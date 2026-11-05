@@ -32,7 +32,12 @@ class RecordingGoalsSummaryQuery implements GoalsSummaryQuery {
 
   countsInGoalOrder(scope: QueryScope, goals: readonly Goal[]): Promise<GoalsSummaryCounts> {
     this.asked.push({ scope, goals });
-    return Promise.resolve({ visits: 8, conversions: [3], convertingVisits: [2] });
+    return Promise.resolve({
+      visits: 8,
+      conversions: [3],
+      convertingVisits: [2],
+      revenue: [389.7],
+    });
   }
 }
 
@@ -51,7 +56,9 @@ describe('GetGoalsSummaryUseCase', () => {
 
     expect(report).toEqual({
       visits: 8,
-      goals: [{ goal: SIGNUP, conversions: 3, convertingVisits: 2, conversionRate: 0.25 }],
+      goals: [
+        { goal: SIGNUP, conversions: 3, convertingVisits: 2, conversionRate: 0.25, revenue: 389.7 },
+      ],
     });
     expect(query.asked).toEqual([
       {

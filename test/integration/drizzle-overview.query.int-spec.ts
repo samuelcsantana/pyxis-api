@@ -202,11 +202,17 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
         goal('pricing', { type: 'page', path: '/pric*' }),
         goal('nowhere', { type: 'page', path: '/nowhere' }),
       ]),
-    ).toEqual({ visits: 3, conversions: [2, 2, 0], convertingVisits: [1, 2, 0] });
+    ).toEqual({
+      visits: 3,
+      conversions: [2, 2, 0],
+      convertingVisits: [1, 2, 0],
+      revenue: [0, 0, 0],
+    });
     expect(await goalsSummary.countsInGoalOrder(SCOPE, [])).toEqual({
       visits: 3,
       conversions: [],
       convertingVisits: [],
+      revenue: [],
     });
   });
 

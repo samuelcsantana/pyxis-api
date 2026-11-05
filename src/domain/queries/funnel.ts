@@ -24,6 +24,7 @@ export type FunnelStep =
 export interface FunnelStepMeasure {
   readonly count: number;
   readonly medianSecondsFromPrevious: number | null;
+  readonly revenue: number | null;
 }
 
 export interface FunnelReport {

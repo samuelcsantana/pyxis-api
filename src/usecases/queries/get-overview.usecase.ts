@@ -3,6 +3,7 @@ import type { Project } from '../../domain/entities/project.entity';
 import { daysIn, todayIn } from '../../domain/queries/date-range';
 import {
   type DayTotals,
+  type Kpi,
   OVERVIEW_QUERY,
   type OverviewQuery,
   type OverviewReport,
@@ -11,6 +12,7 @@ import {
   TOP_ITEMS,
 } from '../../domain/queries/overview';
 import type { QueryScope } from '../../domain/queries/query-scope';
+import { carriesRevenue } from '../../domain/queries/revenue';
 import {
   NO_VISITOR_KINDS,
   type VisitorDay,
@@ -72,7 +74,7 @@ export class GetOverviewUseCase {
   async execute(project: Project, requested: RequestedRange): Promise<OverviewReport> {
     const readAt = this.clock.now();
     const { current, previous, comparisonCutoff } = scopedPeriods(project, requested, readAt);
-    const [now, before, sparseDays, sparsePreviousDays, topPages, topEvents, visitors] =
+    const [now, before, sparseDays, sparsePreviousDays, topPages, topEvents, visitors, revenue] =
       await Promise.all([
         this.query.totals(current),
         this.query.totals(previous),
@@ -83,6 +85,7 @@ export class GetOverviewUseCase {
         project.visitorsEnabled
           ? this.visitors(current, previous, todayIn(project.timezone, readAt))
           : VISITORS_OFF,
+        carriesRevenue(current.conversion) ? this.revenue(current, previous) : null,
       ]);
     const days = denseDays(daysIn(current.range), sparseDays);
     const previousDays = denseDays(daysIn(previous.range), sparsePreviousDays);
@@ -114,6 +117,7 @@ export class GetOverviewUseCase {
                 previous: before.convertingVisits,
                 daily: days.map((day) => day.convertingVisits),
               },
+        revenue,
         writeErrors: {
           current: failures(now),
           previous: failures(before),
@@ -126,6 +130,20 @@ export class GetOverviewUseCase {
       comparisonCutoff,
       previousDays: previousDays.map((day) => previousDay(day, previous)),
       visitors,
+    };
+  }
+
+  private async revenue(current: QueryScope, previous: QueryScope): Promise<Kpi> {
+    const [now, before, sparseDaily] = await Promise.all([
+      this.query.revenueTotal(current),
+      this.query.revenueTotal(previous),
+      this.query.revenueDays(current),
+    ]);
+    const byDate = new Map(sparseDaily.map((day) => [day.date, day.revenue]));
+    return {
+      current: now,
+      previous: before,
+      daily: daysIn(current.range).map((date) => byDate.get(date) ?? 0),
     };
   }
 

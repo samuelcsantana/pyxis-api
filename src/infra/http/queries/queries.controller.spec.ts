@@ -66,6 +66,7 @@ const REPORT: OverviewReport = {
     identifiedUsers: { current: 1, previous: 0, daily: [0, 1] },
     conversions: { current: 1, previous: 1, daily: [1, 0] },
     convertingVisits: { current: 1, previous: 1, daily: [1, 0] },
+    revenue: { current: 129.9, previous: 0, daily: [129.9, 0] },
     writeErrors: {
       current: { failed: 1, total: 4 },
       previous: { failed: 0, total: 2 },
@@ -160,9 +161,10 @@ const ACQUISITION: AcquisitionReport = {
       medium: 'cpc',
       channel: 'paid',
       visits: 2,
-      conversions: null,
-      convertingVisits: null,
+      conversions: 1,
+      convertingVisits: 1,
       fromAdClickVisits: 2,
+      revenue: 129.9,
     },
   ],
   campaigns: [
@@ -175,6 +177,17 @@ const ACQUISITION: AcquisitionReport = {
       conversions: null,
       convertingVisits: null,
       fromAdClickVisits: 1,
+      revenue: null,
+    },
+  ],
+  channels: [
+    {
+      channel: 'paid',
+      visits: 2,
+      conversions: 1,
+      convertingVisits: 1,
+      fromAdClickVisits: 2,
+      revenue: 129.9,
     },
   ],
 };
@@ -271,8 +284,8 @@ function controllerAnswering(
     answering(
       {
         steps: [
-          { count: 5, medianSecondsFromPrevious: null },
-          { count: 2, medianSecondsFromPrevious: 42 },
+          { count: 5, medianSecondsFromPrevious: null, revenue: null },
+          { count: 2, medianSecondsFromPrevious: 42, revenue: 129.9 },
         ],
         medianSecondsOverall: 42,
       },
@@ -297,6 +310,7 @@ describe('QueriesController', () => {
     expect(overviewReportSchema.parse(body)).toEqual(body);
     expect(body.kpis.identified_users).toEqual({ current: 1, previous: 0, daily: [0, 1] });
     expect(body.kpis.converting_visits).toEqual({ current: 1, previous: 1, daily: [1, 0] });
+    expect(body.kpis.revenue).toEqual({ current: 129.9, previous: 0, daily: [129.9, 0] });
     expect(body.kpis.write_errors.current).toEqual({ failed: 1, total: 4 });
     expect(body.days[1]).toEqual({ date: '2026-10-05', page_views: 7, events: 2 });
     expect(body.comparison_cutoff).toBe('10:00:00.000');
@@ -426,10 +440,10 @@ describe('QueriesController', () => {
     });
   });
 
-  it('keeps conversions null when the project has no conversion event', async () => {
+  it('keeps conversions and revenue null when the project has no goal', async () => {
     const { controller } = controllerAnswering({
       ...REPORT,
-      kpis: { ...REPORT.kpis, conversions: null, convertingVisits: null },
+      kpis: { ...REPORT.kpis, conversions: null, convertingVisits: null, revenue: null },
     });
 
     const body = await controller.overview(
@@ -442,6 +456,7 @@ describe('QueriesController', () => {
 
     expect(body.kpis.conversions).toBeNull();
     expect(body.kpis.converting_visits).toBeNull();
+    expect(body.kpis.revenue).toBeNull();
   });
 
   it('answers the devices of the guarded project in snake case', async () => {
@@ -518,9 +533,10 @@ describe('QueriesController', () => {
           medium: 'cpc',
           channel: 'paid',
           visits: 2,
-          conversions: null,
-          converting_visits: null,
+          conversions: 1,
+          converting_visits: 1,
           from_ad_click_visits: 2,
+          revenue: 129.9,
         },
       ],
       campaigns: [
@@ -533,6 +549,17 @@ describe('QueriesController', () => {
           conversions: null,
           converting_visits: null,
           from_ad_click_visits: 1,
+          revenue: null,
+        },
+      ],
+      channels: [
+        {
+          channel: 'paid',
+          visits: 2,
+          conversions: 1,
+          converting_visits: 1,
+          from_ad_click_visits: 2,
+          revenue: 129.9,
         },
       ],
     });
@@ -700,8 +727,8 @@ describe('QueriesController', () => {
 
     expect(funnelReportSchema.parse(body)).toEqual({
       steps: [
-        { count: 5, median_seconds_from_previous: null },
-        { count: 2, median_seconds_from_previous: 42 },
+        { count: 5, median_seconds_from_previous: null, revenue: null },
+        { count: 2, median_seconds_from_previous: 42, revenue: 129.9 },
       ],
       median_seconds_overall: 42,
     });
