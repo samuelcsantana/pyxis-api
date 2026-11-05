@@ -5,6 +5,7 @@ import { createDrizzleDatabase, createPostgresClient } from '../infra/database/p
 import { createBillingGateway } from '../infra/billing/create-billing-gateway';
 import { createMailSender } from '../infra/mail/create-mail-sender';
 import { LazyMailSender } from '../infra/mail/lazy-mail-sender';
+import { DrizzleAlertRecipientsQuery } from '../infra/queries/drizzle-alert-recipients.query';
 import { DrizzleDigestRecipientsQuery } from '../infra/queries/drizzle-digest-recipients.query';
 import { DrizzleOverviewQuery } from '../infra/queries/drizzle-overview.query';
 import { DrizzleProjectActivityQuery } from '../infra/queries/drizzle-project-activity.query';
@@ -14,7 +15,9 @@ import { DrizzleAccountRepository } from '../infra/repositories/drizzle-account.
 import { DrizzleAccountLifecycleRepository } from '../infra/repositories/drizzle-account-lifecycle.repository';
 import { DrizzleAccountUsageRepository } from '../infra/repositories/drizzle-account-usage.repository';
 import { DrizzleDemoTrafficRepository } from '../infra/repositories/drizzle-demo-traffic.repository';
+import { DrizzleAlertDeliveryRepository } from '../infra/repositories/drizzle-alert-delivery.repository';
 import { DrizzleDigestDeliveryRepository } from '../infra/repositories/drizzle-digest-delivery.repository';
+import { DrizzleGoalRepository } from '../infra/repositories/drizzle-goal.repository';
 import { DrizzleEventRepository } from '../infra/repositories/drizzle-event.repository';
 import { DrizzleRetentionRepository } from '../infra/repositories/drizzle-retention.repository';
 import { DrizzleProjectIconRepository } from '../infra/repositories/drizzle-project-icon.repository';
@@ -42,6 +45,8 @@ import { DrizzleProjectExportRepository } from '../infra/repositories/drizzle-pr
 import { WelcomeAccountsUseCase } from '../usecases/accounts/welcome-accounts.usecase';
 import { signUpSettingsFromEnv } from '../infra/http/accounts/sign-up-settings-from-env';
 import { DrizzleAccountWelcomeRepository } from '../infra/repositories/drizzle-account-welcome.repository';
+import { DetectProjectAlertsUseCase } from '../usecases/alerts/detect-project-alerts.usecase';
+import { SendProjectAlertsUseCase } from '../usecases/alerts/send-project-alerts.usecase';
 import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest.usecase';
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
 import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
@@ -166,6 +171,20 @@ export const handler = createJobsHandler({
     withDatabase((database) =>
       new SendOperatorNoticesUseCase(
         new DrizzleNoticeRepository(database),
+        new LazyMailSender(() => createMailSender(validateEnv(process.env))),
+        new SystemClock(),
+      ).execute(),
+    ),
+  sendProjectAlerts: () =>
+    withDatabase((database) =>
+      new SendProjectAlertsUseCase(
+        new DrizzleAlertRecipientsQuery(database),
+        new DrizzleAlertDeliveryRepository(database),
+        new DetectProjectAlertsUseCase(
+          new DrizzleOverviewQuery(database),
+          new DrizzleProjectActivityQuery(database),
+          new DrizzleGoalRepository(database),
+        ),
         new LazyMailSender(() => createMailSender(validateEnv(process.env))),
         new SystemClock(),
       ).execute(),
