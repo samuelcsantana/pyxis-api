@@ -24,6 +24,10 @@ export const ARRIVALS_THROTTLER = 'arrivals';
 export const ARRIVALS_REQUESTS_PER_WINDOW = 30;
 export const ARRIVALS_RATE_WINDOW_MS = 60_000;
 
+export const SHARED_REPORTS_THROTTLER = 'shared-reports';
+export const SHARED_REPORT_REQUESTS_PER_WINDOW = 120;
+export const SHARED_REPORTS_RATE_WINDOW_MS = 60_000;
+
 export const THROTTLERS = [
   { name: INGEST_THROTTLER, ttl: CLIENT_RATE_WINDOW_MS, limit: CLIENT_BATCHES_PER_WINDOW },
   { name: AUTH_THROTTLER, ttl: SIGN_IN_RATE_WINDOW_MS, limit: SIGN_IN_REQUESTS_PER_WINDOW },
@@ -35,6 +39,11 @@ export const THROTTLERS = [
   },
   { name: OAUTH_THROTTLER, ttl: OAUTH_RATE_WINDOW_MS, limit: OAUTH_TOKEN_REQUESTS_PER_WINDOW },
   { name: ARRIVALS_THROTTLER, ttl: ARRIVALS_RATE_WINDOW_MS, limit: ARRIVALS_REQUESTS_PER_WINDOW },
+  {
+    name: SHARED_REPORTS_THROTTLER,
+    ttl: SHARED_REPORTS_RATE_WINDOW_MS,
+    limit: SHARED_REPORT_REQUESTS_PER_WINDOW,
+  },
 ] as const;
 
 export type ThrottlerName = (typeof THROTTLERS)[number]['name'];

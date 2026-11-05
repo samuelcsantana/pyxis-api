@@ -34,5 +34,6 @@ import { GoalsController } from './goals.controller';
     AccessTokenThrottlerGuard,
     ProjectAccessGuard,
   ],
+  exports: [GetGoalsSummaryUseCase],
 })
 export class GoalsModule {}

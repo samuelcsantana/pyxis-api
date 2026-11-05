@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiQuery } from '@nestjs/swagger';
+import { ApiQuery, type ApiQueryOptions } from '@nestjs/swagger';
 import {
   BROWSER_FAMILIES,
   CHANNELS,
@@ -28,6 +28,10 @@ interface FilteredRangeParams extends ReportFilterParams {
 }
 
 const GOAL_ID_SCHEMA = { type: 'string', format: 'uuid' } as const;
+
+export type ReportFilterName = keyof ReportFilterParams;
+
+type ReportFilterQuery = ApiQueryOptions & { readonly name: ReportFilterName };
 
 export function reportFiltersOf(query: ReportFilterParams, goals: readonly Goal[]): ReportFilters {
   return {
@@ -73,107 +77,113 @@ export function ApiGoal() {
   });
 }
 
-export function ApiReportFilters() {
+const REPORT_FILTER_QUERIES: readonly ReportFilterQuery[] = [
+  {
+    name: 'path',
+    required: false,
+    description:
+      'Only the visits that viewed this page; a star matches any characters. Repeat it, up to ' +
+      `${String(MAX_VISIT_PATH_FILTERS)} times, for the visits that viewed every one`,
+    schema: { type: 'array', items: { type: 'string' }, maxItems: MAX_VISIT_PATH_FILTERS },
+  },
+  {
+    name: 'event',
+    required: false,
+    description: 'Only the visits that sent this named event',
+    schema: { type: 'string' },
+  },
+  {
+    name: 'property',
+    required: false,
+    description: 'key=value: the event above carried this property value; needs event',
+    schema: { type: 'string' },
+  },
+  {
+    name: 'channel',
+    required: false,
+    description: 'Only the visits that came through this channel',
+    enum: CHANNELS,
+  },
+  {
+    name: 'device',
+    required: false,
+    description: 'Only the visits on this device type',
+    enum: DEVICE_TYPES,
+  },
+  {
+    name: 'browser',
+    required: false,
+    description: 'Only the visits in this browser family',
+    enum: BROWSER_FAMILIES,
+  },
+  {
+    name: 'os',
+    required: false,
+    description: 'Only the visits on this operating system family',
+    enum: OS_FAMILIES,
+  },
+  {
+    name: 'identity',
+    required: false,
+    description: 'identified: the visits that sent a user id; anonymous: those that never did',
+    enum: VISIT_IDENTITIES,
+  },
+  {
+    name: 'country',
+    required: false,
+    description: 'Only the visits from this two-letter country code',
+    schema: { type: 'string', pattern: '^[A-Z]{2}$' },
+  },
+  {
+    name: 'region',
+    required: false,
+    description:
+      'Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and ' +
+      'the subdivision',
+    schema: { type: 'string', pattern: REGION_CODE_PATTERN.source },
+  },
+  {
+    name: 'city',
+    required: false,
+    description:
+      'Only the visits from this approximate city, by its exact name; send it with its region, ' +
+      'since the same name exists in several regions',
+    schema: { type: 'string', minLength: 1, maxLength: MAX_CITY_NAME_LENGTH },
+  },
+  {
+    name: 'source',
+    required: false,
+    description:
+      'Only the visits from this source as Acquisition names it: campaign source, referring ' +
+      'host, (ad click) or (direct)',
+    schema: { type: 'string', maxLength: MAX_REFERRER_HOST_LENGTH },
+  },
+  {
+    name: 'campaign',
+    required: false,
+    description: 'Only the visits whose entry carried this campaign (utm_campaign)',
+    schema: { type: 'string', maxLength: MAX_UTM_VALUE_LENGTH },
+  },
+  {
+    name: 'failed',
+    required: false,
+    description: 'true: only the visits with a failed request (status 0 or 400 and above)',
+    schema: { type: 'string', enum: ['true', 'false'] },
+  },
+  {
+    name: 'reached_goal',
+    required: false,
+    description:
+      'Only the visits that reached this goal, by its id: sent its event, or viewed a page its ' +
+      'pattern matches',
+    schema: GOAL_ID_SCHEMA,
+  },
+];
+
+export function ApiReportFilters(...without: readonly ReportFilterName[]) {
   return applyDecorators(
-    ApiQuery({
-      name: 'path',
-      required: false,
-      description:
-        'Only the visits that viewed this page; a star matches any characters. Repeat it, up to ' +
-        `${String(MAX_VISIT_PATH_FILTERS)} times, for the visits that viewed every one`,
-      schema: { type: 'array', items: { type: 'string' }, maxItems: MAX_VISIT_PATH_FILTERS },
-    }),
-    ApiQuery({
-      name: 'event',
-      required: false,
-      description: 'Only the visits that sent this named event',
-      schema: { type: 'string' },
-    }),
-    ApiQuery({
-      name: 'property',
-      required: false,
-      description: 'key=value: the event above carried this property value; needs event',
-      schema: { type: 'string' },
-    }),
-    ApiQuery({
-      name: 'channel',
-      required: false,
-      description: 'Only the visits that came through this channel',
-      enum: CHANNELS,
-    }),
-    ApiQuery({
-      name: 'device',
-      required: false,
-      description: 'Only the visits on this device type',
-      enum: DEVICE_TYPES,
-    }),
-    ApiQuery({
-      name: 'browser',
-      required: false,
-      description: 'Only the visits in this browser family',
-      enum: BROWSER_FAMILIES,
-    }),
-    ApiQuery({
-      name: 'os',
-      required: false,
-      description: 'Only the visits on this operating system family',
-      enum: OS_FAMILIES,
-    }),
-    ApiQuery({
-      name: 'identity',
-      required: false,
-      description: 'identified: the visits that sent a user id; anonymous: those that never did',
-      enum: VISIT_IDENTITIES,
-    }),
-    ApiQuery({
-      name: 'country',
-      required: false,
-      description: 'Only the visits from this two-letter country code',
-      schema: { type: 'string', pattern: '^[A-Z]{2}$' },
-    }),
-    ApiQuery({
-      name: 'region',
-      required: false,
-      description:
-        'Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and ' +
-        'the subdivision',
-      schema: { type: 'string', pattern: REGION_CODE_PATTERN.source },
-    }),
-    ApiQuery({
-      name: 'city',
-      required: false,
-      description:
-        'Only the visits from this approximate city, by its exact name; send it with its region, ' +
-        'since the same name exists in several regions',
-      schema: { type: 'string', minLength: 1, maxLength: MAX_CITY_NAME_LENGTH },
-    }),
-    ApiQuery({
-      name: 'source',
-      required: false,
-      description:
-        'Only the visits from this source as Acquisition names it: campaign source, referring ' +
-        'host, (ad click) or (direct)',
-      schema: { type: 'string', maxLength: MAX_REFERRER_HOST_LENGTH },
-    }),
-    ApiQuery({
-      name: 'campaign',
-      required: false,
-      description: 'Only the visits whose entry carried this campaign (utm_campaign)',
-      schema: { type: 'string', maxLength: MAX_UTM_VALUE_LENGTH },
-    }),
-    ApiQuery({
-      name: 'failed',
-      required: false,
-      description: 'true: only the visits with a failed request (status 0 or 400 and above)',
-      schema: { type: 'string', enum: ['true', 'false'] },
-    }),
-    ApiQuery({
-      name: 'reached_goal',
-      required: false,
-      description:
-        'Only the visits that reached this goal, by its id: sent its event, or viewed a page its ' +
-        'pattern matches',
-      schema: GOAL_ID_SCHEMA,
-    }),
+    ...REPORT_FILTER_QUERIES.filter(({ name }) => !without.includes(name)).map((query) =>
+      ApiQuery(query),
+    ),
   );
 }
