@@ -13,6 +13,7 @@ const SHOP: Project = {
   allowedOrigins: ['https://shop.example.com', 'https://www.shop.example.com'],
   timezone: 'America/Sao_Paulo',
   conversionEvent: 'signup_completed',
+  currency: 'BRL',
   cityEnabled: false,
   visitorsEnabled: false,
   createdAt: new Date('2026-09-01T00:00:00.000Z'),

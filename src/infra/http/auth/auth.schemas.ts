@@ -58,6 +58,7 @@ export const meSchema = z
         name: z.string(),
         timezone: z.string(),
         conversion_event: z.string().nullable(),
+        currency: z.string(),
         first_event_at: z.iso
           .datetime()
           .nullable()

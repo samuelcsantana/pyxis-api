@@ -1,5 +1,6 @@
 import { InvalidProjectSettingsError } from '../errors/project.errors';
 import {
+  requireCurrency,
   MAX_ALLOWED_ORIGINS,
   MAX_PROJECT_NAME_LENGTH,
   requireConversionEvent,
@@ -96,5 +97,17 @@ describe('requireConversionEvent', () => {
 
   it.each(['Signup', 'signup-completed', ''])('refuses %j', (name) => {
     expect(failureOf(() => requireConversionEvent(name)).field).toBe('conversion-event');
+  });
+});
+
+describe('requireCurrency', () => {
+  it.each(['BRL', 'USD', 'EUR', 'JPY'])('accepts the ISO 4217 code %s', (code) => {
+    expect(requireCurrency(code)).toBe(code);
+  });
+
+  it.each(['brl', 'XYZ', 'REAL', ''])('refuses %p as a currency', (code) => {
+    expect(() => requireCurrency(code)).toThrow(
+      expect.objectContaining({ field: 'currency' }) as Error,
+    );
   });
 });

@@ -90,6 +90,7 @@ describe('project settings and keys against a real Postgres', () => {
     expect(created.project).toEqual({
       ...SHOP,
       id: expect.any(String) as string,
+      currency: 'BRL',
       cityEnabled: false,
       visitorsEnabled: false,
       createdAt: expect.any(Date) as Date,
@@ -136,6 +137,21 @@ describe('project settings and keys against a real Postgres', () => {
     expect(await settings.update(project.id, { name: 'Store' })).toMatchObject({
       name: 'Store',
       timezone: 'UTC',
+    });
+  });
+
+  it('creates a project in BRL by default, in the currency given, and changes it', async () => {
+    const { project } = await settings.createWithPublicKey(SHOP, publicKey('A'));
+    const { project: inDollars } = await settings.createWithPublicKey(
+      { ...SHOP, name: 'Store', currency: 'USD' },
+      publicKey('B'),
+    );
+
+    expect(project.currency).toBe('BRL');
+    expect(inDollars.currency).toBe('USD');
+    expect(await settings.update(project.id, { currency: 'EUR' })).toMatchObject({
+      currency: 'EUR',
+      name: 'Shop',
     });
   });
 

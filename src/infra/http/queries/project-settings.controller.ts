@@ -24,6 +24,7 @@ export function projectSettingsBody(settings: ProjectSettings): ProjectSettingsB
     name: settings.name,
     timezone: settings.timezone,
     conversion_event: settings.conversionEvent,
+    currency: settings.currency,
     city_enabled: settings.cityEnabled,
     visitors_enabled: settings.visitorsEnabled,
     allowed_origins: [...settings.allowedOrigins],

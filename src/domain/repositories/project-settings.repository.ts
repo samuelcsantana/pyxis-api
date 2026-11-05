@@ -5,6 +5,7 @@ export interface NewProject {
   readonly allowedOrigins: readonly string[];
   readonly timezone: string;
   readonly conversionEvent: string | null;
+  readonly currency?: string;
 }
 
 export interface ProjectChanges {
@@ -12,6 +13,7 @@ export interface ProjectChanges {
   readonly allowedOrigins?: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string | null;
+  readonly currency?: string;
   readonly cityEnabled?: boolean;
   readonly visitorsEnabled?: boolean;
 }

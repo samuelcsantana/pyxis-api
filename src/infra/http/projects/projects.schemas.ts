@@ -7,6 +7,7 @@ import {
 const MAX_ORIGIN_LENGTH = 300;
 const MAX_TIMEZONE_LENGTH = 64;
 const MAX_EVENT_NAME_LENGTH = 64;
+const CURRENCY_CODE_PATTERN = /^[A-Z]{3}$/;
 
 const nameSchema = z.string().min(1).max(MAX_PROJECT_NAME_LENGTH);
 const originsSchema = z
@@ -19,6 +20,10 @@ const timezoneSchema = z
   .max(MAX_TIMEZONE_LENGTH)
   .describe('An IANA time zone, such as America/Sao_Paulo');
 const conversionEventSchema = z.string().max(MAX_EVENT_NAME_LENGTH);
+const currencySchema = z
+  .string()
+  .regex(CURRENCY_CODE_PATTERN)
+  .describe('An ISO 4217 currency code, such as BRL or USD, for the revenue the site sends');
 
 export const newProjectSchema = z
   .strictObject({
@@ -26,6 +31,7 @@ export const newProjectSchema = z
     allowed_origins: originsSchema,
     timezone: timezoneSchema.optional(),
     conversion_event: conversionEventSchema.optional(),
+    currency: currencySchema.optional(),
   })
   .meta({ id: 'NewProject', description: 'A project to create in the account.' });
 
@@ -48,6 +54,7 @@ export const projectChangesSchema = z
       .nullable()
       .optional()
       .describe('The event counted as a conversion; null clears it'),
+    currency: currencySchema.optional(),
     city_enabled: z
       .boolean()
       .optional()
@@ -73,6 +80,9 @@ export const managedProjectSchema = z
     allowed_origins: z.array(z.string()),
     timezone: z.string(),
     conversion_event: z.string().nullable(),
+    currency: z
+      .string()
+      .describe('The ISO 4217 currency of the revenue sent by the site, such as BRL'),
     city_enabled: z.boolean(),
     visitors_enabled: z.boolean(),
     created_at: z.iso.datetime(),

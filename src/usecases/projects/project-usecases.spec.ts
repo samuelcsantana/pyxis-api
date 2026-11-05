@@ -27,6 +27,7 @@ import { UpdateProjectUseCase } from './update-project.usecase';
 
 const NOW = new Date('2026-10-06T14:00:00.000Z');
 const MISSING_ID = 'ffffffff-ffff-4fff-bfff-ffffffffffff';
+const SHOP_SETTINGS = { name: 'Shop', allowedOrigins: ['https://shop.example.com'] };
 const ACCOUNT_ID = 'acc00000-0000-4000-a000-000000000001';
 const OWNER_ID = 'ad000000-0000-4000-a000-000000000001';
 
@@ -354,6 +355,25 @@ describe('UpdateProjectUseCase', () => {
     ).toBeNull();
   });
 
+  it('creates a project in BRL unless told otherwise, and changes its currency', async () => {
+    const { store, createProject, updateProject, projectId } = await withProject();
+    const { projectId: inDollars } = await createProject.execute({
+      name: 'Store',
+      allowedOrigins: ['https://store.example.com'],
+      currency: 'USD',
+    });
+
+    expect((await store.findById(projectId))?.currency).toBe('BRL');
+    expect((await store.findById(inDollars))?.currency).toBe('USD');
+    expect((await updateProject.execute({ projectId, currency: 'EUR' })).currency).toBe('EUR');
+    await expect(createProject.execute({ ...SHOP_SETTINGS, currency: 'XYZ' })).rejects.toThrow(
+      InvalidProjectSettingsError,
+    );
+    await expect(updateProject.execute({ projectId, currency: 'eur' })).rejects.toThrow(
+      InvalidProjectSettingsError,
+    );
+  });
+
   it('creates a project with the city off, and turns it on and off', async () => {
     const { store, updateProject, projectId } = await withProject();
 
@@ -459,6 +479,7 @@ describe('DeleteProjectUseCase', () => {
       allowedOrigins: ['https://shop.example.com'],
       timezone: 'UTC',
       conversionEvent: null,
+      currency: 'BRL',
       cityEnabled: false,
       visitorsEnabled: false,
       createdAt: NOW,
