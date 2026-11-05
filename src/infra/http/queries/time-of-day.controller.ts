@@ -1,6 +1,7 @@
 import { Controller, Get, HttpStatus, Query, Req } from '@nestjs/common';
 import { ApiCookieAuth, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
+import type { TimeOfDayReport } from '../../../domain/queries/time-of-day';
 import { GetTimeOfDayUseCase } from '../../../usecases/queries/get-time-of-day.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -12,6 +13,10 @@ import { type FilteredRangeQuery, filteredRangeQuerySchema } from './query.schem
 import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { type TimeOfDayReportBody, timeOfDayReportSchema } from './time-of-day.schemas';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
+
+export function timeOfDayBody(weekdays: TimeOfDayReport): TimeOfDayReportBody {
+  return { weekdays: weekdays.map((day) => ({ weekday: day.weekday, hours: [...day.hours] })) };
+}
 
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
@@ -39,10 +44,8 @@ export class TimeOfDayController {
     @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
     query: FilteredRangeQuery,
   ): Promise<TimeOfDayReportBody> {
-    const weekdays = await this.getTimeOfDay.execute(
-      projectOf(request),
-      filteredRangeOf(query, goalsOf(request)),
+    return timeOfDayBody(
+      await this.getTimeOfDay.execute(projectOf(request), filteredRangeOf(query, goalsOf(request))),
     );
-    return { weekdays: weekdays.map((day) => ({ weekday: day.weekday, hours: [...day.hours] })) };
   }
 }

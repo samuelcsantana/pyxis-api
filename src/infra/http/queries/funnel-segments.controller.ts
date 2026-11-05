@@ -8,7 +8,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import type { FastifyRequest } from 'fastify';
-import { FUNNEL_SEGMENT_DIMENSIONS } from '../../../domain/queries/funnel';
+import {
+  FUNNEL_SEGMENT_DIMENSIONS,
+  type FunnelSegment,
+  type FunnelSegmentDimension,
+} from '../../../domain/queries/funnel';
 import { GetFunnelSegmentsUseCase } from '../../../usecases/queries/get-funnel-segments.usecase';
 import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
@@ -24,6 +28,16 @@ import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
+
+export function funnelSegmentsBody(
+  by: FunnelSegmentDimension,
+  segments: readonly FunnelSegment[],
+): FunnelSegmentsReportBody {
+  return {
+    by,
+    segments: segments.map((segment) => ({ segment: segment.segment, steps: [...segment.counts] })),
+  };
+}
 
 @ApiTags('dashboard queries')
 @ApiCookieAuth(SESSION_COOKIE_NAME)
@@ -60,18 +74,14 @@ export class FunnelSegmentsController {
     })
     query: FunnelSegmentsQuery,
   ): Promise<FunnelSegmentsReportBody> {
-    const segments = await this.getFunnelSegments.execute(
-      projectOf(request),
-      filteredRangeOf(query, goalsOf(request)),
-      query.steps,
+    return funnelSegmentsBody(
       query.by,
+      await this.getFunnelSegments.execute(
+        projectOf(request),
+        filteredRangeOf(query, goalsOf(request)),
+        query.steps,
+        query.by,
+      ),
     );
-    return {
-      by: query.by,
-      segments: segments.map((segment) => ({
-        segment: segment.segment,
-        steps: [...segment.counts],
-      })),
-    };
   }
 }

@@ -15,6 +15,7 @@ import type {
 } from '../../../domain/queries/acquisition';
 import type { DevicesReport, ValueShare } from '../../../domain/queries/devices';
 import type { FeaturesReport } from '../../../domain/queries/features';
+import type { FunnelReport } from '../../../domain/queries/funnel';
 import type { RequestsReport } from '../../../domain/queries/requests';
 import type { TimelineReport, TimelineSubject } from '../../../domain/queries/timeline';
 import type { Kpi, OverviewReport, WriteErrorsKpi } from '../../../domain/queries/overview';
@@ -97,7 +98,7 @@ function visitorsBody(visitors: VisitorsReport) {
   };
 }
 
-function overviewBody(report: OverviewReport): OverviewReportBody {
+export function overviewBody(report: OverviewReport): OverviewReportBody {
   const { conversions, convertingVisits, revenue } = report.kpis;
   return {
     kpis: {
@@ -139,7 +140,7 @@ function sharesBody(shares: readonly ValueShare[]) {
   }));
 }
 
-function devicesBody(report: DevicesReport): DevicesReportBody {
+export function devicesBody(report: DevicesReport): DevicesReportBody {
   return {
     device_types: sharesBody(report.deviceType),
     browsers: sharesBody(report.browser),
@@ -196,7 +197,7 @@ function channelShareBody(share: ChannelShare) {
   };
 }
 
-function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
+export function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
   return {
     days: report.days.map((day) => ({ date: day.date, by_channel: { ...day.byChannel } })),
     sources: report.sources.map(sourceShareBody),
@@ -208,8 +209,19 @@ function acquisitionBody(report: AcquisitionReport): AcquisitionReportBody {
   };
 }
 
-function featuresBody(report: FeaturesReport): FeaturesReportBody {
+export function featuresBody(report: FeaturesReport): FeaturesReportBody {
   return { items: report.items.map((item) => ({ ...item, daily: [...item.daily] })) };
+}
+
+export function funnelBody(report: FunnelReport): FunnelReportBody {
+  return {
+    steps: report.steps.map((step) => ({
+      count: step.count,
+      median_seconds_from_previous: step.medianSecondsFromPrevious,
+      revenue: step.revenue,
+    })),
+    median_seconds_overall: report.medianSecondsOverall,
+  };
 }
 
 function requestsBody(report: RequestsReport, timezone: string): RequestsReportBody {
@@ -456,20 +468,14 @@ export class QueriesController {
     @Query({ schema: funnelQuerySchema, pipes: [new SchemaPipe(funnelQuerySchema)] })
     query: FunnelQuery,
   ): Promise<FunnelReportBody> {
-    const report = await this.getFunnel.execute(
-      projectOf(request),
-      filteredRangeOf(query, goalsOf(request)),
-      query.mode,
-      query.steps,
+    return funnelBody(
+      await this.getFunnel.execute(
+        projectOf(request),
+        filteredRangeOf(query, goalsOf(request)),
+        query.mode,
+        query.steps,
+      ),
     );
-    return {
-      steps: report.steps.map((step) => ({
-        count: step.count,
-        median_seconds_from_previous: step.medianSecondsFromPrevious,
-        revenue: step.revenue,
-      })),
-      median_seconds_overall: report.medianSecondsOverall,
-    };
   }
 
   @Get('timeline')
