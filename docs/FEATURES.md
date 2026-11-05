@@ -327,6 +327,20 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   each Acquisition source, campaign and channel (a new `channels` list, every channel with its
   visits, conversions and revenue), and each funnel event step, from the event that completed it
   ([ADR 0059](adr/0059-revenue-is-a-property-of-the-goal-event.md))
+- Share links, on Pro: the account's owner creates a read-only link from the dashboard (`POST
+/v1/projects/{projectId}/share-links` with a name and an optional `expires_at`; the
+  `pyxis_sh_` token is answered once and kept only as its hash; ten per project,
+  `409 share_link_limit_reached` past them; `403 plan_required` on the free plan), lists them
+  (`GET`, on any plan) and revokes one at once (`DELETE .../share-links/{linkId}`, on any plan).
+  Without a session, `GET /v1/shared/{token}` answers the project's name, time zone, currency and
+  goals, and `overview`, `time-of-day`, `goals/summary`, `acquisition`, `devices`, `features`,
+  `engagement`, `funnel` and `funnel/segments` under it answer what the dashboard answers, with
+  the same range, filters and `goal`, except the `identity` and `property` filters (`400`).
+  Nothing that lists a visit or a person is shared (visits,
+  timeline, requests, funnel subjects, property values). An unknown, revoked or expired link, an
+  account off Pro or suspended all answer the same `404 share_link_not_found`; a link of an
+  account back on Pro opens again. 120 shared reads a minute per client address
+  ([ADR 0060](adr/0060-a-public-share-link-opens-only-aggregate-reports.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
   required): `POST /v1/accounts/{accountId}/projects` (within the plan's projects), `PATCH
 /v1/projects/{projectId}` (name, up to five origins, time zone, conversion event),
