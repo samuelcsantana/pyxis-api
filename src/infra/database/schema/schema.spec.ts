@@ -21,6 +21,7 @@ import {
   projectKeys,
   projects,
   reviewerCodes,
+  shareLinks,
   termsAcceptances,
   trialCards,
 } from '.';
@@ -44,7 +45,8 @@ function foreignKeyTargets(
     | typeof oauthAuthorizationRequests
     | typeof oauthConnectionTokens
     | typeof reviewerCodes
-    | typeof goals,
+    | typeof goals
+    | typeof shareLinks,
 ): string[] {
   return getTableConfig(table).foreignKeys.map((foreignKey) => {
     const reference = foreignKey.reference();
@@ -140,6 +142,20 @@ describe('database schema', () => {
     expect(config.checks.map((check) => check.name)).toEqual(['goals_target_check']);
     expect(config.indexes.map((index) => [index.config.name, index.config.unique])).toEqual([
       ['goals_project_position_key', true],
+    ]);
+  });
+
+  it('keeps share links as a unique token hash, indexed by project and gone with it', () => {
+    const config = getTableConfig(shareLinks);
+    const columns = Object.fromEntries(config.columns.map((column) => [column.name, column]));
+
+    expect(foreignKeyTargets(shareLinks)).toEqual(['projects.id']);
+    expect(config.foreignKeys[0]?.onDelete).toBe('cascade');
+    expect(columns.token_hash?.isUnique).toBe(true);
+    expect(columns.password_hash?.notNull).toBe(false);
+    expect(columns.expires_at?.notNull).toBe(false);
+    expect(config.indexes.map((index) => [index.config.name, index.config.unique])).toEqual([
+      ['share_links_project_id_idx', false],
     ]);
   });
 
