@@ -18,6 +18,7 @@ import { adminProjectAccess } from '../database/schema/admins';
 import { events } from '../database/schema/events';
 import { projectKeys } from '../database/schema/project-keys';
 import { projects } from '../database/schema/projects';
+import { setFirstGoalFromConversionEvent } from './drizzle-goal.repository';
 import { toProject } from './drizzle-project.repository';
 
 type DrizzleTransaction = Parameters<Parameters<DrizzleDatabase['transaction']>[0]>[0];
@@ -40,16 +41,20 @@ async function insertProjectWithKey(
       .values({ projectId: created.id, kind: 'public', publicKey })
       .returning({ id: projectKeys.id }),
   );
+  if (project.conversionEvent !== null) {
+    await setFirstGoalFromConversionEvent(transaction, created.id, project.conversionEvent);
+  }
   return { project: toProject(created), publicKeyId: key.id };
 }
 
-function columnChanges(changes: ProjectChanges): Partial<typeof projects.$inferInsert> {
-  const { name, allowedOrigins, timezone, conversionEvent, cityEnabled, visitorsEnabled } = changes;
+function columnChanges(
+  changes: Omit<ProjectChanges, 'conversionEvent'>,
+): Partial<typeof projects.$inferInsert> {
+  const { name, allowedOrigins, timezone, cityEnabled, visitorsEnabled } = changes;
   return {
     ...(name === undefined ? {} : { name }),
     ...(allowedOrigins === undefined ? {} : { allowedOrigins: [...allowedOrigins] }),
     ...(timezone === undefined ? {} : { timezone }),
-    ...(conversionEvent === undefined ? {} : { conversionEvent }),
     ...(cityEnabled === undefined ? {} : { cityEnabled }),
     ...(visitorsEnabled === undefined ? {} : { visitorsEnabled }),
   };
@@ -111,7 +116,11 @@ export class DrizzleProjectSettingsRepository implements ProjectSettingsReposito
   }
 
   async update(projectId: string, changes: ProjectChanges): Promise<Project | null> {
-    const values = columnChanges(changes);
+    const { conversionEvent, ...others } = changes;
+    const values = columnChanges(others);
+    if (conversionEvent !== undefined) {
+      return this.updateWithFirstGoal(projectId, values, conversionEvent);
+    }
     if (Object.keys(values).length === 0) {
       return this.findById(projectId);
     }
@@ -121,6 +130,26 @@ export class DrizzleProjectSettingsRepository implements ProjectSettingsReposito
       .where(eq(projects.id, projectId))
       .returning();
     return row === undefined ? null : toProject(row);
+  }
+
+  private async updateWithFirstGoal(
+    projectId: string,
+    values: Partial<typeof projects.$inferInsert>,
+    conversionEvent: string | null,
+  ): Promise<Project | null> {
+    const found = await this.db.transaction(async (transaction) => {
+      const updated = await transaction
+        .update(projects)
+        .set({ ...values, conversionEvent })
+        .where(eq(projects.id, projectId))
+        .returning({ id: projects.id });
+      if (updated.length === 0) {
+        return false;
+      }
+      await setFirstGoalFromConversionEvent(transaction, projectId, conversionEvent);
+      return true;
+    });
+    return found ? this.findById(projectId) : null;
   }
 
   deleteWithEverything(projectId: string): Promise<DeletedProject | null> {
