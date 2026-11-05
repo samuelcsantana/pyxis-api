@@ -71,6 +71,7 @@ author's blog, also in [Portuguese][post-pt] and [Spanish][post-es].
   funnels, timelines, visits, time of day, engagement and live arrivals, over up to 400 days in
   the project's time zone, narrowed by the same visit filters, with up to ten goals and their
   revenue.
+- **Share links.** On Pro, a revocable link that opens a project's aggregate reports, never a visit.
 - **Sign-in.** A six-digit code by e-mail, exchanged for an opaque session the admin can end one
   by one or everywhere at once.
 - **Accounts and billing.** Sign-up on the free Hobby plan without a card, the paid Pro plan
@@ -432,6 +433,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0057](docs/adr/0057-pro-features-are-gated-by-the-account-status.md)                 | Pro features are gated by the account status                               |
 | [0058](docs/adr/0058-goals-replace-the-conversion-event.md)                           | Goals replace the single conversion event                                  |
 | [0059](docs/adr/0059-revenue-is-a-property-of-the-goal-event.md)                      | Revenue is a property of the goal's event                                  |
+| [0060](docs/adr/0060-a-public-share-link-opens-only-aggregate-reports.md)             | A public share link opens only aggregate reports                           |
 
 ## Roadmap
 

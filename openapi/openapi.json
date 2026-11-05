@@ -1037,6 +1037,80 @@
         ],
         "type": "object"
       },
+      "CreatedShareLink": {
+        "additionalProperties": false,
+        "description": "A read-only link to the aggregate reports of one project, opened by anyone who has the token, without signing in, while the account is on Pro.",
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null: the link never expires"
+          },
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "token": {
+            "description": "Answered this once: only its hash is kept. The public routes take it in the path",
+            "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "created_at",
+          "expires_at",
+          "token"
+        ],
+        "type": "object"
+      },
+      "CreateShareLink": {
+        "additionalProperties": false,
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "When the link stops opening, after now; null or absent: it never expires"
+          },
+          "name": {
+            "description": "Who the link is for, as the owner will recognize it in the list",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
       "DeletedProject": {
         "additionalProperties": false,
         "description": "What the deletion removed.",
@@ -4685,6 +4759,121 @@
         },
         "required": [
           "sessions"
+        ],
+        "type": "object"
+      },
+      "SharedProject": {
+        "additionalProperties": false,
+        "description": "What a share link opens: the name and settings the shared reports need, and its goals.",
+        "properties": {
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null: the link never expires"
+          },
+          "goals": {
+            "description": "The goals, in order; the reports take their ids in goal",
+            "items": {
+              "$ref": "#/components/schemas/Goal"
+            },
+            "type": "array"
+          },
+          "project": {
+            "additionalProperties": false,
+            "properties": {
+              "city_enabled": {
+                "description": "Whether the project keeps the approximate city",
+                "type": "boolean"
+              },
+              "currency": {
+                "description": "The ISO 4217 currency of the revenue figures",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "timezone": {
+                "description": "The IANA time zone the days of every report are counted in",
+                "type": "string"
+              },
+              "visitors_enabled": {
+                "description": "Whether the project counts unique visitors",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "name",
+              "timezone",
+              "currency",
+              "city_enabled",
+              "visitors_enabled"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "project",
+          "goals",
+          "expires_at"
+        ],
+        "type": "object"
+      },
+      "ShareLinks": {
+        "additionalProperties": false,
+        "description": "The share links of the project, the oldest first, expired ones included until the owner revokes them. Their tokens are never answered again.",
+        "properties": {
+          "links": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "created_at": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                  "type": "string"
+                },
+                "expires_at": {
+                  "anyOf": [
+                    {
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "null: the link never expires"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "created_at",
+                "expires_at"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "links"
         ],
         "type": "object"
       },
@@ -12787,6 +12976,250 @@
         ]
       }
     },
+    "/v1/projects/{projectId}/share-links": {
+      "get": {
+        "description": "Listed on any plan, so an account that left Pro can still revoke them.",
+        "operationId": "ShareLinksController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLinks"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the link is not one of its links (share_link_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "The share links of a project the admin owns",
+        "tags": [
+          "share links"
+        ]
+      },
+      "post": {
+        "description": "Pro only. The token is answered this once; a project keeps at most ten links. The link opens the overview, acquisition, devices, features and funnel figures, never a visit or a person.",
+        "operationId": "ShareLinksController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShareLink"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedShareLink"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, the account is suspended (account_suspended), or its plan does not include share links (plan_required)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the link is not one of its links (share_link_not_found)."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project already has ten links (share_link_limit_reached), or the account has no running subscription (subscription_required)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Create a public read-only link to the aggregate reports of the project",
+        "tags": [
+          "share links"
+        ]
+      }
+    },
+    "/v1/projects/{projectId}/share-links/{linkId}": {
+      "delete": {
+        "description": "Revoked on any plan; the token never opens again.",
+        "operationId": "ShareLinksController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "The link no longer opens."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the link is not one of its links (share_link_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Revoke a share link, at once",
+        "tags": [
+          "share links"
+        ]
+      }
+    },
     "/v1/projects/{projectId}/time-of-day": {
       "get": {
         "operationId": "TimeOfDayController_timeOfDay",
@@ -13506,6 +13939,2386 @@
         "summary": "The visits of a range, newest first, filtered by what they did",
         "tags": [
           "dashboard queries"
+        ]
+      }
+    },
+    "/v1/shared/{token}": {
+      "get": {
+        "description": "No session: the token is the credential. Only aggregate reports are shared.",
+        "operationId": "SharedReportsController_project",
+        "parameters": [
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedProject"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "The project a share link opens, with its goals",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/acquisition": {
+      "get": {
+        "operationId": "SharedReportsController_acquisition",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcquisitionReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "Visits per day and channel, and the sources that brought them",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/devices": {
+      "get": {
+        "operationId": "SharedReportsController_devices",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevicesReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "Visits and conversions by device, browser, system and place",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/engagement": {
+      "get": {
+        "operationId": "SharedReportsController_engagement",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EngagementReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "Entry and exit pages, single-page visits and visit length",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/features": {
+      "get": {
+        "operationId": "SharedReportsController_features",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "kind",
+            "required": true,
+            "schema": {
+              "enum": [
+                "events",
+                "screens"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeaturesReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "The most used named events or screens, with their daily counts",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/funnel": {
+      "get": {
+        "operationId": "SharedReportsController_funnel",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "mode",
+            "required": true,
+            "schema": {
+              "enum": [
+                "visit",
+                "user"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "The steps of the funnel, as for GET /v1/projects/{projectId}/funnel",
+            "in": "query",
+            "name": "steps",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunnelReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "How many visits or people reached each step of a funnel, in order",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/funnel/segments": {
+      "get": {
+        "operationId": "SharedReportsController_funnelSegments",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The steps of the funnel, as for GET /v1/projects/{projectId}/funnel",
+            "in": "query",
+            "name": "steps",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "by",
+            "required": true,
+            "schema": {
+              "enum": [
+                "device",
+                "channel"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FunnelSegmentsReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "A funnel per device type or channel of the visit",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/goals/summary": {
+      "get": {
+        "operationId": "SharedReportsController_goalsSummary",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GoalsSummary"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "The conversions and conversion rate of each goal of the project",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/overview": {
+      "get": {
+        "operationId": "SharedReportsController_overview",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without it, the first goal. Conversions are null when the project has no goal.",
+            "in": "query",
+            "name": "goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverviewReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "The overview of the shared project, as GET /overview answers it",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/time-of-day": {
+      "get": {
+        "operationId": "SharedReportsController_timeOfDay",
+        "parameters": [
+          {
+            "description": "First day, inclusive, in the project time zone",
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, at most today in the project time zone; 400 days at most",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that viewed this page; a star matches any characters. Repeat it, up to 3 times, for the visits that viewed every one",
+            "in": "query",
+            "name": "path",
+            "required": false,
+            "schema": {
+              "items": {
+                "type": "string"
+              },
+              "maxItems": 3,
+              "type": "array"
+            }
+          },
+          {
+            "description": "Only the visits that sent this named event",
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that came through this channel",
+            "in": "query",
+            "name": "channel",
+            "required": false,
+            "schema": {
+              "enum": [
+                "paid",
+                "email",
+                "social",
+                "campaign",
+                "organic",
+                "referral",
+                "direct"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this device type",
+            "in": "query",
+            "name": "device",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mobile",
+                "tablet",
+                "desktop",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits in this browser family",
+            "in": "query",
+            "name": "browser",
+            "required": false,
+            "schema": {
+              "enum": [
+                "chrome",
+                "safari",
+                "firefox",
+                "edge",
+                "samsung",
+                "opera",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits on this operating system family",
+            "in": "query",
+            "name": "os",
+            "required": false,
+            "schema": {
+              "enum": [
+                "android",
+                "ios",
+                "windows",
+                "macos",
+                "linux",
+                "chromeos",
+                "other"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this two-letter country code",
+            "in": "query",
+            "name": "country",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this region: its ISO 3166-2 code, the country code, a hyphen and the subdivision",
+            "in": "query",
+            "name": "region",
+            "required": false,
+            "schema": {
+              "pattern": "^[A-Z]{2}-[A-Z0-9]{1,3}$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this approximate city, by its exact name; send it with its region, since the same name exists in several regions",
+            "in": "query",
+            "name": "city",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits from this source as Acquisition names it: campaign source, referring host, (ad click) or (direct)",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "maxLength": 128,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits whose entry carried this campaign (utm_campaign)",
+            "in": "query",
+            "name": "campaign",
+            "required": false,
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only the visits with a failed request (status 0 or 400 and above)",
+            "in": "query",
+            "name": "failed",
+            "required": false,
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only the visits that reached this goal, by its id: sent its event, or viewed a page its pattern matches",
+            "in": "query",
+            "name": "reached_goal",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeOfDayReport"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token: never issued, revoked, expired, or its account is no longer on Pro or is suspended (share_link_not_found). The answer never says which."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "This address read shared reports too often; Retry-After says when to come back."
+          }
+        },
+        "summary": "The visits of the shared project by weekday and local hour",
+        "tags": [
+          "shared reports"
         ]
       }
     },
