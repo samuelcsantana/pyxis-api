@@ -47,6 +47,15 @@ import { signUpSettingsFromEnv } from '../infra/http/accounts/sign-up-settings-f
 import { DrizzleAccountWelcomeRepository } from '../infra/repositories/drizzle-account-welcome.repository';
 import { DetectProjectAlertsUseCase } from '../usecases/alerts/detect-project-alerts.usecase';
 import { SendProjectAlertsUseCase } from '../usecases/alerts/send-project-alerts.usecase';
+import { SendSlackAlertsUseCase } from '../usecases/slack/send-slack-alerts.usecase';
+import { DrizzleSlackDestinationsQuery } from '../infra/queries/drizzle-slack-destinations.query';
+import {
+  DrizzleSlackAlertDeliveryRepository,
+  DrizzleSlackWebhookRepository,
+} from '../infra/repositories/drizzle-slack-webhook.repository';
+import { createSecretBox } from '../infra/security/aes-gcm-secret-box';
+import { createSlackSender } from '../infra/slack/http-slack-sender';
+import { CryptoRandomSource } from '../infra/random/crypto-random-source';
 import { BuildWeeklyDigestUseCase } from '../usecases/digest/build-weekly-digest.usecase';
 import { SendWeeklyDigestsUseCase } from '../usecases/digest/send-weekly-digests.usecase';
 import { RefreshProjectIconsUseCase } from '../usecases/projects/refresh-project-icons.usecase';
@@ -189,6 +198,23 @@ export const handler = createJobsHandler({
         new SystemClock(),
       ).execute(),
     ),
+  sendSlackAlerts: () =>
+    withDatabase((database) => {
+      const env = validateEnv(process.env);
+      return new SendSlackAlertsUseCase(
+        new DrizzleSlackDestinationsQuery(database),
+        new DrizzleSlackAlertDeliveryRepository(database),
+        new DrizzleSlackWebhookRepository(database),
+        new DetectProjectAlertsUseCase(
+          new DrizzleOverviewQuery(database),
+          new DrizzleProjectActivityQuery(database),
+          new DrizzleGoalRepository(database),
+        ),
+        createSecretBox(env.SLACK_WEBHOOK_KEYS, new CryptoRandomSource()),
+        createSlackSender(env.DASHBOARD_ORIGIN),
+        new SystemClock(),
+      ).execute();
+    }),
   refreshProjectIcons: () =>
     withDatabase((database) =>
       new RefreshProjectIconsUseCase(
