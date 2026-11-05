@@ -211,3 +211,26 @@ export function buildProjectAlertEmail(
     text: buildText(alert, text, messages, links, support),
   };
 }
+
+export interface ProjectAlertSummary {
+  readonly subject: string;
+  readonly body: string;
+  readonly hint: string;
+  readonly button: string;
+  readonly url: string;
+}
+
+export function summarizeProjectAlert(
+  alert: ProjectAlert,
+  language: EmailLanguage,
+  links: EmailLinks,
+): ProjectAlertSummary {
+  const text = textOf(alert, PROJECT_ALERT_EMAIL_MESSAGES[language], formatsFor(language));
+  return {
+    subject: text.subject,
+    body: text.body,
+    hint: text.hint,
+    button: text.button,
+    url: projectUrl(alert, links, SCREEN_OF_KIND[alert.kind]),
+  };
+}
