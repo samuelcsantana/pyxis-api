@@ -60,6 +60,7 @@ export const envSchema = z.object({
   PROMOTION_CODES_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
   DASHBOARD_ORIGIN: z.preprocess(emptyAsUnset, bareOrigin.optional()),
   API_ORIGIN: z.preprocess(emptyAsUnset, bareOrigin.optional()),
+  SLACK_WEBHOOK_KEYS: z.preprocess(emptyAsUnset, z.string().optional()),
   REMOTE_MCP_OPEN: z.preprocess(emptyAsUnset, z.enum(['true', 'false']).default('false')),
 });
 
