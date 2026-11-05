@@ -116,6 +116,13 @@
                     "null"
                   ]
                 },
+                "revenue": {
+                  "description": "The sum of the revenue property on the conversions of these visits, in the project currency; null when the goal counted is a page or the project has no goal",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
                 "source": {
                   "type": "string"
                 },
@@ -133,7 +140,79 @@
                 "visits",
                 "conversions",
                 "converting_visits",
-                "from_ad_click_visits"
+                "from_ad_click_visits",
+                "revenue"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "channels": {
+            "description": "Every channel, in a fixed order, with the visits that entered through it",
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "channel": {
+                  "enum": [
+                    "paid",
+                    "email",
+                    "social",
+                    "campaign",
+                    "organic",
+                    "referral",
+                    "direct"
+                  ],
+                  "type": "string"
+                },
+                "conversions": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "converting_visits": {
+                  "anyOf": [
+                    {
+                      "maximum": 9007199254740991,
+                      "minimum": -9007199254740991,
+                      "type": "integer"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "from_ad_click_visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                },
+                "revenue": {
+                  "description": "The sum of the revenue property on the conversions of these visits, in the project currency; null when the goal counted is a page or the project has no goal",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "visits": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "channel",
+                "visits",
+                "conversions",
+                "converting_visits",
+                "from_ad_click_visits",
+                "revenue"
               ],
               "type": "object"
             },
@@ -237,6 +316,13 @@
                     "null"
                   ]
                 },
+                "revenue": {
+                  "description": "The sum of the revenue property on the conversions of these visits, in the project currency; null when the goal counted is a page or the project has no goal",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
                 "source": {
                   "type": "string"
                 },
@@ -253,7 +339,8 @@
                 "visits",
                 "conversions",
                 "converting_visits",
-                "from_ad_click_visits"
+                "from_ad_click_visits",
+                "revenue"
               ],
               "type": "object"
             },
@@ -263,7 +350,8 @@
         "required": [
           "days",
           "sources",
-          "campaigns"
+          "campaigns",
+          "channels"
         ],
         "type": "object"
       },
@@ -1663,11 +1751,19 @@
                       "type": "null"
                     }
                   ]
+                },
+                "revenue": {
+                  "description": "For an event step, the sum of the revenue property on the event that completed the step for each visit or person (its first occurrence after the previous step), in the project currency; null for a page step",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
                 }
               },
               "required": [
                 "count",
-                "median_seconds_from_previous"
+                "median_seconds_from_previous",
+                "revenue"
               ],
               "type": "object"
             },
@@ -1924,6 +2020,13 @@
                   "minimum": -9007199254740991,
                   "type": "integer"
                 },
+                "revenue": {
+                  "description": "The sum of the revenue property on the events of the goal, in the project currency; null for a page goal",
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
                 "type": {
                   "enum": [
                     "event",
@@ -1942,7 +2045,8 @@
                 "created_at",
                 "conversions",
                 "converting_visits",
-                "conversion_rate"
+                "conversion_rate",
+                "revenue"
               ],
               "type": "object"
             },
@@ -2170,6 +2274,10 @@
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
             "type": "string"
           },
+          "currency": {
+            "description": "The ISO 4217 currency of the revenue sent by the site, such as BRL",
+            "type": "string"
+          },
           "id": {
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
@@ -2191,6 +2299,7 @@
           "allowed_origins",
           "timezone",
           "conversion_event",
+          "currency",
           "city_enabled",
           "visitors_enabled",
           "created_at"
@@ -2228,6 +2337,9 @@
                     "string",
                     "null"
                   ]
+                },
+                "currency": {
+                  "type": "string"
                 },
                 "first_event_at": {
                   "anyOf": [
@@ -2299,6 +2411,7 @@
                 "name",
                 "timezone",
                 "conversion_event",
+                "currency",
                 "first_event_at",
                 "last_event_at",
                 "icon_version",
@@ -2688,6 +2801,11 @@
             "maxLength": 64,
             "type": "string"
           },
+          "currency": {
+            "description": "An ISO 4217 currency code, such as BRL or USD, for the revenue the site sends",
+            "pattern": "^[A-Z]{3}$",
+            "type": "string"
+          },
           "name": {
             "maxLength": 100,
             "minLength": 1,
@@ -3065,6 +3183,37 @@
                 ],
                 "type": "object"
               },
+              "revenue": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "properties": {
+                      "current": {
+                        "type": "number"
+                      },
+                      "daily": {
+                        "items": {
+                          "type": "number"
+                        },
+                        "type": "array"
+                      },
+                      "previous": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "current",
+                      "previous",
+                      "daily"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The sum of the revenue property on the events of the goal counted, in the project currency; null when that goal is a page or the project has no goal"
+              },
               "visits": {
                 "additionalProperties": false,
                 "properties": {
@@ -3174,6 +3323,7 @@
               "identified_users",
               "conversions",
               "converting_visits",
+              "revenue",
               "write_errors"
             ],
             "type": "object"
@@ -3556,6 +3706,11 @@
             ],
             "description": "The event counted as a conversion; null clears it"
           },
+          "currency": {
+            "description": "An ISO 4217 currency code, such as BRL or USD, for the revenue the site sends",
+            "pattern": "^[A-Z]{3}$",
+            "type": "string"
+          },
           "name": {
             "maxLength": 100,
             "minLength": 1,
@@ -3764,6 +3919,10 @@
             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
             "type": "string"
           },
+          "currency": {
+            "description": "The ISO 4217 currency of the revenue sent by the site, such as BRL",
+            "type": "string"
+          },
           "deletion_held_at": {
             "anyOf": [
               {
@@ -3920,6 +4079,7 @@
           "name",
           "timezone",
           "conversion_event",
+          "currency",
           "city_enabled",
           "visitors_enabled",
           "allowed_origins",

@@ -318,6 +318,15 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   keeps the visits that reached a goal in any report. The former conversion event became each
   project's first goal, and `conversion_event` stays in the answers as the first goal's event
   name, writable as before ([ADR 0058](adr/0058-goals-replace-the-conversion-event.md))
+- Revenue: a numeric `revenue` property on an event, in the project's currency (`currency`, ISO
+  4217, `BRL` by default, set with the other project settings and shown in `/v1/me` and
+  `/settings`; no exchange rates). Only a number from 0 below 1,000,000,000 counts: the ingestion
+  drops any other `revenue` from the event and logs it as `invalid_revenue`, and the queries
+  ignore one stored before. A goal's revenue is the sum on the events it counts (`null` for a
+  page goal): the Overview's `revenue` KPI against the previous period, each goals summary row,
+  each Acquisition source, campaign and channel (a new `channels` list, every channel with its
+  visits, conversions and revenue), and each funnel event step, from the event that completed it
+  ([ADR 0059](adr/0059-revenue-is-a-property-of-the-goal-event.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
   required): `POST /v1/accounts/{accountId}/projects` (within the plan's projects), `PATCH
 /v1/projects/{projectId}` (name, up to five origins, time zone, conversion event),
