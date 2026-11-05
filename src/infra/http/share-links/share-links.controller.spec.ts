@@ -32,6 +32,8 @@ import type {
   RevokeShareLinkCommand,
   RevokeShareLinkUseCase,
 } from '../../../usecases/share-links/revoke-share-link.usecase';
+import type { ListAnnotationsUseCase } from '../../../usecases/annotations/list-annotations.usecase';
+import { annotationListSchema } from '../annotations/annotations.schemas';
 import { goalsSummarySchema } from '../goals/goals.schemas';
 import { engagementReportSchema } from '../queries/engagement.schemas';
 import { funnelSegmentsReportSchema } from '../queries/funnel-segments.schemas';
@@ -216,6 +218,16 @@ function sharedController() {
     medianSecondsOverall: 60,
   });
   const segments = recording([{ segment: 'desktop', counts: [2, 1] }]);
+  const annotations = recording([
+    {
+      id: '00000000-0000-4000-a000-000000000001',
+      projectId: PROJECT.id,
+      day: '2026-11-03',
+      text: 'Launched the new pricing',
+      createdAt: new Date('2026-11-03T15:00:00.000Z'),
+      updatedAt: new Date('2026-11-03T15:00:00.000Z'),
+    },
+  ]);
   return {
     controller: new SharedReportsController(
       overview.useCase as unknown as GetOverviewUseCase,
@@ -227,6 +239,7 @@ function sharedController() {
       engagement.useCase as unknown as GetEngagementUseCase,
       funnel.useCase as unknown as GetFunnelUseCase,
       segments.useCase as unknown as GetFunnelSegmentsUseCase,
+      annotations.useCase as unknown as ListAnnotationsUseCase,
     ),
     overview,
     timeOfDay,
@@ -237,6 +250,7 @@ function sharedController() {
     engagement,
     funnel,
     segments,
+    annotations,
   };
 }
 
@@ -388,6 +402,25 @@ describe('SharedReportsController', () => {
     expect(engagementReportSchema.parse(shape)).toMatchObject({ visits: 2, single_page_visits: 1 });
     expect(features.calls[0]?.[2]).toBe('screens');
     expect(engagement.calls[0]?.[0]).toBe(PROJECT);
+  });
+
+  it('reads the notes of the range, which explain the charts', async () => {
+    const { controller, annotations } = sharedController();
+
+    const body = await controller.annotations(sharedRequest(), RANGE);
+
+    expect(annotationListSchema.parse(body)).toEqual({
+      annotations: [
+        {
+          id: '00000000-0000-4000-a000-000000000001',
+          day: '2026-11-03',
+          text: 'Launched the new pricing',
+          created_at: '2026-11-03T15:00:00.000Z',
+          updated_at: '2026-11-03T15:00:00.000Z',
+        },
+      ],
+    });
+    expect(annotations.calls).toEqual([[PROJECT, RANGE.from, RANGE.to]]);
   });
 
   it('reads the funnel and its segments for the steps asked', async () => {

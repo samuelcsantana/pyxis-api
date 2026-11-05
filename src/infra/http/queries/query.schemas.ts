@@ -594,6 +594,7 @@ export const requestsReportSchema = z
       'in the project time zone, named in timezone; the failure times are UTC.',
   });
 
+export type RangeQuery = z.infer<typeof rangeQuerySchema>;
 export type FilteredRangeQuery = z.infer<typeof filteredRangeQuerySchema>;
 export type ConversionRangeQuery = z.infer<typeof conversionRangeQuerySchema>;
 export type FeaturesQuery = z.infer<typeof featuresQuerySchema>;

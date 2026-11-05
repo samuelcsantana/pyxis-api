@@ -11,6 +11,7 @@ import { CryptoRandomSource } from '../../random/crypto-random-source';
 import { DrizzleAccountRepository } from '../../repositories/drizzle-account.repository';
 import { DrizzleProjectSettingsRepository } from '../../repositories/drizzle-project-settings.repository';
 import { DrizzleShareLinkRepository } from '../../repositories/drizzle-share-link.repository';
+import { AnnotationsModule } from '../annotations/annotations.module';
 import { DashboardOriginGuard, SessionGuard } from '../auth/auth.guards';
 import { AuthModule } from '../auth/auth.module';
 import { GoalsModule } from '../goals/goals.module';
@@ -21,7 +22,7 @@ import { ShareLinksController } from './share-links.controller';
 import { SharedReportsController } from './shared-reports.controller';
 
 @Module({
-  imports: [AuthModule, QueriesModule, GoalsModule],
+  imports: [AuthModule, QueriesModule, GoalsModule, AnnotationsModule],
   controllers: [ShareLinksController, SharedReportsController],
   providers: [
     CreateShareLinkUseCase,
