@@ -145,9 +145,11 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   bytes that changes only when the icon does; a project whose site shows none answers 404 and
   `icon_version: null`, and the dashboard keeps the initials
 
-- `GET` and `PUT /v1/projects/{projectId}/email-preferences` (`{"weekly_digest":true}`): the
-  signed-in admin chooses, for one project and for themselves only, whether to receive the
-  weekly digest, on by default. Saving changes an existing access and never grants one. The
+- `GET` and `PUT /v1/projects/{projectId}/email-preferences` (`weekly_digest`,
+  `no_events_alert`, `failed_writes_alert`, `conversion_drop_alert`): the signed-in admin
+  chooses, for one project and for themselves only, whether to receive the weekly digest and
+  each alert, all on by default; a `PUT` changes only the fields it sends (at least one).
+  Saving changes an existing access and never grants one. The
   dashboard's server sends the change with the admin's session cookie; another site cannot,
   because a `PUT` is never a simple cross-origin request and the cookie is `SameSite=Lax`. The
   admin's e-mails are written in the language of their last sign-in: it is kept on the sign-in
@@ -452,6 +454,15 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   visits says when the last event arrived, in the preview too. The numbers come from the
   dashboard's own queries; each digest is sent once per admin, project and week, and one failed
   e-mail does not stop the others ([ADR 0011](adr/0011-weekly-digest-from-the-jobs-function.md))
+- Alerts by e-mail, in both plans, judged by the daily run on the last closed day in the
+  project's time zone: **no events** for 24 hours after at least 20 visits in the seven days
+  before; **failed writes**, at least 10 that are at least 10% of the writes and twice the rate
+  of the seven days before; **conversion drop**, the first goal reached at most half as often as
+  on the same weekday a week earlier, which had at least 10. Each kind goes at most once a day
+  to each person of the project who keeps it on, in their language, with a link to the screen
+  to check and to the switch in Settings; a failed e-mail or a project that cannot be read never
+  stops the others. Accounts without access, suspended or paused by their quota are not judged
+  ([ADR 0061](adr/0061-email-alerts-from-the-daily-run.md))
 
 ## Privacy and security, in detail
 
@@ -514,7 +525,8 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
 - A dashboard query for a project the admin was not granted answers exactly like one for a
   project that does not exist (404 `not_found`), so the API never confirms that a project exists
 - The weekly digest carries aggregates, paths, event names and routes only, never a user id or a
-  link to a visit, and its logs name projects and admins by id, never by address
+  link to a visit, and its logs name projects and admins by id, never by address; the alerts
+  carry the project's name, a time, counts, a rate and a goal's name, logged the same way
 - Dashboard sign-in never says whether an email belongs to an admin (always 202, empty body).
   Codes and session tokens are stored only as SHA-256 hashes; a code allows five guesses and one
   use, and expires in 10 minutes. A reviewer code is stored the same way and counts its wrong
