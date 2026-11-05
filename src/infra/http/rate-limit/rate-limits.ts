@@ -32,6 +32,10 @@ export const SHARE_UNLOCK_THROTTLER = 'share-unlock';
 export const SHARE_UNLOCKS_PER_WINDOW = 20;
 export const SHARE_UNLOCK_RATE_WINDOW_MS = 15 * 60 * 1000;
 
+export const SLACK_TEST_THROTTLER = 'slack-test';
+export const SLACK_TESTS_PER_WINDOW = 10;
+export const SLACK_TEST_RATE_WINDOW_MS = 15 * 60 * 1000;
+
 export const THROTTLERS = [
   { name: INGEST_THROTTLER, ttl: CLIENT_RATE_WINDOW_MS, limit: CLIENT_BATCHES_PER_WINDOW },
   { name: AUTH_THROTTLER, ttl: SIGN_IN_RATE_WINDOW_MS, limit: SIGN_IN_REQUESTS_PER_WINDOW },
@@ -53,6 +57,7 @@ export const THROTTLERS = [
     ttl: SHARE_UNLOCK_RATE_WINDOW_MS,
     limit: SHARE_UNLOCKS_PER_WINDOW,
   },
+  { name: SLACK_TEST_THROTTLER, ttl: SLACK_TEST_RATE_WINDOW_MS, limit: SLACK_TESTS_PER_WINDOW },
 ] as const;
 
 export type ThrottlerName = (typeof THROTTLERS)[number]['name'];
