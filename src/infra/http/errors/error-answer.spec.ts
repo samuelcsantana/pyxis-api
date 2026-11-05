@@ -1,4 +1,9 @@
 import {
+  InvalidShareLinkError,
+  ShareLinkLimitReachedError,
+  ShareLinkNotFoundError,
+} from '../../../domain/errors/share-link.errors';
+import {
   GoalLimitReachedError,
   GoalNotFoundError,
   InvalidGoalError,
@@ -93,6 +98,9 @@ describe('toErrorAnswer', () => {
     [new InvalidGoalError('name', 'Bad name.'), 400, 'invalid_goal'],
     [new GoalNotFoundError(), 404, 'goal_not_found'],
     [new GoalLimitReachedError(10), 409, 'goal_limit_reached'],
+    [new InvalidShareLinkError('name', 'Bad name.'), 400, 'invalid_share_link'],
+    [new ShareLinkNotFoundError(), 404, 'share_link_not_found'],
+    [new ShareLinkLimitReachedError(10), 409, 'share_link_limit_reached'],
     [new SubscriptionRequiredError(), 409, 'subscription_required'],
     [new PlanRequiredError('slack_alerts'), 403, 'plan_required'],
     [new ProjectNameMismatchError(), 409, 'project_name_mismatch'],
