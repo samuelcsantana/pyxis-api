@@ -352,7 +352,15 @@ in the [API reference](https://samuelcsantana.github.io/pyxis-api/).
   timeline, requests, funnel subjects, property values). An unknown, revoked or expired link, an
   account off Pro or suspended all answer the same `404 share_link_not_found`; a link of an
   account back on Pro opens again. 120 shared reads a minute per client address
-  ([ADR 0060](adr/0060-a-public-share-link-opens-only-aggregate-reports.md))
+  ([ADR 0060](adr/0060-a-public-share-link-opens-only-aggregate-reports.md)). A link may have a
+  password (8 to 128 characters, set at creation or with `PATCH .../share-links/{linkId}`
+  `{ "password": "…" | null }`, stored only as a scrypt hash): `GET /v1/shared/{token}` then
+  answers only `{ "password_required": true }` and the reports `401 share_password_required`
+  until `POST /v1/shared/{token}/unlock` trades the password for a `pyxis_su_` unlock of eight
+  hours, sent as `Authorization: Bearer`. Changing or removing the password, or revoking the
+  link, stops its unlocks at once. 20 unlock attempts per 15 minutes per address, and 50 wrong
+  passwords per 15 minutes per link, both answered as `429 rate_limited`
+  ([ADR 0063](adr/0063-a-share-link-password-is-traded-for-a-stored-unlock.md))
 - Projects managed by the owner of their account, from the dashboard (origin and session
   required): `POST /v1/accounts/{accountId}/projects` (within the plan's projects), `PATCH
 /v1/projects/{projectId}` (name, up to five origins, time zone, conversion event),
