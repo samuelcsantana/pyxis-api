@@ -6,6 +6,8 @@ import {
   createDrizzleDatabase,
   createPostgresClient,
 } from '../../src/infra/database/postgres-client';
+import type { Goal } from '../../src/domain/goals/goal';
+import { DrizzleGoalsSummaryQuery } from '../../src/infra/queries/drizzle-goals-summary.query';
 import { DrizzleOverviewQuery } from '../../src/infra/queries/drizzle-overview.query';
 import { DrizzleEventRepository } from '../../src/infra/repositories/drizzle-event.repository';
 import {
@@ -107,6 +109,7 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
   let owner: postgres.Sql;
   let app: postgres.Sql;
   let query: DrizzleOverviewQuery;
+  let goalsSummary: DrizzleGoalsSummaryQuery;
 
   beforeAll(async () => {
     await migrateTestDatabase();
@@ -114,6 +117,7 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
     app = createPostgresClient(testAppUrl());
     const db = createDrizzleDatabase(app);
     query = new DrizzleOverviewQuery(db);
+    goalsSummary = new DrizzleGoalsSummaryQuery(db);
     await emptyIngestionTables(owner);
     await owner`
       INSERT INTO projects (id, name, timezone, conversion_event)
@@ -180,6 +184,30 @@ describe('DrizzleOverviewQuery against a real Postgres', () => {
 
     expect(await query.totals(reachedPlan)).toMatchObject({ visits: 1, conversions: 0 });
     expect(await query.totals(reachedPricing)).toMatchObject({ visits: 2, conversions: 2 });
+  });
+
+  it('summarizes every goal in one pass, in the order given', async () => {
+    const goal = (id: string, target: Goal['target']): Goal => ({
+      id,
+      projectId: SHOP_ID,
+      name: id,
+      target,
+      position: 1,
+      createdAt: new Date('2026-11-04T12:00:00.000Z'),
+    });
+
+    expect(
+      await goalsSummary.countsInGoalOrder(SCOPE, [
+        goal('signup', { type: 'event', name: 'signup_completed' }),
+        goal('pricing', { type: 'page', path: '/pric*' }),
+        goal('nowhere', { type: 'page', path: '/nowhere' }),
+      ]),
+    ).toEqual({ visits: 3, conversions: [2, 2, 0], convertingVisits: [1, 2, 0] });
+    expect(await goalsSummary.countsInGoalOrder(SCOPE, [])).toEqual({
+      visits: 3,
+      conversions: [],
+      convertingVisits: [],
+    });
   });
 
   it('counts a visit that converted twice as one converting visit', async () => {

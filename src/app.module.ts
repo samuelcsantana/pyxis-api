@@ -5,6 +5,7 @@ import { DatabaseModule } from './infra/database/database.module';
 import { AccountsModule } from './infra/http/accounts/accounts.module';
 import { AuthModule } from './infra/http/auth/auth.module';
 import { BillingModule } from './infra/http/billing/billing.module';
+import { GoalsModule } from './infra/http/goals/goals.module';
 import { HealthModule } from './infra/http/health/health.module';
 import { IngestModule } from './infra/http/ingest/ingest.module';
 import { McpModule } from './infra/http/mcp/mcp.module';
@@ -28,6 +29,7 @@ import { SubjectsModule } from './infra/http/subjects/subjects.module';
     BillingModule,
     AccountsModule,
     ProjectsModule,
+    GoalsModule,
     SubjectsModule,
     OAuthModule,
     McpModule,
