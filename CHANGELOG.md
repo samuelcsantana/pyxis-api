@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.45.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.44.0...v0.45.0) (2026-11-05)
+
+
+### Features
+
+* **accounts:** add the Pro feature gate and the plan_required error ([5d25905](https://github.com/samuelcsantana/pyxis-api/commit/5d2590566796907edf0e83947843266cd2ad689f))
+* **accounts:** raise the paid plan to 250,000 events, 10 projects and 10 people ([e908133](https://github.com/samuelcsantana/pyxis-api/commit/e9081333dd212c78030d642173f4a4f1dc3b1557))
+* **goals:** add the goal routes and the per-goal summary ([276d1c5](https://github.com/samuelcsantana/pyxis-api/commit/276d1c52125c35d1e45db3093ff8d0b122178e61))
+* **goals:** add the goals table and copy each conversion event into goal 1 ([9160583](https://github.com/samuelcsantana/pyxis-api/commit/916058323e1dff9c91c2206eb4daf4e27490d397))
+* **goals:** store goals and mirror the first one into conversion_event ([70a0613](https://github.com/samuelcsantana/pyxis-api/commit/70a06133298005f17551ff7e3246d98210f79923))
+* **queries:** count a chosen goal as conversions and filter on goals ([42bd7c9](https://github.com/samuelcsantana/pyxis-api/commit/42bd7c91ebe79ec8fa5718002ca873f89145cb83))
+
+
+### Documentation
+
+* record goals in ADR 0058, the features list and the OpenAPI export ([883301d](https://github.com/samuelcsantana/pyxis-api/commit/883301dc788795850349363aaf15cdda720c6d28))
+* record the Pro feature gate in ADR 0057 and the features list ([83a43a9](https://github.com/samuelcsantana/pyxis-api/commit/83a43a9bfe0f9b8c8672c49b57e92721ec473271))
+
 ## [0.44.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.43.0...v0.44.0) (2026-11-04)
 
 
