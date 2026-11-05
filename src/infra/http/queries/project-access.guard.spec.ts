@@ -5,7 +5,8 @@ import type { Project } from '../../../domain/entities/project.entity';
 import { AccountSuspendedError } from '../../../domain/errors/account.errors';
 import { InMemoryAccountUsageRepository } from '../../../test-utils/in-memory-account-usage.repository';
 import { InMemoryAdminUserRepository } from '../../../test-utils/in-memory-admin-user.repository';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { InMemoryGoalRepository } from '../../../test-utils/in-memory-goal.repository';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 
 const PROJECT: Project = {
   id: '6f1d3c2a-8b4e-4f7a-9c1d-2e3f4a5b6c7d',
@@ -32,9 +33,11 @@ async function setup() {
   const request = (who: AdminUser, projectId: string | undefined) =>
     ({ admin: who, params: projectId === undefined ? {} : { projectId } }) as FastifyRequest;
   const accountStates = new InMemoryAccountUsageRepository();
+  const goals = new InMemoryGoalRepository();
   return {
-    guard: new ProjectAccessGuard(admins, accountStates),
+    guard: new ProjectAccessGuard(admins, accountStates, goals),
     accountStates,
+    goals,
     admin,
     stranger,
     request,
@@ -48,6 +51,25 @@ describe('ProjectAccessGuard', () => {
 
     await expect(guard.canActivate(contextOf(allowed))).resolves.toBe(true);
     expect(projectOf(allowed)).toEqual(PROJECT);
+  });
+
+  it('puts the goals of the project on the request, in their order', async () => {
+    const { guard, goals, admin, request } = await setup();
+    await goals.create(
+      PROJECT.id,
+      { name: 'Signed up', target: { type: 'event', name: 'signup' } },
+      10,
+    );
+    await goals.create(
+      'another-project',
+      { name: 'Other', target: { type: 'page', path: '/x' } },
+      10,
+    );
+    const allowed = request(admin, PROJECT.id);
+
+    await guard.canActivate(contextOf(allowed));
+
+    expect(goalsOf(allowed).map(({ name }) => name)).toEqual(['Signed up']);
   });
 
   it('refuses a project whose account is suspended, without putting it on the request', async () => {
@@ -83,5 +105,11 @@ describe('ProjectAccessGuard', () => {
 describe('projectOf', () => {
   it('fails loudly when a route reads the project without the guard', () => {
     expect(() => projectOf({} as FastifyRequest)).toThrow('ProjectAccessGuard must run before');
+  });
+});
+
+describe('goalsOf', () => {
+  it('fails loudly when a route reads the goals without the guard', () => {
+    expect(() => goalsOf({} as FastifyRequest)).toThrow('ProjectAccessGuard must run before');
   });
 });

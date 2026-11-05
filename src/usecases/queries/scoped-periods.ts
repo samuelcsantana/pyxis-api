@@ -1,4 +1,5 @@
 import type { Project } from '../../domain/entities/project.entity';
+import type { GoalTarget } from '../../domain/goals/goal';
 import {
   checkedRange,
   comparisonCutoff,
@@ -12,6 +13,7 @@ export interface RequestedRange {
   readonly from: string;
   readonly to: string;
   readonly filters?: ReportFilters;
+  readonly conversion?: GoalTarget | null;
 }
 
 export interface ScopedPeriods {
@@ -29,7 +31,7 @@ export function scopedPeriods(
   const current: QueryScope = {
     projectId: project.id,
     timeZone: project.timezone,
-    conversionEvent: project.conversionEvent,
+    conversion: requested.conversion ?? null,
     range,
     filters: requested.filters ?? NO_REPORT_FILTERS,
   };

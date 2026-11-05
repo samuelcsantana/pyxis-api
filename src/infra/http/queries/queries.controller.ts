@@ -26,8 +26,8 @@ import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
-import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
+import { ApiGoal, ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import {
   type AcquisitionReportBody,
   acquisitionReportSchema,
@@ -43,8 +43,8 @@ import {
   funnelReportSchema,
   type OverviewReportBody,
   overviewReportSchema,
-  type FilteredRangeQuery,
-  filteredRangeQuerySchema,
+  type ConversionRangeQuery,
+  conversionRangeQuerySchema,
   type RequestsQuery,
   requestsQuerySchema,
   type RequestsReportBody,
@@ -299,19 +299,26 @@ export class QueriesController {
   @Get('overview')
   @ApiRange()
   @ApiReportFilters()
+  @ApiGoal()
   @ApiOperation({ summary: 'KPIs, daily activity, top pages and top events of a range' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: overviewReportSchema })
   async overview(
     @Req() request: FastifyRequest,
-    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
-    query: FilteredRangeQuery,
+    @Query({
+      schema: conversionRangeQuerySchema,
+      pipes: [new SchemaPipe(conversionRangeQuerySchema)],
+    })
+    query: ConversionRangeQuery,
   ): Promise<OverviewReportBody> {
-    return overviewBody(await this.getOverview.execute(projectOf(request), filteredRangeOf(query)));
+    return overviewBody(
+      await this.getOverview.execute(projectOf(request), filteredRangeOf(query, goalsOf(request))),
+    );
   }
 
   @Get('devices')
   @ApiRange()
   @ApiReportFilters()
+  @ApiGoal()
   @ApiOperation({
     summary:
       'Visits and conversions by device type, browser, system, country, region and city, and the reach of the range',
@@ -319,24 +326,36 @@ export class QueriesController {
   @ApiResponse({ status: HttpStatus.OK, standardSchema: devicesReportSchema })
   async devices(
     @Req() request: FastifyRequest,
-    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
-    query: FilteredRangeQuery,
+    @Query({
+      schema: conversionRangeQuerySchema,
+      pipes: [new SchemaPipe(conversionRangeQuerySchema)],
+    })
+    query: ConversionRangeQuery,
   ): Promise<DevicesReportBody> {
-    return devicesBody(await this.getDevices.execute(projectOf(request), filteredRangeOf(query)));
+    return devicesBody(
+      await this.getDevices.execute(projectOf(request), filteredRangeOf(query, goalsOf(request))),
+    );
   }
 
   @Get('acquisition')
   @ApiRange()
   @ApiReportFilters()
+  @ApiGoal()
   @ApiOperation({ summary: 'Visits per day and channel, and the sources that brought them' })
   @ApiResponse({ status: HttpStatus.OK, standardSchema: acquisitionReportSchema })
   async acquisition(
     @Req() request: FastifyRequest,
-    @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
-    query: FilteredRangeQuery,
+    @Query({
+      schema: conversionRangeQuerySchema,
+      pipes: [new SchemaPipe(conversionRangeQuerySchema)],
+    })
+    query: ConversionRangeQuery,
   ): Promise<AcquisitionReportBody> {
     return acquisitionBody(
-      await this.getAcquisition.execute(projectOf(request), filteredRangeOf(query)),
+      await this.getAcquisition.execute(
+        projectOf(request),
+        filteredRangeOf(query, goalsOf(request)),
+      ),
     );
   }
 
@@ -352,7 +371,11 @@ export class QueriesController {
     query: FeaturesQuery,
   ): Promise<FeaturesReportBody> {
     return featuresBody(
-      await this.getFeatures.execute(projectOf(request), filteredRangeOf(query), query.kind),
+      await this.getFeatures.execute(
+        projectOf(request),
+        filteredRangeOf(query, goalsOf(request)),
+        query.kind,
+      ),
     );
   }
 
@@ -389,7 +412,7 @@ export class QueriesController {
     const project = projectOf(request);
     const report = await this.getRequests.execute(
       project,
-      filteredRangeOf(query),
+      filteredRangeOf(query, goalsOf(request)),
       query.screen ?? null,
       query.kind,
       query.route ?? null,
@@ -417,7 +440,7 @@ export class QueriesController {
   ): Promise<FunnelReportBody> {
     const report = await this.getFunnel.execute(
       projectOf(request),
-      filteredRangeOf(query),
+      filteredRangeOf(query, goalsOf(request)),
       query.mode,
       query.steps,
     );

@@ -18,7 +18,7 @@ export class DrizzleArrivalsQuery implements ArrivalsQuery {
   async arrivals(ask: ArrivalsAsk): Promise<ArrivalRows> {
     const [visits, conversions, namedEvents, failedRequests, activeVisits] = await Promise.all([
       this.arrivedSince(ask, isEntryPageView),
-      ask.scope.conversionEvent === null
+      ask.scope.conversion === null
         ? Promise.resolve(null)
         : this.arrivedSince(ask, isConversion(ask.scope)),
       this.arrivedSince(ask, isNamedEvent),

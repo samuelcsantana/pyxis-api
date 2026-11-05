@@ -1,6 +1,8 @@
 import { type SQL, sql } from 'drizzle-orm';
 import { API_REQUEST, IDENTIFY, PAGE_VIEW } from '../../domain/events/reserved-event-names';
+import type { GoalTarget } from '../../domain/goals/goal';
 import { AD_CLICK_SOURCE, DIRECT_SOURCE } from '../../domain/queries/acquisition';
+import { likePattern } from '../../domain/queries/funnel';
 import type { QueryScope } from '../../domain/queries/query-scope';
 import { events } from '../database/schema/events';
 
@@ -42,8 +44,17 @@ export const isFailedRequest = sql`${events.name} = ${API_REQUEST} AND ${hasFail
 export const isFailedRead = sql`${events.name} = ${API_REQUEST}
   AND ${events.properties}->>'method' = 'GET' AND ${hasFailed}`;
 
+export function matchesGoal(target: GoalTarget | null): SQL {
+  if (target === null) {
+    return sql`false`;
+  }
+  return target.type === 'event'
+    ? sql`${events.name} = ${target.name}`
+    : sql`${isPageView} AND ${events.path} LIKE ${likePattern(target.path)} ESCAPE '\\'`;
+}
+
 export function isConversion(scope: QueryScope): SQL {
-  return sql`${events.name} = ${scope.conversionEvent}`;
+  return matchesGoal(scope.conversion);
 }
 
 export const visits = sql`count(DISTINCT ${events.sessionId}) FILTER (WHERE ${isPageView})::int`;

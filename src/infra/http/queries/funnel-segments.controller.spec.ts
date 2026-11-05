@@ -33,7 +33,7 @@ describe('FunnelSegmentsController', () => {
     const controller = new FunnelSegmentsController(useCase as unknown as GetFunnelSegmentsUseCase);
 
     const body = await controller.segments(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       funnelSegmentsQuerySchema.parse({ ...BASE, by: 'device', identity: 'anonymous' }),
     );
 
@@ -44,6 +44,7 @@ describe('FunnelSegmentsController', () => {
           from: '2026-10-04',
           to: '2026-10-05',
           filters: { ...NO_REPORT_FILTERS, identity: 'anonymous' },
+          conversion: null,
         },
         [
           { type: 'page', path: '/pricing' },

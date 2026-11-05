@@ -11,6 +11,7 @@ import {
   MAX_UTM_VALUE_LENGTH,
 } from '../../../domain/events/event-limits';
 import { MAX_CITY_NAME_LENGTH } from '../../../domain/events/city';
+import { conversionTarget, type Goal, goalWithId } from '../../../domain/goals/goal';
 import { REGION_CODE_PATTERN } from '../../../domain/events/region';
 import {
   MAX_VISIT_PATH_FILTERS,
@@ -23,9 +24,12 @@ import type { ReportFilterParams } from './query.schemas';
 interface FilteredRangeParams extends ReportFilterParams {
   readonly from: string;
   readonly to: string;
+  readonly goal?: string;
 }
 
-export function reportFiltersOf(query: ReportFilterParams): ReportFilters {
+const GOAL_ID_SCHEMA = { type: 'string', format: 'uuid' } as const;
+
+export function reportFiltersOf(query: ReportFilterParams, goals: readonly Goal[]): ReportFilters {
   return {
     paths: query.path ?? [],
     event:
@@ -41,11 +45,32 @@ export function reportFiltersOf(query: ReportFilterParams): ReportFilters {
     source: query.source ?? null,
     campaign: query.campaign ?? null,
     failed: query.failed ?? false,
+    reachedGoal:
+      query.reached_goal === undefined ? null : goalWithId(goals, query.reached_goal).target,
   };
 }
 
-export function filteredRangeOf(query: FilteredRangeParams): RequestedRange {
-  return { from: query.from, to: query.to, filters: reportFiltersOf(query) };
+export function filteredRangeOf(
+  query: FilteredRangeParams,
+  goals: readonly Goal[],
+): RequestedRange {
+  return {
+    from: query.from,
+    to: query.to,
+    filters: reportFiltersOf(query, goals),
+    conversion: conversionTarget(goals, query.goal),
+  };
+}
+
+export function ApiGoal() {
+  return ApiQuery({
+    name: 'goal',
+    required: false,
+    description:
+      'The goal counted as conversions, by its id (GET /v1/projects/{projectId}/goals); without ' +
+      'it, the first goal. Conversions are null when the project has no goal.',
+    schema: GOAL_ID_SCHEMA,
+  });
 }
 
 export function ApiReportFilters() {
@@ -141,6 +166,14 @@ export function ApiReportFilters() {
       required: false,
       description: 'true: only the visits with a failed request (status 0 or 400 and above)',
       schema: { type: 'string', enum: ['true', 'false'] },
+    }),
+    ApiQuery({
+      name: 'reached_goal',
+      required: false,
+      description:
+        'Only the visits that reached this goal, by its id: sent its event, or viewed a page its ' +
+        'pattern matches',
+      schema: GOAL_ID_SCHEMA,
     }),
   );
 }

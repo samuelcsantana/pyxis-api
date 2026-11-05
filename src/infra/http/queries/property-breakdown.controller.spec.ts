@@ -69,7 +69,7 @@ describe('PropertyBreakdownController', () => {
     );
 
     const body = await controller.properties(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       propertyBreakdownQuerySchema.parse({
         from: '2026-10-04',
         to: '2026-10-05',
@@ -89,6 +89,7 @@ describe('PropertyBreakdownController', () => {
             ...NO_REPORT_FILTERS,
             event: { name: 'signup_completed', property: { key: 'plan', value: 'pro' } },
           },
+          conversion: null,
         },
         'calculator_result_shown',
       ],
@@ -125,7 +126,7 @@ describe('PropertyBreakdownController.summary', () => {
     );
 
     const body = await controller.summary(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       propertySummaryQuerySchema.parse({
         from: '2026-10-04',
         to: '2026-10-05',
@@ -143,6 +144,7 @@ describe('PropertyBreakdownController.summary', () => {
           from: '2026-10-04',
           to: '2026-10-05',
           filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' },
+          conversion: null,
         },
         { name: 'article_read_100', key: 'seconds', by: 'post' },
       ],
@@ -170,7 +172,7 @@ describe('PropertyBreakdownController.summary', () => {
     );
 
     await controller.summary(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       propertySummaryQuerySchema.parse({
         from: '2026-10-04',
         to: '2026-10-05',

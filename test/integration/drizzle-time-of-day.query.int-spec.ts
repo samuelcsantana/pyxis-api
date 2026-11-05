@@ -61,7 +61,7 @@ const SEEDED: readonly TrackedEvent[] = [
 const SCOPE: QueryScope = {
   projectId: SHOP_ID,
   timeZone: 'America/Sao_Paulo',
-  conversionEvent: null,
+  conversion: null,
   range: { from: '2026-10-01', to: '2026-10-05' },
   filters: NO_REPORT_FILTERS,
 };

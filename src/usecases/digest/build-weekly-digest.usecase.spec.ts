@@ -132,7 +132,7 @@ describe('BuildWeeklyDigestUseCase', () => {
       {
         projectId: 'shop',
         timeZone: 'America/Sao_Paulo',
-        conversionEvent: 'signup_completed',
+        conversion: { type: 'event', name: 'signup_completed' },
         range: WEEK,
         filters: NO_REPORT_FILTERS,
         screen: null,

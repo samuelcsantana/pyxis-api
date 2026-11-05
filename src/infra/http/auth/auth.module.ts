@@ -9,6 +9,7 @@ import { ADMIN_SESSION_REPOSITORY } from '../../../domain/repositories/admin-ses
 import { ADMIN_USER_REPOSITORY } from '../../../domain/repositories/admin-user.repository';
 import { OAUTH_CONNECTION_REPOSITORY } from '../../../domain/repositories/oauth-connection.repository';
 import { OTP_CODE_REPOSITORY } from '../../../domain/repositories/otp-code.repository';
+import { GOAL_REPOSITORY } from '../../../domain/repositories/goal.repository';
 import { PROJECT_ACCOUNT_STATE_REPOSITORY } from '../../../domain/repositories/project-account-state.repository';
 import { PROJECT_ICON_REPOSITORY } from '../../../domain/repositories/project-icon.repository';
 import { REVIEWER_CODE_REPOSITORY } from '../../../domain/repositories/reviewer-code.repository';
@@ -41,6 +42,7 @@ import { DrizzleAdminSessionRepository } from '../../repositories/drizzle-admin-
 import { DrizzleAdminUserRepository } from '../../repositories/drizzle-admin-user.repository';
 import { DrizzleOAuthConnectionRepository } from '../../repositories/drizzle-oauth-connection.repository';
 import { DrizzleOtpCodeRepository } from '../../repositories/drizzle-otp-code.repository';
+import { DrizzleGoalRepository } from '../../repositories/drizzle-goal.repository';
 import { DrizzleProjectIconRepository } from '../../repositories/drizzle-project-icon.repository';
 import { DrizzleReviewerCodeRepository } from '../../repositories/drizzle-reviewer-code.repository';
 import {
@@ -85,6 +87,7 @@ import { ReadAccessGuard } from './read-access.guard';
     { provide: PROJECT_ICON_REPOSITORY, useClass: DrizzleProjectIconRepository },
     { provide: PROJECT_RESTRICTIONS_QUERY, useClass: DrizzleProjectRestrictionsQuery },
     { provide: PROJECT_ACCOUNTS_QUERY, useClass: DrizzleProjectAccountsQuery },
+    { provide: GOAL_REPOSITORY, useClass: DrizzleGoalRepository },
     {
       provide: PROJECT_ACCOUNT_STATE_REPOSITORY,
       inject: [DRIZZLE_CLIENT, CLOCK],
@@ -114,6 +117,7 @@ import { ReadAccessGuard } from './read-access.guard';
     AuthenticateConnectionTokenUseCase,
     ADMIN_USER_REPOSITORY,
     PROJECT_ACCOUNT_STATE_REPOSITORY,
+    GOAL_REPOSITORY,
     CLOCK,
     MAIL_SENDER,
   ],

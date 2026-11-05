@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { ArrivalsReport, ArrivalTimes } from '../../../domain/queries/arrivals';
 import { MAX_ARRIVAL_TIMES } from '../../../domain/queries/arrivals';
+import { goalIdSchema } from './query.schemas';
 
 export const arrivalsQuerySchema = z.strictObject({
   from: z.iso.date().describe('First day, inclusive, in the project time zone'),
@@ -8,6 +9,7 @@ export const arrivalsQuerySchema = z.strictObject({
   since: z.iso
     .datetime({ offset: true })
     .describe('Count what arrived after this moment; earlier than 7 days ago counts from then'),
+  goal: goalIdSchema.optional(),
 });
 
 export type ArrivalsQueryParameters = z.infer<typeof arrivalsQuerySchema>;

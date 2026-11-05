@@ -20,7 +20,7 @@ import {
   type FunnelSegmentsReportBody,
   funnelSegmentsReportSchema,
 } from './funnel-segments.schemas';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
@@ -62,7 +62,7 @@ export class FunnelSegmentsController {
   ): Promise<FunnelSegmentsReportBody> {
     const segments = await this.getFunnelSegments.execute(
       projectOf(request),
-      filteredRangeOf(query),
+      filteredRangeOf(query, goalsOf(request)),
       query.steps,
       query.by,
     );

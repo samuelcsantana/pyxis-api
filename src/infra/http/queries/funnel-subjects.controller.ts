@@ -25,7 +25,7 @@ import {
   type FunnelSubjectsReportBody,
   funnelSubjectsReportSchema,
 } from './funnel-subjects.schemas';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
 import { ApiAccountSuspended } from '../errors/account-suspended.response';
@@ -94,7 +94,7 @@ export class FunnelSubjectsController {
     const project = projectOf(request);
     const report = await this.getFunnelSubjects.execute(
       project,
-      filteredRangeOf(query),
+      filteredRangeOf(query, goalsOf(request)),
       { mode: query.mode, steps: query.steps, stepIndex: query.step - 1, outcome: query.outcome },
       query.cursor ?? null,
     );

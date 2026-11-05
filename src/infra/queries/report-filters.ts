@@ -7,7 +7,15 @@ import type {
   VisitIdentity,
 } from '../../domain/queries/report-filters';
 import { events } from '../database/schema/events';
-import { entrySource, inPeriod, isEntryPageView, isFailedRequest, isPageView } from './definitions';
+import type { GoalTarget } from '../../domain/goals/goal';
+import {
+  entrySource,
+  inPeriod,
+  isEntryPageView,
+  isFailedRequest,
+  isPageView,
+  matchesGoal,
+} from './definitions';
 
 function pageConditions(paths: readonly string[]): readonly SQL[] {
   return paths.map(
@@ -42,6 +50,10 @@ function identityConditions(identity: VisitIdentity | null): readonly SQL[] {
   return [identity === 'identified' ? identified : sql`NOT ${identified}`];
 }
 
+function reachedGoalConditions(goal: GoalTarget | null): readonly SQL[] {
+  return goal === null ? [] : [sql`bool_or(${matchesGoal(goal)})`];
+}
+
 function failureConditions(failed: boolean): readonly SQL[] {
   return failed ? [sql`bool_or(${isFailedRequest})`] : [];
 }
@@ -70,6 +82,7 @@ function visitConditions(filters: ReportFilters): readonly SQL[] {
     ...entryWith(entrySource, filters.source),
     ...entryWith(events.utmCampaign, filters.campaign),
     ...failureConditions(filters.failed),
+    ...reachedGoalConditions(filters.reachedGoal),
   ];
 }
 

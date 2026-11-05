@@ -1,4 +1,5 @@
 import type { Project } from '../../domain/entities/project.entity';
+import type { GoalTarget } from '../../domain/goals/goal';
 import { InvalidRangeError } from '../../domain/errors/query.errors';
 import { TOP_ITEMS } from '../../domain/queries/overview';
 import { FixedClock } from '../../test-utils/fixed-clock';
@@ -19,10 +20,18 @@ const PROJECT: Project = {
 };
 const LATE_EVENING_IN_SAO_PAULO = new Date('2026-10-06T02:30:00.000Z');
 
+function conversionOf(project: Project): GoalTarget | null {
+  return project.conversionEvent === null ? null : { type: 'event', name: project.conversionEvent };
+}
+
 function setup(project: Project = PROJECT, now: Date = LATE_EVENING_IN_SAO_PAULO) {
   const query = new StubOverviewQuery();
   const useCase = new GetOverviewUseCase(query, new FixedClock(now));
-  return { query, run: (from: string, to: string) => useCase.execute(project, { from, to }) };
+  return {
+    query,
+    run: (from: string, to: string) =>
+      useCase.execute(project, { from, to, conversion: conversionOf(project) }),
+  };
 }
 
 function scopesFrom(query: StubOverviewQuery, from: string) {
@@ -111,7 +120,7 @@ describe('GetOverviewUseCase', () => {
     expect(query.scopes[0]).toEqual({
       projectId: 'project-1',
       timeZone: 'America/Sao_Paulo',
-      conversionEvent: 'signup_completed',
+      conversion: { type: 'event', name: 'signup_completed' },
       range: { from: '2026-10-05', to: '2026-10-05' },
       filters: NO_REPORT_FILTERS,
     });

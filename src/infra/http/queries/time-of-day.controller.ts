@@ -6,7 +6,7 @@ import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import { ApiRange } from './queries.controller';
 import { type FilteredRangeQuery, filteredRangeQuerySchema } from './query.schemas';
 import { ApiReportFilters, filteredRangeOf } from './report-filter-params';
@@ -39,7 +39,10 @@ export class TimeOfDayController {
     @Query({ schema: filteredRangeQuerySchema, pipes: [new SchemaPipe(filteredRangeQuerySchema)] })
     query: FilteredRangeQuery,
   ): Promise<TimeOfDayReportBody> {
-    const weekdays = await this.getTimeOfDay.execute(projectOf(request), filteredRangeOf(query));
+    const weekdays = await this.getTimeOfDay.execute(
+      projectOf(request),
+      filteredRangeOf(query, goalsOf(request)),
+    );
     return { weekdays: weekdays.map((day) => ({ weekday: day.weekday, hours: [...day.hours] })) };
   }
 }

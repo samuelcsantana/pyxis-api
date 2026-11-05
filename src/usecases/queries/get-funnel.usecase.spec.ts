@@ -51,7 +51,7 @@ describe('GetFunnelUseCase', () => {
         scope: {
           projectId: 'project-1',
           timeZone: 'America/Sao_Paulo',
-          conversionEvent: 'signup_completed',
+          conversion: null,
           range: { from: '2026-10-01', to: '2026-10-05' },
           filters: NO_REPORT_FILTERS,
         },

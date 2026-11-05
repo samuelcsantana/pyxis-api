@@ -9,7 +9,7 @@ import { ReadAccess } from '../auth/read-access.decorator';
 import { SESSION_COOKIE_NAME } from '../auth/session-cookie';
 import { errorResponseSchema } from '../ingest/ingest.schemas';
 import { SchemaPipe } from '../schema-pipe';
-import { ProjectAccessGuard, projectOf } from './project-access.guard';
+import { goalsOf, ProjectAccessGuard, projectOf } from './project-access.guard';
 import {
   type PropertyBreakdownQuery,
   propertyBreakdownQuerySchema,
@@ -84,7 +84,7 @@ export class PropertyBreakdownController {
   ): Promise<PropertyBreakdownReportBody> {
     const report = await this.getPropertyBreakdown.execute(
       projectOf(request),
-      filteredRangeOf(query),
+      filteredRangeOf(query, goalsOf(request)),
       query.name,
     );
     return propertyBreakdownBody(report);
@@ -107,7 +107,7 @@ export class PropertyBreakdownController {
   ): Promise<PropertySummaryReportBody> {
     const report = await this.getPropertySummary.execute(
       projectOf(request),
-      filteredRangeOf(query),
+      filteredRangeOf(query, goalsOf(request)),
       {
         name: query.name,
         key: query.key,

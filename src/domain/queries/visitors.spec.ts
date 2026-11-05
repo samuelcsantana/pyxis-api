@@ -9,7 +9,7 @@ function scopeOf(from: string, to: string, lastDayUntil?: string): QueryScope {
   return {
     projectId: 'c1d2e3f4-a5b6-4c7d-8e9f-a0b1c2d3e4f5',
     timeZone: 'America/Sao_Paulo',
-    conversionEvent: null,
+    conversion: null,
     range: { from, to },
     filters: NO_REPORT_FILTERS,
     ...(lastDayUntil === undefined ? {} : { lastDayUntil }),

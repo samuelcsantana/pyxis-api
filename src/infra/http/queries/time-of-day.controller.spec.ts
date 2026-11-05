@@ -31,12 +31,15 @@ describe('TimeOfDayController', () => {
     const controller = new TimeOfDayController(useCase as unknown as GetTimeOfDayUseCase);
 
     const body = await controller.timeOfDay(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       filteredRangeQuerySchema.parse({ ...RANGE, device: 'mobile' }),
     );
 
     expect(calls).toEqual([
-      [PROJECT, { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' } }],
+      [
+        PROJECT,
+        { ...RANGE, filters: { ...NO_REPORT_FILTERS, deviceType: 'mobile' }, conversion: null },
+      ],
     ]);
     const parsed = timeOfDayReportSchema.parse(body);
     expect(parsed.weekdays).toHaveLength(7);

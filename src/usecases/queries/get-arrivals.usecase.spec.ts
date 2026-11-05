@@ -45,7 +45,7 @@ describe('GetArrivalsUseCase', () => {
         scope: {
           projectId: 'project-1',
           timeZone: 'America/Sao_Paulo',
-          conversionEvent: null,
+          conversion: null,
           range: { from: '2026-10-17', to: '2026-10-23' },
           filters: NO_REPORT_FILTERS,
         },

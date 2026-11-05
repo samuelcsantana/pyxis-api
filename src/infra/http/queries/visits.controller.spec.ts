@@ -63,7 +63,7 @@ describe('VisitsController', () => {
     const { controller, calls } = controllerAnswering(REPORT);
 
     const body = await controller.visits(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       visitsQuerySchema.parse({
         ...RANGE,
         path: ['/calculadora-taxa-ifood', '/calculadora-taxa-99food'],
@@ -109,6 +109,7 @@ describe('VisitsController', () => {
           route: { method: 'POST', route: '/orders/:id' },
           visitors: 'day',
           failed: true,
+          reachedGoal: null,
         },
         { startedAt: new Date('2026-10-05T13:00:00.000Z'), sessionId: SESSION_ID },
       ],
@@ -147,7 +148,7 @@ describe('VisitsController', () => {
     const { controller, calls } = controllerAnswering({ visits: [], nextCursor: null, total: 0 });
 
     const body = await controller.visits(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       visitsQuerySchema.parse(RANGE),
     );
 
@@ -164,7 +165,7 @@ describe('VisitsController', () => {
     const { controller, calls } = controllerAnswering({ visits: [], nextCursor: null, total: 0 });
 
     await controller.visits(
-      { project: PROJECT } as FastifyRequest,
+      { project: PROJECT, goals: [] } as unknown as FastifyRequest,
       visitsQuerySchema.parse({ ...RANGE, path: '/pricing', event: 'signup_completed' }),
     );
 
