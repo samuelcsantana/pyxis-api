@@ -1,12 +1,5 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  type Annotation,
-  MAX_ANNOTATIONS_PER_PROJECT,
-  requireAnnotationDay,
-  requireAnnotationText,
-} from '../../domain/annotations/annotation';
-import { AnnotationLimitReachedError } from '../../domain/errors/annotation.errors';
-import { todayIn } from '../../domain/queries/date-range';
+import { Inject, Injectable } from '@nestjs/common';
+import { type Annotation, requireAnnotationText } from '../../domain/annotations/annotation';
 import {
   ACCOUNT_REPOSITORY,
   type AccountRepository,
@@ -21,6 +14,7 @@ import {
 } from '../../domain/repositories/project-settings.repository';
 import { CLOCK, type Clock } from '../../domain/services/clock';
 import { changeableProject } from '../projects/owned-project';
+import { addAnnotation } from './add-annotation';
 
 export interface CreateAnnotationCommand {
   readonly adminUserId: string;
@@ -31,8 +25,6 @@ export interface CreateAnnotationCommand {
 
 @Injectable()
 export class CreateAnnotationUseCase {
-  private readonly logger = new Logger(CreateAnnotationUseCase.name);
-
   constructor(
     @Inject(PROJECT_SETTINGS_REPOSITORY) private readonly projects: ProjectSettingsRepository,
     @Inject(ACCOUNT_REPOSITORY) private readonly accounts: AccountRepository,
@@ -48,22 +40,6 @@ export class CreateAnnotationUseCase {
       command.projectId,
       command.adminUserId,
     );
-    const now = this.clock.now();
-    const day = requireAnnotationDay(command.day, todayIn(project.timezone, now));
-    const created = await this.annotations.create(
-      project.id,
-      { day, text },
-      now,
-      MAX_ANNOTATIONS_PER_PROJECT,
-    );
-    if (created.outcome === 'limit_reached') {
-      throw new AnnotationLimitReachedError(MAX_ANNOTATIONS_PER_PROJECT);
-    }
-    this.logger.log({
-      message: 'annotation.created',
-      projectId: project.id,
-      annotationId: created.annotation.id,
-    });
-    return created.annotation;
+    return addAnnotation(this.annotations, project, { day: command.day, text }, this.clock.now());
   }
 }
