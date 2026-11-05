@@ -55,6 +55,7 @@ export function managedProjectBody(project: Project): ManagedProjectBody {
     allowed_origins: [...project.allowedOrigins],
     timezone: project.timezone,
     conversion_event: project.conversionEvent,
+    currency: project.currency,
     city_enabled: project.cityEnabled,
     visitors_enabled: project.visitorsEnabled,
     created_at: project.createdAt.toISOString(),
@@ -112,6 +113,7 @@ export class ProjectsController {
       allowedOrigins: body.allowed_origins,
       ...(body.timezone === undefined ? {} : { timezone: body.timezone }),
       ...(body.conversion_event === undefined ? {} : { conversionEvent: body.conversion_event }),
+      ...(body.currency === undefined ? {} : { currency: body.currency }),
     });
     return {
       project_id: created.projectId,
@@ -138,6 +140,7 @@ export class ProjectsController {
       ...(body.allowed_origins === undefined ? {} : { allowedOrigins: body.allowed_origins }),
       ...(body.timezone === undefined ? {} : { timezone: body.timezone }),
       ...(body.conversion_event === undefined ? {} : { conversionEvent: body.conversion_event }),
+      ...(body.currency === undefined ? {} : { currency: body.currency }),
       ...(body.city_enabled === undefined ? {} : { cityEnabled: body.city_enabled }),
       ...(body.visitors_enabled === undefined ? {} : { visitorsEnabled: body.visitors_enabled }),
     });

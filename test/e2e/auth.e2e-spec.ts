@@ -320,6 +320,7 @@ describe('dashboard sign-in', () => {
           name: 'Shop',
           timezone: 'America/Sao_Paulo',
           conversion_event: 'signup_completed',
+          currency: 'BRL',
           first_event_at: null,
           last_event_at: null,
           icon_version: null,

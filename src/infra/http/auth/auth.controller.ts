@@ -182,6 +182,7 @@ export class MeController {
         name: project.name,
         timezone: project.timezone,
         conversion_event: project.conversionEvent,
+        currency: project.currency,
         first_event_at: isoOrNull(project.firstEventAt),
         last_event_at: isoOrNull(project.lastEventAt),
         icon_version: project.iconVersion,

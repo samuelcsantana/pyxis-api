@@ -9,6 +9,7 @@ import {
 import {
   DEFAULT_TIMEZONE,
   requireConversionEvent,
+  requireCurrency,
   requireOrigins,
   requireProjectName,
   requireTimeZone,
@@ -26,6 +27,7 @@ export interface CreateProjectCommand {
   readonly allowedOrigins: readonly string[];
   readonly timezone?: string;
   readonly conversionEvent?: string;
+  readonly currency?: string;
   readonly accountId?: string;
 }
 
@@ -52,6 +54,7 @@ export class CreateProjectUseCase {
         command.conversionEvent === undefined
           ? null
           : requireConversionEvent(command.conversionEvent),
+      ...(command.currency === undefined ? {} : { currency: requireCurrency(command.currency) }),
     };
     const publicKey = generatePublicKey(this.random);
     const created =

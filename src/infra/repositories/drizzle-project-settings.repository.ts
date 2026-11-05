@@ -50,11 +50,12 @@ async function insertProjectWithKey(
 function columnChanges(
   changes: Omit<ProjectChanges, 'conversionEvent'>,
 ): Partial<typeof projects.$inferInsert> {
-  const { name, allowedOrigins, timezone, cityEnabled, visitorsEnabled } = changes;
+  const { name, allowedOrigins, timezone, currency, cityEnabled, visitorsEnabled } = changes;
   return {
     ...(name === undefined ? {} : { name }),
     ...(allowedOrigins === undefined ? {} : { allowedOrigins: [...allowedOrigins] }),
     ...(timezone === undefined ? {} : { timezone }),
+    ...(currency === undefined ? {} : { currency }),
     ...(cityEnabled === undefined ? {} : { cityEnabled }),
     ...(visitorsEnabled === undefined ? {} : { visitorsEnabled }),
   };

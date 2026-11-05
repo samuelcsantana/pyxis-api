@@ -12,6 +12,9 @@ export const projectSettingsSchema = z
       .string()
       .nullable()
       .describe('The event counted as a conversion; null when the project has none'),
+    currency: z
+      .string()
+      .describe('The ISO 4217 currency of the revenue sent by the site, such as BRL'),
     city_enabled: z
       .boolean()
       .describe(

@@ -14,6 +14,7 @@ export function toProject(row: ProjectRow): Project {
     allowedOrigins: row.allowedOrigins,
     timezone: row.timezone,
     conversionEvent: row.conversionEvent,
+    currency: row.currency,
     cityEnabled: row.cityEnabled,
     visitorsEnabled: row.visitorsEnabled,
     createdAt: row.createdAt,

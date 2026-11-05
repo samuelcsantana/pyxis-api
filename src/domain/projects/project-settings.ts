@@ -4,6 +4,9 @@ import { EVENT_NAME_PATTERN } from '../events/event-limits';
 export const MAX_PROJECT_NAME_LENGTH = 100;
 export const MAX_ALLOWED_ORIGINS = 5;
 export const DEFAULT_TIMEZONE = 'UTC';
+export const DEFAULT_CURRENCY = 'BRL';
+
+const CURRENCIES: ReadonlySet<string> = new Set(Intl.supportedValuesOf('currency'));
 
 const WEB_PROTOCOLS = new Set(['http:', 'https:']);
 
@@ -70,4 +73,14 @@ export function requireConversionEvent(name: string): string {
     );
   }
   return name;
+}
+
+export function requireCurrency(currency: string): string {
+  if (!CURRENCIES.has(currency)) {
+    throw new InvalidProjectSettingsError(
+      'currency',
+      `"${currency}" is not an ISO 4217 currency code (BRL, USD, EUR).`,
+    );
+  }
+  return currency;
 }

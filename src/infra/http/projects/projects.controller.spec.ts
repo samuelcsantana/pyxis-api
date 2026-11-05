@@ -37,6 +37,7 @@ const PROJECT: Project = {
   allowedOrigins: ['https://shop.example.com'],
   timezone: 'UTC',
   conversionEvent: null,
+  currency: 'BRL',
   cityEnabled: false,
   visitorsEnabled: false,
   createdAt: new Date('2026-11-02T00:00:00.000Z'),
@@ -89,6 +90,7 @@ describe('managedProjectBody', () => {
       allowed_origins: ['https://shop.example.com'],
       timezone: 'UTC',
       conversion_event: null,
+      currency: 'BRL',
       city_enabled: false,
       visitors_enabled: false,
       created_at: '2026-11-02T00:00:00.000Z',
@@ -109,6 +111,7 @@ describe('ProjectsController', () => {
       allowed_origins: ['https://shop.example.com'],
       timezone: 'America/Sao_Paulo',
       conversion_event: 'signup_completed',
+      currency: 'USD',
     });
 
     expect(body).toEqual({
@@ -125,6 +128,7 @@ describe('ProjectsController', () => {
           allowedOrigins: ['https://shop.example.com'],
           timezone: 'America/Sao_Paulo',
           conversionEvent: 'signup_completed',
+          currency: 'USD',
         },
       },
     ]);
@@ -158,6 +162,7 @@ describe('ProjectsController', () => {
       allowed_origins: ['https://store.example.com'],
       timezone: 'UTC',
       conversion_event: null,
+      currency: 'USD',
       city_enabled: true,
       visitors_enabled: true,
     });
@@ -170,6 +175,7 @@ describe('ProjectsController', () => {
       allowedOrigins: ['https://store.example.com'],
       timezone: 'UTC',
       conversionEvent: null,
+      currency: 'USD',
       cityEnabled: true,
       visitorsEnabled: true,
     });

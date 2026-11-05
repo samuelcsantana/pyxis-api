@@ -59,6 +59,7 @@ async function setup(settings: RemoteMcpSettings = OPEN) {
     allowedOrigins: [],
     timezone: 'UTC',
     conversionEvent: null,
+    currency: 'BRL',
     cityEnabled: false,
     visitorsEnabled: false,
     createdAt: NOW,

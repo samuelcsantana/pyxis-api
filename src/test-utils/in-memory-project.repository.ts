@@ -16,6 +16,8 @@ import type {
   ProjectSettingsRepository,
 } from '../domain/repositories/project-settings.repository';
 
+import { DEFAULT_CURRENCY } from '../domain/projects/project-settings';
+
 const CREATED_AT = new Date('2026-10-06T00:00:00.000Z');
 
 export interface ProjectAccessGrant {
@@ -73,6 +75,7 @@ export class InMemoryProjectRepository
   async createWithPublicKey(project: NewProject, publicKey: string): Promise<CreatedProject> {
     const created: Project = {
       ...project,
+      currency: project.currency ?? DEFAULT_CURRENCY,
       id: this.nextId(),
       cityEnabled: false,
       visitorsEnabled: false,
