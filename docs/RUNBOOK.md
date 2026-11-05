@@ -105,7 +105,10 @@ pyxis-api-deployer`; never paste it anywhere else. Terraform runs with that prof
    `/pyxis-api/app/RESEND_API_KEY` (a Resend key allowed to send only),
    `/pyxis-api/jobs/DATABASE_URL` (the same value as `/pyxis-api/app/DATABASE_URL`),
    `/pyxis-api/jobs/RESEND_API_KEY` (the same value as `/pyxis-api/app/RESEND_API_KEY`; rotate both),
-   `/pyxis-api/migrate/MIGRATION_DATABASE_URL` (direct host, owner, `sslmode=verify-full`).
+   `/pyxis-api/migrate/MIGRATION_DATABASE_URL` (direct host, owner, `sslmode=verify-full`),
+   `/pyxis-api/app/SLACK_WEBHOOK_KEYS` and `/pyxis-api/jobs/SLACK_WEBHOOK_KEYS` (the same value:
+   `1:` and 32 random bytes in base64, which seal the Slack webhooks; until it is set the Slack
+   routes answer 503).
    `DASHBOARD_ORIGIN` and `MAIL_FROM` are plain parameters Terraform sets from its variables, for
    the HTTP and the jobs functions; the e-mails link to `DASHBOARD_ORIGIN` and load their logo
    from it, and the domain of `MAIL_FROM` must be verified in Resend before the first sign-in.
@@ -659,6 +662,13 @@ Write the new value in CloudFront's origin header and in `/pyxis-api/app/EDGE_SH
 force new execution environments (`aws lambda update-function-configuration --function-name
 pyxis-api --description "rotated <date>"`). Requests answer 403 between the two edits.
 
+## Rotating the Slack webhook key
+
+Append the next version to `SLACK_WEBHOOK_KEYS`, in both `/pyxis-api/app` and `/pyxis-api/jobs`
+(`1:<old key>,2:<new key>`), then force new execution environments for both functions. New
+addresses are sealed with the newest key, the stored ones still open with theirs. Never remove a
+version: every webhook sealed with it stops opening until its owner pastes the address again.
+
 ## Local development
 
 To sign in as an admin locally, grant yourself a project, then exchange the code the API logs
@@ -716,6 +726,7 @@ Configuration is validated at boot ([`src/config/env.schema.ts`](../src/config/e
 | `JOBS_FUNCTION_NAME`                        | unset                                                         | The jobs function an export is handed to; without it exports wait for the daily job                                                                                                                                                                                                                       |
 | `API_ORIGIN`                                | unset; required when `REMOTE_MCP_OPEN` is `true`              | The API's own origin, such as `https://api.example.com`: the OAuth issuer, and `${API_ORIGIN}/mcp` the only resource a connection reads                                                                                                                                                                   |
 | `REMOTE_MCP_OPEN`                           | `false`                                                       | `true` opens `/mcp` and lets Claude and Claude Code connect through OAuth, once `API_ORIGIN` and `DASHBOARD_ORIGIN` are set; otherwise `/mcp`, its metadata, the OAuth addresses and the consent routes answer 404                                                                                        |
+| `SLACK_WEBHOOK_KEYS`                        | unset                                                         | The AES-256-GCM keys that seal the Slack webhooks, `version:base64-key[,version:base64-key]` with 32-byte keys; the newest version seals, every one opens. Unset or invalid: the Slack routes answer `503 slack_unavailable` and nothing is stored                                                        |
 
 In production every database URL ends in `sslmode=verify-full`. The production requirements
 apply to the API process only: the migration and the scripts validate the shared settings.
