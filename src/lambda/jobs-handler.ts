@@ -6,6 +6,7 @@ import { describeError } from '../infra/logging/describe-error';
 import type { AccountUsageReport } from '../usecases/accounts/measure-account-usage.usecase';
 import type { AccountLifecycleReport } from '../usecases/accounts/run-account-lifecycle.usecase';
 import type { DemoTrafficReport } from '../usecases/demo-traffic/generate-demo-traffic.usecase';
+import type { AlertsReport } from '../usecases/alerts/send-project-alerts.usecase';
 import type { DigestReport } from '../usecases/digest/send-weekly-digests.usecase';
 import type { ProjectIconsReport } from '../usecases/projects/refresh-project-icons.usecase';
 import type { RetentionReport } from '../usecases/retention/run-retention.usecase';
@@ -30,6 +31,7 @@ export interface JobsHandlerDependencies {
   readonly processExport: (exportId: string) => Promise<ExportOutcome>;
   readonly processStalledExports: () => Promise<StalledExportsReport>;
   readonly sendOperatorNotices: () => Promise<OperatorNoticesReport>;
+  readonly sendProjectAlerts: () => Promise<AlertsReport>;
   readonly generateDemoTraffic: () => Promise<DemoTrafficReport>;
 }
 
@@ -43,6 +45,7 @@ export type JobsOutcome =
       readonly accountLifecycle: AccountLifecycleReport;
       readonly exports: StalledExportsReport;
       readonly operatorNotices: OperatorNoticesReport;
+      readonly alerts: AlertsReport | null;
       readonly projectIcons: ProjectIconsReport | null;
       readonly demoTraffic: DemoTrafficReport | null;
     }
@@ -94,6 +97,20 @@ async function bestEffortRefreshProjectIcons(
   }
 }
 
+async function bestEffortSendProjectAlerts(
+  send: () => Promise<AlertsReport>,
+): Promise<AlertsReport | null> {
+  try {
+    return await send();
+  } catch (error) {
+    logger.error({
+      message: 'jobs.alerts_failed',
+      reason: describeError(error),
+    });
+    return null;
+  }
+}
+
 async function bestEffortGenerateDemoTraffic(
   generate: () => Promise<DemoTrafficReport>,
 ): Promise<DemoTrafficReport | null> {
@@ -134,6 +151,7 @@ export function createJobsHandler(
     const accountLifecycle = await dependencies.runAccountLifecycle();
     const stalledExports = await dependencies.processStalledExports();
     const operatorNotices = await dependencies.sendOperatorNotices();
+    const alerts = await bestEffortSendProjectAlerts(dependencies.sendProjectAlerts);
     const projectIcons = await bestEffortRefreshProjectIcons(dependencies.refreshProjectIcons);
     const demoTraffic = await bestEffortGenerateDemoTraffic(dependencies.generateDemoTraffic);
     logger.log({ message: DAILY_JOB_DONE });
@@ -146,6 +164,7 @@ export function createJobsHandler(
       accountLifecycle,
       exports: stalledExports,
       operatorNotices,
+      alerts,
       projectIcons,
       demoTraffic,
     };

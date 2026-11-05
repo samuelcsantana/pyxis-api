@@ -22,6 +22,7 @@ const DIGEST = { sent: 2, alreadySent: 1, failed: 0 };
 const ICONS = { found: 2, removed: 0, unreachable: 1 };
 const EXPORTS = { done: 1, failed: 0 };
 const NOTICES = { sent: 3, failed: 0 };
+const ALERTS = { projects: 4, raised: 2, sent: 3, alreadySent: 0, failed: 0, failedProjects: 0 };
 const DEMO_TRAFFIC = { projects: 1, inserted: 480 };
 const LIFECYCLE = {
   freePlacesOpened: 0,
@@ -93,6 +94,10 @@ function recordingDependencies(order: string[]): JobsHandlerDependencies {
       order.push('notices');
       return Promise.resolve(NOTICES);
     },
+    sendProjectAlerts: () => {
+      order.push('alerts');
+      return Promise.resolve(ALERTS);
+    },
     refreshProjectIcons: () => {
       order.push('icons');
       return Promise.resolve(ICONS);
@@ -125,6 +130,7 @@ describe('createJobsHandler', () => {
         accountLifecycle: LIFECYCLE,
         exports: EXPORTS,
         operatorNotices: NOTICES,
+        alerts: ALERTS,
         projectIcons: ICONS,
         demoTraffic: DEMO_TRAFFIC,
       });
@@ -136,6 +142,7 @@ describe('createJobsHandler', () => {
         'lifecycle',
         'exports',
         'notices',
+        'alerts',
         'icons',
         'demo traffic',
       ]);
@@ -179,6 +186,24 @@ describe('createJobsHandler', () => {
     await expect(
       createJobsHandler(recordingDependencies([]))({ job: 'export', exportId: 7 }),
     ).resolves.toMatchObject({ job: 'daily' });
+  });
+
+  it('finishes the daily jobs when the alerts fail, logging what it swallowed', async () => {
+    const errors = jest.spyOn(Logger.prototype, 'error').mockImplementation(() => undefined);
+    const handler = createJobsHandler({
+      ...recordingDependencies([]),
+      sendProjectAlerts: () => Promise.reject(new Error('mail down')),
+    });
+
+    await expect(handler()).resolves.toMatchObject({
+      job: 'daily',
+      alerts: null,
+      projectIcons: ICONS,
+    });
+    expect(errors).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'jobs.alerts_failed', reason: 'mail down' }),
+    );
+    errors.mockRestore();
   });
 
   it('finishes the daily jobs when the icons fail, logging what it swallowed', async () => {
