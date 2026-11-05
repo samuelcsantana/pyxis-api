@@ -436,6 +436,7 @@ Every rule with its numbers (limits, lifetimes, the known false positive) is in
 | [0060](docs/adr/0060-a-public-share-link-opens-only-aggregate-reports.md)             | A public share link opens only aggregate reports                           |
 | [0061](docs/adr/0061-email-alerts-from-the-daily-run.md)                              | E-mail alerts from the daily run                                           |
 | [0062](docs/adr/0062-annotations-are-notes-on-a-day-written-by-the-owner.md)          | Annotations are notes on a day, written by the owner                       |
+| [0063](docs/adr/0063-a-share-link-password-is-traded-for-a-stored-unlock.md)          | A share link's password is traded for a stored unlock                      |
 
 ## Roadmap
 

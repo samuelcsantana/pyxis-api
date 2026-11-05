@@ -1109,7 +1109,7 @@
       },
       "CreatedShareLink": {
         "additionalProperties": false,
-        "description": "A read-only link to the aggregate reports of one project, opened by anyone who has the token, without signing in, while the account is on Pro.",
+        "description": "A read-only link to the aggregate reports of one project, opened by anyone who has the token, and the password when it has one, without signing in, while the account is on Pro.",
         "properties": {
           "created_at": {
             "format": "date-time",
@@ -1137,6 +1137,10 @@
           "name": {
             "type": "string"
           },
+          "password_protected": {
+            "description": "Whether the viewer must type a password",
+            "type": "boolean"
+          },
           "token": {
             "description": "Answered this once: only its hash is kept. The public routes take it in the path",
             "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
@@ -1148,6 +1152,7 @@
           "name",
           "created_at",
           "expires_at",
+          "password_protected",
           "token"
         ],
         "type": "object"
@@ -1174,6 +1179,20 @@
             "maxLength": 64,
             "minLength": 1,
             "type": "string"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "description": "8 to 128 characters, kept exactly as typed and stored only as a scrypt hash",
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "description": "A password the viewer must type before the reports open; null or absent: none"
           }
         },
         "required": [
@@ -4892,9 +4911,104 @@
         "type": "object"
       },
       "SharedProject": {
+        "description": "What a share link opens: the name and settings the shared reports need, and its goals; only password_required: true for a password-protected link not unlocked yet.",
+        "oneOf": [
+          {
+            "additionalProperties": false,
+            "description": "The link has a password and no valid unlock was sent: nothing else is answered",
+            "properties": {
+              "password_required": {
+                "enum": [
+                  true
+                ],
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "password_required"
+            ],
+            "type": "object"
+          },
+          {
+            "additionalProperties": false,
+            "properties": {
+              "expires_at": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "null: the link never expires"
+              },
+              "goals": {
+                "description": "The goals, in order; the reports take their ids in goal",
+                "items": {
+                  "$ref": "#/components/schemas/Goal"
+                },
+                "type": "array"
+              },
+              "password_required": {
+                "enum": [
+                  false
+                ],
+                "type": "boolean"
+              },
+              "project": {
+                "additionalProperties": false,
+                "properties": {
+                  "city_enabled": {
+                    "description": "Whether the project keeps the approximate city",
+                    "type": "boolean"
+                  },
+                  "currency": {
+                    "description": "The ISO 4217 currency of the revenue figures",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "timezone": {
+                    "description": "The IANA time zone the days of every report are counted in",
+                    "type": "string"
+                  },
+                  "visitors_enabled": {
+                    "description": "Whether the project counts unique visitors",
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "name",
+                  "timezone",
+                  "currency",
+                  "city_enabled",
+                  "visitors_enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "password_required",
+              "project",
+              "goals",
+              "expires_at"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "ShareLink": {
         "additionalProperties": false,
-        "description": "What a share link opens: the name and settings the shared reports need, and its goals.",
         "properties": {
+          "created_at": {
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
           "expires_at": {
             "anyOf": [
               {
@@ -4908,101 +5022,85 @@
             ],
             "description": "null: the link never expires"
           },
-          "goals": {
-            "description": "The goals, in order; the reports take their ids in goal",
-            "items": {
-              "$ref": "#/components/schemas/Goal"
-            },
-            "type": "array"
+          "id": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
           },
-          "project": {
-            "additionalProperties": false,
-            "properties": {
-              "city_enabled": {
-                "description": "Whether the project keeps the approximate city",
-                "type": "boolean"
-              },
-              "currency": {
-                "description": "The ISO 4217 currency of the revenue figures",
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              },
-              "timezone": {
-                "description": "The IANA time zone the days of every report are counted in",
-                "type": "string"
-              },
-              "visitors_enabled": {
-                "description": "Whether the project counts unique visitors",
-                "type": "boolean"
-              }
-            },
-            "required": [
-              "name",
-              "timezone",
-              "currency",
-              "city_enabled",
-              "visitors_enabled"
-            ],
-            "type": "object"
+          "name": {
+            "type": "string"
+          },
+          "password_protected": {
+            "description": "Whether the viewer must type a password",
+            "type": "boolean"
           }
         },
         "required": [
-          "project",
-          "goals",
-          "expires_at"
+          "id",
+          "name",
+          "created_at",
+          "expires_at",
+          "password_protected"
+        ],
+        "type": "object"
+      },
+      "ShareLinkPassword": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "anyOf": [
+              {
+                "description": "8 to 128 characters, kept exactly as typed and stored only as a scrypt hash",
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The new password; null removes it. Either way the open unlocks stop working"
+          }
+        },
+        "required": [
+          "password"
         ],
         "type": "object"
       },
       "ShareLinks": {
         "additionalProperties": false,
-        "description": "The share links of the project, the oldest first, expired ones included until the owner revokes them. Their tokens are never answered again.",
+        "description": "The share links of the project, the oldest first, expired ones included until the owner revokes them. Their tokens and passwords are never answered.",
         "properties": {
           "links": {
             "items": {
-              "additionalProperties": false,
-              "properties": {
-                "created_at": {
-                  "format": "date-time",
-                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
-                  "type": "string"
-                },
-                "expires_at": {
-                  "anyOf": [
-                    {
-                      "format": "date-time",
-                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "null: the link never expires"
-                },
-                "id": {
-                  "format": "uuid",
-                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
-                  "type": "string"
-                },
-                "name": {
-                  "type": "string"
-                }
-              },
-              "required": [
-                "id",
-                "name",
-                "created_at",
-                "expires_at"
-              ],
-              "type": "object"
+              "$ref": "#/components/schemas/ShareLink"
             },
             "type": "array"
           }
         },
         "required": [
           "links"
+        ],
+        "type": "object"
+      },
+      "ShareUnlock": {
+        "additionalProperties": false,
+        "description": "Opens the reports of one password-protected link for a few hours. It stops at once when the owner changes or removes the password or revokes the link.",
+        "properties": {
+          "expires_at": {
+            "description": "When the unlock stops opening the reports",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$",
+            "type": "string"
+          },
+          "unlock": {
+            "description": "Sent as Authorization: Bearer pyxis_su_… with every /v1/shared/{token} call of this link; keep it in memory or the tab’s sessionStorage",
+            "pattern": "^pyxis_su_[A-Za-z0-9]{32}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "unlock",
+          "expires_at"
         ],
         "type": "object"
       },
@@ -5556,6 +5654,20 @@
         ],
         "type": "object"
       },
+      "UnlockShareLink": {
+        "additionalProperties": false,
+        "properties": {
+          "password": {
+            "description": "8 to 128 characters, kept exactly as typed and stored only as a scrypt hash",
+            "maxLength": 512,
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "type": "object"
+      },
       "VerifyCodeRequest": {
         "additionalProperties": false,
         "description": "The email and the six-digit code it received.",
@@ -5842,6 +5954,12 @@
       "secret_key": {
         "bearerFormat": "opaque",
         "description": "A secret project key: pyxis_sk_ followed by 32 letters and digits",
+        "scheme": "bearer",
+        "type": "http"
+      },
+      "share_unlock": {
+        "bearerFormat": "opaque",
+        "description": "The unlock of a password-protected share link, from POST /v1/shared/{token}/unlock: pyxis_su_ followed by 32 letters and digits, valid a few hours, for that link only",
         "scheme": "bearer",
         "type": "http"
       }
@@ -13807,6 +13925,101 @@
         "tags": [
           "share links"
         ]
+      },
+      "patch": {
+        "description": "Pro only, like creating a link. The password is stored only as a scrypt hash, and every unlock of the link stops working at once.",
+        "operationId": "ShareLinksController_changePassword",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "projectId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareLinkPassword"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareLink"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The request did not come from the dashboard, the account is suspended (account_suspended), or its plan does not include share links (plan_required)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The project is not one the admin owns (project_not_found), or the link is not one of its links (share_link_not_found)."
+          }
+        },
+        "security": [
+          {
+            "pyxis_session": []
+          }
+        ],
+        "summary": "Set, change or remove the password of a share link",
+        "tags": [
+          "share links"
+        ]
       }
     },
     "/v1/projects/{projectId}/time-of-day": {
@@ -14533,7 +14746,7 @@
     },
     "/v1/shared/{token}": {
       "get": {
-        "description": "No session: the token is the credential. Only aggregate reports are shared.",
+        "description": "No session: the token is the credential. Only aggregate reports are shared. A link with a password answers only password_required: true until it is unlocked.",
         "operationId": "SharedReportsController_project",
         "parameters": [
           {
@@ -14568,6 +14781,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -14589,6 +14812,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "The project a share link opens, with its goals",
         "tags": [
           "shared reports"
@@ -14826,6 +15054,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -14847,6 +15085,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "Visits per day and channel, and the sources that brought them",
         "tags": [
           "shared reports"
@@ -14909,6 +15152,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -14930,6 +15183,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "The notes on the days of a range, which explain the charts",
         "tags": [
           "shared reports"
@@ -15167,6 +15425,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -15188,6 +15456,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "Visits and conversions by device, browser, system and place",
         "tags": [
           "shared reports"
@@ -15415,6 +15688,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -15436,6 +15719,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "Entry and exit pages, single-page visits and visit length",
         "tags": [
           "shared reports"
@@ -15675,6 +15963,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -15696,6 +15994,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "The most used named events or screens, with their daily counts",
         "tags": [
           "shared reports"
@@ -15944,6 +16247,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -15965,6 +16278,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "How many visits or people reached each step of a funnel, in order",
         "tags": [
           "shared reports"
@@ -16213,6 +16531,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -16234,6 +16562,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "A funnel per device type or channel of the visit",
         "tags": [
           "shared reports"
@@ -16461,6 +16794,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -16482,6 +16825,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "The conversions and conversion rate of each goal of the project",
         "tags": [
           "shared reports"
@@ -16719,6 +17067,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -16740,6 +17098,11 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "The overview of the shared project, as GET /overview answers it",
         "tags": [
           "shared reports"
@@ -16967,6 +17330,16 @@
             },
             "description": ""
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has a password and no live unlock of this link was sent (share_password_required): POST /v1/shared/{token}/unlock first."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -16988,7 +17361,106 @@
             "description": "This address read shared reports too often; Retry-After says when to come back."
           }
         },
+        "security": [
+          {
+            "share_unlock": []
+          }
+        ],
         "summary": "The visits of the shared project by weekday and local hour",
+        "tags": [
+          "shared reports"
+        ]
+      }
+    },
+    "/v1/shared/{token}/unlock": {
+      "post": {
+        "description": "No session. The answer is sent as Authorization: Bearer pyxis_su_… with the other /v1/shared/{token} routes of this link.",
+        "operationId": "ShareUnlockController_unlock",
+        "parameters": [
+          {
+            "description": "The token answered when the link was created",
+            "in": "path",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "pattern": "^pyxis_sh_[A-Za-z0-9]{32}$",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlockShareLink"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareUnlock"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The password does not open this link (wrong_share_password)."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "No open link has this token (share_link_not_found), the same answer as the other shared routes."
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "The link has no password (share_password_not_set)."
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Too many attempts from this address, or too many wrong passwords for the link; the two answers are the same (rate_limited), with Retry-After."
+          }
+        },
+        "summary": "Trade the password of a share link for an unlock of its reports",
         "tags": [
           "shared reports"
         ]
