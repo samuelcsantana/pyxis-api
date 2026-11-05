@@ -16,6 +16,13 @@ const OTHER_ADMIN_ID = '2c3d4e5f-6a7b-4c8d-9e0f-1a2b3c4d5e04';
 const SESSION_TOKEN = 'e2e-email-preferences-session-token';
 const SESSION_COOKIE = `${SESSION_COOKIE_NAME}=${SESSION_TOKEN}`;
 
+const EVERYTHING_ON = {
+  weekly_digest: true,
+  no_events_alert: true,
+  failed_writes_alert: true,
+  conversion_drop_alert: true,
+};
+
 describe('e-mail preferences', () => {
   let app: NestFastifyApplication;
   let owner: postgres.Sql;
@@ -69,13 +76,16 @@ describe('e-mail preferences', () => {
   it('sends the weekly digest until the admin turns it off, for that admin only', async () => {
     const before = await get(preferencesOf(SHOP_ID));
     expect(before.statusCode).toBe(200);
-    expect(before.json()).toEqual({ weekly_digest: true });
+    expect(before.json()).toEqual(EVERYTHING_ON);
 
     const turnedOff = await put(preferencesOf(SHOP_ID), { weekly_digest: false });
     expect(turnedOff.statusCode).toBe(200);
-    expect(turnedOff.json()).toEqual({ weekly_digest: false });
+    expect(turnedOff.json()).toEqual({ ...EVERYTHING_ON, weekly_digest: false });
 
-    expect((await get(preferencesOf(SHOP_ID))).json()).toEqual({ weekly_digest: false });
+    expect((await get(preferencesOf(SHOP_ID))).json()).toEqual({
+      ...EVERYTHING_ON,
+      weekly_digest: false,
+    });
     const rows = await owner<{ admin_user_id: string; weekly_digest: boolean }[]>`
       SELECT admin_user_id, weekly_digest FROM admin_project_access
       WHERE project_id = ${SHOP_ID} ORDER BY admin_user_id
@@ -86,18 +96,47 @@ describe('e-mail preferences', () => {
     ]);
 
     const turnedOn = await put(preferencesOf(SHOP_ID), { weekly_digest: true });
-    expect(turnedOn.json()).toEqual({ weekly_digest: true });
+    expect(turnedOn.json()).toEqual(EVERYTHING_ON);
+  });
+
+  it('turns the alerts off one by one, keeping the others and the digest', async () => {
+    const quiet = await put(preferencesOf(SHOP_ID), {
+      no_events_alert: false,
+      conversion_drop_alert: false,
+    });
+
+    expect(quiet.statusCode).toBe(200);
+    expect(quiet.json()).toEqual({
+      ...EVERYTHING_ON,
+      no_events_alert: false,
+      conversion_drop_alert: false,
+    });
+    const [row] = await owner<
+      { no_events_alert: boolean; failed_writes_alert: boolean; conversion_drop_alert: boolean }[]
+    >`
+      SELECT no_events_alert, failed_writes_alert, conversion_drop_alert FROM admin_project_access
+      WHERE project_id = ${SHOP_ID} AND admin_user_id = ${ADMIN_ID}
+    `;
+    expect(row).toEqual({
+      no_events_alert: false,
+      failed_writes_alert: true,
+      conversion_drop_alert: false,
+    });
+
+    await put(preferencesOf(SHOP_ID), { no_events_alert: true, conversion_drop_alert: true });
+    expect((await get(preferencesOf(SHOP_ID))).json()).toEqual(EVERYTHING_ON);
   });
 
   it.each([
     ['an unknown field', { weekly_digest: false, monthly_digest: true }],
     ['a value that is not a boolean', { weekly_digest: 'no' }],
     ['no value', {}],
+    ['an alert value that is not a boolean', { failed_writes_alert: 1 }],
   ])('refuses a body with %s and changes nothing', async (_label, payload) => {
     const response = await put(preferencesOf(SHOP_ID), payload);
 
     expect(response.statusCode).toBe(400);
-    expect((await get(preferencesOf(SHOP_ID))).json()).toEqual({ weekly_digest: true });
+    expect((await get(preferencesOf(SHOP_ID))).json()).toEqual(EVERYTHING_ON);
   });
 
   it.each([
