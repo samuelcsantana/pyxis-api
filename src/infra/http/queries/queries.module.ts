@@ -128,5 +128,15 @@ import { VisitsController } from './visits.controller';
     ArrivalsThrottlerGuard,
     ProjectAccessGuard,
   ],
+  exports: [
+    GetOverviewUseCase,
+    GetTimeOfDayUseCase,
+    GetAcquisitionUseCase,
+    GetDevicesUseCase,
+    GetFeaturesUseCase,
+    GetEngagementUseCase,
+    GetFunnelUseCase,
+    GetFunnelSegmentsUseCase,
+  ],
 })
 export class QueriesModule {}

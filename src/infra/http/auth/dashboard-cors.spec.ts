@@ -25,6 +25,7 @@ describe('isDashboardPath', () => {
     '/v1/projects/p1/overview?from=a&to=b',
     '/v1/auth/request-code',
     '/v1/auth/logout?x=1',
+    '/v1/shared/pyxis_sh_abc/overview?from=a&to=b',
   ])('treats %s as a dashboard path', (url) => {
     expect(isDashboardPath(url)).toBe(true);
   });
@@ -35,6 +36,7 @@ describe('isDashboardPath', () => {
     '/v1/meetings',
     '/v1/authors',
     '/v1/subjects/ana',
+    '/v1/sharedly',
     '/docs?path=/v1/me',
   ])('leaves %s alone', (url) => {
     expect(isDashboardPath(url)).toBe(false);
