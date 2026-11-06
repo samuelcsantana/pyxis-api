@@ -214,9 +214,10 @@ describe('the remote MCP endpoint', () => {
         'visit_timeline',
         'property_summary',
         'goals',
+        'annotations',
       ]),
     );
-    expect(tools).toHaveLength(17);
+    expect(tools).toHaveLength(18);
 
     const projects = await post(toolCall('list_projects'), withBearer(token));
     expect(projects.statusCode).toBe(200);
