@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.48.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.47.0...v0.48.0) (2026-11-06)
+
+
+### Features
+
+* **alerts:** judge no events, failed writes and a conversion drop ([0698e87](https://github.com/samuelcsantana/pyxis-api/commit/0698e87fbe03d77f28c0cf1ea496503add0a1d89))
+* **alerts:** keep the alert switches and the alerts sent ([acb422f](https://github.com/samuelcsantana/pyxis-api/commit/acb422f86d77c164638f625a758dcfca7036b03d))
+* **alerts:** send the alerts from the daily run ([b5386d8](https://github.com/samuelcsantana/pyxis-api/commit/b5386d84f7b92f1edb3f890afc782a3b17edbb6b))
+* **alerts:** write the alert e-mail in seven languages ([181d920](https://github.com/samuelcsantana/pyxis-api/commit/181d920f7b6ddb43242ba9ae3683d2bacc48920f))
+* **annotations:** keep short notes on the days of a project ([68f5738](https://github.com/samuelcsantana/pyxis-api/commit/68f573802e5f13e1986070795d670c422765c72d))
+* **annotations:** routes for the owner, the readers and the share link ([1350b3e](https://github.com/samuelcsantana/pyxis-api/commit/1350b3e75b48a228631a8a769757c40c86769996))
+* **annotations:** write a note with the project's secret key, on Pro ([513dfe2](https://github.com/samuelcsantana/pyxis-api/commit/513dfe2a41082f6c25c6454c354b26ce455cc2f5))
+* **annotations:** write, change, delete and list notes ([ee19eec](https://github.com/samuelcsantana/pyxis-api/commit/ee19eecff4674c2d67f58f8126e564e0ea688ddf))
+* **database:** store the Slack webhooks and the Slack alerts posted ([08bb812](https://github.com/samuelcsantana/pyxis-api/commit/08bb8120784ea91981a95ad7a07fc6640c78c198))
+* **jobs:** post the daily alerts to the project's Slack ([29adf0c](https://github.com/samuelcsantana/pyxis-api/commit/29adf0cd27cab266512a9eaef1f24700e6716a20))
+* **preferences:** let each person turn each alert off ([0480228](https://github.com/samuelcsantana/pyxis-api/commit/0480228b4163033edff35d5c4430bc1b9e2beb1f))
+* **security:** hash passwords with Node's own scrypt ([087f029](https://github.com/samuelcsantana/pyxis-api/commit/087f02979842042ef6b709a548f1285324edf5d7))
+* **security:** seal secrets with AES-256-GCM and versioned keys ([3a7ccf9](https://github.com/samuelcsantana/pyxis-api/commit/3a7ccf90d1accec6bd64e2f94ab5adb570f275ec))
+* **share-links:** an optional password, traded for an unlock of the link ([de2e670](https://github.com/samuelcsantana/pyxis-api/commit/de2e670332e607e23c22c25940dbefc85b71473a))
+* **slack:** accept only Slack Incoming Webhook addresses ([d842aad](https://github.com/samuelcsantana/pyxis-api/commit/d842aadb0805f9d5f13bd363a9948ca77c29aff0))
+* **slack:** let the owner set, test and remove the project's Slack webhook ([f15b5bb](https://github.com/samuelcsantana/pyxis-api/commit/f15b5bb9d58f44250a104b36a46e46ab31f2e8fa))
+* **slack:** post alerts and test messages to a Slack webhook ([1fcf7a1](https://github.com/samuelcsantana/pyxis-api/commit/1fcf7a165bbb8b4c10f5f4cc90b1a4afde1e5120))
+
+
+### Bug Fixes
+
+* **mail:** open Settings on the e-mail section from the alert and digest e-mails ([ef8a0dc](https://github.com/samuelcsantana/pyxis-api/commit/ef8a0dcb377e0b481ca9e9dbdc6ef4b5628d0253))
+
+
+### Refactoring
+
+* **annotations:** share the rules of a new note between its writers ([0dce83f](https://github.com/samuelcsantana/pyxis-api/commit/0dce83febda9c7c98781affdeeaf525576e3dc08))
+
+
+### Documentation
+
+* **alerts:** record the e-mail alerts and export the preference routes ([e01c7ca](https://github.com/samuelcsantana/pyxis-api/commit/e01c7ca408c8dde74d7254f9146e16a96cc7b9da))
+* **annotations:** record the annotations and export their routes ([7322e6c](https://github.com/samuelcsantana/pyxis-api/commit/7322e6c345f3924040d79c55e44f44e039bc233b))
+* **annotations:** record the secret key as the token that writes notes ([19f142f](https://github.com/samuelcsantana/pyxis-api/commit/19f142f27bb1f8525e2ebb93f933f687ec60d34d))
+* **share-links:** record the link password and its unlocks ([5043026](https://github.com/samuelcsantana/pyxis-api/commit/5043026cba8ebd1c533a8bfa15cb14876528abb1))
+* **slack:** record the Slack alerts and how their key rotates ([c4493fb](https://github.com/samuelcsantana/pyxis-api/commit/c4493fbee470f139aa9b0e4d4c0e3530be3f916e))
+
 ## [0.47.0](https://github.com/samuelcsantana/pyxis-api/compare/v0.46.0...v0.47.0) (2026-11-05)
 
 
